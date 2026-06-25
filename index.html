@@ -3,21 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title>marble tilt calibrated</title>
+<title>marble tilt</title>
 <style>
   html,body{
-    margin:0;
-    height:100%;
-    overflow:hidden;
-    background:#101114;
-    font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-    color:white;
-    touch-action:none;
-    overscroll-behavior:none;
+    margin:0;height:100%;overflow:hidden;background:#101114;
+    font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:white;
+    touch-action:none;overscroll-behavior:none;
   }
   #game{
-    position:fixed;
-    inset:0;
+    position:fixed;inset:0;
     background:
       linear-gradient(#ffffff08 1px,transparent 1px),
       linear-gradient(90deg,#ffffff08 1px,transparent 1px),
@@ -25,50 +19,23 @@
     background-size:42px 42px,42px 42px,100% 100%;
   }
   #marble{
-    position:absolute;
-    width:58px;
-    height:58px;
-    border-radius:50%;
+    position:absolute;width:58px;height:58px;border-radius:50%;
     transform:translate(-50%,-50%);
-    background:
-      radial-gradient(circle at 34% 28%,#fff 0 6%,#bce8ff 7% 19%,#2d86dd 42%,#083b75 75%,#031b36 100%);
-    box-shadow:0 16px 28px #000a, inset -8px -10px 18px #0018;
+    background:radial-gradient(circle at 34% 28%,#fff 0 6%,#bce8ff 7% 19%,#2d86dd 42%,#083b75 75%,#031b36 100%);
+    box-shadow:0 16px 28px #000a,inset -8px -10px 18px #0018;
     will-change:left,top;
   }
-  #panel{
-    position:fixed;
-    left:12px;
-    right:12px;
-    top:12px;
-    display:grid;
-    gap:8px;
-    pointer-events:none;
-  }
-  #hint,#debug{
-    border-radius:14px;
-    background:#0008;
-    padding:10px 12px;
-    backdrop-filter:blur(8px);
-  }
+  #panel{position:fixed;left:12px;right:12px;top:12px;display:grid;gap:8px;pointer-events:none}
+  #hint,#debug{border-radius:14px;background:#0008;padding:10px 12px;backdrop-filter:blur(8px)}
   #hint{font-size:15px;text-align:center}
   #debug{font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;opacity:.86;white-space:pre-wrap}
   #controls{
-    position:fixed;
-    left:12px;
-    right:12px;
-    bottom:calc(12px + env(safe-area-inset-bottom));
-    display:flex;
-    gap:10px;
+    position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));
+    display:flex;gap:10px;
   }
   button{
-    flex:1;
-    border:0;
-    border-radius:999px;
-    padding:14px 12px;
-    font-size:17px;
-    font-weight:700;
-    background:white;
-    color:#111;
+    flex:1;border:0;border-radius:999px;padding:14px 12px;
+    font-size:17px;font-weight:800;background:white;color:#111;
   }
   button.secondary{background:#2e3440;color:white}
 </style>
@@ -77,20 +44,20 @@
 <div id="game"><div id="marble"></div></div>
 
 <div id="panel">
-  <div id="hint">tap start. hold phone flat-ish, then calibrate.</div>
+  <div id="hint">hold phone normally, then tap start</div>
   <div id="debug">waiting for sensors...</div>
 </div>
 
 <div id="controls">
   <button id="start">start</button>
-  <button id="calibrate" class="secondary">calibrate</button>
+  <button id="neutral" class="secondary">set neutral</button>
 </div>
 
 <script>
 (() => {
   const marble = document.getElementById("marble");
   const startBtn = document.getElementById("start");
-  const calBtn = document.getElementById("calibrate");
+  const neutralBtn = document.getElementById("neutral");
   const hint = document.getElementById("hint");
   const debug = document.getElementById("debug");
 
@@ -99,25 +66,28 @@
 
   let rawX = 0, rawY = 0;
   let smoothX = 0, smoothY = 0;
-  let zeroX = 0, zeroY = 0;
+  let neutralX = null, neutralY = null;
+
+  let sampleCount = 0;
+  let sampleX = 0, sampleY = 0;
+  let autoNeutralDone = false;
 
   let gotOrientation = false;
   let gotMotion = false;
   let using = "none";
 
   const r = 29;
-  const accel = 0.075;       // lower = less twitchy
-  const maxTilt = 28;        // clamp angle/accel
-  const smoothing = 0.18;    // lower = smoother/slower
-  const friction = 0.972;    // lower = stops faster
-  const bounce = 0.38;       // wall bounce
-  const deadZone = 0.8;      // ignores tiny sensor drift
+
+  // feel knobs
+  const accel = 0.075;
+  const maxTilt = 28;
+  const smoothing = 0.18;
+  const friction = 0.972;
+  const bounce = 0.38;
+  const deadZone = 0.85;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-  function applyDeadZone(v) {
-    return Math.abs(v) < deadZone ? 0 : v;
-  }
+  function dz(v) { return Math.abs(v) < deadZone ? 0 : v; }
 
   function resize() {
     x = clamp(x, r, innerWidth - r);
@@ -126,8 +96,6 @@
   addEventListener("resize", resize);
 
   function screenAdjusted(gamma, beta) {
-    // gamma: left/right tilt, beta: front/back tilt
-    // adjust for screen rotation, otherwise landscape feels possessed.
     const angle = screen.orientation && typeof screen.orientation.angle === "number"
       ? screen.orientation.angle
       : (window.orientation || 0);
@@ -144,7 +112,26 @@
       ty = -ty;
     }
 
-    return [tx, ty];
+    // inverted to match natural marble direction
+    return [-tx, -ty];
+  }
+
+  function maybeAutoNeutral() {
+    if (autoNeutralDone) return;
+
+    sampleX += rawX;
+    sampleY += rawY;
+    sampleCount++;
+
+    // first few frames become the user's normal holding posture.
+    // not table-flat. not lab-instrument nonsense.
+    if (sampleCount >= 18) {
+      neutralX = sampleX / sampleCount;
+      neutralY = sampleY / sampleCount;
+      autoNeutralDone = true;
+      vx = 0; vy = 0;
+      hint.textContent = "neutral set. tilt from your normal holding angle.";
+    }
   }
 
   function onOrientation(e) {
@@ -152,19 +139,20 @@
     gotOrientation = true;
     using = "deviceorientation";
     const [tx, ty] = screenAdjusted(e.gamma, e.beta);
-    rawX = clamp(-tx, -maxTilt, maxTilt);
-    rawY = clamp(-ty, -maxTilt, maxTilt);
+    rawX = clamp(tx, -maxTilt, maxTilt);
+    rawY = clamp(ty, -maxTilt, maxTilt);
+    maybeAutoNeutral();
   }
 
   function onMotion(e) {
-    // fallback only. orientation is usually nicer for this toy.
     if (gotOrientation) return;
     const g = e.accelerationIncludingGravity;
     if (!g) return;
     gotMotion = true;
     using = "devicemotion fallback";
-    rawX = clamp((g.x || 0) * 3, -maxTilt, maxTilt);
-    rawY = clamp(-(g.y || 0) * 3, -maxTilt, maxTilt);
+    rawX = clamp(-(g.x || 0) * 3, -maxTilt, maxTilt);
+    rawY = clamp((g.y || 0) * 3, -maxTilt, maxTilt);
+    maybeAutoNeutral();
   }
 
   async function requestPermissionIfNeeded() {
@@ -188,28 +176,40 @@
       return;
     }
 
+    sampleCount = 0;
+    sampleX = 0;
+    sampleY = 0;
+    autoNeutralDone = false;
+    neutralX = null;
+    neutralY = null;
+
     addEventListener("deviceorientation", onOrientation, true);
     addEventListener("devicemotion", onMotion, true);
 
     startBtn.textContent = "running";
     startBtn.disabled = true;
-    hint.textContent = "tilt gently. tap calibrate when held neutral.";
+    hint.textContent = "keep holding normally for half a sec...";
   }
 
-  function calibrate() {
-    zeroX = rawX;
-    zeroY = rawY;
-    vx = 0;
-    vy = 0;
-    hint.textContent = "calibrated. now tilt gently, not like you're steering a pirate ship.";
+  function setNeutralNow() {
+    neutralX = rawX;
+    neutralY = rawY;
+    autoNeutralDone = true;
+    sampleCount = 18;
+    vx = 0; vy = 0;
+    smoothX = 0; smoothY = 0;
+    hint.textContent = "neutral reset to current hand position.";
   }
 
   startBtn.addEventListener("click", start);
-  calBtn.addEventListener("click", calibrate);
+  neutralBtn.addEventListener("click", setNeutralNow);
 
   function loop() {
-    const targetX = applyDeadZone(rawX - zeroX);
-    const targetY = applyDeadZone(rawY - zeroY);
+    const nx = neutralX ?? rawX;
+    const ny = neutralY ?? rawY;
+
+    const targetX = dz(rawX - nx);
+    const targetY = dz(rawY - ny);
 
     smoothX += (targetX - smoothX) * smoothing;
     smoothY += (targetY - smoothY) * smoothing;
@@ -235,8 +235,9 @@
       "sensor: " + using +
       "\norientation seen: " + gotOrientation +
       " | motion seen: " + gotMotion +
+      "\nauto neutral: " + autoNeutralDone +
       "\nraw x/y: " + rawX.toFixed(2) + " / " + rawY.toFixed(2) +
-      "\nzero x/y: " + zeroX.toFixed(2) + " / " + zeroY.toFixed(2) +
+      "\nneutral x/y: " + (neutralX ?? 0).toFixed(2) + " / " + (neutralY ?? 0).toFixed(2) +
       "\ntilt x/y: " + smoothX.toFixed(2) + " / " + smoothY.toFixed(2) +
       "\nvel x/y: " + vx.toFixed(2) + " / " + vy.toFixed(2);
 
