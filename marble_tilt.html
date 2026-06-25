@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>marble tilt</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:system-ui,sans-serif;touch-action:none}
+#game{position:fixed;inset:0;background:radial-gradient(circle,#333 0,#111 70%)}
+#marble{position:absolute;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#9fd3ff 18%,#2477d4 55%,#06386f 100%);box-shadow:0 12px 25px #0009;transform:translate(-50%,-50%)}
+#start{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);font-size:20px;padding:14px 22px;border:0;border-radius:999px}
+#hint{position:fixed;top:18px;left:18px;right:18px;color:#fff;opacity:.8;text-align:center}
+</style>
+</head>
+<body>
+<div id="game"><div id="marble"></div></div>
+<div id="hint">tap start, then tilt phone</div>
+<button id="start">start</button>
+<script>
+let x=innerWidth/2,y=innerHeight/2,vx=0,vy=0,tx=0,ty=0;
+const r=28,a=.45,f=.985,b=.55,m=document.getElementById("marble");
+function c(v,n,x){return Math.max(n,Math.min(x,v))}
+function motion(e){const g=e.accelerationIncludingGravity;if(!g)return;tx=g.x||0;ty=-(g.y||0)}
+async function start(){
+if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){
+const p=await DeviceMotionEvent.requestPermission();if(p!=="granted")return;}
+addEventListener("devicemotion",motion);
+document.getElementById("start").style.display="none";
+document.getElementById("hint").textContent="tilt phone";
+}
+document.getElementById("start").onclick=start;
+(function loop(){
+vx+=tx*a;vy+=ty*a;vx*=f;vy*=f;x+=vx;y+=vy;
+if(x<r){x=r;vx=-vx*b} if(x>innerWidth-r){x=innerWidth-r;vx=-vx*b}
+if(y<r){y=r;vy=-vy*b} if(y>innerHeight-r){y=innerHeight-r;vy=-vy*b}
+m.style.left=x+"px";m.style.top=y+"px";
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
