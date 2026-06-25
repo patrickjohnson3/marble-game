@@ -152,8 +152,8 @@
     gotOrientation = true;
     using = "deviceorientation";
     const [tx, ty] = screenAdjusted(e.gamma, e.beta);
-    rawX = clamp(tx, -maxTilt, maxTilt);
-    rawY = clamp(ty, -maxTilt, maxTilt);
+    rawX = clamp(-tx, -maxTilt, maxTilt);
+    rawY = clamp(-ty, -maxTilt, maxTilt);
   }
 
   function onMotion(e) {
