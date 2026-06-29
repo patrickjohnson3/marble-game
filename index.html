@@ -83,13 +83,13 @@
   const r = 29;
 
   // feel knobs
-  const accel = 0.18;
+  const accel = 0.115;
   const maxTilt = 26;
   const smoothing = 0.2;
-  const friction = 0.955;
+  const friction = 0.94;
   const bounce = 0.38;
   const deadZone = 0.65;
-  const maxSpeed = 22;
+  const maxSpeed = 14;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function dz(v) { return Math.abs(v) < deadZone ? 0 : v; }
