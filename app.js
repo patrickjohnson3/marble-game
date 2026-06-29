@@ -66,8 +66,11 @@
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function dz(v) { return Math.abs(v) < physics.deadZone ? 0 : v; }
   function setHint(message) { hint.textContent = message; }
+  function isSettingsOpen() { return settingsOverlay.classList.contains("open"); }
 
   function updateDebugPanel() {
+    if (!isSettingsOpen()) return;
+
     debug.textContent =
       "phase: " + game.phase +
       "\nsensor: " + sensor.using +
@@ -246,6 +249,7 @@
   function openSettings() {
     settingsOverlay.classList.add("open");
     settingsOverlay.setAttribute("aria-hidden", "false");
+    updateDebugPanel();
   }
 
   function closeSettingsModal() {
