@@ -37,6 +37,7 @@
     flex:1;border:0;border-radius:999px;padding:14px 12px;
     font-size:17px;font-weight:800;background:white;color:#111;
   }
+  button:disabled{opacity:.72}
   button.secondary{background:#2e3440;color:white}
 </style>
 </head>
@@ -67,6 +68,9 @@
   let rawX = 0, rawY = 0;
   let smoothX = 0, smoothY = 0;
   let neutralX = null, neutralY = null;
+  let keyboardX = 0, keyboardY = 0;
+  let lastFrame = performance.now();
+  let sensorWatchdog = 0;
 
   let sampleCount = 0;
   let sampleX = 0, sampleY = 0;
@@ -79,12 +83,13 @@
   const r = 29;
 
   // feel knobs
-  const accel = 0.075;
-  const maxTilt = 28;
-  const smoothing = 0.18;
-  const friction = 0.972;
+  const accel = 0.18;
+  const maxTilt = 26;
+  const smoothing = 0.2;
+  const friction = 0.955;
   const bounce = 0.38;
-  const deadZone = 0.85;
+  const deadZone = 0.65;
+  const maxSpeed = 22;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function dz(v) { return Math.abs(v) < deadZone ? 0 : v; }
@@ -112,8 +117,7 @@
       ty = -ty;
     }
 
-    // inverted to match natural marble direction
-    return [-tx, -ty];
+    return [tx, ty];
   }
 
   function maybeAutoNeutral() {
@@ -139,8 +143,8 @@
     gotOrientation = true;
     using = "deviceorientation";
     const [tx, ty] = screenAdjusted(e.gamma, e.beta);
-    rawX = clamp(tx, -maxTilt, maxTilt);
-    rawY = clamp(ty, -maxTilt, maxTilt);
+    rawX = tx;
+    rawY = ty;
     maybeAutoNeutral();
   }
 
@@ -150,8 +154,8 @@
     if (!g) return;
     gotMotion = true;
     using = "devicemotion fallback";
-    rawX = clamp(-(g.x || 0) * 3, -maxTilt, maxTilt);
-    rawY = clamp((g.y || 0) * 3, -maxTilt, maxTilt);
+    rawX = -(g.x || 0) * 3;
+    rawY = (g.y || 0) * 3;
     maybeAutoNeutral();
   }
 
@@ -189,6 +193,17 @@
     startBtn.textContent = "running";
     startBtn.disabled = true;
     hint.textContent = "keep holding normally for half a sec...";
+
+    clearTimeout(sensorWatchdog);
+    sensorWatchdog = setTimeout(() => {
+      if (using === "none") {
+        hint.textContent = "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.";
+        using = "keyboard";
+        neutralX = 0;
+        neutralY = 0;
+        autoNeutralDone = true;
+      }
+    }, 1400);
   }
 
   function setNeutralNow() {
@@ -204,24 +219,51 @@
   startBtn.addEventListener("click", start);
   neutralBtn.addEventListener("click", setNeutralNow);
 
+  addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (k === "arrowleft" || k === "a") keyboardX = -1;
+    if (k === "arrowright" || k === "d") keyboardX = 1;
+    if (k === "arrowup" || k === "w") keyboardY = -1;
+    if (k === "arrowdown" || k === "s") keyboardY = 1;
+    if (["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(k)) {
+      e.preventDefault();
+      using = using === "none" ? "keyboard" : using;
+    }
+  }, { passive:false });
+
+  addEventListener("keyup", (e) => {
+    const k = e.key.toLowerCase();
+    if ((k === "arrowleft" || k === "a") && keyboardX < 0) keyboardX = 0;
+    if ((k === "arrowright" || k === "d") && keyboardX > 0) keyboardX = 0;
+    if ((k === "arrowup" || k === "w") && keyboardY < 0) keyboardY = 0;
+    if ((k === "arrowdown" || k === "s") && keyboardY > 0) keyboardY = 0;
+  });
+
   function loop() {
+    const now = performance.now();
+    const dt = clamp((now - lastFrame) / 16.67, 0.25, 2);
+    lastFrame = now;
+
     const nx = neutralX ?? rawX;
     const ny = neutralY ?? rawY;
 
-    const targetX = dz(rawX - nx);
-    const targetY = dz(rawY - ny);
+    const sensorX = clamp(dz(rawX - nx), -maxTilt, maxTilt);
+    const sensorY = clamp(dz(rawY - ny), -maxTilt, maxTilt);
+    const targetX = keyboardX ? keyboardX * 18 : sensorX;
+    const targetY = keyboardY ? keyboardY * 18 : sensorY;
 
-    smoothX += (targetX - smoothX) * smoothing;
-    smoothY += (targetY - smoothY) * smoothing;
+    smoothX += (targetX - smoothX) * (1 - Math.pow(1 - smoothing, dt));
+    smoothY += (targetY - smoothY) * (1 - Math.pow(1 - smoothing, dt));
 
-    vx += smoothX * accel;
-    vy += smoothY * accel;
+    vx += smoothX * accel * dt;
+    vy += smoothY * accel * dt;
 
-    vx *= friction;
-    vy *= friction;
+    const drag = Math.pow(friction, dt);
+    vx = clamp(vx * drag, -maxSpeed, maxSpeed);
+    vy = clamp(vy * drag, -maxSpeed, maxSpeed);
 
-    x += vx;
-    y += vy;
+    x += vx * dt;
+    y += vy * dt;
 
     if (x < r) { x = r; vx = -vx * bounce; }
     if (x > innerWidth - r) { x = innerWidth - r; vx = -vx * bounce; }
