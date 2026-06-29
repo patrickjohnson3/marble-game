@@ -80,7 +80,7 @@
     scale: 1,
     rotation: 0,
     rotationEnabled: false,
-    minScale: 0.65,
+    minScale: 0.2,
     maxScale: 2.5,
     followLag: 0.08,
     gestureCooldown: 0
