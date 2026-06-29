@@ -59,6 +59,19 @@
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function dz(v) { return Math.abs(v) < physics.deadZone ? 0 : v; }
+  function setHint(message) { hint.textContent = message; }
+
+  function updateDebugPanel() {
+    debug.textContent =
+      "sensor: " + sensor.using +
+      "\norientation seen: " + sensor.gotOrientation +
+      " | motion seen: " + sensor.gotMotion +
+      "\nauto neutral: " + calibration.autoNeutralDone +
+      "\nraw x/y: " + tilt.rawX.toFixed(2) + " / " + tilt.rawY.toFixed(2) +
+      "\nneutral x/y: " + (tilt.neutralX ?? 0).toFixed(2) + " / " + (tilt.neutralY ?? 0).toFixed(2) +
+      "\ntilt x/y: " + tilt.smoothX.toFixed(2) + " / " + tilt.smoothY.toFixed(2) +
+      "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2);
+  }
 
   function resize() {
     marble.x = clamp(marble.x, marble.r, innerWidth - marble.r);
@@ -100,7 +113,7 @@
       tilt.neutralY = calibration.sampleY / calibration.sampleCount;
       calibration.autoNeutralDone = true;
       marble.vx = 0; marble.vy = 0;
-      hint.textContent = "neutral set. tilt from your normal holding angle.";
+      setHint("neutral set. tilt from your normal holding angle.");
     }
   }
 
@@ -182,7 +195,7 @@
   async function start() {
     const ok = await requestPermissionIfNeeded();
     if (!ok) {
-      hint.textContent = "motion permission denied. check chrome site settings.";
+      setHint("motion permission denied. check chrome site settings.");
       return;
     }
 
@@ -191,12 +204,12 @@
 
     startBtn.textContent = "running";
     startBtn.disabled = true;
-    hint.textContent = "keep holding normally for half a sec...";
+    setHint("keep holding normally for half a sec...");
 
     clearTimeout(sensorWatchdog);
     sensorWatchdog = setTimeout(() => {
       if (sensor.using === "none") {
-        hint.textContent = "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.";
+        setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
         sensor.using = "keyboard";
         tilt.neutralX = 0;
         tilt.neutralY = 0;
@@ -212,7 +225,7 @@
     calibration.sampleCount = 18;
     marble.vx = 0; marble.vy = 0;
     tilt.smoothX = 0; tilt.smoothY = 0;
-    hint.textContent = "neutral reset to current hand position.";
+    setHint("neutral reset to current hand position.");
   }
 
   startBtn.addEventListener("click", start);
@@ -280,16 +293,7 @@
 
     marbleEl.style.left = marble.x + "px";
     marbleEl.style.top = marble.y + "px";
-
-    debug.textContent =
-      "sensor: " + sensor.using +
-      "\norientation seen: " + sensor.gotOrientation +
-      " | motion seen: " + sensor.gotMotion +
-      "\nauto neutral: " + calibration.autoNeutralDone +
-      "\nraw x/y: " + tilt.rawX.toFixed(2) + " / " + tilt.rawY.toFixed(2) +
-      "\nneutral x/y: " + (tilt.neutralX ?? 0).toFixed(2) + " / " + (tilt.neutralY ?? 0).toFixed(2) +
-      "\ntilt x/y: " + tilt.smoothX.toFixed(2) + " / " + tilt.smoothY.toFixed(2) +
-      "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2);
+    updateDebugPanel();
 
     requestAnimationFrame(loop);
   }
