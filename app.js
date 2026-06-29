@@ -695,12 +695,23 @@
     marble.y += marble.vy * dt;
   }
 
+  function circleRectContact(circle, rect) {
+    const closestX = clamp(circle.x, rect.x, rect.x + rect.w);
+    const closestY = clamp(circle.y, rect.y, rect.y + rect.h);
+    const dx = circle.x - closestX;
+    const dy = circle.y - closestY;
+    const distanceSq = dx * dx + dy * dy;
+
+    return {
+      intersects: distanceSq <= circle.r * circle.r,
+      dx,
+      dy,
+      distanceSq
+    };
+  }
+
   function marbleOverRect(rect) {
-    const closestX = clamp(marble.x, rect.x, rect.x + rect.w);
-    const closestY = clamp(marble.y, rect.y, rect.y + rect.h);
-    const dx = marble.x - closestX;
-    const dy = marble.y - closestY;
-    return dx * dx + dy * dy <= marble.r * marble.r;
+    return circleRectContact(marble, rect).intersects;
   }
 
   function handleSurfaceFeedback() {
@@ -711,17 +722,13 @@
   }
 
   function resolveObstacleCollision(obstacle) {
-    const closestX = clamp(marble.x, obstacle.x, obstacle.x + obstacle.w);
-    const closestY = clamp(marble.y, obstacle.y, obstacle.y + obstacle.h);
-    const dx = marble.x - closestX;
-    const dy = marble.y - closestY;
-    const distanceSq = dx * dx + dy * dy;
+    const contact = circleRectContact(marble, obstacle);
 
-    if (distanceSq > marble.r * marble.r) return;
+    if (!contact.intersects) return;
 
-    let distance = Math.sqrt(distanceSq);
-    let nx = dx / (distance || 1);
-    let ny = dy / (distance || 1);
+    let distance = Math.sqrt(contact.distanceSq);
+    let nx = contact.dx / (distance || 1);
+    let ny = contact.dy / (distance || 1);
 
     if (distance === 0) {
       const left = Math.abs(marble.x - obstacle.x);
