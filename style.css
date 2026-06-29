@@ -7,7 +7,7 @@ html,body{
   position:fixed;inset:0;overflow:hidden;background:#101114;
 }
 #world{
-  position:absolute;left:0;top:0;width:2200px;height:2200px;
+  position:absolute;left:0;top:0;
   transform-origin:0 0;
   background:
     linear-gradient(#ffffff08 1px,transparent 1px),
