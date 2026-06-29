@@ -1,4 +1,6 @@
 (() => {
+  const gameEl = document.getElementById("game");
+  const worldEl = document.getElementById("world");
   const marbleEl = document.getElementById("marble");
   const startBtn = document.getElementById("start");
   const neutralBtn = document.getElementById("neutral");
@@ -32,6 +34,17 @@
     y: 0
   };
 
+  const camera = {
+    x: 0,
+    y: 0,
+    scale: 1,
+    rotation: 0,
+    minScale: 0.65,
+    maxScale: 2.5
+  };
+
+  const pointers = new Map();
+  let gesture = null;
   let lastFrame = performance.now();
   let sensorWatchdog = 0;
 
@@ -80,20 +93,108 @@
       "\nraw x/y: " + tilt.rawX.toFixed(2) + " / " + tilt.rawY.toFixed(2) +
       "\nneutral x/y: " + (tilt.neutralX ?? 0).toFixed(2) + " / " + (tilt.neutralY ?? 0).toFixed(2) +
       "\ntilt x/y: " + tilt.smoothX.toFixed(2) + " / " + tilt.smoothY.toFixed(2) +
-      "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2);
+      "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2) +
+      "\nzoom: " + camera.scale.toFixed(2) +
+      " | rotation: " + (camera.rotation * 180 / Math.PI).toFixed(0) + "deg";
   }
 
   function syncMarbleRadius() {
-    const rect = marbleEl.getBoundingClientRect();
-    marble.r = Math.max(rect.width, rect.height) / 2;
+    marble.r = Math.max(marbleEl.offsetWidth, marbleEl.offsetHeight) / 2;
   }
 
   function resize() {
     syncMarbleRadius();
+    applyCameraTransform();
     marble.x = clamp(marble.x, marble.r, innerWidth - marble.r);
     marble.y = clamp(marble.y, marble.r, innerHeight - marble.r);
   }
   addEventListener("resize", resize);
+
+  function applyCameraTransform() {
+    worldEl.style.transform =
+      "translate(" + camera.x + "px, " + camera.y + "px) " +
+      "scale(" + camera.scale + ") " +
+      "rotate(" + camera.rotation + "rad)";
+  }
+
+  function pointerPoint(e) {
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  function distance(a, b) {
+    return Math.hypot(b.x - a.x, b.y - a.y);
+  }
+
+  function angle(a, b) {
+    return Math.atan2(b.y - a.y, b.x - a.x);
+  }
+
+  function midpoint(a, b) {
+    return {
+      x: (a.x + b.x) / 2,
+      y: (a.y + b.y) / 2
+    };
+  }
+
+  function getGesturePoints() {
+    return Array.from(pointers.values()).slice(0, 2);
+  }
+
+  function startGesture() {
+    const [a, b] = getGesturePoints();
+    if (!a || !b) return;
+
+    gesture = {
+      distance: Math.max(distance(a, b), 1),
+      angle: angle(a, b),
+      midpoint: midpoint(a, b),
+      x: camera.x,
+      y: camera.y,
+      scale: camera.scale,
+      rotation: camera.rotation
+    };
+  }
+
+  function updateGesture() {
+    if (!gesture || pointers.size < 2) return;
+
+    const [a, b] = getGesturePoints();
+    const nextMidpoint = midpoint(a, b);
+    camera.scale = clamp(
+      gesture.scale * (distance(a, b) / gesture.distance),
+      camera.minScale,
+      camera.maxScale
+    );
+    camera.rotation = gesture.rotation + angle(a, b) - gesture.angle;
+    camera.x = gesture.x + nextMidpoint.x - gesture.midpoint.x;
+    camera.y = gesture.y + nextMidpoint.y - gesture.midpoint.y;
+    applyCameraTransform();
+  }
+
+  function onPointerDown(e) {
+    pointers.set(e.pointerId, pointerPoint(e));
+    if (gameEl.setPointerCapture) {
+      try {
+        gameEl.setPointerCapture(e.pointerId);
+      } catch {
+        // Losing capture is acceptable; pointercancel/up will still clear state.
+      }
+    }
+    if (pointers.size === 2) startGesture();
+  }
+
+  function onPointerMove(e) {
+    if (!pointers.has(e.pointerId)) return;
+
+    pointers.set(e.pointerId, pointerPoint(e));
+    updateGesture();
+  }
+
+  function onPointerEnd(e) {
+    pointers.delete(e.pointerId);
+    gesture = null;
+    if (pointers.size === 2) startGesture();
+  }
 
   function screenAdjusted(gamma, beta) {
     const angle = screen.orientation && typeof screen.orientation.angle === "number"
@@ -192,6 +293,13 @@
     addEventListener("keyup", onKeyUp);
   }
 
+  function enableGestureInput() {
+    gameEl.addEventListener("pointerdown", onPointerDown);
+    gameEl.addEventListener("pointermove", onPointerMove);
+    gameEl.addEventListener("pointerup", onPointerEnd);
+    gameEl.addEventListener("pointercancel", onPointerEnd);
+  }
+
   function onKeyDown(e) {
     const k = e.key.toLowerCase();
     if (k === "arrowleft" || k === "a") keyboard.x = -1;
@@ -287,9 +395,13 @@
     const sensorY = clamp(dz(tilt.rawY - ny), -physics.maxTilt, physics.maxTilt);
     const targetX = keyboard.x ? keyboard.x * physics.keyboardTilt : sensorX;
     const targetY = keyboard.y ? keyboard.y * physics.keyboardTilt : sensorY;
+    const c = Math.cos(-camera.rotation);
+    const s = Math.sin(-camera.rotation);
+    const worldTargetX = targetX * c - targetY * s;
+    const worldTargetY = targetX * s + targetY * c;
 
-    tilt.smoothX += (targetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
-    tilt.smoothY += (targetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
+    tilt.smoothX += (worldTargetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
+    tilt.smoothY += (worldTargetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
   }
 
   function updateVelocity(dt) {
@@ -333,6 +445,8 @@
   }
 
   syncMarbleRadius();
+  applyCameraTransform();
   enableKeyboardInput();
+  enableGestureInput();
   loop();
 })();
