@@ -587,6 +587,59 @@
     tilt.neutralY = null;
   }
 
+  function clearIntroTimers() {
+    clearTimeout(intro.messageTimer);
+    clearTimeout(intro.countdownTimer);
+    clearInterval(intro.countdownTimer);
+    intro.messageTimer = 0;
+    intro.countdownTimer = 0;
+  }
+
+  function resetGameState() {
+    clearTimeout(sensorWatchdog);
+    sensorWatchdog = 0;
+    clearIntroTimers();
+    resetCalibration();
+
+    game.phase = "waiting";
+    sensor.gotOrientation = false;
+    sensor.gotMotion = false;
+    sensor.using = "none";
+
+    intro.started = false;
+    intro.released = false;
+    intro.countdownValue = timing.countdownStart;
+
+    keyboard.x = 0;
+    keyboard.y = 0;
+    tilt.rawX = 0;
+    tilt.rawY = 0;
+    tilt.smoothX = 0;
+    tilt.smoothY = 0;
+
+    marble.x = world.width / 2;
+    marble.y = world.height / 2;
+    marble.vx = 0;
+    marble.vy = 0;
+
+    camera.x = 0;
+    camera.y = 0;
+    camera.scale = 1;
+    camera.rotation = 0;
+    camera.gestureCooldown = 0;
+    gesture = null;
+    pointers.clear();
+
+    haptics.impact.lastPulse = 0;
+    haptics.surface.lastPulse = 0;
+
+    worldEl.classList.remove("map-open");
+    hideMessage();
+    setReleasedBounds();
+    updateIntroBounds();
+    centerCameraOnMarble();
+  }
+
   function enableMotionInput() {
     addEventListener("deviceorientation", onOrientation, true);
     addEventListener("devicemotion", onMotion, true);
@@ -639,7 +692,7 @@
       return;
     }
 
-    resetCalibration();
+    resetGameState();
     enableMotionInput();
     game.phase = "calibrating";
 
