@@ -13,6 +13,7 @@
   const closeSettings = document.getElementById("closeSettings");
   const speedSetting = document.getElementById("speedSetting");
   const sensitivitySetting = document.getElementById("sensitivitySetting");
+  const rotationSetting = document.getElementById("rotationSetting");
   const hint = document.getElementById("hint");
   const debug = document.getElementById("debug");
 
@@ -78,6 +79,7 @@
     y: 0,
     scale: 1,
     rotation: 0,
+    rotationEnabled: false,
     minScale: 0.65,
     maxScale: 2.5,
     followLag: 0.08,
@@ -137,6 +139,7 @@
       "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2) +
       "\nzoom: " + camera.scale.toFixed(2) +
       " | rotation: " + (camera.rotation * 180 / Math.PI).toFixed(0) + "deg" +
+      " | enabled: " + camera.rotationEnabled +
       "\nfollow cooldown: " + camera.gestureCooldown.toFixed(1) +
       "\nmap released: " + intro.released;
   }
@@ -314,7 +317,9 @@
       camera.minScale,
       camera.maxScale
     );
-    camera.rotation = gesture.rotation + angle(a, b) - gesture.angle;
+    camera.rotation = camera.rotationEnabled
+      ? gesture.rotation + angle(a, b) - gesture.angle
+      : 0;
     if (!intro.released) {
       centerCameraOnMarble();
       return;
@@ -356,7 +361,7 @@
 
     intro.started = true;
     intro.messageTimer = setTimeout(() => {
-      showMessage("Pinch to zoom out. Reverse pinch to zoom in. Btw, you can rotate with your fingers too.");
+      showMessage("Pinch to zoom out. Reverse pinch to zoom in. Rotation is available in settings.");
       intro.countdownTimer = setTimeout(startReleaseCountdown, 4500);
     }, 10000);
   }
@@ -584,6 +589,13 @@
   });
   sensitivitySetting.addEventListener("input", () => {
     physics.accel = Number(sensitivitySetting.value);
+  });
+  rotationSetting.addEventListener("change", () => {
+    camera.rotationEnabled = rotationSetting.checked;
+    if (!camera.rotationEnabled) {
+      camera.rotation = 0;
+      centerCameraOnMarble();
+    }
   });
   settingsOverlay.addEventListener("click", (e) => {
     if (e.target === settingsOverlay) closeSettingsModal();

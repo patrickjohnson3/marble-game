@@ -84,4 +84,5 @@ button.secondary{background:#2e3440;color:white}
   margin-bottom:12px;font-size:14px;font-weight:800;text-transform:uppercase;
 }
 .settingRow input{width:100%}
+.checkboxRow input{justify-self:start;width:22px;height:22px}
 #settingsModal #debug{background:#0b0d11;margin:0}
