@@ -79,7 +79,9 @@
     scale: 1,
     rotation: 0,
     minScale: 0.65,
-    maxScale: 2.5
+    maxScale: 2.5,
+    followLag: 0.08,
+    gestureCooldown: 0
   };
 
   const pointers = new Map();
@@ -135,6 +137,7 @@
       "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2) +
       "\nzoom: " + camera.scale.toFixed(2) +
       " | rotation: " + (camera.rotation * 180 / Math.PI).toFixed(0) + "deg" +
+      "\nfollow cooldown: " + camera.gestureCooldown.toFixed(1) +
       "\nmap released: " + intro.released;
   }
 
@@ -188,8 +191,9 @@
   }
 
   function centerCameraOnMarble() {
-    camera.x = innerWidth / 2 - marble.x;
-    camera.y = innerHeight / 2 - marble.y;
+    const transformed = transformedWorldPoint(marble.x, marble.y);
+    camera.x = innerWidth / 2 - transformed.x;
+    camera.y = innerHeight / 2 - transformed.y;
     applyCameraTransform();
   }
 
@@ -234,6 +238,32 @@
       "translate(" + camera.x + "px, " + camera.y + "px) " +
       "scale(" + camera.scale + ") " +
       "rotate(" + camera.rotation + "rad)";
+  }
+
+  function transformedWorldPoint(x, y) {
+    const c = Math.cos(camera.rotation);
+    const s = Math.sin(camera.rotation);
+
+    return {
+      x: (x * c - y * s) * camera.scale,
+      y: (x * s + y * c) * camera.scale
+    };
+  }
+
+  function updateCameraFollow(dt) {
+    if (!intro.released) return;
+
+    camera.gestureCooldown = Math.max(0, camera.gestureCooldown - dt);
+    if (camera.gestureCooldown > 0) return;
+
+    const transformed = transformedWorldPoint(marble.x, marble.y);
+    const targetX = innerWidth / 2 - transformed.x;
+    const targetY = innerHeight / 2 - transformed.y;
+    const followStep = 1 - Math.pow(1 - camera.followLag, dt);
+
+    camera.x += (targetX - camera.x) * followStep;
+    camera.y += (targetY - camera.y) * followStep;
+    applyCameraTransform();
   }
 
   function pointerPoint(e) {
@@ -287,6 +317,7 @@
     camera.rotation = gesture.rotation + angle(a, b) - gesture.angle;
     camera.x = gesture.x + nextMidpoint.x - gesture.midpoint.x;
     camera.y = gesture.y + nextMidpoint.y - gesture.midpoint.y;
+    camera.gestureCooldown = 90;
     applyCameraTransform();
   }
 
@@ -652,6 +683,7 @@
       updateVelocity(dt);
       updatePosition(dt);
       handleWallCollisions();
+      updateCameraFollow(dt);
     }
 
     marbleEl.style.left = marble.x + "px";
