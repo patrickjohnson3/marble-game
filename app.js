@@ -5,6 +5,8 @@
   const settingsToggle = document.getElementById("settingsToggle");
   const settingsOverlay = document.getElementById("settingsOverlay");
   const closeSettings = document.getElementById("closeSettings");
+  const speedSetting = document.getElementById("speedSetting");
+  const sensitivitySetting = document.getElementById("sensitivitySetting");
   const hint = document.getElementById("hint");
   const debug = document.getElementById("debug");
 
@@ -253,6 +255,12 @@
 
   settingsToggle.addEventListener("click", openSettings);
   closeSettings.addEventListener("click", closeSettingsModal);
+  speedSetting.addEventListener("input", () => {
+    physics.maxSpeed = Number(speedSetting.value);
+  });
+  sensitivitySetting.addEventListener("input", () => {
+    physics.accel = Number(sensitivitySetting.value);
+  });
   settingsOverlay.addEventListener("click", (e) => {
     if (e.target === settingsOverlay) closeSettingsModal();
   });

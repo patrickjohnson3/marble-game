@@ -54,4 +54,9 @@ button.secondary{background:#2e3440;color:white}
   background:#2e3440;color:white;font-size:24px;line-height:1;
 }
 #settingsModal #neutral{width:100%;margin-bottom:12px}
+.settingRow{
+  display:grid;grid-template-columns:96px 1fr;align-items:center;gap:12px;
+  margin-bottom:12px;font-size:14px;font-weight:800;text-transform:uppercase;
+}
+.settingRow input{width:100%}
 #settingsModal #debug{background:#0b0d11;margin:0}
