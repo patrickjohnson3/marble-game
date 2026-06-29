@@ -201,22 +201,22 @@
     return "left:" + wall.x + "px;top:" + wall.y + "px;width:" + wall.w + "px;height:" + wall.h + "px";
   }
 
-  function renderWallSet(container, walls) {
-    container.innerHTML = walls.map((wall) => (
-      '<div class="wall" style="' + wallStyle(wall) + '"></div>'
+  function renderMapElements(container, className, elements) {
+    container.innerHTML = elements.map((element) => (
+      '<div class="' + className + '" style="' + wallStyle(element) + '"></div>'
     )).join("");
+  }
+
+  function renderWalls(container, walls) {
+    renderMapElements(container, "wall", walls);
   }
 
   function renderObstacles() {
-    obstaclesEl.innerHTML = obstacles.map((obstacle) => (
-      '<div class="obstacle" style="' + wallStyle(obstacle) + '"></div>'
-    )).join("");
+    renderMapElements(obstaclesEl, "obstacle", obstacles);
   }
 
   function renderRoughPatches() {
-    roughPatchesEl.innerHTML = roughPatches.map((patch) => (
-      '<div class="roughPatch" style="' + wallStyle(patch) + '"></div>'
-    )).join("");
+    renderMapElements(roughPatchesEl, "roughPatch", roughPatches);
   }
 
   function mapEdgeWalls() {
@@ -266,7 +266,7 @@
     bounds.right = clamp(marble.x + halfW, 0, world.width);
     bounds.top = clamp(marble.y - halfH, 0, world.height);
     bounds.bottom = clamp(marble.y + halfH, 0, world.height);
-    renderWallSet(introWallsEl, introPenWalls());
+    renderWalls(introWallsEl, introPenWalls());
   }
 
   function setReleasedBounds() {
@@ -280,7 +280,7 @@
     worldEl.style.width = world.width + "px";
     worldEl.style.height = world.height + "px";
     setReleasedBounds();
-    renderWallSet(mapWallsEl, mapEdgeWalls());
+    renderWalls(mapWallsEl, mapEdgeWalls());
     renderRoughPatches();
     renderObstacles();
     updateIntroBounds();
