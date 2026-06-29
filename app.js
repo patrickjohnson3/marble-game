@@ -15,7 +15,7 @@
     y: innerHeight / 2,
     vx: 0,
     vy: 0,
-    r: 29
+    r: 0
   };
 
   const tilt = {
@@ -83,7 +83,13 @@
       "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2);
   }
 
+  function syncMarbleRadius() {
+    const rect = marbleEl.getBoundingClientRect();
+    marble.r = Math.max(rect.width, rect.height) / 2;
+  }
+
   function resize() {
+    syncMarbleRadius();
     marble.x = clamp(marble.x, marble.r, innerWidth - marble.r);
     marble.y = clamp(marble.y, marble.r, innerHeight - marble.r);
   }
@@ -320,6 +326,7 @@
     requestAnimationFrame(loop);
   }
 
+  syncMarbleRadius();
   enableKeyboardInput();
   loop();
 })();
