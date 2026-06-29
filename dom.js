@@ -1,0 +1,21 @@
+export const els = {
+  game: document.getElementById("game"),
+  world: document.getElementById("world"),
+  introWalls: document.getElementById("introWalls"),
+  mapWalls: document.getElementById("mapWalls"),
+  roughPatches: document.getElementById("roughPatches"),
+  obstacles: document.getElementById("obstacles"),
+  marble: document.getElementById("marble"),
+  messageOverlay: document.getElementById("messageOverlay"),
+  startBtn: document.getElementById("start"),
+  neutralBtn: document.getElementById("neutral"),
+  settingsToggle: document.getElementById("settingsToggle"),
+  settingsOverlay: document.getElementById("settingsOverlay"),
+  closeSettings: document.getElementById("closeSettings"),
+  speedSetting: document.getElementById("speedSetting"),
+  sensitivitySetting: document.getElementById("sensitivitySetting"),
+  rotationSetting: document.getElementById("rotationSetting"),
+  hapticsSetting: document.getElementById("hapticsSetting"),
+  hint: document.getElementById("hint"),
+  debug: document.getElementById("debug")
+};

@@ -1,90 +1,35 @@
-(() => {
-  const gameEl = document.getElementById("game");
-  const worldEl = document.getElementById("world");
-  const introWallsEl = document.getElementById("introWalls");
-  const mapWallsEl = document.getElementById("mapWalls");
-  const roughPatchesEl = document.getElementById("roughPatches");
-  const obstaclesEl = document.getElementById("obstacles");
-  const marbleEl = document.getElementById("marble");
-  const messageOverlay = document.getElementById("messageOverlay");
-  const startBtn = document.getElementById("start");
-  const neutralBtn = document.getElementById("neutral");
-  const settingsToggle = document.getElementById("settingsToggle");
-  const settingsOverlay = document.getElementById("settingsOverlay");
-  const closeSettings = document.getElementById("closeSettings");
-  const speedSetting = document.getElementById("speedSetting");
-  const sensitivitySetting = document.getElementById("sensitivitySetting");
-  const rotationSetting = document.getElementById("rotationSetting");
-  const hapticsSetting = document.getElementById("hapticsSetting");
-  const hint = document.getElementById("hint");
-  const debug = document.getElementById("debug");
+import { mapConfig, timing, tuning, hapticTuning } from "./config.js";
+import { els } from "./dom.js";
+import { clamp, distance, angle, midpoint, circleRectContact } from "./geometry.js";
+import { createHapticsController } from "./haptics.js";
+import { renderMapElements, renderWalls } from "./rendering.js";
 
-  const mapConfig = {
-    world: {
-      width: 2200,
-      height: 2200
-    },
-    intro: {
-      wallThickness: 34,
-      viewportMargin: 18
-    },
-    camera: {
-      minScale: 0.2,
-      maxScale: 2.5,
-      followLag: 0.08
-    },
-    elements: [
-      { type: "obstacle", x: 260, y: 330, w: 310, h: 42 },
-      { type: "obstacle", x: 720, y: 250, w: 54, h: 360 },
-      { type: "obstacle", x: 1320, y: 330, w: 430, h: 52 },
-      { type: "obstacle", x: 1700, y: 600, w: 58, h: 430 },
-      { type: "obstacle", x: 250, y: 900, w: 520, h: 54 },
-      { type: "obstacle", x: 910, y: 760, w: 58, h: 380 },
-      { type: "obstacle", x: 1180, y: 960, w: 520, h: 50 },
-      { type: "obstacle", x: 520, y: 1380, w: 52, h: 440 },
-      { type: "obstacle", x: 830, y: 1570, w: 620, h: 52 },
-      { type: "obstacle", x: 1640, y: 1370, w: 52, h: 470 },
-      { type: "roughPatch", x: 360, y: 650, w: 290, h: 220 },
-      { type: "roughPatch", x: 1040, y: 520, w: 360, h: 240 },
-      { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
-      { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 }
-    ]
-  };
+const {
+  game: gameEl,
+  world: worldEl,
+  introWalls: introWallsEl,
+  mapWalls: mapWallsEl,
+  roughPatches: roughPatchesEl,
+  obstacles: obstaclesEl,
+  marble: marbleEl,
+  messageOverlay,
+  startBtn,
+  neutralBtn,
+  settingsToggle,
+  settingsOverlay,
+  closeSettings,
+  speedSetting,
+  sensitivitySetting,
+  rotationSetting,
+  hapticsSetting,
+  hint,
+  debug
+} = els;
 
-  const world = mapConfig.world;
-  const mapElements = mapConfig.elements;
-  const obstacles = mapElements.filter((element) => element.type === "obstacle");
-  const roughPatches = mapElements.filter((element) => element.type === "roughPatch");
-
-  const timing = {
-    introPromptDelayMs: 10000,
-    countdownDelayMs: 4500,
-    countdownStart: 5,
-    countdownTickMs: 1000,
-    sensorFallbackMs: 1400,
-    targetFrameMs: 16.67,
-    minFrameStep: 0.25,
-    maxFrameStep: 2
-  };
-
-  const tuning = {
-    neutralSampleCount: 18,
-    gestureCooldownFrames: 90,
-    motionGravityScale: 3
-  };
-
-  const hapticTuning = {
-    impactCooldownMs: 90,
-    impactMin: 1.7,
-    impactScale: 3,
-    impactMinDurationMs: 8,
-    impactMaxDurationMs: 35,
-    surfaceCooldownMs: 130,
-    surfaceMinSpeed: 1.2,
-    surfaceScale: 1.4,
-    surfaceMinDurationMs: 5,
-    surfaceMaxDurationMs: 16
-  };
+const world = mapConfig.world;
+const mapElements = mapConfig.elements;
+const obstacles = mapElements.filter((element) => element.type === "obstacle");
+const roughPatches = mapElements.filter((element) => element.type === "roughPatch");
 
   const marble = {
     x: world.width / 2,
@@ -191,7 +136,6 @@
     hapticsEnabled: hapticsSetting.checked
   };
 
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function dz(v) { return Math.abs(v) < physics.deadZone ? 0 : v; }
   function setHint(message) { hint.textContent = message; }
   function isSettingsOpen() { return settingsOverlay.classList.contains("open"); }
@@ -203,35 +147,7 @@
     haptics.enabled = settings.hapticsEnabled;
   }
 
-  function pulseImpactHaptic(impact) {
-    if (!haptics.enabled || !("vibrate" in navigator)) return;
-    if (impact < haptics.impact.minImpact) return;
-
-    const now = performance.now();
-    if (now - haptics.impact.lastPulse < haptics.impact.cooldownMs) return;
-
-    haptics.impact.lastPulse = now;
-    navigator.vibrate(clamp(
-      Math.round(impact * hapticTuning.impactScale),
-      hapticTuning.impactMinDurationMs,
-      hapticTuning.impactMaxDurationMs
-    ));
-  }
-
-  function pulseSurfaceHaptic(speed) {
-    if (!haptics.enabled || !("vibrate" in navigator)) return;
-    if (speed < haptics.surface.minSpeed) return;
-
-    const now = performance.now();
-    if (now - haptics.surface.lastPulse < haptics.surface.cooldownMs) return;
-
-    haptics.surface.lastPulse = now;
-    navigator.vibrate(clamp(
-      Math.round(speed * hapticTuning.surfaceScale),
-      hapticTuning.surfaceMinDurationMs,
-      hapticTuning.surfaceMaxDurationMs
-    ));
-  }
+  const hapticFeedback = createHapticsController(haptics, hapticTuning);
 
   function getDebugLines() {
     return [
@@ -256,20 +172,6 @@
     if (!isSettingsOpen()) return;
 
     debug.textContent = getDebugLines().join("\n");
-  }
-
-  function wallStyle(wall) {
-    return "left:" + wall.x + "px;top:" + wall.y + "px;width:" + wall.w + "px;height:" + wall.h + "px";
-  }
-
-  function renderMapElements(container, className, elements) {
-    container.innerHTML = elements.map((element) => (
-      '<div class="' + className + '" style="' + wallStyle(element) + '"></div>'
-    )).join("");
-  }
-
-  function renderWalls(container, walls) {
-    renderMapElements(container, "wall", walls);
   }
 
   function renderObstacles() {
@@ -392,21 +294,6 @@
 
   function pointerPoint(e) {
     return { x: e.clientX, y: e.clientY };
-  }
-
-  function distance(a, b) {
-    return Math.hypot(b.x - a.x, b.y - a.y);
-  }
-
-  function angle(a, b) {
-    return Math.atan2(b.y - a.y, b.x - a.x);
-  }
-
-  function midpoint(a, b) {
-    return {
-      x: (a.x + b.x) / 2,
-      y: (a.y + b.y) / 2
-    };
   }
 
   function getGesturePoints() {
@@ -819,21 +706,6 @@
     marble.y += marble.vy * dt;
   }
 
-  function circleRectContact(circle, rect) {
-    const closestX = clamp(circle.x, rect.x, rect.x + rect.w);
-    const closestY = clamp(circle.y, rect.y, rect.y + rect.h);
-    const dx = circle.x - closestX;
-    const dy = circle.y - closestY;
-    const distanceSq = dx * dx + dy * dy;
-
-    return {
-      intersects: distanceSq <= circle.r * circle.r,
-      dx,
-      dy,
-      distanceSq
-    };
-  }
-
   function marbleOverRect(rect) {
     return circleRectContact(marble, rect).intersects;
   }
@@ -842,7 +714,7 @@
     if (!intro.released) return;
     if (!roughPatches.some(marbleOverRect)) return;
 
-    pulseSurfaceHaptic(Math.hypot(marble.vx, marble.vy));
+    hapticFeedback.pulseSurface(Math.hypot(marble.vx, marble.vy));
   }
 
   function resolveObstacleCollision(obstacle) {
@@ -871,7 +743,7 @@
 
     const impact = marble.vx * nx + marble.vy * ny;
     if (impact < 0) {
-      pulseImpactHaptic(-impact);
+      hapticFeedback.pulseImpact(-impact);
       marble.vx -= (1 + physics.bounce) * impact * nx;
       marble.vy -= (1 + physics.bounce) * impact * ny;
     }
@@ -879,22 +751,22 @@
 
   function handleWallCollisions() {
     if (marble.x < bounds.left + marble.r) {
-      pulseImpactHaptic(Math.abs(marble.vx));
+      hapticFeedback.pulseImpact(Math.abs(marble.vx));
       marble.x = bounds.left + marble.r;
       marble.vx = -marble.vx * physics.bounce;
     }
     if (marble.x > bounds.right - marble.r) {
-      pulseImpactHaptic(Math.abs(marble.vx));
+      hapticFeedback.pulseImpact(Math.abs(marble.vx));
       marble.x = bounds.right - marble.r;
       marble.vx = -marble.vx * physics.bounce;
     }
     if (marble.y < bounds.top + marble.r) {
-      pulseImpactHaptic(Math.abs(marble.vy));
+      hapticFeedback.pulseImpact(Math.abs(marble.vy));
       marble.y = bounds.top + marble.r;
       marble.vy = -marble.vy * physics.bounce;
     }
     if (marble.y > bounds.bottom - marble.r) {
-      pulseImpactHaptic(Math.abs(marble.vy));
+      hapticFeedback.pulseImpact(Math.abs(marble.vy));
       marble.y = bounds.bottom - marble.r;
       marble.vy = -marble.vy * physics.bounce;
     }
@@ -936,4 +808,3 @@
   inputSystems.keyboard.enable();
   inputSystems.gestures.enable();
   loop();
-})();

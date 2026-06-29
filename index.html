@@ -61,6 +61,7 @@
 
 <script>
   const appScript = document.createElement("script");
+  appScript.type = "module";
   appScript.src = "app.js?v=" + assetVersion;
   document.body.appendChild(appScript);
 </script>

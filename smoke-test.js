@@ -1,16 +1,19 @@
-const { readFileSync } = require("fs");
-const { spawnSync } = require("child_process");
+import { readFileSync } from "fs";
+import { spawnSync } from "child_process";
 
 const html = readFileSync("index.html", "utf8");
-const app = readFileSync("app.js", "utf8");
+const scripts = ["app.js", "config.js", "dom.js", "geometry.js", "haptics.js", "rendering.js"];
+const app = scripts.map((file) => readFileSync(file, "utf8")).join("\n");
 
-const syntax = spawnSync(process.execPath, ["--check", "app.js"], {
-  encoding: "utf8"
-});
+for (const script of scripts) {
+  const syntax = spawnSync(process.execPath, ["--check", script], {
+    encoding: "utf8"
+  });
 
-if (syntax.status !== 0) {
-  process.stderr.write(syntax.stderr || syntax.stdout);
-  process.exit(syntax.status || 1);
+  if (syntax.status !== 0) {
+    process.stderr.write(syntax.stderr || syntax.stdout);
+    process.exit(syntax.status || 1);
+  }
 }
 
 const appIds = [...app.matchAll(/document\.getElementById\("([^"]+)"\)/g)]
