@@ -8,7 +8,7 @@ html,body{
 }
 #world{
   position:absolute;left:0;top:0;width:2200px;height:2200px;
-  transform-origin:center center;
+  transform-origin:0 0;
   background:
     linear-gradient(#ffffff08 1px,transparent 1px),
     linear-gradient(90deg,#ffffff08 1px,transparent 1px),

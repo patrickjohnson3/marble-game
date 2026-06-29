@@ -315,6 +315,11 @@
       camera.maxScale
     );
     camera.rotation = gesture.rotation + angle(a, b) - gesture.angle;
+    if (!intro.released) {
+      centerCameraOnMarble();
+      return;
+    }
+
     camera.x = gesture.x + nextMidpoint.x - gesture.midpoint.x;
     camera.y = gesture.y + nextMidpoint.y - gesture.midpoint.y;
     camera.gestureCooldown = 90;
