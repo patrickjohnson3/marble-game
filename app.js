@@ -46,6 +46,10 @@
     using: "none"
   };
 
+  const game = {
+    phase: "waiting"
+  };
+
   const physics = {
     accel: 0.115,
     maxTilt: 26,
@@ -63,7 +67,8 @@
 
   function updateDebugPanel() {
     debug.textContent =
-      "sensor: " + sensor.using +
+      "phase: " + game.phase +
+      "\nsensor: " + sensor.using +
       "\norientation seen: " + sensor.gotOrientation +
       " | motion seen: " + sensor.gotMotion +
       "\nauto neutral: " + calibration.autoNeutralDone +
@@ -112,6 +117,7 @@
       tilt.neutralX = calibration.sampleX / calibration.sampleCount;
       tilt.neutralY = calibration.sampleY / calibration.sampleCount;
       calibration.autoNeutralDone = true;
+      game.phase = "running";
       marble.vx = 0; marble.vy = 0;
       setHint("neutral set. tilt from your normal holding angle.");
     }
@@ -180,6 +186,7 @@
     if (["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(k)) {
       e.preventDefault();
       sensor.using = sensor.using === "none" ? "keyboard" : sensor.using;
+      if (game.phase === "waiting" || game.phase === "calibrating") game.phase = "keyboard";
     }
   }
 
@@ -201,6 +208,7 @@
 
     resetCalibration();
     enableMotionInput();
+    game.phase = "calibrating";
 
     startBtn.textContent = "running";
     startBtn.disabled = true;
@@ -211,6 +219,7 @@
       if (sensor.using === "none") {
         setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
         sensor.using = "keyboard";
+        game.phase = "keyboard";
         tilt.neutralX = 0;
         tilt.neutralY = 0;
         calibration.autoNeutralDone = true;
@@ -222,6 +231,7 @@
     tilt.neutralX = tilt.rawX;
     tilt.neutralY = tilt.rawY;
     calibration.autoNeutralDone = true;
+    if (game.phase === "calibrating") game.phase = "running";
     calibration.sampleCount = 18;
     marble.vx = 0; marble.vy = 0;
     tilt.smoothX = 0; tilt.smoothY = 0;
