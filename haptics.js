@@ -1,6 +1,8 @@
-import { clamp } from "./geometry.js";
-
 export function createHapticsController(state, tuning) {
+  function clamp(v, lo, hi) {
+    return Math.max(lo, Math.min(hi, v));
+  }
+
   function canVibrate() {
     return state.enabled && "vibrate" in navigator;
   }

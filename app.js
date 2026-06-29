@@ -1,8 +1,24 @@
-import { mapConfig, timing, tuning, hapticTuning } from "./config.js";
-import { els } from "./dom.js";
-import { clamp, distance, angle, midpoint, circleRectContact } from "./geometry.js";
-import { createHapticsController } from "./haptics.js";
-import { renderMapElements, renderWalls } from "./rendering.js";
+const assetVersion = new URL(import.meta.url).searchParams.get("v") || Date.now();
+const versioned = (path) => path + "?v=" + encodeURIComponent(assetVersion);
+const [
+  configModule,
+  domModule,
+  geometryModule,
+  hapticsModule,
+  renderingModule
+] = await Promise.all([
+  import(versioned("./config.js")),
+  import(versioned("./dom.js")),
+  import(versioned("./geometry.js")),
+  import(versioned("./haptics.js")),
+  import(versioned("./rendering.js"))
+]);
+
+const { mapConfig, timing, tuning, hapticTuning } = configModule;
+const { els } = domModule;
+const { clamp, distance, angle, midpoint, circleRectContact } = geometryModule;
+const { createHapticsController } = hapticsModule;
+const { renderMapElements, renderWalls } = renderingModule;
 
 const {
   game: gameEl,
