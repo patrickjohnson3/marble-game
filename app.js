@@ -220,11 +220,7 @@
     if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
   });
 
-  function loop() {
-    const now = performance.now();
-    const dt = clamp((now - lastFrame) / 16.67, 0.25, 2);
-    lastFrame = now;
-
+  function updateTilt(dt) {
     const nx = tilt.neutralX ?? tilt.rawX;
     const ny = tilt.neutralY ?? tilt.rawY;
 
@@ -235,21 +231,38 @@
 
     tilt.smoothX += (targetX - tilt.smoothX) * (1 - Math.pow(1 - smoothing, dt));
     tilt.smoothY += (targetY - tilt.smoothY) * (1 - Math.pow(1 - smoothing, dt));
+  }
 
+  function updateVelocity(dt) {
     marble.vx += tilt.smoothX * accel * dt;
     marble.vy += tilt.smoothY * accel * dt;
 
     const drag = Math.pow(friction, dt);
     marble.vx = clamp(marble.vx * drag, -maxSpeed, maxSpeed);
     marble.vy = clamp(marble.vy * drag, -maxSpeed, maxSpeed);
+  }
 
+  function updatePosition(dt) {
     marble.x += marble.vx * dt;
     marble.y += marble.vy * dt;
+  }
 
+  function handleWallCollisions() {
     if (marble.x < marble.r) { marble.x = marble.r; marble.vx = -marble.vx * bounce; }
     if (marble.x > innerWidth - marble.r) { marble.x = innerWidth - marble.r; marble.vx = -marble.vx * bounce; }
     if (marble.y < marble.r) { marble.y = marble.r; marble.vy = -marble.vy * bounce; }
     if (marble.y > innerHeight - marble.r) { marble.y = innerHeight - marble.r; marble.vy = -marble.vy * bounce; }
+  }
+
+  function loop() {
+    const now = performance.now();
+    const dt = clamp((now - lastFrame) / 16.67, 0.25, 2);
+    lastFrame = now;
+
+    updateTilt(dt);
+    updateVelocity(dt);
+    updatePosition(dt);
+    handleWallCollisions();
 
     marbleEl.style.left = marble.x + "px";
     marbleEl.style.top = marble.y + "px";
