@@ -185,10 +185,24 @@
     keyboardTilt: 18
   };
 
+  const settings = {
+    maxSpeed: Number(speedSetting.value),
+    acceleration: Number(sensitivitySetting.value),
+    rotationEnabled: rotationSetting.checked,
+    hapticsEnabled: hapticsSetting.checked
+  };
+
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function dz(v) { return Math.abs(v) < physics.deadZone ? 0 : v; }
   function setHint(message) { hint.textContent = message; }
   function isSettingsOpen() { return settingsOverlay.classList.contains("open"); }
+
+  function applySettings() {
+    physics.maxSpeed = settings.maxSpeed;
+    physics.accel = settings.acceleration;
+    camera.rotationEnabled = settings.rotationEnabled;
+    haptics.enabled = settings.hapticsEnabled;
+  }
 
   function pulseImpactHaptic(impact) {
     if (!haptics.enabled || !("vibrate" in navigator)) return;
@@ -748,20 +762,24 @@
   settingsToggle.addEventListener("click", openSettings);
   closeSettings.addEventListener("click", closeSettingsModal);
   speedSetting.addEventListener("input", () => {
-    physics.maxSpeed = Number(speedSetting.value);
+    settings.maxSpeed = Number(speedSetting.value);
+    applySettings();
   });
   sensitivitySetting.addEventListener("input", () => {
-    physics.accel = Number(sensitivitySetting.value);
+    settings.acceleration = Number(sensitivitySetting.value);
+    applySettings();
   });
   rotationSetting.addEventListener("change", () => {
-    camera.rotationEnabled = rotationSetting.checked;
-    if (!camera.rotationEnabled) {
+    settings.rotationEnabled = rotationSetting.checked;
+    applySettings();
+    if (!settings.rotationEnabled) {
       camera.rotation = 0;
       centerCameraOnMarble();
     }
   });
   hapticsSetting.addEventListener("change", () => {
-    haptics.enabled = hapticsSetting.checked;
+    settings.hapticsEnabled = hapticsSetting.checked;
+    applySettings();
   });
   settingsOverlay.addEventListener("click", (e) => {
     if (e.target === settingsOverlay) closeSettingsModal();
@@ -909,6 +927,7 @@
   }
 
   setupMap();
+  applySettings();
   syncMarbleRadius();
   centerCameraOnMarble();
   inputSystems.keyboard.enable();
