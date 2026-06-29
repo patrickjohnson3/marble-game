@@ -1,5 +1,5 @@
 (() => {
-  const marble = document.getElementById("marble");
+  const marbleEl = document.getElementById("marble");
   const startBtn = document.getElementById("start");
   const neutralBtn = document.getElementById("neutral");
   const settingsToggle = document.getElementById("settingsToggle");
@@ -8,25 +8,43 @@
   const hint = document.getElementById("hint");
   const debug = document.getElementById("debug");
 
-  let x = innerWidth / 2, y = innerHeight / 2;
-  let vx = 0, vy = 0;
+  const marble = {
+    x: innerWidth / 2,
+    y: innerHeight / 2,
+    vx: 0,
+    vy: 0,
+    r: 29
+  };
 
-  let rawX = 0, rawY = 0;
-  let smoothX = 0, smoothY = 0;
-  let neutralX = null, neutralY = null;
-  let keyboardX = 0, keyboardY = 0;
+  const tilt = {
+    rawX: 0,
+    rawY: 0,
+    smoothX: 0,
+    smoothY: 0,
+    neutralX: null,
+    neutralY: null
+  };
+
+  const keyboard = {
+    x: 0,
+    y: 0
+  };
+
   let lastFrame = performance.now();
   let sensorWatchdog = 0;
 
-  let sampleCount = 0;
-  let sampleX = 0, sampleY = 0;
-  let autoNeutralDone = false;
+  const calibration = {
+    sampleCount: 0,
+    sampleX: 0,
+    sampleY: 0,
+    autoNeutralDone: false
+  };
 
-  let gotOrientation = false;
-  let gotMotion = false;
-  let using = "none";
-
-  const r = 29;
+  const sensor = {
+    gotOrientation: false,
+    gotMotion: false,
+    using: "none"
+  };
 
   // feel knobs
   const accel = 0.115;
@@ -41,8 +59,8 @@
   function dz(v) { return Math.abs(v) < deadZone ? 0 : v; }
 
   function resize() {
-    x = clamp(x, r, innerWidth - r);
-    y = clamp(y, r, innerHeight - r);
+    marble.x = clamp(marble.x, marble.r, innerWidth - marble.r);
+    marble.y = clamp(marble.y, marble.r, innerHeight - marble.r);
   }
   addEventListener("resize", resize);
 
@@ -67,41 +85,41 @@
   }
 
   function maybeAutoNeutral() {
-    if (autoNeutralDone) return;
+    if (calibration.autoNeutralDone) return;
 
-    sampleX += rawX;
-    sampleY += rawY;
-    sampleCount++;
+    calibration.sampleX += tilt.rawX;
+    calibration.sampleY += tilt.rawY;
+    calibration.sampleCount++;
 
     // first few frames become the user's normal holding posture.
     // not table-flat. not lab-instrument nonsense.
-    if (sampleCount >= 18) {
-      neutralX = sampleX / sampleCount;
-      neutralY = sampleY / sampleCount;
-      autoNeutralDone = true;
-      vx = 0; vy = 0;
+    if (calibration.sampleCount >= 18) {
+      tilt.neutralX = calibration.sampleX / calibration.sampleCount;
+      tilt.neutralY = calibration.sampleY / calibration.sampleCount;
+      calibration.autoNeutralDone = true;
+      marble.vx = 0; marble.vy = 0;
       hint.textContent = "neutral set. tilt from your normal holding angle.";
     }
   }
 
   function onOrientation(e) {
     if (e.beta == null || e.gamma == null) return;
-    gotOrientation = true;
-    using = "deviceorientation";
+    sensor.gotOrientation = true;
+    sensor.using = "deviceorientation";
     const [tx, ty] = screenAdjusted(e.gamma, e.beta);
-    rawX = tx;
-    rawY = ty;
+    tilt.rawX = tx;
+    tilt.rawY = ty;
     maybeAutoNeutral();
   }
 
   function onMotion(e) {
-    if (gotOrientation) return;
+    if (sensor.gotOrientation) return;
     const g = e.accelerationIncludingGravity;
     if (!g) return;
-    gotMotion = true;
-    using = "devicemotion fallback";
-    rawX = -(g.x || 0) * 3;
-    rawY = (g.y || 0) * 3;
+    sensor.gotMotion = true;
+    sensor.using = "devicemotion fallback";
+    tilt.rawX = -(g.x || 0) * 3;
+    tilt.rawY = (g.y || 0) * 3;
     maybeAutoNeutral();
   }
 
@@ -126,12 +144,12 @@
       return;
     }
 
-    sampleCount = 0;
-    sampleX = 0;
-    sampleY = 0;
-    autoNeutralDone = false;
-    neutralX = null;
-    neutralY = null;
+    calibration.sampleCount = 0;
+    calibration.sampleX = 0;
+    calibration.sampleY = 0;
+    calibration.autoNeutralDone = false;
+    tilt.neutralX = null;
+    tilt.neutralY = null;
 
     addEventListener("deviceorientation", onOrientation, true);
     addEventListener("devicemotion", onMotion, true);
@@ -142,23 +160,23 @@
 
     clearTimeout(sensorWatchdog);
     sensorWatchdog = setTimeout(() => {
-      if (using === "none") {
+      if (sensor.using === "none") {
         hint.textContent = "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.";
-        using = "keyboard";
-        neutralX = 0;
-        neutralY = 0;
-        autoNeutralDone = true;
+        sensor.using = "keyboard";
+        tilt.neutralX = 0;
+        tilt.neutralY = 0;
+        calibration.autoNeutralDone = true;
       }
     }, 1400);
   }
 
   function setNeutralNow() {
-    neutralX = rawX;
-    neutralY = rawY;
-    autoNeutralDone = true;
-    sampleCount = 18;
-    vx = 0; vy = 0;
-    smoothX = 0; smoothY = 0;
+    tilt.neutralX = tilt.rawX;
+    tilt.neutralY = tilt.rawY;
+    calibration.autoNeutralDone = true;
+    calibration.sampleCount = 18;
+    marble.vx = 0; marble.vy = 0;
+    tilt.smoothX = 0; tilt.smoothY = 0;
     hint.textContent = "neutral reset to current hand position.";
   }
 
@@ -183,23 +201,23 @@
 
   addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
-    if (k === "arrowleft" || k === "a") keyboardX = -1;
-    if (k === "arrowright" || k === "d") keyboardX = 1;
-    if (k === "arrowup" || k === "w") keyboardY = -1;
-    if (k === "arrowdown" || k === "s") keyboardY = 1;
+    if (k === "arrowleft" || k === "a") keyboard.x = -1;
+    if (k === "arrowright" || k === "d") keyboard.x = 1;
+    if (k === "arrowup" || k === "w") keyboard.y = -1;
+    if (k === "arrowdown" || k === "s") keyboard.y = 1;
     if (["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(k)) {
       e.preventDefault();
-      using = using === "none" ? "keyboard" : using;
+      sensor.using = sensor.using === "none" ? "keyboard" : sensor.using;
     }
   }, { passive:false });
 
   addEventListener("keyup", (e) => {
     const k = e.key.toLowerCase();
     if (k === "escape") closeSettingsModal();
-    if ((k === "arrowleft" || k === "a") && keyboardX < 0) keyboardX = 0;
-    if ((k === "arrowright" || k === "d") && keyboardX > 0) keyboardX = 0;
-    if ((k === "arrowup" || k === "w") && keyboardY < 0) keyboardY = 0;
-    if ((k === "arrowdown" || k === "s") && keyboardY > 0) keyboardY = 0;
+    if ((k === "arrowleft" || k === "a") && keyboard.x < 0) keyboard.x = 0;
+    if ((k === "arrowright" || k === "d") && keyboard.x > 0) keyboard.x = 0;
+    if ((k === "arrowup" || k === "w") && keyboard.y < 0) keyboard.y = 0;
+    if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
   });
 
   function loop() {
@@ -207,44 +225,44 @@
     const dt = clamp((now - lastFrame) / 16.67, 0.25, 2);
     lastFrame = now;
 
-    const nx = neutralX ?? rawX;
-    const ny = neutralY ?? rawY;
+    const nx = tilt.neutralX ?? tilt.rawX;
+    const ny = tilt.neutralY ?? tilt.rawY;
 
-    const sensorX = clamp(dz(rawX - nx), -maxTilt, maxTilt);
-    const sensorY = clamp(dz(rawY - ny), -maxTilt, maxTilt);
-    const targetX = keyboardX ? keyboardX * 18 : sensorX;
-    const targetY = keyboardY ? keyboardY * 18 : sensorY;
+    const sensorX = clamp(dz(tilt.rawX - nx), -maxTilt, maxTilt);
+    const sensorY = clamp(dz(tilt.rawY - ny), -maxTilt, maxTilt);
+    const targetX = keyboard.x ? keyboard.x * 18 : sensorX;
+    const targetY = keyboard.y ? keyboard.y * 18 : sensorY;
 
-    smoothX += (targetX - smoothX) * (1 - Math.pow(1 - smoothing, dt));
-    smoothY += (targetY - smoothY) * (1 - Math.pow(1 - smoothing, dt));
+    tilt.smoothX += (targetX - tilt.smoothX) * (1 - Math.pow(1 - smoothing, dt));
+    tilt.smoothY += (targetY - tilt.smoothY) * (1 - Math.pow(1 - smoothing, dt));
 
-    vx += smoothX * accel * dt;
-    vy += smoothY * accel * dt;
+    marble.vx += tilt.smoothX * accel * dt;
+    marble.vy += tilt.smoothY * accel * dt;
 
     const drag = Math.pow(friction, dt);
-    vx = clamp(vx * drag, -maxSpeed, maxSpeed);
-    vy = clamp(vy * drag, -maxSpeed, maxSpeed);
+    marble.vx = clamp(marble.vx * drag, -maxSpeed, maxSpeed);
+    marble.vy = clamp(marble.vy * drag, -maxSpeed, maxSpeed);
 
-    x += vx * dt;
-    y += vy * dt;
+    marble.x += marble.vx * dt;
+    marble.y += marble.vy * dt;
 
-    if (x < r) { x = r; vx = -vx * bounce; }
-    if (x > innerWidth - r) { x = innerWidth - r; vx = -vx * bounce; }
-    if (y < r) { y = r; vy = -vy * bounce; }
-    if (y > innerHeight - r) { y = innerHeight - r; vy = -vy * bounce; }
+    if (marble.x < marble.r) { marble.x = marble.r; marble.vx = -marble.vx * bounce; }
+    if (marble.x > innerWidth - marble.r) { marble.x = innerWidth - marble.r; marble.vx = -marble.vx * bounce; }
+    if (marble.y < marble.r) { marble.y = marble.r; marble.vy = -marble.vy * bounce; }
+    if (marble.y > innerHeight - marble.r) { marble.y = innerHeight - marble.r; marble.vy = -marble.vy * bounce; }
 
-    marble.style.left = x + "px";
-    marble.style.top = y + "px";
+    marbleEl.style.left = marble.x + "px";
+    marbleEl.style.top = marble.y + "px";
 
     debug.textContent =
-      "sensor: " + using +
-      "\norientation seen: " + gotOrientation +
-      " | motion seen: " + gotMotion +
-      "\nauto neutral: " + autoNeutralDone +
-      "\nraw x/y: " + rawX.toFixed(2) + " / " + rawY.toFixed(2) +
-      "\nneutral x/y: " + (neutralX ?? 0).toFixed(2) + " / " + (neutralY ?? 0).toFixed(2) +
-      "\ntilt x/y: " + smoothX.toFixed(2) + " / " + smoothY.toFixed(2) +
-      "\nvel x/y: " + vx.toFixed(2) + " / " + vy.toFixed(2);
+      "sensor: " + sensor.using +
+      "\norientation seen: " + sensor.gotOrientation +
+      " | motion seen: " + sensor.gotMotion +
+      "\nauto neutral: " + calibration.autoNeutralDone +
+      "\nraw x/y: " + tilt.rawX.toFixed(2) + " / " + tilt.rawY.toFixed(2) +
+      "\nneutral x/y: " + (tilt.neutralX ?? 0).toFixed(2) + " / " + (tilt.neutralY ?? 0).toFixed(2) +
+      "\ntilt x/y: " + tilt.smoothX.toFixed(2) + " / " + tilt.smoothY.toFixed(2) +
+      "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2);
 
     requestAnimationFrame(loop);
   }
