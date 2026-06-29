@@ -3,6 +3,7 @@
   const worldEl = document.getElementById("world");
   const introWallsEl = document.getElementById("introWalls");
   const mapWallsEl = document.getElementById("mapWalls");
+  const roughPatchesEl = document.getElementById("roughPatches");
   const obstaclesEl = document.getElementById("obstacles");
   const marbleEl = document.getElementById("marble");
   const messageOverlay = document.getElementById("messageOverlay");
@@ -61,6 +62,13 @@
     { x: 1640, y: 1370, w: 52, h: 470 }
   ];
 
+  const roughPatches = [
+    { x: 360, y: 650, w: 290, h: 220 },
+    { x: 1040, y: 520, w: 360, h: 240 },
+    { x: 1420, y: 1160, w: 330, h: 260 },
+    { x: 600, y: 1780, w: 420, h: 230 }
+  ];
+
   const tilt = {
     rawX: 0,
     rawY: 0,
@@ -96,6 +104,7 @@
     enabled: true,
     cooldownMs: 90,
     lastPulse: 0,
+    lastSurfacePulse: 0,
     minImpact: 1.7
   };
 
@@ -143,6 +152,17 @@
     navigator.vibrate(clamp(Math.round(impact * 3), 8, 35));
   }
 
+  function pulseSurfaceHaptic(speed) {
+    if (!haptics.enabled || !("vibrate" in navigator)) return;
+    if (speed < 1.2) return;
+
+    const now = performance.now();
+    if (now - haptics.lastSurfacePulse < 130) return;
+
+    haptics.lastSurfacePulse = now;
+    navigator.vibrate(clamp(Math.round(speed * 1.4), 5, 16));
+  }
+
   function updateDebugPanel() {
     if (!isSettingsOpen()) return;
 
@@ -177,6 +197,12 @@
   function renderObstacles() {
     obstaclesEl.innerHTML = obstacles.map((obstacle) => (
       '<div class="obstacle" style="' + wallStyle(obstacle) + '"></div>'
+    )).join("");
+  }
+
+  function renderRoughPatches() {
+    roughPatchesEl.innerHTML = roughPatches.map((patch) => (
+      '<div class="roughPatch" style="' + wallStyle(patch) + '"></div>'
     )).join("");
   }
 
@@ -242,6 +268,7 @@
     worldEl.style.height = world.height + "px";
     setReleasedBounds();
     renderWallSet(mapWallsEl, mapEdgeWalls());
+    renderRoughPatches();
     renderObstacles();
     updateIntroBounds();
   }
@@ -655,6 +682,21 @@
     marble.y += marble.vy * dt;
   }
 
+  function marbleOverRect(rect) {
+    const closestX = clamp(marble.x, rect.x, rect.x + rect.w);
+    const closestY = clamp(marble.y, rect.y, rect.y + rect.h);
+    const dx = marble.x - closestX;
+    const dy = marble.y - closestY;
+    return dx * dx + dy * dy <= marble.r * marble.r;
+  }
+
+  function handleSurfaceFeedback() {
+    if (!intro.released) return;
+    if (!roughPatches.some(marbleOverRect)) return;
+
+    pulseSurfaceHaptic(Math.hypot(marble.vx, marble.vy));
+  }
+
   function resolveObstacleCollision(obstacle) {
     const closestX = clamp(marble.x, obstacle.x, obstacle.x + obstacle.w);
     const closestY = clamp(marble.y, obstacle.y, obstacle.y + obstacle.h);
@@ -728,6 +770,7 @@
       updateVelocity(dt);
       updatePosition(dt);
       handleWallCollisions();
+      handleSurfaceFeedback();
       updateCameraFollow(dt);
     }
 
