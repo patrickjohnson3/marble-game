@@ -33,29 +33,28 @@
       maxScale: 2.5,
       followLag: 0.08
     },
-    obstacles: [
-      { x: 260, y: 330, w: 310, h: 42 },
-      { x: 720, y: 250, w: 54, h: 360 },
-      { x: 1320, y: 330, w: 430, h: 52 },
-      { x: 1700, y: 600, w: 58, h: 430 },
-      { x: 250, y: 900, w: 520, h: 54 },
-      { x: 910, y: 760, w: 58, h: 380 },
-      { x: 1180, y: 960, w: 520, h: 50 },
-      { x: 520, y: 1380, w: 52, h: 440 },
-      { x: 830, y: 1570, w: 620, h: 52 },
-      { x: 1640, y: 1370, w: 52, h: 470 }
-    ],
-    roughPatches: [
-      { x: 360, y: 650, w: 290, h: 220 },
-      { x: 1040, y: 520, w: 360, h: 240 },
-      { x: 1420, y: 1160, w: 330, h: 260 },
-      { x: 600, y: 1780, w: 420, h: 230 }
+    elements: [
+      { type: "obstacle", x: 260, y: 330, w: 310, h: 42 },
+      { type: "obstacle", x: 720, y: 250, w: 54, h: 360 },
+      { type: "obstacle", x: 1320, y: 330, w: 430, h: 52 },
+      { type: "obstacle", x: 1700, y: 600, w: 58, h: 430 },
+      { type: "obstacle", x: 250, y: 900, w: 520, h: 54 },
+      { type: "obstacle", x: 910, y: 760, w: 58, h: 380 },
+      { type: "obstacle", x: 1180, y: 960, w: 520, h: 50 },
+      { type: "obstacle", x: 520, y: 1380, w: 52, h: 440 },
+      { type: "obstacle", x: 830, y: 1570, w: 620, h: 52 },
+      { type: "obstacle", x: 1640, y: 1370, w: 52, h: 470 },
+      { type: "roughPatch", x: 360, y: 650, w: 290, h: 220 },
+      { type: "roughPatch", x: 1040, y: 520, w: 360, h: 240 },
+      { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
+      { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 }
     ]
   };
 
   const world = mapConfig.world;
-  const obstacles = mapConfig.obstacles;
-  const roughPatches = mapConfig.roughPatches;
+  const mapElements = mapConfig.elements;
+  const obstacles = mapElements.filter((element) => element.type === "obstacle");
+  const roughPatches = mapElements.filter((element) => element.type === "roughPatch");
 
   const timing = {
     introPromptDelayMs: 10000,
