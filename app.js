@@ -1,0 +1,253 @@
+(() => {
+  const marble = document.getElementById("marble");
+  const startBtn = document.getElementById("start");
+  const neutralBtn = document.getElementById("neutral");
+  const settingsToggle = document.getElementById("settingsToggle");
+  const settingsOverlay = document.getElementById("settingsOverlay");
+  const closeSettings = document.getElementById("closeSettings");
+  const hint = document.getElementById("hint");
+  const debug = document.getElementById("debug");
+
+  let x = innerWidth / 2, y = innerHeight / 2;
+  let vx = 0, vy = 0;
+
+  let rawX = 0, rawY = 0;
+  let smoothX = 0, smoothY = 0;
+  let neutralX = null, neutralY = null;
+  let keyboardX = 0, keyboardY = 0;
+  let lastFrame = performance.now();
+  let sensorWatchdog = 0;
+
+  let sampleCount = 0;
+  let sampleX = 0, sampleY = 0;
+  let autoNeutralDone = false;
+
+  let gotOrientation = false;
+  let gotMotion = false;
+  let using = "none";
+
+  const r = 29;
+
+  // feel knobs
+  const accel = 0.115;
+  const maxTilt = 26;
+  const smoothing = 0.2;
+  const friction = 0.94;
+  const bounce = 0.38;
+  const deadZone = 0.65;
+  const maxSpeed = 14;
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function dz(v) { return Math.abs(v) < deadZone ? 0 : v; }
+
+  function resize() {
+    x = clamp(x, r, innerWidth - r);
+    y = clamp(y, r, innerHeight - r);
+  }
+  addEventListener("resize", resize);
+
+  function screenAdjusted(gamma, beta) {
+    const angle = screen.orientation && typeof screen.orientation.angle === "number"
+      ? screen.orientation.angle
+      : (window.orientation || 0);
+
+    let tx = gamma || 0;
+    let ty = beta || 0;
+
+    if (angle === 90) {
+      [tx, ty] = [ty, -tx];
+    } else if (angle === -90 || angle === 270) {
+      [tx, ty] = [-ty, tx];
+    } else if (angle === 180) {
+      tx = -tx;
+      ty = -ty;
+    }
+
+    return [tx, ty];
+  }
+
+  function maybeAutoNeutral() {
+    if (autoNeutralDone) return;
+
+    sampleX += rawX;
+    sampleY += rawY;
+    sampleCount++;
+
+    // first few frames become the user's normal holding posture.
+    // not table-flat. not lab-instrument nonsense.
+    if (sampleCount >= 18) {
+      neutralX = sampleX / sampleCount;
+      neutralY = sampleY / sampleCount;
+      autoNeutralDone = true;
+      vx = 0; vy = 0;
+      hint.textContent = "neutral set. tilt from your normal holding angle.";
+    }
+  }
+
+  function onOrientation(e) {
+    if (e.beta == null || e.gamma == null) return;
+    gotOrientation = true;
+    using = "deviceorientation";
+    const [tx, ty] = screenAdjusted(e.gamma, e.beta);
+    rawX = tx;
+    rawY = ty;
+    maybeAutoNeutral();
+  }
+
+  function onMotion(e) {
+    if (gotOrientation) return;
+    const g = e.accelerationIncludingGravity;
+    if (!g) return;
+    gotMotion = true;
+    using = "devicemotion fallback";
+    rawX = -(g.x || 0) * 3;
+    rawY = (g.y || 0) * 3;
+    maybeAutoNeutral();
+  }
+
+  async function requestPermissionIfNeeded() {
+    if (typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function") {
+      const p = await DeviceOrientationEvent.requestPermission();
+      if (p !== "granted") return false;
+    }
+    if (typeof DeviceMotionEvent !== "undefined" &&
+        typeof DeviceMotionEvent.requestPermission === "function") {
+      const p = await DeviceMotionEvent.requestPermission();
+      if (p !== "granted") return false;
+    }
+    return true;
+  }
+
+  async function start() {
+    const ok = await requestPermissionIfNeeded();
+    if (!ok) {
+      hint.textContent = "motion permission denied. check chrome site settings.";
+      return;
+    }
+
+    sampleCount = 0;
+    sampleX = 0;
+    sampleY = 0;
+    autoNeutralDone = false;
+    neutralX = null;
+    neutralY = null;
+
+    addEventListener("deviceorientation", onOrientation, true);
+    addEventListener("devicemotion", onMotion, true);
+
+    startBtn.textContent = "running";
+    startBtn.disabled = true;
+    hint.textContent = "keep holding normally for half a sec...";
+
+    clearTimeout(sensorWatchdog);
+    sensorWatchdog = setTimeout(() => {
+      if (using === "none") {
+        hint.textContent = "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.";
+        using = "keyboard";
+        neutralX = 0;
+        neutralY = 0;
+        autoNeutralDone = true;
+      }
+    }, 1400);
+  }
+
+  function setNeutralNow() {
+    neutralX = rawX;
+    neutralY = rawY;
+    autoNeutralDone = true;
+    sampleCount = 18;
+    vx = 0; vy = 0;
+    smoothX = 0; smoothY = 0;
+    hint.textContent = "neutral reset to current hand position.";
+  }
+
+  startBtn.addEventListener("click", start);
+  neutralBtn.addEventListener("click", setNeutralNow);
+
+  function openSettings() {
+    settingsOverlay.classList.add("open");
+    settingsOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeSettingsModal() {
+    settingsOverlay.classList.remove("open");
+    settingsOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  settingsToggle.addEventListener("click", openSettings);
+  closeSettings.addEventListener("click", closeSettingsModal);
+  settingsOverlay.addEventListener("click", (e) => {
+    if (e.target === settingsOverlay) closeSettingsModal();
+  });
+
+  addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (k === "arrowleft" || k === "a") keyboardX = -1;
+    if (k === "arrowright" || k === "d") keyboardX = 1;
+    if (k === "arrowup" || k === "w") keyboardY = -1;
+    if (k === "arrowdown" || k === "s") keyboardY = 1;
+    if (["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(k)) {
+      e.preventDefault();
+      using = using === "none" ? "keyboard" : using;
+    }
+  }, { passive:false });
+
+  addEventListener("keyup", (e) => {
+    const k = e.key.toLowerCase();
+    if (k === "escape") closeSettingsModal();
+    if ((k === "arrowleft" || k === "a") && keyboardX < 0) keyboardX = 0;
+    if ((k === "arrowright" || k === "d") && keyboardX > 0) keyboardX = 0;
+    if ((k === "arrowup" || k === "w") && keyboardY < 0) keyboardY = 0;
+    if ((k === "arrowdown" || k === "s") && keyboardY > 0) keyboardY = 0;
+  });
+
+  function loop() {
+    const now = performance.now();
+    const dt = clamp((now - lastFrame) / 16.67, 0.25, 2);
+    lastFrame = now;
+
+    const nx = neutralX ?? rawX;
+    const ny = neutralY ?? rawY;
+
+    const sensorX = clamp(dz(rawX - nx), -maxTilt, maxTilt);
+    const sensorY = clamp(dz(rawY - ny), -maxTilt, maxTilt);
+    const targetX = keyboardX ? keyboardX * 18 : sensorX;
+    const targetY = keyboardY ? keyboardY * 18 : sensorY;
+
+    smoothX += (targetX - smoothX) * (1 - Math.pow(1 - smoothing, dt));
+    smoothY += (targetY - smoothY) * (1 - Math.pow(1 - smoothing, dt));
+
+    vx += smoothX * accel * dt;
+    vy += smoothY * accel * dt;
+
+    const drag = Math.pow(friction, dt);
+    vx = clamp(vx * drag, -maxSpeed, maxSpeed);
+    vy = clamp(vy * drag, -maxSpeed, maxSpeed);
+
+    x += vx * dt;
+    y += vy * dt;
+
+    if (x < r) { x = r; vx = -vx * bounce; }
+    if (x > innerWidth - r) { x = innerWidth - r; vx = -vx * bounce; }
+    if (y < r) { y = r; vy = -vy * bounce; }
+    if (y > innerHeight - r) { y = innerHeight - r; vy = -vy * bounce; }
+
+    marble.style.left = x + "px";
+    marble.style.top = y + "px";
+
+    debug.textContent =
+      "sensor: " + using +
+      "\norientation seen: " + gotOrientation +
+      " | motion seen: " + gotMotion +
+      "\nauto neutral: " + autoNeutralDone +
+      "\nraw x/y: " + rawX.toFixed(2) + " / " + rawY.toFixed(2) +
+      "\nneutral x/y: " + (neutralX ?? 0).toFixed(2) + " / " + (neutralY ?? 0).toFixed(2) +
+      "\ntilt x/y: " + smoothX.toFixed(2) + " / " + smoothY.toFixed(2) +
+      "\nvel x/y: " + vx.toFixed(2) + " / " + vy.toFixed(2);
+
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+})();

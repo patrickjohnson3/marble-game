@@ -1,0 +1,57 @@
+html,body{
+  margin:0;height:100%;overflow:hidden;background:#101114;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:white;
+  touch-action:none;overscroll-behavior:none;
+}
+#game{
+  position:fixed;inset:0;
+  background:
+    linear-gradient(#ffffff08 1px,transparent 1px),
+    linear-gradient(90deg,#ffffff08 1px,transparent 1px),
+    radial-gradient(circle at center,#2a2d35,#101114 72%);
+  background-size:42px 42px,42px 42px,100% 100%;
+}
+#marble{
+  position:absolute;width:58px;height:58px;border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle at 34% 28%,#fff 0 6%,#bce8ff 7% 19%,#2d86dd 42%,#083b75 75%,#031b36 100%);
+  box-shadow:0 16px 28px #000a,inset -8px -10px 18px #0018;
+  will-change:left,top;
+}
+#panel{position:fixed;left:12px;right:64px;top:12px;display:grid;gap:8px;pointer-events:none}
+#hint,#debug{border-radius:14px;background:#0008;padding:10px 12px;backdrop-filter:blur(8px)}
+#hint{font-size:15px;text-align:center}
+#debug{font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;opacity:.86;white-space:pre-wrap}
+#settingsToggle{
+  position:fixed;right:12px;top:12px;width:44px;height:44px;
+  display:grid;place-items:center;border-radius:50%;padding:0;
+  background:#0009;color:white;font-size:24px;line-height:1;
+  backdrop-filter:blur(8px);
+}
+#controls{
+  position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));
+  display:flex;gap:10px;
+}
+button{
+  flex:1;border:0;border-radius:999px;padding:14px 12px;
+  font-size:17px;font-weight:800;background:white;color:#111;
+}
+button:disabled{opacity:.72}
+button.secondary{background:#2e3440;color:white}
+#settingsOverlay{
+  position:fixed;inset:0;display:none;place-items:center;
+  padding:18px;background:#0009;z-index:10;
+}
+#settingsOverlay.open{display:grid}
+#settingsModal{
+  width:min(420px,100%);border-radius:18px;background:#171a20;
+  box-shadow:0 24px 80px #000c;padding:18px;
+}
+#settingsHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+#settingsHeader h2{margin:0;font-size:20px}
+#closeSettings{
+  flex:0 0 auto;width:40px;height:40px;padding:0;border-radius:50%;
+  background:#2e3440;color:white;font-size:24px;line-height:1;
+}
+#settingsModal #neutral{width:100%;margin-bottom:12px}
+#settingsModal #debug{background:#0b0d11;margin:0}
