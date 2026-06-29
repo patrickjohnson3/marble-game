@@ -640,23 +640,6 @@
     centerCameraOnMarble();
   }
 
-  function enableMotionInput() {
-    addEventListener("deviceorientation", onOrientation, true);
-    addEventListener("devicemotion", onMotion, true);
-  }
-
-  function enableKeyboardInput() {
-    addEventListener("keydown", onKeyDown, { passive:false });
-    addEventListener("keyup", onKeyUp);
-  }
-
-  function enableGestureInput() {
-    gameEl.addEventListener("pointerdown", onPointerDown);
-    gameEl.addEventListener("pointermove", onPointerMove);
-    gameEl.addEventListener("pointerup", onPointerEnd);
-    gameEl.addEventListener("pointercancel", onPointerEnd);
-  }
-
   function onKeyDown(e) {
     const k = e.key.toLowerCase();
     if (k === "arrowleft" || k === "a") keyboard.x = -1;
@@ -685,6 +668,29 @@
     if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
   }
 
+  const inputSystems = {
+    motion: {
+      enable() {
+        addEventListener("deviceorientation", onOrientation, true);
+        addEventListener("devicemotion", onMotion, true);
+      }
+    },
+    keyboard: {
+      enable() {
+        addEventListener("keydown", onKeyDown, { passive:false });
+        addEventListener("keyup", onKeyUp);
+      }
+    },
+    gestures: {
+      enable() {
+        gameEl.addEventListener("pointerdown", onPointerDown);
+        gameEl.addEventListener("pointermove", onPointerMove);
+        gameEl.addEventListener("pointerup", onPointerEnd);
+        gameEl.addEventListener("pointercancel", onPointerEnd);
+      }
+    }
+  };
+
   async function start() {
     const ok = await requestPermissionIfNeeded();
     if (!ok) {
@@ -693,7 +699,7 @@
     }
 
     resetGameState();
-    enableMotionInput();
+    inputSystems.motion.enable();
     game.phase = "calibrating";
 
     startBtn.textContent = "running";
@@ -905,7 +911,7 @@
   setupMap();
   syncMarbleRadius();
   centerCameraOnMarble();
-  enableKeyboardInput();
-  enableGestureInput();
+  inputSystems.keyboard.enable();
+  inputSystems.gestures.enable();
   loop();
 })();
