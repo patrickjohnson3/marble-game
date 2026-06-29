@@ -46,17 +46,19 @@
     using: "none"
   };
 
-  // feel knobs
-  const accel = 0.115;
-  const maxTilt = 26;
-  const smoothing = 0.2;
-  const friction = 0.94;
-  const bounce = 0.38;
-  const deadZone = 0.65;
-  const maxSpeed = 14;
+  const physics = {
+    accel: 0.115,
+    maxTilt: 26,
+    smoothing: 0.2,
+    friction: 0.94,
+    bounce: 0.38,
+    deadZone: 0.65,
+    maxSpeed: 14,
+    keyboardTilt: 18
+  };
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-  function dz(v) { return Math.abs(v) < deadZone ? 0 : v; }
+  function dz(v) { return Math.abs(v) < physics.deadZone ? 0 : v; }
 
   function resize() {
     marble.x = clamp(marble.x, marble.r, innerWidth - marble.r);
@@ -236,22 +238,22 @@
     const nx = tilt.neutralX ?? tilt.rawX;
     const ny = tilt.neutralY ?? tilt.rawY;
 
-    const sensorX = clamp(dz(tilt.rawX - nx), -maxTilt, maxTilt);
-    const sensorY = clamp(dz(tilt.rawY - ny), -maxTilt, maxTilt);
-    const targetX = keyboard.x ? keyboard.x * 18 : sensorX;
-    const targetY = keyboard.y ? keyboard.y * 18 : sensorY;
+    const sensorX = clamp(dz(tilt.rawX - nx), -physics.maxTilt, physics.maxTilt);
+    const sensorY = clamp(dz(tilt.rawY - ny), -physics.maxTilt, physics.maxTilt);
+    const targetX = keyboard.x ? keyboard.x * physics.keyboardTilt : sensorX;
+    const targetY = keyboard.y ? keyboard.y * physics.keyboardTilt : sensorY;
 
-    tilt.smoothX += (targetX - tilt.smoothX) * (1 - Math.pow(1 - smoothing, dt));
-    tilt.smoothY += (targetY - tilt.smoothY) * (1 - Math.pow(1 - smoothing, dt));
+    tilt.smoothX += (targetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
+    tilt.smoothY += (targetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
   }
 
   function updateVelocity(dt) {
-    marble.vx += tilt.smoothX * accel * dt;
-    marble.vy += tilt.smoothY * accel * dt;
+    marble.vx += tilt.smoothX * physics.accel * dt;
+    marble.vy += tilt.smoothY * physics.accel * dt;
 
-    const drag = Math.pow(friction, dt);
-    marble.vx = clamp(marble.vx * drag, -maxSpeed, maxSpeed);
-    marble.vy = clamp(marble.vy * drag, -maxSpeed, maxSpeed);
+    const drag = Math.pow(physics.friction, dt);
+    marble.vx = clamp(marble.vx * drag, -physics.maxSpeed, physics.maxSpeed);
+    marble.vy = clamp(marble.vy * drag, -physics.maxSpeed, physics.maxSpeed);
   }
 
   function updatePosition(dt) {
@@ -260,10 +262,10 @@
   }
 
   function handleWallCollisions() {
-    if (marble.x < marble.r) { marble.x = marble.r; marble.vx = -marble.vx * bounce; }
-    if (marble.x > innerWidth - marble.r) { marble.x = innerWidth - marble.r; marble.vx = -marble.vx * bounce; }
-    if (marble.y < marble.r) { marble.y = marble.r; marble.vy = -marble.vy * bounce; }
-    if (marble.y > innerHeight - marble.r) { marble.y = innerHeight - marble.r; marble.vy = -marble.vy * bounce; }
+    if (marble.x < marble.r) { marble.x = marble.r; marble.vx = -marble.vx * physics.bounce; }
+    if (marble.x > innerWidth - marble.r) { marble.x = innerWidth - marble.r; marble.vx = -marble.vx * physics.bounce; }
+    if (marble.y < marble.r) { marble.y = marble.r; marble.vy = -marble.vy * physics.bounce; }
+    if (marble.y > innerHeight - marble.r) { marble.y = innerHeight - marble.r; marble.vy = -marble.vy * physics.bounce; }
   }
 
   function loop() {
