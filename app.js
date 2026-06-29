@@ -115,10 +115,16 @@
 
   const haptics = {
     enabled: true,
-    cooldownMs: 90,
-    lastPulse: 0,
-    lastSurfacePulse: 0,
-    minImpact: 1.7
+    impact: {
+      cooldownMs: 90,
+      lastPulse: 0,
+      minImpact: 1.7
+    },
+    surface: {
+      cooldownMs: 130,
+      lastPulse: 0,
+      minSpeed: 1.2
+    }
   };
 
   const calibration = {
@@ -154,25 +160,25 @@
   function setHint(message) { hint.textContent = message; }
   function isSettingsOpen() { return settingsOverlay.classList.contains("open"); }
 
-  function pulseHaptic(impact) {
+  function pulseImpactHaptic(impact) {
     if (!haptics.enabled || !("vibrate" in navigator)) return;
-    if (impact < haptics.minImpact) return;
+    if (impact < haptics.impact.minImpact) return;
 
     const now = performance.now();
-    if (now - haptics.lastPulse < haptics.cooldownMs) return;
+    if (now - haptics.impact.lastPulse < haptics.impact.cooldownMs) return;
 
-    haptics.lastPulse = now;
+    haptics.impact.lastPulse = now;
     navigator.vibrate(clamp(Math.round(impact * 3), 8, 35));
   }
 
   function pulseSurfaceHaptic(speed) {
     if (!haptics.enabled || !("vibrate" in navigator)) return;
-    if (speed < 1.2) return;
+    if (speed < haptics.surface.minSpeed) return;
 
     const now = performance.now();
-    if (now - haptics.lastSurfacePulse < 130) return;
+    if (now - haptics.surface.lastPulse < haptics.surface.cooldownMs) return;
 
-    haptics.lastSurfacePulse = now;
+    haptics.surface.lastPulse = now;
     navigator.vibrate(clamp(Math.round(speed * 1.4), 5, 16));
   }
 
@@ -747,7 +753,7 @@
 
     const impact = marble.vx * nx + marble.vy * ny;
     if (impact < 0) {
-      pulseHaptic(-impact);
+      pulseImpactHaptic(-impact);
       marble.vx -= (1 + physics.bounce) * impact * nx;
       marble.vy -= (1 + physics.bounce) * impact * ny;
     }
@@ -755,22 +761,22 @@
 
   function handleWallCollisions() {
     if (marble.x < bounds.left + marble.r) {
-      pulseHaptic(Math.abs(marble.vx));
+      pulseImpactHaptic(Math.abs(marble.vx));
       marble.x = bounds.left + marble.r;
       marble.vx = -marble.vx * physics.bounce;
     }
     if (marble.x > bounds.right - marble.r) {
-      pulseHaptic(Math.abs(marble.vx));
+      pulseImpactHaptic(Math.abs(marble.vx));
       marble.x = bounds.right - marble.r;
       marble.vx = -marble.vx * physics.bounce;
     }
     if (marble.y < bounds.top + marble.r) {
-      pulseHaptic(Math.abs(marble.vy));
+      pulseImpactHaptic(Math.abs(marble.vy));
       marble.y = bounds.top + marble.r;
       marble.vy = -marble.vy * physics.bounce;
     }
     if (marble.y > bounds.bottom - marble.r) {
-      pulseHaptic(Math.abs(marble.vy));
+      pulseImpactHaptic(Math.abs(marble.vy));
       marble.y = bounds.bottom - marble.r;
       marble.vy = -marble.vy * physics.bounce;
     }
