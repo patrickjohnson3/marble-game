@@ -57,6 +57,36 @@
   const obstacles = mapConfig.obstacles;
   const roughPatches = mapConfig.roughPatches;
 
+  const timing = {
+    introPromptDelayMs: 10000,
+    countdownDelayMs: 4500,
+    countdownStart: 5,
+    countdownTickMs: 1000,
+    sensorFallbackMs: 1400,
+    targetFrameMs: 16.67,
+    minFrameStep: 0.25,
+    maxFrameStep: 2
+  };
+
+  const tuning = {
+    neutralSampleCount: 18,
+    gestureCooldownFrames: 90,
+    motionGravityScale: 3
+  };
+
+  const hapticTuning = {
+    impactCooldownMs: 90,
+    impactMin: 1.7,
+    impactScale: 3,
+    impactMinDurationMs: 8,
+    impactMaxDurationMs: 35,
+    surfaceCooldownMs: 130,
+    surfaceMinSpeed: 1.2,
+    surfaceScale: 1.4,
+    surfaceMinDurationMs: 5,
+    surfaceMaxDurationMs: 16
+  };
+
   const marble = {
     x: world.width / 2,
     y: world.height / 2,
@@ -79,7 +109,7 @@
     viewportMargin: mapConfig.intro.viewportMargin,
     messageTimer: 0,
     countdownTimer: 0,
-    countdownValue: 5
+    countdownValue: timing.countdownStart
   };
 
   const tilt = {
@@ -116,14 +146,14 @@
   const haptics = {
     enabled: true,
     impact: {
-      cooldownMs: 90,
+      cooldownMs: hapticTuning.impactCooldownMs,
       lastPulse: 0,
-      minImpact: 1.7
+      minImpact: hapticTuning.impactMin
     },
     surface: {
-      cooldownMs: 130,
+      cooldownMs: hapticTuning.surfaceCooldownMs,
       lastPulse: 0,
-      minSpeed: 1.2
+      minSpeed: hapticTuning.surfaceMinSpeed
     }
   };
 
@@ -168,7 +198,11 @@
     if (now - haptics.impact.lastPulse < haptics.impact.cooldownMs) return;
 
     haptics.impact.lastPulse = now;
-    navigator.vibrate(clamp(Math.round(impact * 3), 8, 35));
+    navigator.vibrate(clamp(
+      Math.round(impact * hapticTuning.impactScale),
+      hapticTuning.impactMinDurationMs,
+      hapticTuning.impactMaxDurationMs
+    ));
   }
 
   function pulseSurfaceHaptic(speed) {
@@ -179,7 +213,11 @@
     if (now - haptics.surface.lastPulse < haptics.surface.cooldownMs) return;
 
     haptics.surface.lastPulse = now;
-    navigator.vibrate(clamp(Math.round(speed * 1.4), 5, 16));
+    navigator.vibrate(clamp(
+      Math.round(speed * hapticTuning.surfaceScale),
+      hapticTuning.surfaceMinDurationMs,
+      hapticTuning.surfaceMaxDurationMs
+    ));
   }
 
   function updateDebugPanel() {
@@ -393,7 +431,7 @@
 
     camera.x = gesture.x + nextMidpoint.x - gesture.midpoint.x;
     camera.y = gesture.y + nextMidpoint.y - gesture.midpoint.y;
-    camera.gestureCooldown = 90;
+    camera.gestureCooldown = tuning.gestureCooldownFrames;
     applyCameraTransform();
   }
 
@@ -428,12 +466,12 @@
     intro.started = true;
     intro.messageTimer = setTimeout(() => {
       showMessage("Pinch to zoom out. Reverse pinch to zoom in. Rotation is available in settings.");
-      intro.countdownTimer = setTimeout(startReleaseCountdown, 4500);
-    }, 10000);
+      intro.countdownTimer = setTimeout(startReleaseCountdown, timing.countdownDelayMs);
+    }, timing.introPromptDelayMs);
   }
 
   function startReleaseCountdown() {
-    intro.countdownValue = 5;
+    intro.countdownValue = timing.countdownStart;
     showCountdown();
 
     intro.countdownTimer = setInterval(() => {
@@ -445,7 +483,7 @@
       }
 
       showCountdown();
-    }, 1000);
+    }, timing.countdownTickMs);
   }
 
   function showCountdown() {
@@ -490,7 +528,7 @@
 
     // first few frames become the user's normal holding posture.
     // not table-flat. not lab-instrument nonsense.
-    if (calibration.sampleCount >= 18) {
+    if (calibration.sampleCount >= tuning.neutralSampleCount) {
       tilt.neutralX = calibration.sampleX / calibration.sampleCount;
       tilt.neutralY = calibration.sampleY / calibration.sampleCount;
       calibration.autoNeutralDone = true;
@@ -517,8 +555,8 @@
     if (!g) return;
     sensor.gotMotion = true;
     sensor.using = "devicemotion fallback";
-    tilt.rawX = -(g.x || 0) * 3;
-    tilt.rawY = (g.y || 0) * 3;
+    tilt.rawX = -(g.x || 0) * tuning.motionGravityScale;
+    tilt.rawY = (g.y || 0) * tuning.motionGravityScale;
     maybeAutoNeutral();
   }
 
@@ -620,7 +658,7 @@
         calibration.autoNeutralDone = true;
         scheduleIntroSequence();
       }
-    }, 1400);
+    }, timing.sensorFallbackMs);
   }
 
   function setNeutralNow() {
@@ -628,7 +666,7 @@
     tilt.neutralY = tilt.rawY;
     calibration.autoNeutralDone = true;
     if (game.phase === "calibrating") game.phase = "running";
-    calibration.sampleCount = 18;
+    calibration.sampleCount = tuning.neutralSampleCount;
     marble.vx = 0; marble.vy = 0;
     tilt.smoothX = 0; tilt.smoothY = 0;
     setHint("neutral reset to current hand position.");
@@ -788,7 +826,11 @@
 
   function loop() {
     const now = performance.now();
-    const dt = clamp((now - lastFrame) / 16.67, 0.25, 2);
+    const dt = clamp(
+      (now - lastFrame) / timing.targetFrameMs,
+      timing.minFrameStep,
+      timing.maxFrameStep
+    );
     lastFrame = now;
 
     if (game.phase !== "waiting") {
