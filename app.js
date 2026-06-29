@@ -156,15 +156,19 @@
   }
 
   async function requestPermissionIfNeeded() {
-    if (typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function") {
-      const p = await DeviceOrientationEvent.requestPermission();
-      if (p !== "granted") return false;
-    }
-    if (typeof DeviceMotionEvent !== "undefined" &&
-        typeof DeviceMotionEvent.requestPermission === "function") {
-      const p = await DeviceMotionEvent.requestPermission();
-      if (p !== "granted") return false;
+    try {
+      if (typeof DeviceOrientationEvent !== "undefined" &&
+          typeof DeviceOrientationEvent.requestPermission === "function") {
+        const p = await DeviceOrientationEvent.requestPermission();
+        if (p !== "granted") return false;
+      }
+      if (typeof DeviceMotionEvent !== "undefined" &&
+          typeof DeviceMotionEvent.requestPermission === "function") {
+        const p = await DeviceMotionEvent.requestPermission();
+        if (p !== "granted") return false;
+      }
+    } catch {
+      return false;
     }
     return true;
   }
