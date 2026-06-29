@@ -137,6 +137,46 @@
     return true;
   }
 
+  function resetCalibration() {
+    calibration.sampleCount = 0;
+    calibration.sampleX = 0;
+    calibration.sampleY = 0;
+    calibration.autoNeutralDone = false;
+    tilt.neutralX = null;
+    tilt.neutralY = null;
+  }
+
+  function enableMotionInput() {
+    addEventListener("deviceorientation", onOrientation, true);
+    addEventListener("devicemotion", onMotion, true);
+  }
+
+  function enableKeyboardInput() {
+    addEventListener("keydown", onKeyDown, { passive:false });
+    addEventListener("keyup", onKeyUp);
+  }
+
+  function onKeyDown(e) {
+    const k = e.key.toLowerCase();
+    if (k === "arrowleft" || k === "a") keyboard.x = -1;
+    if (k === "arrowright" || k === "d") keyboard.x = 1;
+    if (k === "arrowup" || k === "w") keyboard.y = -1;
+    if (k === "arrowdown" || k === "s") keyboard.y = 1;
+    if (["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(k)) {
+      e.preventDefault();
+      sensor.using = sensor.using === "none" ? "keyboard" : sensor.using;
+    }
+  }
+
+  function onKeyUp(e) {
+    const k = e.key.toLowerCase();
+    if (k === "escape") closeSettingsModal();
+    if ((k === "arrowleft" || k === "a") && keyboard.x < 0) keyboard.x = 0;
+    if ((k === "arrowright" || k === "d") && keyboard.x > 0) keyboard.x = 0;
+    if ((k === "arrowup" || k === "w") && keyboard.y < 0) keyboard.y = 0;
+    if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
+  }
+
   async function start() {
     const ok = await requestPermissionIfNeeded();
     if (!ok) {
@@ -144,15 +184,8 @@
       return;
     }
 
-    calibration.sampleCount = 0;
-    calibration.sampleX = 0;
-    calibration.sampleY = 0;
-    calibration.autoNeutralDone = false;
-    tilt.neutralX = null;
-    tilt.neutralY = null;
-
-    addEventListener("deviceorientation", onOrientation, true);
-    addEventListener("devicemotion", onMotion, true);
+    resetCalibration();
+    enableMotionInput();
 
     startBtn.textContent = "running";
     startBtn.disabled = true;
@@ -197,27 +230,6 @@
   closeSettings.addEventListener("click", closeSettingsModal);
   settingsOverlay.addEventListener("click", (e) => {
     if (e.target === settingsOverlay) closeSettingsModal();
-  });
-
-  addEventListener("keydown", (e) => {
-    const k = e.key.toLowerCase();
-    if (k === "arrowleft" || k === "a") keyboard.x = -1;
-    if (k === "arrowright" || k === "d") keyboard.x = 1;
-    if (k === "arrowup" || k === "w") keyboard.y = -1;
-    if (k === "arrowdown" || k === "s") keyboard.y = 1;
-    if (["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(k)) {
-      e.preventDefault();
-      sensor.using = sensor.using === "none" ? "keyboard" : sensor.using;
-    }
-  }, { passive:false });
-
-  addEventListener("keyup", (e) => {
-    const k = e.key.toLowerCase();
-    if (k === "escape") closeSettingsModal();
-    if ((k === "arrowleft" || k === "a") && keyboard.x < 0) keyboard.x = 0;
-    if ((k === "arrowright" || k === "d") && keyboard.x > 0) keyboard.x = 0;
-    if ((k === "arrowup" || k === "w") && keyboard.y < 0) keyboard.y = 0;
-    if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
   });
 
   function updateTilt(dt) {
@@ -280,5 +292,6 @@
     requestAnimationFrame(loop);
   }
 
+  enableKeyboardInput();
   loop();
 })();
