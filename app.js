@@ -1,7 +1,11 @@
 (() => {
   const gameEl = document.getElementById("game");
   const worldEl = document.getElementById("world");
+  const introWallsEl = document.getElementById("introWalls");
+  const mapWallsEl = document.getElementById("mapWalls");
+  const obstaclesEl = document.getElementById("obstacles");
   const marbleEl = document.getElementById("marble");
+  const messageOverlay = document.getElementById("messageOverlay");
   const startBtn = document.getElementById("start");
   const neutralBtn = document.getElementById("neutral");
   const settingsToggle = document.getElementById("settingsToggle");
@@ -12,13 +16,48 @@
   const hint = document.getElementById("hint");
   const debug = document.getElementById("debug");
 
+  const world = {
+    width: 2200,
+    height: 2200
+  };
+
   const marble = {
-    x: innerWidth / 2,
-    y: innerHeight / 2,
+    x: world.width / 2,
+    y: world.height / 2,
     vx: 0,
     vy: 0,
     r: 0
   };
+
+  const bounds = {
+    left: 0,
+    right: world.width,
+    top: 0,
+    bottom: world.height
+  };
+
+  const intro = {
+    started: false,
+    released: false,
+    wallThickness: 34,
+    viewportMargin: 18,
+    messageTimer: 0,
+    countdownTimer: 0,
+    countdownValue: 5
+  };
+
+  const obstacles = [
+    { x: 260, y: 330, w: 310, h: 42 },
+    { x: 720, y: 250, w: 54, h: 360 },
+    { x: 1320, y: 330, w: 430, h: 52 },
+    { x: 1700, y: 600, w: 58, h: 430 },
+    { x: 250, y: 900, w: 520, h: 54 },
+    { x: 910, y: 760, w: 58, h: 380 },
+    { x: 1180, y: 960, w: 520, h: 50 },
+    { x: 520, y: 1380, w: 52, h: 440 },
+    { x: 830, y: 1570, w: 620, h: 52 },
+    { x: 1640, y: 1370, w: 52, h: 470 }
+  ];
 
   const tilt = {
     rawX: 0,
@@ -95,18 +134,98 @@
       "\ntilt x/y: " + tilt.smoothX.toFixed(2) + " / " + tilt.smoothY.toFixed(2) +
       "\nvel x/y: " + marble.vx.toFixed(2) + " / " + marble.vy.toFixed(2) +
       "\nzoom: " + camera.scale.toFixed(2) +
-      " | rotation: " + (camera.rotation * 180 / Math.PI).toFixed(0) + "deg";
+      " | rotation: " + (camera.rotation * 180 / Math.PI).toFixed(0) + "deg" +
+      "\nmap released: " + intro.released;
+  }
+
+  function wallStyle(wall) {
+    return "left:" + wall.x + "px;top:" + wall.y + "px;width:" + wall.w + "px;height:" + wall.h + "px";
+  }
+
+  function renderWallSet(container, walls) {
+    container.innerHTML = walls.map((wall) => (
+      '<div class="wall" style="' + wallStyle(wall) + '"></div>'
+    )).join("");
+  }
+
+  function renderObstacles() {
+    obstaclesEl.innerHTML = obstacles.map((obstacle) => (
+      '<div class="obstacle" style="' + wallStyle(obstacle) + '"></div>'
+    )).join("");
+  }
+
+  function mapEdgeWalls() {
+    const t = intro.wallThickness;
+    return [
+      { x: -t, y: -t, w: world.width + t * 2, h: t },
+      { x: -t, y: world.height, w: world.width + t * 2, h: t },
+      { x: -t, y: 0, w: t, h: world.height },
+      { x: world.width, y: 0, w: t, h: world.height }
+    ];
+  }
+
+  function introPenWalls() {
+    const t = intro.wallThickness;
+    return [
+      { x: bounds.left - t, y: bounds.top - t, w: bounds.right - bounds.left + t * 2, h: t },
+      { x: bounds.left - t, y: bounds.bottom, w: bounds.right - bounds.left + t * 2, h: t },
+      { x: bounds.left - t, y: bounds.top, w: t, h: bounds.bottom - bounds.top },
+      { x: bounds.right, y: bounds.top, w: t, h: bounds.bottom - bounds.top }
+    ];
+  }
+
+  function showMessage(html) {
+    messageOverlay.innerHTML = html;
+    messageOverlay.classList.add("show");
+  }
+
+  function hideMessage() {
+    messageOverlay.classList.remove("show");
   }
 
   function syncMarbleRadius() {
     marble.r = Math.max(marbleEl.offsetWidth, marbleEl.offsetHeight) / 2;
   }
 
+  function centerCameraOnMarble() {
+    camera.x = innerWidth / 2 - marble.x;
+    camera.y = innerHeight / 2 - marble.y;
+    applyCameraTransform();
+  }
+
+  function updateIntroBounds() {
+    const halfW = innerWidth / 2 + intro.viewportMargin;
+    const halfH = innerHeight / 2 + intro.viewportMargin;
+    bounds.left = clamp(marble.x - halfW, 0, world.width);
+    bounds.right = clamp(marble.x + halfW, 0, world.width);
+    bounds.top = clamp(marble.y - halfH, 0, world.height);
+    bounds.bottom = clamp(marble.y + halfH, 0, world.height);
+    renderWallSet(introWallsEl, introPenWalls());
+  }
+
+  function setReleasedBounds() {
+    bounds.left = 0;
+    bounds.right = world.width;
+    bounds.top = 0;
+    bounds.bottom = world.height;
+  }
+
+  function setupMap() {
+    worldEl.style.width = world.width + "px";
+    worldEl.style.height = world.height + "px";
+    setReleasedBounds();
+    renderWallSet(mapWallsEl, mapEdgeWalls());
+    renderObstacles();
+    updateIntroBounds();
+  }
+
   function resize() {
     syncMarbleRadius();
-    applyCameraTransform();
-    marble.x = clamp(marble.x, marble.r, innerWidth - marble.r);
-    marble.y = clamp(marble.y, marble.r, innerHeight - marble.r);
+    if (!intro.released) updateIntroBounds();
+    marble.x = clamp(marble.x, bounds.left + marble.r, bounds.right - marble.r);
+    marble.y = clamp(marble.y, bounds.top + marble.r, bounds.bottom - marble.r);
+    if (!intro.released) centerCameraOnMarble();
+    else applyCameraTransform();
   }
   addEventListener("resize", resize);
 
@@ -196,6 +315,45 @@
     if (pointers.size === 2) startGesture();
   }
 
+  function scheduleIntroSequence() {
+    if (intro.started) return;
+
+    intro.started = true;
+    intro.messageTimer = setTimeout(() => {
+      showMessage("Pinch to zoom out. Reverse pinch to zoom in. Btw, you can rotate with your fingers too.");
+      intro.countdownTimer = setTimeout(startReleaseCountdown, 4500);
+    }, 10000);
+  }
+
+  function startReleaseCountdown() {
+    intro.countdownValue = 5;
+    showCountdown();
+
+    intro.countdownTimer = setInterval(() => {
+      intro.countdownValue--;
+      if (intro.countdownValue <= 0) {
+        clearInterval(intro.countdownTimer);
+        releaseMap();
+        return;
+      }
+
+      showCountdown();
+    }, 1000);
+  }
+
+  function showCountdown() {
+    showMessage('Ready?<span class="countdown">' + intro.countdownValue + '</span>');
+  }
+
+  function releaseMap() {
+    intro.released = true;
+    introWallsEl.innerHTML = "";
+    worldEl.classList.add("map-open");
+    setReleasedBounds();
+    hideMessage();
+    setHint("map open. zoom, rotate, and explore.");
+  }
+
   function screenAdjusted(gamma, beta) {
     const angle = screen.orientation && typeof screen.orientation.angle === "number"
       ? screen.orientation.angle
@@ -232,6 +390,7 @@
       game.phase = "running";
       marble.vx = 0; marble.vy = 0;
       setHint("neutral set. tilt from your normal holding angle.");
+      scheduleIntroSequence();
     }
   }
 
@@ -309,7 +468,13 @@
     if (["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(k)) {
       e.preventDefault();
       sensor.using = sensor.using === "none" ? "keyboard" : sensor.using;
-      if (game.phase === "waiting" || game.phase === "calibrating") game.phase = "keyboard";
+      if (game.phase === "waiting" || game.phase === "calibrating") {
+        game.phase = "keyboard";
+        tilt.neutralX = 0;
+        tilt.neutralY = 0;
+        calibration.autoNeutralDone = true;
+        scheduleIntroSequence();
+      }
     }
   }
 
@@ -346,6 +511,7 @@
         tilt.neutralX = 0;
         tilt.neutralY = 0;
         calibration.autoNeutralDone = true;
+        scheduleIntroSequence();
       }
     }, 1400);
   }
@@ -418,11 +584,62 @@
     marble.y += marble.vy * dt;
   }
 
+  function resolveObstacleCollision(obstacle) {
+    const closestX = clamp(marble.x, obstacle.x, obstacle.x + obstacle.w);
+    const closestY = clamp(marble.y, obstacle.y, obstacle.y + obstacle.h);
+    const dx = marble.x - closestX;
+    const dy = marble.y - closestY;
+    const distanceSq = dx * dx + dy * dy;
+
+    if (distanceSq > marble.r * marble.r) return;
+
+    let distance = Math.sqrt(distanceSq);
+    let nx = dx / (distance || 1);
+    let ny = dy / (distance || 1);
+
+    if (distance === 0) {
+      const left = Math.abs(marble.x - obstacle.x);
+      const right = Math.abs(obstacle.x + obstacle.w - marble.x);
+      const top = Math.abs(marble.y - obstacle.y);
+      const bottom = Math.abs(obstacle.y + obstacle.h - marble.y);
+      const min = Math.min(left, right, top, bottom);
+      nx = min === left ? -1 : min === right ? 1 : 0;
+      ny = min === top ? -1 : min === bottom ? 1 : 0;
+      distance = 0;
+    }
+
+    const overlap = marble.r - distance;
+    marble.x += nx * overlap;
+    marble.y += ny * overlap;
+
+    const impact = marble.vx * nx + marble.vy * ny;
+    if (impact < 0) {
+      marble.vx -= (1 + physics.bounce) * impact * nx;
+      marble.vy -= (1 + physics.bounce) * impact * ny;
+    }
+  }
+
   function handleWallCollisions() {
-    if (marble.x < marble.r) { marble.x = marble.r; marble.vx = -marble.vx * physics.bounce; }
-    if (marble.x > innerWidth - marble.r) { marble.x = innerWidth - marble.r; marble.vx = -marble.vx * physics.bounce; }
-    if (marble.y < marble.r) { marble.y = marble.r; marble.vy = -marble.vy * physics.bounce; }
-    if (marble.y > innerHeight - marble.r) { marble.y = innerHeight - marble.r; marble.vy = -marble.vy * physics.bounce; }
+    if (marble.x < bounds.left + marble.r) {
+      marble.x = bounds.left + marble.r;
+      marble.vx = -marble.vx * physics.bounce;
+    }
+    if (marble.x > bounds.right - marble.r) {
+      marble.x = bounds.right - marble.r;
+      marble.vx = -marble.vx * physics.bounce;
+    }
+    if (marble.y < bounds.top + marble.r) {
+      marble.y = bounds.top + marble.r;
+      marble.vy = -marble.vy * physics.bounce;
+    }
+    if (marble.y > bounds.bottom - marble.r) {
+      marble.y = bounds.bottom - marble.r;
+      marble.vy = -marble.vy * physics.bounce;
+    }
+
+    if (intro.released) {
+      obstacles.forEach(resolveObstacleCollision);
+    }
   }
 
   function loop() {
@@ -444,8 +661,9 @@
     requestAnimationFrame(loop);
   }
 
+  setupMap();
   syncMarbleRadius();
-  applyCameraTransform();
+  centerCameraOnMarble();
   enableKeyboardInput();
   enableGestureInput();
   loop();

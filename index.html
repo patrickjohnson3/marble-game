@@ -10,7 +10,16 @@
 </script>
 </head>
 <body>
-<div id="game"><div id="world"><div id="marble"></div></div></div>
+<div id="game">
+  <div id="world">
+    <div id="introWalls" class="walls"></div>
+    <div id="mapWalls" class="walls"></div>
+    <div id="obstacles"></div>
+    <div id="marble"></div>
+  </div>
+</div>
+
+<div id="messageOverlay" aria-live="polite"></div>
 
 <div id="panel">
   <div id="hint">hold phone normally, then tap start</div>
