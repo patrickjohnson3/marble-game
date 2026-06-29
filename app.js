@@ -318,10 +318,12 @@
     const dt = clamp((now - lastFrame) / 16.67, 0.25, 2);
     lastFrame = now;
 
-    updateTilt(dt);
-    updateVelocity(dt);
-    updatePosition(dt);
-    handleWallCollisions();
+    if (game.phase !== "waiting") {
+      updateTilt(dt);
+      updateVelocity(dt);
+      updatePosition(dt);
+      handleWallCollisions();
+    }
 
     marbleEl.style.left = marble.x + "px";
     marbleEl.style.top = marble.y + "px";
