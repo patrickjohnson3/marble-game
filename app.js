@@ -5,6 +5,7 @@ const [
   domModule,
   geometryModule,
   hapticsModule,
+  physicsModule,
   renderingModule,
   stateModule
 ] = await Promise.all([
@@ -12,6 +13,7 @@ const [
   import(versioned("./dom.js")),
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
+  import(versioned("./physics.js")),
   import(versioned("./rendering.js")),
   import(versioned("./state.js"))
 ]).catch((error) => {
@@ -30,8 +32,9 @@ const {
   settingsControls
 } = configModule;
 const { els } = domModule;
-const { clamp, distance, angle, midpoint, circleRectContact } = geometryModule;
+const { clamp, distance, angle, midpoint } = geometryModule;
 const { createHapticsController } = hapticsModule;
+const { updatePhysicsInput, updatePhysics } = physicsModule;
 const { renderMapElements, renderWalls } = renderingModule;
 const { createGameState } = stateModule;
 
@@ -141,7 +144,6 @@ sensitivitySetting.value = settings.acceleration;
 rotationSetting.checked = settings.rotationEnabled;
 hapticsSetting.checked = settings.hapticsEnabled;
 
-function dz(v) { return Math.abs(v) < physics.deadZone ? 0 : v; }
 function setHint(message) { hint.textContent = message; }
 function isSettingsOpen() { return settingsOverlay.classList.contains("open"); }
 
@@ -753,122 +755,18 @@ settingsOverlay.addEventListener("click", (e) => {
   if (e.target === settingsOverlay) closeSettingsModal();
 });
 
-function updateTilt(dt) {
-  const nx = tilt.neutralX ?? tilt.rawX;
-  const ny = tilt.neutralY ?? tilt.rawY;
-
-  const sensorX = clamp(dz(tilt.rawX - nx), -physics.maxTilt, physics.maxTilt);
-  const sensorY = clamp(dz(tilt.rawY - ny), -physics.maxTilt, physics.maxTilt);
-  const targetX = keyboard.x ? keyboard.x * physics.keyboardTilt : sensorX;
-  const targetY = keyboard.y ? keyboard.y * physics.keyboardTilt : sensorY;
-  const c = Math.cos(-camera.rotation);
-  const s = Math.sin(-camera.rotation);
-  const worldTargetX = targetX * c - targetY * s;
-  const worldTargetY = targetX * s + targetY * c;
-
-  tilt.smoothX += (worldTargetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
-  tilt.smoothY += (worldTargetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
-}
-
-function updateVelocity(dt) {
-  marble.vx += tilt.smoothX * physics.accel * dt;
-  marble.vy += tilt.smoothY * physics.accel * dt;
-
-  const drag = Math.pow(physics.friction, dt);
-  marble.vx = clamp(marble.vx * drag, -physics.maxSpeed, physics.maxSpeed);
-  marble.vy = clamp(marble.vy * drag, -physics.maxSpeed, physics.maxSpeed);
-}
-
-function updatePosition(dt) {
-  marble.x += marble.vx * dt;
-  marble.y += marble.vy * dt;
-}
-
-function marbleOverRect(rect) {
-  return circleRectContact(marble, rect).intersects;
-}
-
-function handleSurfaceFeedback() {
-  if (!intro.released) return;
-  if (!roughPatches.some(marbleOverRect)) return;
-
-  hapticFeedback.pulseSurface(Math.hypot(marble.vx, marble.vy));
-}
-
-function resolveObstacleCollision(obstacle) {
-  const contact = circleRectContact(marble, obstacle);
-
-  if (!contact.intersects) return;
-
-  let distance = Math.sqrt(contact.distanceSq);
-  let nx = contact.dx / (distance || 1);
-  let ny = contact.dy / (distance || 1);
-  let overlap = marble.r - distance;
-
-  if (distance === 0) {
-    const left = Math.abs(marble.x - obstacle.x);
-    const right = Math.abs(obstacle.x + obstacle.w - marble.x);
-    const top = Math.abs(marble.y - obstacle.y);
-    const bottom = Math.abs(obstacle.y + obstacle.h - marble.y);
-    const min = Math.min(left, right, top, bottom);
-    nx = min === left ? -1 : min === right ? 1 : 0;
-    ny = min === top ? -1 : min === bottom ? 1 : 0;
-    overlap = marble.r + min;
-  }
-
-  marble.x += nx * overlap;
-  marble.y += ny * overlap;
-
-  const impact = marble.vx * nx + marble.vy * ny;
-  if (impact < 0) {
-    hapticFeedback.pulseImpact(-impact);
-    marble.vx -= (1 + physics.bounce) * impact * nx;
-    marble.vy -= (1 + physics.bounce) * impact * ny;
-  }
-}
-
-function handleWallCollisions() {
-  if (marble.x < bounds.left + marble.r) {
-    hapticFeedback.pulseImpact(Math.abs(marble.vx));
-    marble.x = bounds.left + marble.r;
-    marble.vx = -marble.vx * physics.bounce;
-  }
-  if (marble.x > bounds.right - marble.r) {
-    hapticFeedback.pulseImpact(Math.abs(marble.vx));
-    marble.x = bounds.right - marble.r;
-    marble.vx = -marble.vx * physics.bounce;
-  }
-  if (marble.y < bounds.top + marble.r) {
-    hapticFeedback.pulseImpact(Math.abs(marble.vy));
-    marble.y = bounds.top + marble.r;
-    marble.vy = -marble.vy * physics.bounce;
-  }
-  if (marble.y > bounds.bottom - marble.r) {
-    hapticFeedback.pulseImpact(Math.abs(marble.vy));
-    marble.y = bounds.bottom - marble.r;
-    marble.vy = -marble.vy * physics.bounce;
-  }
-
-  if (intro.released) {
-    obstacles.forEach(resolveObstacleCollision);
-  }
-}
-
-function physicsStep(dt) {
-  updateVelocity(dt);
-  updatePosition(dt);
-  handleWallCollisions();
-  handleSurfaceFeedback();
-}
-
-function updatePhysics(dt) {
-  const speed = Math.hypot(marble.vx, marble.vy);
-  const steps = Math.max(1, Math.ceil((speed * dt) / physics.maxStepDistance));
-  const stepDt = dt / steps;
-
-  for (let i = 0; i < steps; i++) {
-    physicsStep(stepDt);
-  }
+function physicsContext() {
+  return {
+    marble,
+    bounds,
+    intro,
+    tilt,
+    keyboard,
+    camera,
+    physics,
+    obstacles,
+    roughPatches
+  };
 }
 
 function loop() {
@@ -881,8 +779,12 @@ function loop() {
   lastFrame = now;
 
   if (game.phase !== "waiting") {
-    updateTilt(dt);
-    updatePhysics(dt);
+    const context = physicsContext();
+    updatePhysicsInput(context, dt);
+    updatePhysics(context, dt, {
+      onImpact: (impact) => hapticFeedback.pulseImpact(impact),
+      onSurface: (speed) => hapticFeedback.pulseSurface(speed)
+    });
     updateCameraFollow(dt);
   }
 
