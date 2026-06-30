@@ -10,7 +10,7 @@
   #settingsOverlay,#messageOverlay{display:none}
 </style>
 <script>
-  const assetVersion = "2026-06-30.2";
+  const assetVersion = Date.now().toString(36);
   const appStylesheet = document.createElement("link");
   appStylesheet.rel = "stylesheet";
   appStylesheet.href = "style.css?v=" + assetVersion;
