@@ -176,9 +176,7 @@ function loadSettings() {
     return {
       maxSpeed: numberSetting(saved.maxSpeed, settingsConfig.maxSpeed, settingsControls.maxSpeed),
       acceleration: numberSetting(saved.acceleration, settingsConfig.acceleration, settingsControls.acceleration),
-      rotationEnabled: typeof saved.rotationEnabled === "boolean"
-        ? saved.rotationEnabled
-        : settingsConfig.rotationEnabled,
+      rotationEnabled: settingsConfig.rotationEnabled,
       hapticsEnabled: typeof saved.hapticsEnabled === "boolean"
         ? saved.hapticsEnabled
         : settingsConfig.hapticsEnabled
@@ -190,7 +188,11 @@ function loadSettings() {
 
 function saveSettings() {
   try {
-    localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+    localStorage.setItem(settingsStorageKey, JSON.stringify({
+      maxSpeed: settings.maxSpeed,
+      acceleration: settings.acceleration,
+      hapticsEnabled: settings.hapticsEnabled
+    }));
   } catch {
     // Persistence is optional; gameplay should still work without storage.
   }
