@@ -18,6 +18,7 @@ const [
 });
 
 const {
+  appConfig,
   mapConfig,
   timing,
   tuning,
@@ -183,6 +184,23 @@ function applySettings() {
 }
 
 const hapticFeedback = createHapticsController(haptics, hapticTuning);
+
+async function requestFullscreenMode() {
+  if (!appConfig.fullscreenOnStart || document.fullscreenElement) return;
+
+  const target = document.documentElement;
+  const requestFullscreen = target.requestFullscreen ||
+    target.webkitRequestFullscreen ||
+    target.msRequestFullscreen;
+
+  if (!requestFullscreen) return;
+
+  try {
+    await requestFullscreen.call(target);
+  } catch {
+    // Fullscreen is best-effort; some mobile browsers reject it.
+  }
+}
 
 async function requestWakeLock() {
   if (!("wakeLock" in navigator)) return;
@@ -655,6 +673,7 @@ const inputSystems = {
 };
 
 async function start() {
+  requestFullscreenMode();
   requestWakeLock();
 
   const ok = await requestPermissionIfNeeded();

@@ -1,3 +1,7 @@
+export const appConfig = {
+  fullscreenOnStart: true
+};
+
 export const mapConfig = {
   world: {
     width: 2200,
