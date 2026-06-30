@@ -9,6 +9,7 @@ const scripts = [
   "geometry.js",
   "haptics.js",
   "physics.js",
+  "platform.js",
   "rendering.js",
   "state.js"
 ];

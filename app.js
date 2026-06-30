@@ -6,6 +6,7 @@ const [
   geometryModule,
   hapticsModule,
   physicsModule,
+  platformModule,
   renderingModule,
   stateModule
 ] = await Promise.all([
@@ -14,6 +15,7 @@ const [
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
   import(versioned("./physics.js")),
+  import(versioned("./platform.js")),
   import(versioned("./rendering.js")),
   import(versioned("./state.js"))
 ]).catch((error) => {
@@ -35,6 +37,12 @@ const { els } = domModule;
 const { clamp, distance, angle, midpoint } = geometryModule;
 const { createHapticsController } = hapticsModule;
 const { updatePhysicsInput, updatePhysics } = physicsModule;
+const {
+  requestFullscreenMode,
+  requestWakeLock,
+  requestMotionPermissionIfNeeded,
+  screenAdjusted
+} = platformModule;
 const { renderMapElements, renderWalls } = renderingModule;
 const { createGameState } = stateModule;
 
@@ -92,7 +100,6 @@ const pointers = new Map();
 let gesture = null;
 let lastFrame = performance.now();
 let sensorWatchdog = 0;
-let wakeLock = null;
 const settingsStorageKey = "marbleGameSettings";
 
 function applyRangeConfig(input, range) {
@@ -155,37 +162,6 @@ function applySettings() {
 }
 
 const hapticFeedback = createHapticsController(haptics, hapticTuning);
-
-async function requestFullscreenMode() {
-  if (!appConfig.fullscreenOnStart || document.fullscreenElement) return;
-
-  const target = document.documentElement;
-  const requestFullscreen = target.requestFullscreen ||
-    target.webkitRequestFullscreen ||
-    target.msRequestFullscreen;
-
-  if (!requestFullscreen) return;
-
-  try {
-    await requestFullscreen.call(target);
-  } catch {
-    // Fullscreen is best-effort; some mobile browsers reject it.
-  }
-}
-
-async function requestWakeLock() {
-  if (!("wakeLock" in navigator)) return;
-  if (wakeLock || document.visibilityState !== "visible") return;
-
-  try {
-    wakeLock = await navigator.wakeLock.request("screen");
-    wakeLock.addEventListener("release", () => {
-      wakeLock = null;
-    });
-  } catch {
-    wakeLock = null;
-  }
-}
 
 function keepDisplayAwakeWhenVisible() {
   if (document.visibilityState === "visible" && game.phase !== "waiting") {
@@ -474,26 +450,6 @@ function releaseMap() {
   setHint("map open. pinch to zoom and explore.");
 }
 
-function screenAdjusted(gamma, beta) {
-  const angle = screen.orientation && typeof screen.orientation.angle === "number"
-    ? screen.orientation.angle
-    : (window.orientation || 0);
-
-  let tx = gamma || 0;
-  let ty = beta || 0;
-
-  if (angle === 90) {
-    [tx, ty] = [ty, -tx];
-  } else if (angle === -90 || angle === 270) {
-    [tx, ty] = [-ty, tx];
-  } else if (angle === 180) {
-    tx = -tx;
-    ty = -ty;
-  }
-
-  return [tx, ty];
-}
-
 function maybeAutoNeutral() {
   if (calibration.autoNeutralDone) return;
 
@@ -533,24 +489,6 @@ function onMotion(e) {
   tilt.rawX = -(g.x || 0) * tuning.motionGravityScale;
   tilt.rawY = (g.y || 0) * tuning.motionGravityScale;
   maybeAutoNeutral();
-}
-
-async function requestPermissionIfNeeded() {
-  try {
-    if (typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function") {
-      const p = await DeviceOrientationEvent.requestPermission();
-      if (p !== "granted") return false;
-    }
-    if (typeof DeviceMotionEvent !== "undefined" &&
-        typeof DeviceMotionEvent.requestPermission === "function") {
-      const p = await DeviceMotionEvent.requestPermission();
-      if (p !== "granted") return false;
-    }
-  } catch {
-    return false;
-  }
-  return true;
 }
 
 function resetCalibration() {
@@ -670,13 +608,13 @@ const inputSystems = {
 };
 
 async function start() {
-  const ok = await requestPermissionIfNeeded();
+  const ok = await requestMotionPermissionIfNeeded();
   if (!ok) {
     setHint("motion permission denied. check chrome site settings.");
     return;
   }
 
-  requestFullscreenMode();
+  requestFullscreenMode(appConfig);
   requestWakeLock();
   resetGameState();
   inputSystems.motion.enable();
