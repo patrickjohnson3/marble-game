@@ -121,6 +121,7 @@ const pointers = new Map();
 let gesture = null;
 let lastFrame = performance.now();
 let sensorWatchdog = 0;
+let wakeLock = null;
 
 const haptics = {
   enabled: true,
@@ -182,6 +183,26 @@ function applySettings() {
 }
 
 const hapticFeedback = createHapticsController(haptics, hapticTuning);
+
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  if (wakeLock || document.visibilityState !== "visible") return;
+
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => {
+      wakeLock = null;
+    });
+  } catch {
+    wakeLock = null;
+  }
+}
+
+function keepDisplayAwakeWhenVisible() {
+  if (document.visibilityState === "visible" && game.phase !== "waiting") {
+    requestWakeLock();
+  }
+}
 
 function getDebugLines() {
   return [
@@ -292,6 +313,7 @@ function resize() {
   else applyCameraTransform();
 }
 addEventListener("resize", resize);
+document.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
 
 function applyCameraTransform() {
   worldEl.style.transform =
@@ -633,6 +655,8 @@ const inputSystems = {
 };
 
 async function start() {
+  requestWakeLock();
+
   const ok = await requestPermissionIfNeeded();
   if (!ok) {
     setHint("motion permission denied. check chrome site settings.");
