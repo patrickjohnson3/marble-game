@@ -6,7 +6,10 @@
 <title>marble tilt</title>
 <script>
   const assetVersion = Date.now();
-  document.write('<link rel="stylesheet" href="style.css?v=' + assetVersion + '">');
+  const appStylesheet = document.createElement("link");
+  appStylesheet.rel = "stylesheet";
+  appStylesheet.href = "style.css?v=" + assetVersion;
+  document.head.appendChild(appStylesheet);
 </script>
 </head>
 <body>
