@@ -496,7 +496,7 @@ function releaseMap() {
   worldEl.classList.add("map-open");
   setReleasedBounds();
   hideMessage();
-  setHint("map open. zoom, rotate, and explore.");
+  setHint("map open. pinch to zoom and explore.");
 }
 
 function screenAdjusted(gamma, beta) {
