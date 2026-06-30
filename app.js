@@ -599,7 +599,10 @@ function onKeyUp(e) {
 
 const inputSystems = {
   motion: {
+    enabled: false,
     enable() {
+      if (this.enabled) return;
+      this.enabled = true;
       addEventListener("deviceorientation", onOrientation, true);
       addEventListener("devicemotion", onMotion, true);
     }
