@@ -695,15 +695,14 @@ const inputSystems = {
 };
 
 async function start() {
-  requestFullscreenMode();
-  requestWakeLock();
-
   const ok = await requestPermissionIfNeeded();
   if (!ok) {
     setHint("motion permission denied. check chrome site settings.");
     return;
   }
 
+  requestFullscreenMode();
+  requestWakeLock();
   resetGameState();
   inputSystems.motion.enable();
   game.phase = "calibrating";
