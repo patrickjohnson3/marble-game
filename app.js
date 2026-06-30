@@ -288,7 +288,7 @@ function syncMarbleRadius() {
   marble.r = Math.max(marbleEl.offsetWidth, marbleEl.offsetHeight) / 2;
 }
 
-function updateMarbleShadow() {
+function updateMarbleLighting() {
   const light = mapConfig.light;
   const dx = marble.x - light.x;
   const dy = marble.y - light.y;
@@ -303,6 +303,11 @@ function updateMarbleShadow() {
   marbleEl.style.setProperty("--marble-shadow-x", (dx / distance * shadowDistance).toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-shadow-y", (dy / distance * shadowDistance).toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-shadow-blur", shadowBlur.toFixed(1) + "px");
+
+  const glintX = 18 + clamp(marble.vx * 0.55, -9, 9);
+  const glintY = 14 + clamp(marble.vy * 0.55, -9, 9);
+  marbleEl.style.setProperty("--marble-glint-x", glintX.toFixed(1) + "px");
+  marbleEl.style.setProperty("--marble-glint-y", glintY.toFixed(1) + "px");
 }
 
 function centerCameraOnMarble() {
@@ -893,7 +898,7 @@ function loop() {
 
   marbleEl.style.left = marble.x + "px";
   marbleEl.style.top = marble.y + "px";
-  updateMarbleShadow();
+  updateMarbleLighting();
   updateDebugPanel();
 
   requestAnimationFrame(loop);

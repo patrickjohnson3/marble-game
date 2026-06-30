@@ -47,6 +47,13 @@ html,body{
     inset -8px -10px 18px #0018;
   will-change:left,top;
 }
+#marble::after{
+  content:"";position:absolute;width:14px;height:14px;border-radius:50%;
+  left:var(--marble-glint-x,18px);top:var(--marble-glint-y,14px);
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,#fff 0 18%,#ffffffd8 19% 40%,#ffffff00 72%);
+  filter:blur(.3px);opacity:.9;mix-blend-mode:screen;pointer-events:none;
+}
 #messageOverlay{
   position:fixed;left:18px;right:18px;top:50%;z-index:4;
   transform:translateY(-50%);display:none;pointer-events:none;
