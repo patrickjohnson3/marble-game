@@ -156,6 +156,7 @@ const game = {
 };
 
 const physics = { ...physicsConfig };
+const settingsStorageKey = "marbleGameSettings";
 
 function applyRangeConfig(input, range) {
   input.min = range.min;
@@ -163,14 +164,46 @@ function applyRangeConfig(input, range) {
   input.step = range.step;
 }
 
+function numberSetting(value, fallback, range) {
+  return Number.isFinite(value) ? clamp(value, range.min, range.max) : fallback;
+}
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(settingsStorageKey) || "null");
+    if (!saved || typeof saved !== "object") return { ...settingsConfig };
+
+    return {
+      maxSpeed: numberSetting(saved.maxSpeed, settingsConfig.maxSpeed, settingsControls.maxSpeed),
+      acceleration: numberSetting(saved.acceleration, settingsConfig.acceleration, settingsControls.acceleration),
+      rotationEnabled: typeof saved.rotationEnabled === "boolean"
+        ? saved.rotationEnabled
+        : settingsConfig.rotationEnabled,
+      hapticsEnabled: typeof saved.hapticsEnabled === "boolean"
+        ? saved.hapticsEnabled
+        : settingsConfig.hapticsEnabled
+    };
+  } catch {
+    return { ...settingsConfig };
+  }
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+  } catch {
+    // Persistence is optional; gameplay should still work without storage.
+  }
+}
+
+const settings = loadSettings();
+
 applyRangeConfig(speedSetting, settingsControls.maxSpeed);
 applyRangeConfig(sensitivitySetting, settingsControls.acceleration);
-speedSetting.value = settingsConfig.maxSpeed;
-sensitivitySetting.value = settingsConfig.acceleration;
-rotationSetting.checked = settingsConfig.rotationEnabled;
-hapticsSetting.checked = settingsConfig.hapticsEnabled;
-
-const settings = { ...settingsConfig };
+speedSetting.value = settings.maxSpeed;
+sensitivitySetting.value = settings.acceleration;
+rotationSetting.checked = settings.rotationEnabled;
+hapticsSetting.checked = settings.hapticsEnabled;
 
 function dz(v) { return Math.abs(v) < physics.deadZone ? 0 : v; }
 function setHint(message) { hint.textContent = message; }
@@ -755,14 +788,17 @@ closeSettings.addEventListener("click", closeSettingsModal);
 speedSetting.addEventListener("input", () => {
   settings.maxSpeed = Number(speedSetting.value);
   applySettings();
+  saveSettings();
 });
 sensitivitySetting.addEventListener("input", () => {
   settings.acceleration = Number(sensitivitySetting.value);
   applySettings();
+  saveSettings();
 });
 rotationSetting.addEventListener("change", () => {
   settings.rotationEnabled = rotationSetting.checked;
   applySettings();
+  saveSettings();
   if (!settings.rotationEnabled) {
     camera.rotation = 0;
     centerCameraOnMarble();
@@ -771,6 +807,7 @@ rotationSetting.addEventListener("change", () => {
 hapticsSetting.addEventListener("change", () => {
   settings.hapticsEnabled = hapticsSetting.checked;
   applySettings();
+  saveSettings();
 });
 settingsOverlay.addEventListener("click", (e) => {
   if (e.target === settingsOverlay) closeSettingsModal();
