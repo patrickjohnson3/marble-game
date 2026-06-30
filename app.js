@@ -288,6 +288,23 @@ function syncMarbleRadius() {
   marble.r = Math.max(marbleEl.offsetWidth, marbleEl.offsetHeight) / 2;
 }
 
+function updateMarbleShadow() {
+  const light = mapConfig.light;
+  const dx = marble.x - light.x;
+  const dy = marble.y - light.y;
+  const distance = Math.hypot(dx, dy) || 1;
+  const worldDiagonal = Math.hypot(world.width, world.height);
+  const reach = clamp(distance / worldDiagonal, 0, 1);
+  const shadowDistance = light.shadowMinDistance +
+    (light.shadowMaxDistance - light.shadowMinDistance) * reach;
+  const shadowBlur = light.shadowMinBlur +
+    (light.shadowMaxBlur - light.shadowMinBlur) * reach;
+
+  marbleEl.style.setProperty("--marble-shadow-x", (dx / distance * shadowDistance).toFixed(1) + "px");
+  marbleEl.style.setProperty("--marble-shadow-y", (dy / distance * shadowDistance).toFixed(1) + "px");
+  marbleEl.style.setProperty("--marble-shadow-blur", shadowBlur.toFixed(1) + "px");
+}
+
 function centerCameraOnMarble() {
   const transformed = transformedWorldPoint(marble.x, marble.y);
   camera.x = innerWidth / 2 - transformed.x;
@@ -876,6 +893,7 @@ function loop() {
 
   marbleEl.style.left = marble.x + "px";
   marbleEl.style.top = marble.y + "px";
+  updateMarbleShadow();
   updateDebugPanel();
 
   requestAnimationFrame(loop);

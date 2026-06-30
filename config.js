@@ -16,6 +16,14 @@ export const mapConfig = {
     maxScale: 2.5,
     followLag: 0.08
   },
+  light: {
+    x: 420,
+    y: 260,
+    shadowMinDistance: 14,
+    shadowMaxDistance: 30,
+    shadowMinBlur: 20,
+    shadowMaxBlur: 36
+  },
   elements: [
     { type: "obstacle", x: 260, y: 330, w: 310, h: 42 },
     { type: "obstacle", x: 720, y: 250, w: 54, h: 360 },
