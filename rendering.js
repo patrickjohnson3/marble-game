@@ -1,11 +1,13 @@
-function rectStyle(rect) {
-  return "left:" + rect.x + "px;top:" + rect.y + "px;width:" + rect.w + "px;height:" + rect.h + "px";
-}
-
 export function renderMapElements(container, className, elements) {
-  container.innerHTML = elements.map((element) => (
-    '<div class="' + className + '" style="' + rectStyle(element) + '"></div>'
-  )).join("");
+  container.replaceChildren(...elements.map((element) => {
+    const el = document.createElement("div");
+    el.className = className;
+    el.style.left = element.x + "px";
+    el.style.top = element.y + "px";
+    el.style.width = element.w + "px";
+    el.style.height = element.h + "px";
+    return el;
+  }));
 }
 
 export function renderWalls(container, walls) {
