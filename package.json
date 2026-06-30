@@ -1,6 +1,6 @@
 {
   "type": "module",
   "scripts": {
-    "test": "node smoke-test.js"
+    "test": "node smoke-test.js && node physics-test.js"
   }
 }
