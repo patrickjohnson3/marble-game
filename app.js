@@ -918,6 +918,23 @@ function handleWallCollisions() {
   }
 }
 
+function physicsStep(dt) {
+  updateVelocity(dt);
+  updatePosition(dt);
+  handleWallCollisions();
+  handleSurfaceFeedback();
+}
+
+function updatePhysics(dt) {
+  const speed = Math.hypot(marble.vx, marble.vy);
+  const steps = Math.max(1, Math.ceil((speed * dt) / physics.maxStepDistance));
+  const stepDt = dt / steps;
+
+  for (let i = 0; i < steps; i++) {
+    physicsStep(stepDt);
+  }
+}
+
 function loop() {
   const now = performance.now();
   const dt = clamp(
@@ -929,10 +946,7 @@ function loop() {
 
   if (game.phase !== "waiting") {
     updateTilt(dt);
-    updateVelocity(dt);
-    updatePosition(dt);
-    handleWallCollisions();
-    handleSurfaceFeedback();
+    updatePhysics(dt);
     updateCameraFollow(dt);
   }
 

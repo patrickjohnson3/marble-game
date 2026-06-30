@@ -80,7 +80,8 @@ export const physicsConfig = {
   bounce: 0.38,
   deadZone: 0.65,
   maxSpeed: 14,
-  keyboardTilt: 18
+  keyboardTilt: 18,
+  maxStepDistance: 10
 };
 
 export const settingsConfig = {
