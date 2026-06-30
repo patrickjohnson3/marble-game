@@ -867,6 +867,7 @@ function resolveObstacleCollision(obstacle) {
   let distance = Math.sqrt(contact.distanceSq);
   let nx = contact.dx / (distance || 1);
   let ny = contact.dy / (distance || 1);
+  let overlap = marble.r - distance;
 
   if (distance === 0) {
     const left = Math.abs(marble.x - obstacle.x);
@@ -876,10 +877,9 @@ function resolveObstacleCollision(obstacle) {
     const min = Math.min(left, right, top, bottom);
     nx = min === left ? -1 : min === right ? 1 : 0;
     ny = min === top ? -1 : min === bottom ? 1 : 0;
-    distance = 0;
+    overlap = marble.r + min;
   }
 
-  const overlap = marble.r - distance;
   marble.x += nx * overlap;
   marble.y += ny * overlap;
 
