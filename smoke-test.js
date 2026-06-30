@@ -6,6 +6,7 @@ const html = readFileSync("index.html", "utf8");
 const scripts = [
   "app.js",
   "config.js",
+  "debug.js",
   "dom.js",
   "geometry.js",
   "haptics.js",
