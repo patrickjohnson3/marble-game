@@ -12,7 +12,10 @@ const [
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
   import(versioned("./rendering.js"))
-]);
+]).catch((error) => {
+  showBootError(error);
+  throw error;
+});
 
 const {
   mapConfig,
@@ -26,6 +29,14 @@ const { els } = domModule;
 const { clamp, distance, angle, midpoint, circleRectContact } = geometryModule;
 const { createHapticsController } = hapticsModule;
 const { renderMapElements, renderWalls } = renderingModule;
+
+function showBootError(error) {
+  const hintEl = document.getElementById("hint");
+  if (hintEl) {
+    hintEl.textContent = "game failed to load. refresh and try again.";
+  }
+  console.error(error);
+}
 
 const {
   game: gameEl,
@@ -815,10 +826,15 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-setupMap();
-applySettings();
-syncMarbleRadius();
-centerCameraOnMarble();
-inputSystems.keyboard.enable();
-inputSystems.gestures.enable();
-loop();
+try {
+  setupMap();
+  applySettings();
+  syncMarbleRadius();
+  centerCameraOnMarble();
+  inputSystems.keyboard.enable();
+  inputSystems.gestures.enable();
+  loop();
+} catch (error) {
+  showBootError(error);
+  throw error;
+}
