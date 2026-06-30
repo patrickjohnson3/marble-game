@@ -23,7 +23,8 @@ const {
   tuning,
   hapticTuning,
   physicsConfig,
-  settingsConfig
+  settingsConfig,
+  settingsControls
 } = configModule;
 const { els } = domModule;
 const { clamp, distance, angle, midpoint, circleRectContact } = geometryModule;
@@ -154,6 +155,14 @@ const game = {
 
 const physics = { ...physicsConfig };
 
+function applyRangeConfig(input, range) {
+  input.min = range.min;
+  input.max = range.max;
+  input.step = range.step;
+}
+
+applyRangeConfig(speedSetting, settingsControls.maxSpeed);
+applyRangeConfig(sensitivitySetting, settingsControls.acceleration);
 speedSetting.value = settingsConfig.maxSpeed;
 sensitivitySetting.value = settingsConfig.acceleration;
 rotationSetting.checked = settingsConfig.rotationEnabled;

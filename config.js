@@ -77,3 +77,16 @@ export const settingsConfig = {
   rotationEnabled: false,
   hapticsEnabled: true
 };
+
+export const settingsControls = {
+  maxSpeed: {
+    min: 8,
+    max: 24,
+    step: 1
+  },
+  acceleration: {
+    min: 0.06,
+    max: 0.18,
+    step: 0.005
+  }
+};
