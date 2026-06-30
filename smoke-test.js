@@ -16,8 +16,13 @@ for (const script of scripts) {
   }
 }
 
-const appIds = [...app.matchAll(/document\.getElementById\("([^"]+)"\)/g)]
-  .map((match) => match[1]);
+const domIdPatterns = [
+  /document\.getElementById\("([^"]+)"\)/g,
+  /requiredElement\("([^"]+)"\)/g
+];
+const appIds = domIdPatterns.flatMap((pattern) => (
+  [...app.matchAll(pattern)].map((match) => match[1])
+));
 const htmlIds = new Set(
   [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1])
 );
