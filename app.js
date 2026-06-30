@@ -14,7 +14,14 @@ const [
   import(versioned("./rendering.js"))
 ]);
 
-const { mapConfig, timing, tuning, hapticTuning } = configModule;
+const {
+  mapConfig,
+  timing,
+  tuning,
+  hapticTuning,
+  physicsConfig,
+  settingsConfig
+} = configModule;
 const { els } = domModule;
 const { clamp, distance, angle, midpoint, circleRectContact } = geometryModule;
 const { createHapticsController } = hapticsModule;
@@ -134,23 +141,14 @@ const game = {
   phase: "waiting"
 };
 
-const physics = {
-  accel: 0.115,
-  maxTilt: 26,
-  smoothing: 0.2,
-  friction: 0.94,
-  bounce: 0.38,
-  deadZone: 0.65,
-  maxSpeed: 14,
-  keyboardTilt: 18
-};
+const physics = { ...physicsConfig };
 
-const settings = {
-  maxSpeed: Number(speedSetting.value),
-  acceleration: Number(sensitivitySetting.value),
-  rotationEnabled: rotationSetting.checked,
-  hapticsEnabled: hapticsSetting.checked
-};
+speedSetting.value = settingsConfig.maxSpeed;
+sensitivitySetting.value = settingsConfig.acceleration;
+rotationSetting.checked = settingsConfig.rotationEnabled;
+hapticsSetting.checked = settingsConfig.hapticsEnabled;
+
+const settings = { ...settingsConfig };
 
 function dz(v) { return Math.abs(v) < physics.deadZone ? 0 : v; }
 function setHint(message) { hint.textContent = message; }

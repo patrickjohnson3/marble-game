@@ -59,3 +59,21 @@ export const hapticTuning = {
   surfaceMinDurationMs: 5,
   surfaceMaxDurationMs: 16
 };
+
+export const physicsConfig = {
+  accel: 0.115,
+  maxTilt: 26,
+  smoothing: 0.2,
+  friction: 0.94,
+  bounce: 0.38,
+  deadZone: 0.65,
+  maxSpeed: 14,
+  keyboardTilt: 18
+};
+
+export const settingsConfig = {
+  maxSpeed: physicsConfig.maxSpeed,
+  acceleration: physicsConfig.accel,
+  rotationEnabled: false,
+  hapticsEnabled: true
+};
