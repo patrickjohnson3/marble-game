@@ -5,13 +5,15 @@ const [
   domModule,
   geometryModule,
   hapticsModule,
-  renderingModule
+  renderingModule,
+  stateModule
 ] = await Promise.all([
   import(versioned("./config.js")),
   import(versioned("./dom.js")),
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
-  import(versioned("./rendering.js"))
+  import(versioned("./rendering.js")),
+  import(versioned("./state.js"))
 ]).catch((error) => {
   showBootError(error);
   throw error;
@@ -31,6 +33,7 @@ const { els } = domModule;
 const { clamp, distance, angle, midpoint, circleRectContact } = geometryModule;
 const { createHapticsController } = hapticsModule;
 const { renderMapElements, renderWalls } = renderingModule;
+const { createGameState } = stateModule;
 
 function showBootError(error) {
   const hintEl = document.getElementById("hint");
@@ -67,95 +70,26 @@ const mapElements = mapConfig.elements;
 const obstacles = mapElements.filter((element) => element.type === "obstacle");
 const roughPatches = mapElements.filter((element) => element.type === "roughPatch");
 
-const marble = {
-  x: world.width / 2,
-  y: world.height / 2,
-  vx: 0,
-  vy: 0,
-  r: 0
-};
-
-const bounds = {
-  left: 0,
-  right: world.width,
-  top: 0,
-  bottom: world.height
-};
-
-const intro = {
-  started: false,
-  released: false,
-  wallThickness: mapConfig.intro.wallThickness,
-  viewportMargin: mapConfig.intro.viewportMargin,
-  messageTimer: 0,
-  countdownTimer: 0,
-  countdownValue: timing.countdownStart
-};
-
-const tilt = {
-  rawX: 0,
-  rawY: 0,
-  smoothX: 0,
-  smoothY: 0,
-  neutralX: null,
-  neutralY: null
-};
-
-const keyboard = {
-  x: 0,
-  y: 0
-};
-
-const camera = {
-  x: 0,
-  y: 0,
-  scale: 1,
-  rotation: 0,
-  rotationEnabled: false,
-  minScale: mapConfig.camera.minScale,
-  maxScale: mapConfig.camera.maxScale,
-  followLag: mapConfig.camera.followLag,
-  gestureCooldown: 0
-};
+const state = createGameState({ world, mapConfig, timing, hapticTuning, physicsConfig });
+const {
+  marble,
+  bounds,
+  intro,
+  tilt,
+  keyboard,
+  camera,
+  haptics,
+  calibration,
+  sensor,
+  game,
+  physics
+} = state;
 
 const pointers = new Map();
 let gesture = null;
 let lastFrame = performance.now();
 let sensorWatchdog = 0;
 let wakeLock = null;
-
-const haptics = {
-  enabled: true,
-  impact: {
-    cooldownMs: hapticTuning.impactCooldownMs,
-    lastPulse: 0,
-    minImpact: hapticTuning.impactMin
-  },
-  surface: {
-    cooldownMs: hapticTuning.surfaceCooldownMs,
-    lastPulse: 0,
-    minSpeed: hapticTuning.surfaceMinSpeed
-  }
-};
-
-const calibration = {
-  sampleCount: 0,
-  sampleX: 0,
-  sampleY: 0,
-  autoNeutralDone: false
-};
-
-const sensor = {
-  gotOrientation: false,
-  gotMotion: false,
-  using: "none"
-};
-
-const game = {
-  phase: "waiting"
-};
-
-const physics = { ...physicsConfig };
 const settingsStorageKey = "marbleGameSettings";
 
 function applyRangeConfig(input, range) {
