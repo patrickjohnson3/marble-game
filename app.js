@@ -308,8 +308,8 @@ function introPenWalls() {
   ];
 }
 
-function showMessage(html) {
-  messageOverlay.innerHTML = html;
+function showMessage(message) {
+  messageOverlay.textContent = message;
   messageOverlay.classList.add("show");
 }
 
@@ -520,7 +520,11 @@ function startReleaseCountdown() {
 }
 
 function showCountdown() {
-  showMessage('Ready?<span class="countdown">' + intro.countdownValue + '</span>');
+  const countdown = document.createElement("span");
+  countdown.className = "countdown";
+  countdown.textContent = intro.countdownValue;
+  messageOverlay.replaceChildren("Ready?", countdown);
+  messageOverlay.classList.add("show");
 }
 
 function releaseMap() {
