@@ -1,4 +1,4 @@
-const assetVersion = new URL(import.meta.url).searchParams.get("v") || Date.now();
+const assetVersion = new URL(import.meta.url).searchParams.get("v") || "dev";
 const versioned = (path) => path + "?v=" + encodeURIComponent(assetVersion);
 const [
   configModule,
