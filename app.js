@@ -121,6 +121,7 @@ const trailPoints = [];
 const trailDurationMs = 2500;
 const trailMinDistance = 3;
 const trailMinIntervalMs = 50;
+const svgNamespace = "http://www.w3.org/2000/svg";
 const settingsStorageKey = "marbleGameSettings";
 
 function applyRangeConfig(input, range) {
@@ -281,15 +282,15 @@ function updateTrail(now) {
     const a = trailPoints[i - 1];
     const b = trailPoints[i];
     const opacity = clamp(1 - (now - b.t) / trailDurationMs, 0, 1) * 0.5;
-    segments.push(
-      "<line x1=\"" + a.x.toFixed(1) +
-      "\" y1=\"" + a.y.toFixed(1) +
-      "\" x2=\"" + b.x.toFixed(1) +
-      "\" y2=\"" + b.y.toFixed(1) +
-      "\" opacity=\"" + opacity.toFixed(3) + "\"/>"
-    );
+    const segment = document.createElementNS(svgNamespace, "line");
+    segment.setAttribute("x1", a.x.toFixed(1));
+    segment.setAttribute("y1", a.y.toFixed(1));
+    segment.setAttribute("x2", b.x.toFixed(1));
+    segment.setAttribute("y2", b.y.toFixed(1));
+    segment.setAttribute("opacity", opacity.toFixed(3));
+    segments.push(segment);
   }
-  trailSegmentsEl.innerHTML = segments.join("");
+  trailSegmentsEl.replaceChildren(...segments);
 }
 
 function mapEdgeWalls() {
