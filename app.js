@@ -471,7 +471,7 @@ function onKeyDown(e) {
 
 function onKeyUp(e) {
   const k = e.key.toLowerCase();
-  if (k === "escape") closeSettingsModal();
+  if (k === "escape") gameController.closeSettings();
   if (game.paused) return;
 
   if ((k === "arrowleft" || k === "a") && keyboard.x < 0) keyboard.x = 0;
@@ -523,7 +523,7 @@ async function start() {
   }
 
   requestWakeLock();
-  resetGameState();
+  gameController.reset();
   controlsEl.hidden = true;
   startBtn.disabled = true;
   inputSystems.motion.enable();
@@ -551,22 +551,31 @@ function requestStartFullscreen() {
   requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
 }
 
-startBtn.addEventListener("pointerdown", requestStartFullscreen);
-startBtn.addEventListener("click", start);
-neutralBtn.addEventListener("click", setNeutralNow);
-
 function openSettings() {
-  pauseGame();
+  gameController.pause();
   ui.openSettingsModal();
 }
 
 function closeSettingsModal() {
   ui.closeSettingsModal();
-  resumeGame();
+  gameController.resume();
 }
 
-settingsToggle.addEventListener("click", openSettings);
-closeSettings.addEventListener("click", closeSettingsModal);
+const gameController = {
+  start,
+  reset: resetGameState,
+  pause: pauseGame,
+  resume: resumeGame,
+  openSettings,
+  closeSettings: closeSettingsModal,
+  tick: loop
+};
+
+startBtn.addEventListener("pointerdown", requestStartFullscreen);
+startBtn.addEventListener("click", gameController.start);
+neutralBtn.addEventListener("click", setNeutralNow);
+settingsToggle.addEventListener("click", gameController.openSettings);
+closeSettings.addEventListener("click", gameController.closeSettings);
 speedSetting.addEventListener("input", () => {
   settings.maxSpeed = Number(speedSetting.value);
   applySettings();
@@ -602,7 +611,7 @@ fullscreenSetting.addEventListener("change", () => {
   applyFullscreenSetting();
 });
 settingsOverlay.addEventListener("click", (e) => {
-  if (e.target === settingsOverlay) closeSettingsModal();
+  if (e.target === settingsOverlay) gameController.closeSettings();
 });
 
 function physicsContext() {
@@ -654,7 +663,7 @@ function loop() {
   if (!game.paused) trailRenderer.update(now);
   ui.updateDebugPanel();
 
-  requestAnimationFrame(loop);
+  requestAnimationFrame(gameController.tick);
 }
 
 try {
@@ -664,7 +673,7 @@ try {
   cameraController.centerOnMarble();
   inputSystems.keyboard.enable();
   inputSystems.gestures.enable();
-  loop();
+  gameController.tick();
 } catch (error) {
   showBootError(error);
   throw error;
