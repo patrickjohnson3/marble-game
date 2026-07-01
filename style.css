@@ -81,7 +81,7 @@ html,body{
 #messageOverlay.show{display:block}
 #messageOverlay .countdown{display:block;margin-top:12px;font-size:clamp(52px,18vw,120px)}
 #panel{position:fixed;left:12px;right:64px;top:12px;display:grid;gap:8px;pointer-events:none}
-#hint,#debug{border-radius:14px;background:#0008;padding:10px 12px;backdrop-filter:blur(8px)}
+#hint,#debug{border-radius:14px;background:#0005;padding:10px 12px;backdrop-filter:blur(8px)}
 #hint{font-size:15px;text-align:center}
 #debug{font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;opacity:.86;white-space:pre-wrap}
 #settingsToggle{
