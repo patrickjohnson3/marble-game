@@ -12,6 +12,7 @@ export const runtimeScripts = [
   "physics.js",
   "platform.js",
   "rendering.js",
+  "sensor-watchdog.js",
   "settings-store.js",
   "state.js",
   "trail.js",

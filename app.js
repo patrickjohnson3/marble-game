@@ -13,6 +13,7 @@ const [
   physicsModule,
   platformModule,
   renderingModule,
+  sensorWatchdogModule,
   settingsStoreModule,
   stateModule,
   trailModule,
@@ -30,6 +31,7 @@ const [
   import(versioned("./physics.js")),
   import(versioned("./platform.js")),
   import(versioned("./rendering.js")),
+  import(versioned("./sensor-watchdog.js")),
   import(versioned("./settings-store.js")),
   import(versioned("./state.js")),
   import(versioned("./trail.js")),
@@ -74,6 +76,7 @@ const {
   screenAdjusted
 } = platformModule;
 const { renderMapElements, renderWalls } = renderingModule;
+const { createSensorWatchdog } = sensorWatchdogModule;
 const {
   applyRangeConfig,
   loadSettings,
@@ -139,9 +142,6 @@ const {
 } = state;
 
 let lastFrame = performance.now();
-let sensorWatchdog = 0;
-let sensorWatchdogStartedAt = 0;
-let sensorWatchdogDelayMs = 0;
 const settingsStorageKey = "marbleGameSettings";
 
 const settings = loadSettings({
@@ -213,45 +213,6 @@ function keepDisplayAwakeWhenVisible() {
   if (document.visibilityState === "visible" && game.phase !== "waiting") {
     requestWakeLock();
   }
-}
-
-function runSensorWatchdog() {
-  sensorWatchdog = 0;
-  sensorWatchdogStartedAt = 0;
-  sensorWatchdogDelayMs = 0;
-  if (game.paused) return;
-
-  if (sensor.using === "none") {
-    ui.setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
-    sensor.using = "keyboard";
-    game.phase = "keyboard";
-    tilt.neutralX = 0;
-    tilt.neutralY = 0;
-    calibration.autoNeutralDone = true;
-    introSequence.schedule();
-  }
-}
-
-function scheduleSensorWatchdog(delay = timing.sensorFallbackMs) {
-  clearTimeout(sensorWatchdog);
-  sensorWatchdogStartedAt = performance.now();
-  sensorWatchdogDelayMs = delay;
-  sensorWatchdog = setTimeout(runSensorWatchdog, delay);
-}
-
-function pauseSensorWatchdog() {
-  if (!sensorWatchdog) return;
-
-  const elapsed = performance.now() - sensorWatchdogStartedAt;
-  sensorWatchdogDelayMs = Math.max(0, sensorWatchdogDelayMs - elapsed);
-  clearTimeout(sensorWatchdog);
-  sensorWatchdog = 0;
-}
-
-function resumeSensorWatchdog() {
-  if (game.phase !== "calibrating" || sensor.using !== "none" || sensorWatchdog) return;
-
-  scheduleSensorWatchdog(Math.max(0, sensorWatchdogDelayMs));
 }
 
 function renderObstacles() {
@@ -350,6 +311,20 @@ const introSequence = createIntroSequence({
   messageOverlay,
   onRelease: releaseMap
 });
+const sensorWatchdog = createSensorWatchdog({
+  delayMs: timing.sensorFallbackMs,
+  game,
+  sensor,
+  onFallback() {
+    ui.setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
+    sensor.using = "keyboard";
+    game.phase = "keyboard";
+    tilt.neutralX = 0;
+    tilt.neutralY = 0;
+    calibration.autoNeutralDone = true;
+    introSequence.schedule();
+  }
+});
 
 function maybeAutoNeutral() {
   if (game.paused) return;
@@ -409,7 +384,7 @@ function pauseGame() {
   keyboard.x = 0;
   keyboard.y = 0;
   cameraController.resetGesture();
-  pauseSensorWatchdog();
+  sensorWatchdog.pause();
   introSequence.pause();
 }
 
@@ -418,15 +393,12 @@ function resumeGame() {
 
   game.paused = false;
   lastFrame = performance.now();
-  resumeSensorWatchdog();
+  sensorWatchdog.resume(() => game.phase === "calibrating" && sensor.using === "none");
   introSequence.resume();
 }
 
 function resetGameState() {
-  clearTimeout(sensorWatchdog);
-  sensorWatchdog = 0;
-  sensorWatchdogStartedAt = 0;
-  sensorWatchdogDelayMs = 0;
+  sensorWatchdog.reset();
   introSequence.clearTimers();
   resetCalibration();
 
@@ -559,7 +531,7 @@ async function start() {
 
   ui.setHint("keep holding normally for half a sec...");
 
-  scheduleSensorWatchdog();
+  sensorWatchdog.schedule();
 }
 
 function setNeutralNow() {
