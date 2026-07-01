@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "test": "node smoke-test.js && node physics-test.js",
+    "test": "node test-all.js",
     "bump-cache": "node bump-cache-version.js"
   }
 }
