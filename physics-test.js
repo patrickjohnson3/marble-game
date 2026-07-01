@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { circleRectContact } from "./geometry.js";
-import { marbleOverRect, resolveObstacleCollision, updatePhysics } from "./physics.js";
+import { marbleOverRect, resolveObstacleCollision, updatePhysics, updatePhysicsInput } from "./physics.js";
 
 function testCircleRectContact() {
   const circle = { x: 15, y: 15, r: 10 };
@@ -103,11 +103,32 @@ function testLowSpeedDriftSettles() {
   assert.equal(marble.vy, 0);
 }
 
+function testTiltCurveSoftensSmallSensorInput() {
+  const context = {
+    tilt: { rawX: 5, rawY: 10, neutralX: 0, neutralY: 0, smoothX: 0, smoothY: 0 },
+    keyboard: { x: 0, y: 0 },
+    camera: { rotation: 0 },
+    physics: {
+      deadZone: 0,
+      maxTilt: 10,
+      keyboardTilt: 18,
+      smoothing: 1,
+      tiltCurve: 2
+    }
+  };
+
+  updatePhysicsInput(context, 1);
+
+  assert.equal(context.tilt.smoothX, 2.5);
+  assert.equal(context.tilt.smoothY, 10);
+}
+
 testCircleRectContact();
 testObstacleBounce();
 testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
 testRoughPatchAddsDrag();
 testLowSpeedDriftSettles();
+testTiltCurveSoftensSmallSensorInput();
 
 console.log("Physics tests passed.");

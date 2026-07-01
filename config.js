@@ -87,7 +87,8 @@ export const physicsConfig = {
   roughPatchFriction: 0.82,
   scrapeHapticScale: 0.08,
   settleSpeed: 0.035,
-  settleTilt: 0.8
+  settleTilt: 0.8,
+  tiltCurve: 1.25
 };
 
 export const settingsConfig = {

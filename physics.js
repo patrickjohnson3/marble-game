@@ -4,12 +4,21 @@ function deadZone(value, threshold) {
   return Math.abs(value) < threshold ? 0 : value;
 }
 
+function curveTilt(value, maxTilt, curve = 1) {
+  if (value === 0 || curve === 1) return value;
+
+  const normalized = clamp(Math.abs(value) / maxTilt, 0, 1);
+  return Math.sign(value) * maxTilt * Math.pow(normalized, curve);
+}
+
 function updateTilt({ tilt, keyboard, camera, physics }, dt) {
   const nx = tilt.neutralX ?? tilt.rawX;
   const ny = tilt.neutralY ?? tilt.rawY;
 
-  const sensorX = clamp(deadZone(tilt.rawX - nx, physics.deadZone), -physics.maxTilt, physics.maxTilt);
-  const sensorY = clamp(deadZone(tilt.rawY - ny, physics.deadZone), -physics.maxTilt, physics.maxTilt);
+  const rawSensorX = clamp(deadZone(tilt.rawX - nx, physics.deadZone), -physics.maxTilt, physics.maxTilt);
+  const rawSensorY = clamp(deadZone(tilt.rawY - ny, physics.deadZone), -physics.maxTilt, physics.maxTilt);
+  const sensorX = curveTilt(rawSensorX, physics.maxTilt, physics.tiltCurve);
+  const sensorY = curveTilt(rawSensorY, physics.maxTilt, physics.tiltCurve);
   const targetX = keyboard.x ? keyboard.x * physics.keyboardTilt : sensorX;
   const targetY = keyboard.y ? keyboard.y * physics.keyboardTilt : sensorY;
   const c = Math.cos(-camera.rotation);
