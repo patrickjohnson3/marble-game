@@ -6,6 +6,7 @@ const [
   domModule,
   geometryModule,
   hapticsModule,
+  introTimersModule,
   physicsModule,
   platformModule,
   renderingModule,
@@ -16,6 +17,7 @@ const [
   import(versioned("./dom.js")),
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
+  import(versioned("./intro-timers.js")),
   import(versioned("./physics.js")),
   import(versioned("./platform.js")),
   import(versioned("./rendering.js")),
@@ -38,6 +40,13 @@ const { debugLines } = debugModule;
 const { els } = domModule;
 const { clamp, distance, angle, midpoint } = geometryModule;
 const { createHapticsController } = hapticsModule;
+const {
+  pauseIntroTimerState,
+  resetIntroTimerState,
+  resumeIntroTimerAction,
+  shouldPauseGame,
+  trackIntroTimer
+} = introTimersModule;
 const { updatePhysicsInput, updatePhysics } = physicsModule;
 const {
   requestFullscreenMode,
@@ -497,17 +506,13 @@ function onPointerEnd(e) {
 
 function setIntroTimer(stage, delay, callback) {
   clearIntroTimers();
-  intro.sequenceStage = stage;
-  intro.timerStartedAt = performance.now();
-  intro.timerDelayMs = delay;
+  trackIntroTimer(intro, stage, delay, performance.now());
   intro.messageTimer = setTimeout(callback, delay);
 }
 
 function scheduleCountdownTick(delay = timing.countdownTickMs) {
   clearIntroTimers();
-  intro.sequenceStage = "countdown";
-  intro.timerStartedAt = performance.now();
-  intro.timerDelayMs = delay;
+  trackIntroTimer(intro, "countdown", delay, performance.now());
   intro.countdownTimer = setTimeout(() => {
     if (game.paused) return;
 
@@ -621,28 +626,26 @@ function clearIntroTimers() {
 }
 
 function pauseIntroTimers() {
-  if (!intro.started || intro.released || intro.sequenceStage === "idle") return;
+  const hadActiveTimer = pauseIntroTimerState(intro, performance.now());
+  if (!hadActiveTimer) return;
 
-  const elapsed = performance.now() - intro.timerStartedAt;
-  intro.timerDelayMs = Math.max(0, intro.timerDelayMs - elapsed);
   clearIntroTimers();
 }
 
 function resumeIntroTimers() {
-  if (!intro.started || intro.released) return;
-
   const delay = Math.max(0, intro.timerDelayMs);
-  if (intro.sequenceStage === "promptWait") {
+  const action = resumeIntroTimerAction(intro);
+  if (action === "prompt") {
     setIntroTimer("promptWait", delay, showIntroPrompt);
-  } else if (intro.sequenceStage === "countdownWait") {
+  } else if (action === "countdownStart") {
     setIntroTimer("countdownWait", delay, startReleaseCountdown);
-  } else if (intro.sequenceStage === "countdown") {
+  } else if (action === "countdownTick") {
     scheduleCountdownTick(delay);
   }
 }
 
 function pauseGame() {
-  if (game.paused || game.phase === "waiting") return;
+  if (!shouldPauseGame(game)) return;
 
   game.paused = true;
   keyboard.x = 0;
@@ -675,9 +678,7 @@ function resetGameState() {
   intro.started = false;
   intro.released = false;
   intro.countdownValue = timing.countdownStart;
-  intro.sequenceStage = "idle";
-  intro.timerStartedAt = 0;
-  intro.timerDelayMs = 0;
+  resetIntroTimerState(intro);
 
   keyboard.x = 0;
   keyboard.y = 0;
