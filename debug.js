@@ -1,6 +1,7 @@
 export function debugLines({ game, sensor, calibration, tilt, marble, camera, haptics, intro }) {
   return [
     "phase: " + game.phase,
+    "paused: " + game.paused,
     "sensor: " + sensor.using,
     "orientation seen: " + sensor.gotOrientation + " | motion seen: " + sensor.gotMotion,
     "auto neutral: " + calibration.autoNeutralDone,

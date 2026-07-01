@@ -22,7 +22,10 @@ export function createGameState({ world, mapConfig, timing, hapticTuning, physic
       viewportMargin: mapConfig.intro.viewportMargin,
       messageTimer: 0,
       countdownTimer: 0,
-      countdownValue: timing.countdownStart
+      countdownValue: timing.countdownStart,
+      sequenceStage: "idle",
+      timerStartedAt: 0,
+      timerDelayMs: 0
     },
     tilt: {
       rawX: 0,
@@ -72,7 +75,8 @@ export function createGameState({ world, mapConfig, timing, hapticTuning, physic
       using: "none"
     },
     game: {
-      phase: "waiting"
+      phase: "waiting",
+      paused: false
     },
     physics: { ...physicsConfig }
   };

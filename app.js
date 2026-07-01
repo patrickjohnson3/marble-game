@@ -201,6 +201,26 @@ function keepDisplayAwakeWhenVisible() {
   }
 }
 
+function scheduleSensorWatchdog() {
+  clearTimeout(sensorWatchdog);
+  sensorWatchdog = setTimeout(() => {
+    if (game.paused) {
+      scheduleSensorWatchdog();
+      return;
+    }
+
+    if (sensor.using === "none") {
+      setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
+      sensor.using = "keyboard";
+      game.phase = "keyboard";
+      tilt.neutralX = 0;
+      tilt.neutralY = 0;
+      calibration.autoNeutralDone = true;
+      scheduleIntroSequence();
+    }
+  }, timing.sensorFallbackMs);
+}
+
 function updateDebugPanel() {
   if (!isSettingsOpen()) return;
 
@@ -445,6 +465,8 @@ function updateGesture() {
 }
 
 function onPointerDown(e) {
+  if (game.paused) return;
+
   pointers.set(e.pointerId, pointerPoint(e));
   if (gameEl.setPointerCapture) {
     try {
@@ -457,6 +479,7 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
+  if (game.paused) return;
   if (!pointers.has(e.pointerId)) return;
 
   pointers.set(e.pointerId, pointerPoint(e));
@@ -469,30 +492,53 @@ function onPointerEnd(e) {
   if (pointers.size === 2) startGesture();
 }
 
-function scheduleIntroSequence() {
-  if (intro.started) return;
-
-  intro.started = true;
-  intro.messageTimer = setTimeout(() => {
-    showMessage("Pinch to zoom out. Reverse pinch to zoom in. Rotation is available in settings.");
-    intro.countdownTimer = setTimeout(startReleaseCountdown, timing.countdownDelayMs);
-  }, timing.introPromptDelayMs);
+function setIntroTimer(stage, delay, callback) {
+  clearIntroTimers();
+  intro.sequenceStage = stage;
+  intro.timerStartedAt = performance.now();
+  intro.timerDelayMs = delay;
+  intro.messageTimer = setTimeout(callback, delay);
 }
 
-function startReleaseCountdown() {
-  intro.countdownValue = timing.countdownStart;
-  showCountdown();
+function scheduleCountdownTick(delay = timing.countdownTickMs) {
+  clearIntroTimers();
+  intro.sequenceStage = "countdown";
+  intro.timerStartedAt = performance.now();
+  intro.timerDelayMs = delay;
+  intro.countdownTimer = setTimeout(() => {
+    if (game.paused) return;
 
-  intro.countdownTimer = setInterval(() => {
     intro.countdownValue--;
     if (intro.countdownValue <= 0) {
-      clearInterval(intro.countdownTimer);
+      intro.countdownTimer = 0;
+      intro.sequenceStage = "idle";
       releaseMap();
       return;
     }
 
     showCountdown();
-  }, timing.countdownTickMs);
+    scheduleCountdownTick();
+  }, delay);
+}
+
+function showIntroPrompt() {
+  showMessage("Pinch to zoom out. Reverse pinch to zoom in. Rotation is available in settings.");
+  setIntroTimer("countdownWait", timing.countdownDelayMs, startReleaseCountdown);
+}
+
+function scheduleIntroSequence() {
+  if (intro.started) return;
+
+  intro.started = true;
+  setIntroTimer("promptWait", timing.introPromptDelayMs, showIntroPrompt);
+}
+
+function startReleaseCountdown() {
+  clearIntroTimers();
+  intro.sequenceStage = "countdown";
+  intro.countdownValue = timing.countdownStart;
+  showCountdown();
+  scheduleCountdownTick();
 }
 
 function showCountdown() {
@@ -505,6 +551,7 @@ function showCountdown() {
 
 function releaseMap() {
   intro.released = true;
+  intro.sequenceStage = "idle";
   introWallsEl.innerHTML = "";
   worldEl.classList.add("map-open");
   setReleasedBounds();
@@ -513,6 +560,7 @@ function releaseMap() {
 }
 
 function maybeAutoNeutral() {
+  if (game.paused) return;
   if (calibration.autoNeutralDone) return;
 
   calibration.sampleX += tilt.rawX;
@@ -565,9 +613,48 @@ function resetCalibration() {
 function clearIntroTimers() {
   clearTimeout(intro.messageTimer);
   clearTimeout(intro.countdownTimer);
-  clearInterval(intro.countdownTimer);
   intro.messageTimer = 0;
   intro.countdownTimer = 0;
+}
+
+function pauseIntroTimers() {
+  if (!intro.started || intro.released || intro.sequenceStage === "idle") return;
+
+  const elapsed = performance.now() - intro.timerStartedAt;
+  intro.timerDelayMs = Math.max(0, intro.timerDelayMs - elapsed);
+  clearIntroTimers();
+}
+
+function resumeIntroTimers() {
+  if (!intro.started || intro.released) return;
+
+  const delay = Math.max(0, intro.timerDelayMs);
+  if (intro.sequenceStage === "promptWait") {
+    setIntroTimer("promptWait", delay, showIntroPrompt);
+  } else if (intro.sequenceStage === "countdownWait") {
+    setIntroTimer("countdownWait", delay, startReleaseCountdown);
+  } else if (intro.sequenceStage === "countdown") {
+    scheduleCountdownTick(delay);
+  }
+}
+
+function pauseGame() {
+  if (game.paused || game.phase === "waiting") return;
+
+  game.paused = true;
+  keyboard.x = 0;
+  keyboard.y = 0;
+  gesture = null;
+  pointers.clear();
+  pauseIntroTimers();
+}
+
+function resumeGame() {
+  if (!game.paused) return;
+
+  game.paused = false;
+  lastFrame = performance.now();
+  resumeIntroTimers();
 }
 
 function resetGameState() {
@@ -577,6 +664,7 @@ function resetGameState() {
   resetCalibration();
 
   game.phase = "waiting";
+  game.paused = false;
   sensor.gotOrientation = false;
   sensor.gotMotion = false;
   sensor.using = "none";
@@ -584,6 +672,9 @@ function resetGameState() {
   intro.started = false;
   intro.released = false;
   intro.countdownValue = timing.countdownStart;
+  intro.sequenceStage = "idle";
+  intro.timerStartedAt = 0;
+  intro.timerDelayMs = 0;
 
   keyboard.x = 0;
   keyboard.y = 0;
@@ -623,6 +714,8 @@ function resetGameState() {
 
 function onKeyDown(e) {
   const k = e.key.toLowerCase();
+  if (game.paused) return;
+
   if (k === "arrowleft" || k === "a") keyboard.x = -1;
   if (k === "arrowright" || k === "d") keyboard.x = 1;
   if (k === "arrowup" || k === "w") keyboard.y = -1;
@@ -643,6 +736,8 @@ function onKeyDown(e) {
 function onKeyUp(e) {
   const k = e.key.toLowerCase();
   if (k === "escape") closeSettingsModal();
+  if (game.paused) return;
+
   if ((k === "arrowleft" || k === "a") && keyboard.x < 0) keyboard.x = 0;
   if ((k === "arrowright" || k === "d") && keyboard.x > 0) keyboard.x = 0;
   if ((k === "arrowup" || k === "w") && keyboard.y < 0) keyboard.y = 0;
@@ -693,23 +788,14 @@ async function start() {
 
   requestWakeLock();
   resetGameState();
+  controlsEl.hidden = true;
+  startBtn.disabled = true;
   inputSystems.motion.enable();
   game.phase = "calibrating";
 
   setHint("keep holding normally for half a sec...");
 
-  clearTimeout(sensorWatchdog);
-  sensorWatchdog = setTimeout(() => {
-    if (sensor.using === "none") {
-      setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
-      sensor.using = "keyboard";
-      game.phase = "keyboard";
-      tilt.neutralX = 0;
-      tilt.neutralY = 0;
-      calibration.autoNeutralDone = true;
-      scheduleIntroSequence();
-    }
-  }, timing.sensorFallbackMs);
+  scheduleSensorWatchdog();
 }
 
 function setNeutralNow() {
@@ -734,6 +820,7 @@ startBtn.addEventListener("click", start);
 neutralBtn.addEventListener("click", setNeutralNow);
 
 function openSettings() {
+  pauseGame();
   settingsOverlay.classList.add("open");
   settingsOverlay.setAttribute("aria-hidden", "false");
   updateDebugPanel();
@@ -742,6 +829,7 @@ function openSettings() {
 function closeSettingsModal() {
   settingsOverlay.classList.remove("open");
   settingsOverlay.setAttribute("aria-hidden", "true");
+  resumeGame();
 }
 
 settingsToggle.addEventListener("click", openSettings);
@@ -807,7 +895,7 @@ function loop() {
   );
   lastFrame = now;
 
-  if (game.phase !== "waiting") {
+  if (game.phase !== "waiting" && !game.paused) {
     const context = physicsContext();
     updatePhysicsInput(context, dt);
     updatePhysics(context, dt, {
@@ -827,7 +915,7 @@ function loop() {
   marbleEl.style.setProperty("--marble-scale-x", (1 + marble.impactSquash * 0.08).toFixed(3));
   marbleEl.style.setProperty("--marble-scale-y", (1 - marble.impactSquash * 0.06).toFixed(3));
   updateMarbleLighting();
-  updateTrail(now);
+  if (!game.paused) updateTrail(now);
   updateDebugPanel();
 
   requestAnimationFrame(loop);
