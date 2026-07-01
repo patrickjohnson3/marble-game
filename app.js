@@ -132,7 +132,9 @@ function loadSettings() {
     return {
       maxSpeed: numberSetting(saved.maxSpeed, settingsConfig.maxSpeed, settingsControls.maxSpeed),
       acceleration: numberSetting(saved.acceleration, settingsConfig.acceleration, settingsControls.acceleration),
-      rotationEnabled: settingsConfig.rotationEnabled,
+      rotationEnabled: typeof saved.rotationEnabled === "boolean"
+        ? saved.rotationEnabled
+        : settingsConfig.rotationEnabled,
       hapticsEnabled: typeof saved.hapticsEnabled === "boolean"
         ? saved.hapticsEnabled
         : settingsConfig.hapticsEnabled,
@@ -153,6 +155,7 @@ function saveSettings() {
     localStorage.setItem(settingsStorageKey, JSON.stringify({
       maxSpeed: settings.maxSpeed,
       acceleration: settings.acceleration,
+      rotationEnabled: settings.rotationEnabled,
       hapticsEnabled: settings.hapticsEnabled,
       trailEnabled: settings.trailEnabled,
       fullscreenEnabled: settings.fullscreenEnabled
