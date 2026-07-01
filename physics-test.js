@@ -123,6 +123,35 @@ function testTiltCurveSoftensSmallSensorInput() {
   assert.equal(context.tilt.smoothY, 10);
 }
 
+function testMaxSpeedEasesDown() {
+  const marble = { x: 50, y: 50, vx: 20, vy: 0, r: 10 };
+
+  updatePhysics({
+    marble,
+    bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+    intro: { released: true },
+    tilt: { smoothX: 0, smoothY: 0 },
+    obstacles: [],
+    roughPatches: [],
+    physics: {
+      accel: 0,
+      friction: 1,
+      roughPatchFriction: 0.5,
+      bounce: 0.5,
+      maxSpeed: 10,
+      maxSpeedEase: 0.5,
+      maxStepDistance: 100,
+      settleSpeed: 0,
+      settleTilt: 0
+    }
+  }, 1, {
+    onImpact: () => {},
+    onSurface: () => {}
+  });
+
+  assert.equal(marble.vx, 15);
+}
+
 testCircleRectContact();
 testObstacleBounce();
 testGlancingImpactReportsScrapeFeedback();
@@ -130,5 +159,6 @@ testDeepOverlapPushesToNearestEdge();
 testRoughPatchAddsDrag();
 testLowSpeedDriftSettles();
 testTiltCurveSoftensSmallSensorInput();
+testMaxSpeedEasesDown();
 
 console.log("Physics tests passed.");

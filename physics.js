@@ -35,10 +35,19 @@ function updateVelocity({ marble, tilt, physics }, dt) {
   marble.vy += tilt.smoothY * physics.accel * dt;
 
   const drag = Math.pow(physics.friction, dt);
-  marble.vx = clamp(marble.vx * drag, -physics.maxSpeed, physics.maxSpeed);
-  marble.vy = clamp(marble.vy * drag, -physics.maxSpeed, physics.maxSpeed);
+  marble.vx *= drag;
+  marble.vy *= drag;
 
-  const speed = Math.hypot(marble.vx, marble.vy);
+  let speed = Math.hypot(marble.vx, marble.vy);
+  if (speed > physics.maxSpeed) {
+    const easedSpeed = physics.maxSpeed +
+      (speed - physics.maxSpeed) * Math.pow(physics.maxSpeedEase ?? 0, dt);
+    const scale = easedSpeed / speed;
+    marble.vx *= scale;
+    marble.vy *= scale;
+    speed = easedSpeed;
+  }
+
   const tiltMagnitude = Math.hypot(tilt.smoothX, tilt.smoothY);
   if (speed < (physics.settleSpeed ?? 0) && tiltMagnitude < (physics.settleTilt ?? 0)) {
     marble.vx = 0;

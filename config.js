@@ -88,7 +88,8 @@ export const physicsConfig = {
   scrapeHapticScale: 0.08,
   settleSpeed: 0.035,
   settleTilt: 0.8,
-  tiltCurve: 1.25
+  tiltCurve: 1.25,
+  maxSpeedEase: 0.35
 };
 
 export const settingsConfig = {
