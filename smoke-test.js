@@ -11,6 +11,7 @@ const scripts = [
   "geometry.js",
   "haptics.js",
   "intro-timers.js",
+  "map.js",
   "physics.js",
   "platform.js",
   "rendering.js",

@@ -7,6 +7,7 @@ const [
   geometryModule,
   hapticsModule,
   introTimersModule,
+  mapModule,
   physicsModule,
   platformModule,
   renderingModule,
@@ -18,6 +19,7 @@ const [
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
   import(versioned("./intro-timers.js")),
+  import(versioned("./map.js")),
   import(versioned("./physics.js")),
   import(versioned("./platform.js")),
   import(versioned("./rendering.js")),
@@ -47,6 +49,12 @@ const {
   shouldPauseGame,
   trackIntroTimer
 } = introTimersModule;
+const {
+  introPenWalls,
+  mapEdgeWalls,
+  setReleasedBounds: setReleasedMapBounds,
+  updateIntroBounds: updateIntroMapBounds
+} = mapModule;
 const { updatePhysicsInput, updatePhysics } = physicsModule;
 const {
   requestFullscreenMode,
@@ -314,26 +322,6 @@ function updateTrail(now) {
   trailSegmentsEl.replaceChildren(...segments);
 }
 
-function mapEdgeWalls() {
-  const t = intro.wallThickness;
-  return [
-    { x: -t, y: -t, w: world.width + t * 2, h: t },
-    { x: -t, y: world.height, w: world.width + t * 2, h: t },
-    { x: -t, y: 0, w: t, h: world.height },
-    { x: world.width, y: 0, w: t, h: world.height }
-  ];
-}
-
-function introPenWalls() {
-  const t = intro.wallThickness;
-  return [
-    { x: bounds.left - t, y: bounds.top - t, w: bounds.right - bounds.left + t * 2, h: t },
-    { x: bounds.left - t, y: bounds.bottom, w: bounds.right - bounds.left + t * 2, h: t },
-    { x: bounds.left - t, y: bounds.top, w: t, h: bounds.bottom - bounds.top },
-    { x: bounds.right, y: bounds.top, w: t, h: bounds.bottom - bounds.top }
-  ];
-}
-
 function showMessage(message) {
   messageOverlay.textContent = message;
   messageOverlay.classList.add("show");
@@ -380,20 +368,18 @@ function centerCameraOnMarble() {
 }
 
 function updateIntroBounds() {
-  const halfW = innerWidth / 2 + intro.viewportMargin;
-  const halfH = innerHeight / 2 + intro.viewportMargin;
-  bounds.left = clamp(marble.x - halfW, 0, world.width);
-  bounds.right = clamp(marble.x + halfW, 0, world.width);
-  bounds.top = clamp(marble.y - halfH, 0, world.height);
-  bounds.bottom = clamp(marble.y + halfH, 0, world.height);
-  renderWalls(introWallsEl, introPenWalls());
+  updateIntroMapBounds({
+    bounds,
+    intro,
+    marble,
+    viewport: { width: innerWidth, height: innerHeight },
+    world
+  });
+  renderWalls(introWallsEl, introPenWalls(bounds, intro));
 }
 
 function setReleasedBounds() {
-  bounds.left = 0;
-  bounds.right = world.width;
-  bounds.top = 0;
-  bounds.bottom = world.height;
+  setReleasedMapBounds(bounds, world);
 }
 
 function setupMap() {
@@ -401,7 +387,7 @@ function setupMap() {
   worldEl.style.height = world.height + "px";
   trailEl.setAttribute("viewBox", "0 0 " + world.width + " " + world.height);
   setReleasedBounds();
-  renderWalls(mapWallsEl, mapEdgeWalls());
+  renderWalls(mapWallsEl, mapEdgeWalls(world, intro));
   renderRoughPatches();
   renderObstacles();
   updateIntroBounds();
