@@ -81,12 +81,16 @@ html,body{
 }
 #messageOverlay.show{display:block}
 #messageOverlay .countdown{display:block;margin-top:12px;font-size:clamp(52px,18vw,120px)}
-#panel{position:fixed;left:12px;right:64px;top:12px;display:grid;gap:8px;pointer-events:none}
+#panel{
+  position:fixed;left:12px;right:64px;
+  top:calc(28px + env(safe-area-inset-top));
+  display:grid;gap:8px;pointer-events:none;
+}
 #hint,#debug{border-radius:14px;background:#0005;padding:10px 12px;backdrop-filter:blur(8px)}
 #hint{font-size:15px;text-align:center}
 #debug{font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;opacity:.86;white-space:pre-wrap}
 #settingsToggle{
-  position:fixed;right:12px;top:12px;width:44px;height:44px;
+  position:fixed;right:12px;top:calc(28px + env(safe-area-inset-top));width:44px;height:44px;
   display:grid;place-items:center;border-radius:50%;padding:0;
   background:#0009;color:white;font-size:24px;line-height:1;
   backdrop-filter:blur(8px);
