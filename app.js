@@ -11,6 +11,7 @@ const [
   physicsModule,
   platformModule,
   renderingModule,
+  settingsStoreModule,
   stateModule
 ] = await Promise.all([
   import(versioned("./config.js")),
@@ -23,6 +24,7 @@ const [
   import(versioned("./physics.js")),
   import(versioned("./platform.js")),
   import(versioned("./rendering.js")),
+  import(versioned("./settings-store.js")),
   import(versioned("./state.js"))
 ]).catch((error) => {
   showBootError(error);
@@ -64,6 +66,11 @@ const {
   screenAdjusted
 } = platformModule;
 const { renderMapElements, renderWalls } = renderingModule;
+const {
+  applyRangeConfig,
+  loadSettings,
+  saveSettings: persistSettings
+} = settingsStoreModule;
 const { createGameState } = stateModule;
 
 function showBootError(error) {
@@ -134,58 +141,17 @@ const trailMinIntervalMs = 50;
 const svgNamespace = "http://www.w3.org/2000/svg";
 const settingsStorageKey = "marbleGameSettings";
 
-function applyRangeConfig(input, range) {
-  input.min = range.min;
-  input.max = range.max;
-  input.step = range.step;
-}
-
-function numberSetting(value, fallback, range) {
-  return Number.isFinite(value) ? clamp(value, range.min, range.max) : fallback;
-}
-
-function loadSettings() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(settingsStorageKey) || "null");
-    if (!saved || typeof saved !== "object") return { ...settingsConfig };
-
-    return {
-      maxSpeed: numberSetting(saved.maxSpeed, settingsConfig.maxSpeed, settingsControls.maxSpeed),
-      acceleration: numberSetting(saved.acceleration, settingsConfig.acceleration, settingsControls.acceleration),
-      rotationEnabled: typeof saved.rotationEnabled === "boolean"
-        ? saved.rotationEnabled
-        : settingsConfig.rotationEnabled,
-      hapticsEnabled: typeof saved.hapticsEnabled === "boolean"
-        ? saved.hapticsEnabled
-        : settingsConfig.hapticsEnabled,
-      trailEnabled: typeof saved.trailEnabled === "boolean"
-        ? saved.trailEnabled
-        : settingsConfig.trailEnabled,
-      fullscreenEnabled: typeof saved.fullscreenEnabled === "boolean"
-        ? saved.fullscreenEnabled
-        : settingsConfig.fullscreenEnabled
-    };
-  } catch {
-    return { ...settingsConfig };
-  }
-}
+const settings = loadSettings({
+  storage: localStorage,
+  storageKey: settingsStorageKey,
+  defaults: settingsConfig,
+  controls: settingsControls,
+  clamp
+});
 
 function saveSettings() {
-  try {
-    localStorage.setItem(settingsStorageKey, JSON.stringify({
-      maxSpeed: settings.maxSpeed,
-      acceleration: settings.acceleration,
-      rotationEnabled: settings.rotationEnabled,
-      hapticsEnabled: settings.hapticsEnabled,
-      trailEnabled: settings.trailEnabled,
-      fullscreenEnabled: settings.fullscreenEnabled
-    }));
-  } catch {
-    // Persistence is optional; gameplay should still work without storage.
-  }
+  persistSettings({ storage: localStorage, storageKey: settingsStorageKey, settings });
 }
-
-const settings = loadSettings();
 
 applyRangeConfig(speedSetting, settingsControls.maxSpeed);
 applyRangeConfig(sensitivitySetting, settingsControls.acceleration);

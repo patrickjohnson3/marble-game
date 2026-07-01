@@ -15,6 +15,7 @@ const scripts = [
   "physics.js",
   "platform.js",
   "rendering.js",
+  "settings-store.js",
   "state.js"
 ];
 const app = scripts.map((file) => readFileSync(file, "utf8")).join("\n");

@@ -12,6 +12,7 @@ const runtimeFiles = [
   "physics.js",
   "platform.js",
   "rendering.js",
+  "settings-store.js",
   "state.js",
   "style.css"
 ];
