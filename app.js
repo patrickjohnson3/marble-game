@@ -610,10 +610,12 @@ const inputSystems = {
 };
 
 async function start() {
-  requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
+  const fullscreenRequest = requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
 
   const ok = await requestMotionPermissionIfNeeded();
   if (!ok) {
+    await fullscreenRequest;
+    if (settings.fullscreenEnabled) exitFullscreenMode();
     setHint("motion permission denied. check chrome site settings.");
     return;
   }
