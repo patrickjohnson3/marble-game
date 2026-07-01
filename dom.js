@@ -15,6 +15,7 @@ export const els = {
   obstacles: requiredElement("obstacles"),
   marble: requiredElement("marble"),
   messageOverlay: requiredElement("messageOverlay"),
+  controls: requiredElement("controls"),
   startBtn: requiredElement("start"),
   neutralBtn: requiredElement("neutral"),
   settingsToggle: requiredElement("settingsToggle"),

@@ -66,6 +66,7 @@ const {
   obstacles: obstaclesEl,
   marble: marbleEl,
   messageOverlay,
+  controls: controlsEl,
   startBtn,
   neutralBtn,
   settingsToggle,
@@ -545,6 +546,9 @@ function resetGameState() {
   haptics.surface.lastPulse = 0;
 
   worldEl.classList.remove("map-open");
+  controlsEl.hidden = false;
+  startBtn.textContent = "start";
+  startBtn.disabled = false;
   hideMessage();
   setReleasedBounds();
   updateIntroBounds();
@@ -606,20 +610,20 @@ const inputSystems = {
 };
 
 async function start() {
+  requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
+
   const ok = await requestMotionPermissionIfNeeded();
   if (!ok) {
     setHint("motion permission denied. check chrome site settings.");
     return;
   }
 
-  requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
   requestWakeLock();
   resetGameState();
   inputSystems.motion.enable();
   game.phase = "calibrating";
 
-  startBtn.textContent = "running";
-  startBtn.disabled = true;
+  controlsEl.hidden = true;
   setHint("keep holding normally for half a sec...");
 
   clearTimeout(sensorWatchdog);
