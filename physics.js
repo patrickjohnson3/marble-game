@@ -118,21 +118,25 @@ function handleWallCollisions({ marble, bounds, intro, obstacles, physics }, onI
     onImpact(collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics));
     marble.x = bounds.left + marble.r;
     marble.vx = -marble.vx * physics.bounce;
+    marble.vy *= physics.wallTangentialFriction ?? 1;
   }
   if (marble.x > bounds.right - marble.r) {
     onImpact(collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics));
     marble.x = bounds.right - marble.r;
     marble.vx = -marble.vx * physics.bounce;
+    marble.vy *= physics.wallTangentialFriction ?? 1;
   }
   if (marble.y < bounds.top + marble.r) {
     onImpact(collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics));
     marble.y = bounds.top + marble.r;
     marble.vy = -marble.vy * physics.bounce;
+    marble.vx *= physics.wallTangentialFriction ?? 1;
   }
   if (marble.y > bounds.bottom - marble.r) {
     onImpact(collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics));
     marble.y = bounds.bottom - marble.r;
     marble.vy = -marble.vy * physics.bounce;
+    marble.vx *= physics.wallTangentialFriction ?? 1;
   }
 
   if (intro.released) {

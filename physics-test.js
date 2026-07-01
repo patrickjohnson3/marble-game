@@ -152,6 +152,38 @@ function testMaxSpeedEasesDown() {
   assert.equal(marble.vx, 15);
 }
 
+function testWallCollisionAppliesTangentialFriction() {
+  const marble = { x: 5, y: 50, vx: -4, vy: 10, r: 10 };
+
+  updatePhysics({
+    marble,
+    bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+    intro: { released: true },
+    tilt: { smoothX: 0, smoothY: 0 },
+    obstacles: [],
+    roughPatches: [],
+    physics: {
+      accel: 0,
+      friction: 1,
+      roughPatchFriction: 0.5,
+      bounce: 0.5,
+      maxSpeed: 100,
+      maxSpeedEase: 0,
+      maxStepDistance: 100,
+      settleSpeed: 0,
+      settleTilt: 0,
+      wallTangentialFriction: 0.5
+    }
+  }, 1, {
+    onImpact: () => {},
+    onSurface: () => {}
+  });
+
+  assert.equal(marble.x, 10);
+  assert.equal(marble.vx, 2);
+  assert.equal(marble.vy, 5);
+}
+
 testCircleRectContact();
 testObstacleBounce();
 testGlancingImpactReportsScrapeFeedback();
@@ -160,5 +192,6 @@ testRoughPatchAddsDrag();
 testLowSpeedDriftSettles();
 testTiltCurveSoftensSmallSensorInput();
 testMaxSpeedEasesDown();
+testWallCollisionAppliesTangentialFriction();
 
 console.log("Physics tests passed.");

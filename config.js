@@ -89,7 +89,8 @@ export const physicsConfig = {
   settleSpeed: 0.035,
   settleTilt: 0.8,
   tiltCurve: 1.25,
-  maxSpeedEase: 0.35
+  maxSpeedEase: 0.35,
+  wallTangentialFriction: 0.92
 };
 
 export const settingsConfig = {
