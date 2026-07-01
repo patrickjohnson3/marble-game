@@ -16,7 +16,8 @@ const scripts = [
   "platform.js",
   "rendering.js",
   "settings-store.js",
-  "state.js"
+  "state.js",
+  "trail.js"
 ];
 const app = scripts.map((file) => readFileSync(file, "utf8")).join("\n");
 

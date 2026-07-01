@@ -12,7 +12,8 @@ const [
   platformModule,
   renderingModule,
   settingsStoreModule,
-  stateModule
+  stateModule,
+  trailModule
 ] = await Promise.all([
   import(versioned("./config.js")),
   import(versioned("./debug.js")),
@@ -25,7 +26,8 @@ const [
   import(versioned("./platform.js")),
   import(versioned("./rendering.js")),
   import(versioned("./settings-store.js")),
-  import(versioned("./state.js"))
+  import(versioned("./state.js")),
+  import(versioned("./trail.js"))
 ]).catch((error) => {
   showBootError(error);
   throw error;
@@ -72,6 +74,7 @@ const {
   saveSettings: persistSettings
 } = settingsStoreModule;
 const { createGameState } = stateModule;
+const { createTrailRenderer } = trailModule;
 
 function showBootError(error) {
   const hintEl = document.getElementById("hint");
@@ -134,11 +137,6 @@ let lastFrame = performance.now();
 let sensorWatchdog = 0;
 let sensorWatchdogStartedAt = 0;
 let sensorWatchdogDelayMs = 0;
-const trailPoints = [];
-const trailDurationMs = 2500;
-const trailMinDistance = 3;
-const trailMinIntervalMs = 50;
-const svgNamespace = "http://www.w3.org/2000/svg";
 const settingsStorageKey = "marbleGameSettings";
 
 const settings = loadSettings({
@@ -170,8 +168,7 @@ function applySettings() {
   physics.accel = settings.acceleration;
   camera.rotationEnabled = settings.rotationEnabled;
   haptics.enabled = settings.hapticsEnabled;
-  trailEl.hidden = !settings.trailEnabled;
-  if (!settings.trailEnabled) clearTrail();
+  trailRenderer.setEnabled(settings.trailEnabled);
 }
 
 function applyFullscreenSetting() {
@@ -183,6 +180,20 @@ function applyFullscreenSetting() {
 }
 
 const hapticFeedback = createHapticsController(haptics, hapticTuning);
+const trailRenderer = createTrailRenderer({
+  trailEl,
+  trailSegmentsEl,
+  marble,
+  game,
+  settings,
+  config: {
+    durationMs: 2500,
+    minDistance: 3,
+    minIntervalMs: 50,
+    maxOpacity: 0.5
+  },
+  clamp
+});
 
 function keepDisplayAwakeWhenVisible() {
   if (document.visibilityState === "visible" && game.phase !== "waiting") {
@@ -241,51 +252,6 @@ function renderObstacles() {
 
 function renderRoughPatches() {
   renderMapElements(roughPatchesEl, "roughPatch", roughPatches);
-}
-
-function clearTrail() {
-  trailPoints.length = 0;
-  if (trailSegmentsEl.childNodes.length > 0) trailSegmentsEl.replaceChildren();
-}
-
-function updateTrail(now) {
-  if (!settings.trailEnabled || game.phase === "waiting") {
-    clearTrail();
-    return;
-  }
-
-  const last = trailPoints[trailPoints.length - 1];
-  const movedEnough = !last || Math.hypot(marble.x - last.x, marble.y - last.y) >= trailMinDistance;
-  const waitedEnough = !last || now - last.t >= trailMinIntervalMs;
-
-  if (movedEnough && waitedEnough) {
-    trailPoints.push({ x: marble.x, y: marble.y, t: now });
-  }
-
-  const oldest = now - trailDurationMs;
-  while (trailPoints.length > 0 && trailPoints[0].t < oldest) {
-    trailPoints.shift();
-  }
-
-  if (trailPoints.length < 2) {
-    trailSegmentsEl.replaceChildren();
-    return;
-  }
-
-  const segments = [];
-  for (let i = 1; i < trailPoints.length; i++) {
-    const a = trailPoints[i - 1];
-    const b = trailPoints[i];
-    const opacity = clamp(1 - (now - b.t) / trailDurationMs, 0, 1) * 0.5;
-    const segment = document.createElementNS(svgNamespace, "line");
-    segment.setAttribute("x1", a.x.toFixed(1));
-    segment.setAttribute("y1", a.y.toFixed(1));
-    segment.setAttribute("x2", b.x.toFixed(1));
-    segment.setAttribute("y2", b.y.toFixed(1));
-    segment.setAttribute("opacity", opacity.toFixed(3));
-    segments.push(segment);
-  }
-  trailSegmentsEl.replaceChildren(...segments);
 }
 
 function showMessage(message) {
@@ -682,7 +648,7 @@ function resetGameState() {
 
   haptics.impact.lastPulse = 0;
   haptics.surface.lastPulse = 0;
-  clearTrail();
+  trailRenderer.clear();
 
   worldEl.classList.remove("map-open");
   controlsEl.hidden = false;
@@ -897,7 +863,7 @@ function loop() {
   marbleEl.style.setProperty("--marble-scale-x", (1 + marble.impactSquash * 0.08).toFixed(3));
   marbleEl.style.setProperty("--marble-scale-y", (1 - marble.impactSquash * 0.06).toFixed(3));
   updateMarbleLighting();
-  if (!game.paused) updateTrail(now);
+  if (!game.paused) trailRenderer.update(now);
   updateDebugPanel();
 
   requestAnimationFrame(loop);

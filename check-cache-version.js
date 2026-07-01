@@ -14,6 +14,7 @@ const runtimeFiles = [
   "rendering.js",
   "settings-store.js",
   "state.js",
+  "trail.js",
   "style.css"
 ];
 
