@@ -83,7 +83,8 @@ export const physicsConfig = {
   deadZone: 0.65,
   maxSpeed: 14,
   keyboardTilt: 18,
-  maxStepDistance: 10
+  maxStepDistance: 10,
+  roughPatchFriction: 0.82
 };
 
 export const settingsConfig = {

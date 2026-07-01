@@ -39,6 +39,18 @@ export function marbleOverRect(marble, rect) {
   return circleRectContact(marble, rect).intersects;
 }
 
+function isOverRoughPatch({ marble, intro, roughPatches }) {
+  return intro.released && roughPatches.some((rect) => marbleOverRect(marble, rect));
+}
+
+function applySurfaceDrag(context, dt) {
+  if (!isOverRoughPatch(context)) return;
+
+  const drag = Math.pow(context.physics.roughPatchFriction, dt);
+  context.marble.vx *= drag;
+  context.marble.vy *= drag;
+}
+
 export function resolveObstacleCollision(marble, obstacle, physics, onImpact = () => {}) {
   const contact = circleRectContact(marble, obstacle);
 
@@ -101,14 +113,14 @@ function handleWallCollisions({ marble, bounds, intro, obstacles, physics }, onI
 }
 
 function handleSurfaceFeedback({ marble, intro, roughPatches }, onSurface) {
-  if (!intro.released) return;
-  if (!roughPatches.some((rect) => marbleOverRect(marble, rect))) return;
+  if (!isOverRoughPatch({ marble, intro, roughPatches })) return;
 
   onSurface(Math.hypot(marble.vx, marble.vy));
 }
 
 function physicsStep(context, dt, feedback) {
   updateVelocity(context, dt);
+  applySurfaceDrag(context, dt);
   updatePosition(context.marble, dt);
   handleWallCollisions(context, feedback.onImpact);
   handleSurfaceFeedback(context, feedback.onSurface);

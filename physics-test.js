@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { circleRectContact } from "./geometry.js";
-import { marbleOverRect, resolveObstacleCollision } from "./physics.js";
+import { marbleOverRect, resolveObstacleCollision, updatePhysics } from "./physics.js";
 
 function testCircleRectContact() {
   const circle = { x: 15, y: 15, r: 10 };
@@ -35,8 +35,35 @@ function testDeepOverlapPushesToNearestEdge() {
   assert.equal(circleRectContact(marble, obstacle).distanceSq, marble.r * marble.r);
 }
 
+function testRoughPatchAddsDrag() {
+  const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
+
+  updatePhysics({
+    marble,
+    bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+    intro: { released: true },
+    tilt: { smoothX: 0, smoothY: 0 },
+    obstacles: [],
+    roughPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+    physics: {
+      accel: 0,
+      friction: 1,
+      roughPatchFriction: 0.5,
+      bounce: 0.5,
+      maxSpeed: 100,
+      maxStepDistance: 100
+    }
+  }, 1, {
+    onImpact: () => {},
+    onSurface: () => {}
+  });
+
+  assert.equal(marble.vx, 5);
+}
+
 testCircleRectContact();
 testObstacleBounce();
 testDeepOverlapPushesToNearestEdge();
+testRoughPatchAddsDrag();
 
 console.log("Physics tests passed.");
