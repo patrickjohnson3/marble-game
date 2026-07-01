@@ -117,6 +117,8 @@ const pointers = new Map();
 let gesture = null;
 let lastFrame = performance.now();
 let sensorWatchdog = 0;
+let sensorWatchdogStartedAt = 0;
+let sensorWatchdogDelayMs = 0;
 const trailPoints = [];
 const trailDurationMs = 2500;
 const trailMinDistance = 3;
@@ -214,24 +216,43 @@ function keepDisplayAwakeWhenVisible() {
   }
 }
 
-function scheduleSensorWatchdog() {
-  clearTimeout(sensorWatchdog);
-  sensorWatchdog = setTimeout(() => {
-    if (game.paused) {
-      scheduleSensorWatchdog();
-      return;
-    }
+function runSensorWatchdog() {
+  sensorWatchdog = 0;
+  sensorWatchdogStartedAt = 0;
+  sensorWatchdogDelayMs = 0;
+  if (game.paused) return;
 
-    if (sensor.using === "none") {
-      setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
-      sensor.using = "keyboard";
-      game.phase = "keyboard";
-      tilt.neutralX = 0;
-      tilt.neutralY = 0;
-      calibration.autoNeutralDone = true;
-      scheduleIntroSequence();
-    }
-  }, timing.sensorFallbackMs);
+  if (sensor.using === "none") {
+    setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
+    sensor.using = "keyboard";
+    game.phase = "keyboard";
+    tilt.neutralX = 0;
+    tilt.neutralY = 0;
+    calibration.autoNeutralDone = true;
+    scheduleIntroSequence();
+  }
+}
+
+function scheduleSensorWatchdog(delay = timing.sensorFallbackMs) {
+  clearTimeout(sensorWatchdog);
+  sensorWatchdogStartedAt = performance.now();
+  sensorWatchdogDelayMs = delay;
+  sensorWatchdog = setTimeout(runSensorWatchdog, delay);
+}
+
+function pauseSensorWatchdog() {
+  if (!sensorWatchdog) return;
+
+  const elapsed = performance.now() - sensorWatchdogStartedAt;
+  sensorWatchdogDelayMs = Math.max(0, sensorWatchdogDelayMs - elapsed);
+  clearTimeout(sensorWatchdog);
+  sensorWatchdog = 0;
+}
+
+function resumeSensorWatchdog() {
+  if (game.phase !== "calibrating" || sensor.using !== "none" || sensorWatchdog) return;
+
+  scheduleSensorWatchdog(Math.max(0, sensorWatchdogDelayMs));
 }
 
 function updateDebugPanel() {
@@ -653,6 +674,7 @@ function pauseGame() {
   keyboard.y = 0;
   gesture = null;
   pointers.clear();
+  pauseSensorWatchdog();
   pauseIntroTimers();
 }
 
@@ -661,12 +683,15 @@ function resumeGame() {
 
   game.paused = false;
   lastFrame = performance.now();
+  resumeSensorWatchdog();
   resumeIntroTimers();
 }
 
 function resetGameState() {
   clearTimeout(sensorWatchdog);
   sensorWatchdog = 0;
+  sensorWatchdogStartedAt = 0;
+  sensorWatchdogDelayMs = 0;
   clearIntroTimers();
   resetCalibration();
 
