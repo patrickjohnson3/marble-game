@@ -1,24 +1,5 @@
 import { spawnSync } from "node:child_process";
-
-const runtimeFiles = [
-  "app.js",
-  "camera.js",
-  "config.js",
-  "debug.js",
-  "dom.js",
-  "geometry.js",
-  "haptics.js",
-  "intro-sequence.js",
-  "intro-timers.js",
-  "map.js",
-  "physics.js",
-  "platform.js",
-  "rendering.js",
-  "settings-store.js",
-  "state.js",
-  "trail.js",
-  "style.css"
-];
+import { runtimeFiles } from "./runtime-assets.js";
 
 function git(args) {
   return spawnSync("git", args, {

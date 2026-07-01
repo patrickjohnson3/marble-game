@@ -1,26 +1,10 @@
 import { readFileSync } from "fs";
 import { spawnSync } from "child_process";
 import { mapConfig } from "./config.js";
+import { runtimeScripts } from "./runtime-assets.js";
 
 const html = readFileSync("index.html", "utf8");
-const scripts = [
-  "app.js",
-  "camera.js",
-  "config.js",
-  "debug.js",
-  "dom.js",
-  "geometry.js",
-  "haptics.js",
-  "intro-sequence.js",
-  "intro-timers.js",
-  "map.js",
-  "physics.js",
-  "platform.js",
-  "rendering.js",
-  "settings-store.js",
-  "state.js",
-  "trail.js"
-];
+const scripts = runtimeScripts;
 const app = scripts.map((file) => readFileSync(file, "utf8")).join("\n");
 
 for (const script of scripts) {
