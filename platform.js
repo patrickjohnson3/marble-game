@@ -17,6 +17,22 @@ export async function requestFullscreenMode({ fullscreenOnStart }) {
   }
 }
 
+export async function exitFullscreenMode() {
+  if (!document.fullscreenElement) return;
+
+  const exitFullscreen = document.exitFullscreen ||
+    document.webkitExitFullscreen ||
+    document.msExitFullscreen;
+
+  if (!exitFullscreen) return;
+
+  try {
+    await exitFullscreen.call(document);
+  } catch {
+    // Fullscreen exit is best-effort; browser chrome may handle it instead.
+  }
+}
+
 export async function requestWakeLock() {
   if (!("wakeLock" in navigator)) return;
   if (wakeLock || document.visibilityState !== "visible") return;

@@ -88,7 +88,8 @@ export const settingsConfig = {
   maxSpeed: physicsConfig.maxSpeed,
   acceleration: physicsConfig.accel,
   rotationEnabled: false,
-  hapticsEnabled: true
+  hapticsEnabled: true,
+  fullscreenEnabled: appConfig.fullscreenOnStart
 };
 
 export const settingsControls = {

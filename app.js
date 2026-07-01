@@ -26,7 +26,6 @@ const [
 });
 
 const {
-  appConfig,
   mapConfig,
   timing,
   tuning,
@@ -42,6 +41,7 @@ const { createHapticsController } = hapticsModule;
 const { updatePhysicsInput, updatePhysics } = physicsModule;
 const {
   requestFullscreenMode,
+  exitFullscreenMode,
   requestWakeLock,
   requestMotionPermissionIfNeeded,
   screenAdjusted
@@ -75,6 +75,7 @@ const {
   sensitivitySetting,
   rotationSetting,
   hapticsSetting,
+  fullscreenSetting,
   hint,
   debug
 } = els;
@@ -126,7 +127,10 @@ function loadSettings() {
       rotationEnabled: settingsConfig.rotationEnabled,
       hapticsEnabled: typeof saved.hapticsEnabled === "boolean"
         ? saved.hapticsEnabled
-        : settingsConfig.hapticsEnabled
+        : settingsConfig.hapticsEnabled,
+      fullscreenEnabled: typeof saved.fullscreenEnabled === "boolean"
+        ? saved.fullscreenEnabled
+        : settingsConfig.fullscreenEnabled
     };
   } catch {
     return { ...settingsConfig };
@@ -138,7 +142,8 @@ function saveSettings() {
     localStorage.setItem(settingsStorageKey, JSON.stringify({
       maxSpeed: settings.maxSpeed,
       acceleration: settings.acceleration,
-      hapticsEnabled: settings.hapticsEnabled
+      hapticsEnabled: settings.hapticsEnabled,
+      fullscreenEnabled: settings.fullscreenEnabled
     }));
   } catch {
     // Persistence is optional; gameplay should still work without storage.
@@ -153,6 +158,7 @@ speedSetting.value = settings.maxSpeed;
 sensitivitySetting.value = settings.acceleration;
 rotationSetting.checked = settings.rotationEnabled;
 hapticsSetting.checked = settings.hapticsEnabled;
+fullscreenSetting.checked = settings.fullscreenEnabled;
 
 function setHint(message) { hint.textContent = message; }
 function isSettingsOpen() { return settingsOverlay.classList.contains("open"); }
@@ -162,6 +168,14 @@ function applySettings() {
   physics.accel = settings.acceleration;
   camera.rotationEnabled = settings.rotationEnabled;
   haptics.enabled = settings.hapticsEnabled;
+}
+
+function applyFullscreenSetting() {
+  if (settings.fullscreenEnabled) {
+    requestFullscreenMode({ fullscreenOnStart: true });
+  } else {
+    exitFullscreenMode();
+  }
 }
 
 const hapticFeedback = createHapticsController(haptics, hapticTuning);
@@ -598,7 +612,7 @@ async function start() {
     return;
   }
 
-  requestFullscreenMode(appConfig);
+  requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
   requestWakeLock();
   resetGameState();
   inputSystems.motion.enable();
@@ -672,6 +686,11 @@ hapticsSetting.addEventListener("change", () => {
   settings.hapticsEnabled = hapticsSetting.checked;
   applySettings();
   saveSettings();
+});
+fullscreenSetting.addEventListener("change", () => {
+  settings.fullscreenEnabled = fullscreenSetting.checked;
+  saveSettings();
+  applyFullscreenSetting();
 });
 settingsOverlay.addEventListener("click", (e) => {
   if (e.target === settingsOverlay) closeSettingsModal();

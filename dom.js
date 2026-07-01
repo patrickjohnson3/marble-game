@@ -24,6 +24,7 @@ export const els = {
   sensitivitySetting: requiredElement("sensitivitySetting"),
   rotationSetting: requiredElement("rotationSetting"),
   hapticsSetting: requiredElement("hapticsSetting"),
+  fullscreenSetting: requiredElement("fullscreenSetting"),
   hint: requiredElement("hint"),
   debug: requiredElement("debug")
 };
