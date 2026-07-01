@@ -250,8 +250,8 @@ function updateMarbleLighting() {
   marbleEl.style.setProperty("--marble-shadow-y", (dy / distance * shadowDistance).toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-shadow-blur", shadowBlur.toFixed(1) + "px");
 
-  const glintX = 18 + clamp(marble.vx * 0.55, -9, 9);
-  const glintY = 14 + clamp(marble.vy * 0.55, -9, 9);
+  const glintX = 18 + clamp(marble.vx * 0.28, -5, 5);
+  const glintY = 14 + clamp(marble.vy * 0.28, -5, 5);
   marbleEl.style.setProperty("--marble-glint-x", glintX.toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-glint-y", glintY.toFixed(1) + "px");
 }

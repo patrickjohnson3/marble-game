@@ -41,18 +41,18 @@ html,body{
 #marble{
   position:absolute;width:58px;height:58px;border-radius:50%;
   transform:translate(-50%,-50%);
-  background:radial-gradient(circle at 34% 28%,#fff 0 6%,#bce8ff 7% 19%,#2d86dd 42%,#083b75 75%,#031b36 100%);
+  background:radial-gradient(circle at 34% 28%,#dff3ff 0 5%,#78bdec 11% 24%,#2d86dd 46%,#083b75 78%,#031b36 100%);
   box-shadow:
     var(--marble-shadow-x,0px) var(--marble-shadow-y,16px) var(--marble-shadow-blur,28px) #000a,
     inset -8px -10px 18px #0018;
   will-change:left,top;
 }
 #marble::after{
-  content:"";position:absolute;width:14px;height:14px;border-radius:50%;
+  content:"";position:absolute;width:9px;height:9px;border-radius:50%;
   left:var(--marble-glint-x,18px);top:var(--marble-glint-y,14px);
   transform:translate(-50%,-50%);
-  background:radial-gradient(circle,#fff 0 18%,#ffffffd8 19% 40%,#ffffff00 72%);
-  filter:blur(.3px);opacity:.9;mix-blend-mode:screen;pointer-events:none;
+  background:radial-gradient(circle,#ffffffd6 0 20%,#ffffff70 21% 42%,#ffffff00 72%);
+  filter:blur(.6px);opacity:.48;mix-blend-mode:screen;pointer-events:none;
 }
 #messageOverlay{
   position:fixed;left:18px;right:18px;top:50%;z-index:4;
