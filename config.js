@@ -19,10 +19,10 @@ export const mapConfig = {
   light: {
     x: 420,
     y: 260,
-    shadowMinDistance: 14,
-    shadowMaxDistance: 30,
-    shadowMinBlur: 20,
-    shadowMaxBlur: 36
+    shadowMinDistance: 5,
+    shadowMaxDistance: 12,
+    shadowMinBlur: 8,
+    shadowMaxBlur: 15
   },
   elements: [
     { type: "obstacle", x: 260, y: 330, w: 310, h: 42 },
