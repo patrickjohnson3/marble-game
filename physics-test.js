@@ -25,18 +25,18 @@ function testObstacleBounce() {
   assert.deepEqual(impacts, [8]);
 }
 
-function testDeepOverlapPushesOutsideNearestEdge() {
+function testDeepOverlapPushesToNearestEdge() {
   const marble = { x: 120, y: 55, vx: 0, vy: 0, r: 10 };
   const obstacle = { x: 100, y: 50, w: 80, h: 80 };
 
   resolveObstacleCollision(marble, obstacle, { bounce: 0.5 });
 
   assert.equal(marble.y, 40);
-  assert.equal(marbleOverRect(marble, obstacle), true);
+  assert.equal(circleRectContact(marble, obstacle).distanceSq, marble.r * marble.r);
 }
 
 testCircleRectContact();
 testObstacleBounce();
-testDeepOverlapPushesOutsideNearestEdge();
+testDeepOverlapPushesToNearestEdge();
 
 console.log("Physics tests passed.");
