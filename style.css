@@ -51,7 +51,12 @@ html,body{
 #marble::before{
   content:"";position:absolute;inset:6px;border-radius:50%;
   transform:rotate(var(--marble-roll,0rad));
-  background:linear-gradient(115deg,#ffffff00 12%,#ffffff22 28%,#ffffff00 46%,#001a3b26 66%,#ffffff00 84%);
+  background:
+    radial-gradient(circle at 20% 30%,#ffffff24 0 1px,#ffffff00 2px),
+    radial-gradient(circle at 72% 62%,#001a3b24 0 1.5px,#001a3b00 3px),
+    radial-gradient(circle at 45% 78%,#ffffff18 0 1px,#ffffff00 2.5px),
+    linear-gradient(115deg,#ffffff00 12%,#ffffff20 28%,#ffffff00 46%,#001a3b22 66%,#ffffff00 84%);
+  background-size:18px 18px,22px 22px,26px 26px,100% 100%;
   opacity:.42;pointer-events:none;
 }
 #marble::after{
