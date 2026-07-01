@@ -74,6 +74,25 @@ export const hapticTuning = {
   surfaceMaxDurationMs: 16
 };
 
+export const visualConfig = {
+  trail: {
+    durationMs: 2500,
+    minDistance: 3,
+    minIntervalMs: 50,
+    maxOpacity: 0.5
+  },
+  marble: {
+    impactSquashDivisor: 12,
+    impactSquashDecay: 0.12,
+    impactScaleX: 0.08,
+    impactScaleY: 0.06,
+    glintCenter: 29,
+    glintLightOffset: 11,
+    glintVelocityScale: 0.08,
+    glintVelocityLimit: 1.5
+  }
+};
+
 export const physicsConfig = {
   accel: 0.115,
   maxTilt: 26,

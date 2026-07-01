@@ -42,6 +42,7 @@ const {
   timing,
   tuning,
   hapticTuning,
+  visualConfig,
   physicsConfig,
   settingsConfig,
   settingsControls
@@ -203,12 +204,7 @@ const trailRenderer = createTrailRenderer({
   marble,
   game,
   settings,
-  config: {
-    durationMs: 2500,
-    minDistance: 3,
-    minIntervalMs: 50,
-    maxOpacity: 0.5
-  },
+  config: visualConfig.trail,
   clamp
 });
 
@@ -293,8 +289,13 @@ function updateMarbleLighting() {
   marbleEl.style.setProperty("--marble-contact-shadow-y", light.contactShadowY.toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-contact-shadow-blur", light.contactShadowBlur.toFixed(1) + "px");
 
-  const glintX = 29 + (-dx / distance) * 11 + clamp(marble.vx * 0.08, -1.5, 1.5);
-  const glintY = 29 + (-dy / distance) * 11 + clamp(marble.vy * 0.08, -1.5, 1.5);
+  const marbleVisual = visualConfig.marble;
+  const glintX = marbleVisual.glintCenter +
+    (-dx / distance) * marbleVisual.glintLightOffset +
+    clamp(marble.vx * marbleVisual.glintVelocityScale, -marbleVisual.glintVelocityLimit, marbleVisual.glintVelocityLimit);
+  const glintY = marbleVisual.glintCenter +
+    (-dy / distance) * marbleVisual.glintLightOffset +
+    clamp(marble.vy * marbleVisual.glintVelocityScale, -marbleVisual.glintVelocityLimit, marbleVisual.glintVelocityLimit);
   marbleEl.style.setProperty("--marble-glint-x", glintX.toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-glint-y", glintY.toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-roll", marble.roll.toFixed(3) + "rad");
@@ -668,20 +669,23 @@ function loop() {
     updatePhysicsInput(context, dt);
     updatePhysics(context, dt, {
       onImpact: (impact) => {
-        marble.impactSquash = Math.max(marble.impactSquash, clamp(impact / 12, 0, 1));
+        marble.impactSquash = Math.max(
+          marble.impactSquash,
+          clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1)
+        );
         hapticFeedback.pulseImpact(impact);
       },
       onSurface: (speed) => hapticFeedback.pulseSurface(speed)
     });
     marble.roll += Math.hypot(marble.vx, marble.vy) * dt / Math.max(marble.r, 1);
-    marble.impactSquash = Math.max(0, marble.impactSquash - 0.12 * dt);
+    marble.impactSquash = Math.max(0, marble.impactSquash - visualConfig.marble.impactSquashDecay * dt);
     cameraController.updateFollow(dt);
   }
 
   marbleEl.style.left = marble.x + "px";
   marbleEl.style.top = marble.y + "px";
-  marbleEl.style.setProperty("--marble-scale-x", (1 + marble.impactSquash * 0.08).toFixed(3));
-  marbleEl.style.setProperty("--marble-scale-y", (1 - marble.impactSquash * 0.06).toFixed(3));
+  marbleEl.style.setProperty("--marble-scale-x", (1 + marble.impactSquash * visualConfig.marble.impactScaleX).toFixed(3));
+  marbleEl.style.setProperty("--marble-scale-y", (1 - marble.impactSquash * visualConfig.marble.impactScaleY).toFixed(3));
   updateMarbleLighting();
   if (!game.paused) trailRenderer.update(now);
   updateDebugPanel();
