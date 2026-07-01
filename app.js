@@ -254,6 +254,7 @@ function updateMarbleLighting() {
   const glintY = 14 + clamp(marble.vy * 0.28, -5, 5);
   marbleEl.style.setProperty("--marble-glint-x", glintX.toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-glint-y", glintY.toFixed(1) + "px");
+  marbleEl.style.setProperty("--marble-roll", marble.roll.toFixed(3) + "rad");
 }
 
 function centerCameraOnMarble() {
@@ -533,6 +534,7 @@ function resetGameState() {
   marble.y = world.height / 2;
   marble.vx = 0;
   marble.vy = 0;
+  marble.roll = 0;
 
   camera.x = 0;
   camera.y = 0;
@@ -732,6 +734,7 @@ function loop() {
       onImpact: (impact) => hapticFeedback.pulseImpact(impact),
       onSurface: (speed) => hapticFeedback.pulseSurface(speed)
     });
+    marble.roll += Math.hypot(marble.vx, marble.vy) * dt / Math.max(marble.r, 1);
     updateCameraFollow(dt);
   }
 

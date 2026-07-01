@@ -5,7 +5,8 @@ export function createGameState({ world, mapConfig, timing, hapticTuning, physic
       y: world.height / 2,
       vx: 0,
       vy: 0,
-      r: 0
+      r: 0,
+      roll: 0
     },
     bounds: {
       left: 0,
