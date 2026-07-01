@@ -10,7 +10,7 @@
   #settingsOverlay,#messageOverlay{display:none}
 </style>
 <script>
-  const assetVersion = "20260701.231101";
+  const assetVersion = "20260701.231333";
   const appStylesheet = document.createElement("link");
   appStylesheet.rel = "stylesheet";
   appStylesheet.href = "style.css?v=" + assetVersion;
@@ -24,6 +24,7 @@
     <div id="mapWalls" class="walls"></div>
     <div id="roughPatches"></div>
     <div id="obstacles"></div>
+    <svg id="trail" aria-hidden="true"><g id="trailSegments"></g></svg>
     <div id="marble"></div>
   </div>
 </div>
@@ -62,6 +63,10 @@
     <label class="settingRow checkboxRow" for="hapticsSetting">
       <span>haptics</span>
       <input id="hapticsSetting" type="checkbox">
+    </label>
+    <label class="settingRow checkboxRow" for="trailSetting">
+      <span>trail</span>
+      <input id="trailSetting" type="checkbox">
     </label>
     <label class="settingRow checkboxRow" for="fullscreenSetting">
       <span>fullscreen</span>

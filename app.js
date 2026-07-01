@@ -64,6 +64,8 @@ const {
   mapWalls: mapWallsEl,
   roughPatches: roughPatchesEl,
   obstacles: obstaclesEl,
+  trail: trailEl,
+  trailSegments: trailSegmentsEl,
   marble: marbleEl,
   messageOverlay,
   controls: controlsEl,
@@ -76,6 +78,7 @@ const {
   sensitivitySetting,
   rotationSetting,
   hapticsSetting,
+  trailSetting,
   fullscreenSetting,
   hint,
   debug
@@ -105,6 +108,10 @@ const pointers = new Map();
 let gesture = null;
 let lastFrame = performance.now();
 let sensorWatchdog = 0;
+const trailPoints = [];
+const trailDurationMs = 2500;
+const trailMinDistance = 3;
+const trailMinIntervalMs = 50;
 const settingsStorageKey = "marbleGameSettings";
 
 function applyRangeConfig(input, range) {
@@ -129,6 +136,9 @@ function loadSettings() {
       hapticsEnabled: typeof saved.hapticsEnabled === "boolean"
         ? saved.hapticsEnabled
         : settingsConfig.hapticsEnabled,
+      trailEnabled: typeof saved.trailEnabled === "boolean"
+        ? saved.trailEnabled
+        : settingsConfig.trailEnabled,
       fullscreenEnabled: typeof saved.fullscreenEnabled === "boolean"
         ? saved.fullscreenEnabled
         : settingsConfig.fullscreenEnabled
@@ -144,6 +154,7 @@ function saveSettings() {
       maxSpeed: settings.maxSpeed,
       acceleration: settings.acceleration,
       hapticsEnabled: settings.hapticsEnabled,
+      trailEnabled: settings.trailEnabled,
       fullscreenEnabled: settings.fullscreenEnabled
     }));
   } catch {
@@ -159,6 +170,7 @@ speedSetting.value = settings.maxSpeed;
 sensitivitySetting.value = settings.acceleration;
 rotationSetting.checked = settings.rotationEnabled;
 hapticsSetting.checked = settings.hapticsEnabled;
+trailSetting.checked = settings.trailEnabled;
 fullscreenSetting.checked = settings.fullscreenEnabled;
 
 function setHint(message) { hint.textContent = message; }
@@ -169,6 +181,8 @@ function applySettings() {
   physics.accel = settings.acceleration;
   camera.rotationEnabled = settings.rotationEnabled;
   haptics.enabled = settings.hapticsEnabled;
+  trailEl.hidden = !settings.trailEnabled;
+  if (!settings.trailEnabled) clearTrail();
 }
 
 function applyFullscreenSetting() {
@@ -199,6 +213,51 @@ function renderObstacles() {
 
 function renderRoughPatches() {
   renderMapElements(roughPatchesEl, "roughPatch", roughPatches);
+}
+
+function clearTrail() {
+  trailPoints.length = 0;
+  if (trailSegmentsEl.childNodes.length > 0) trailSegmentsEl.replaceChildren();
+}
+
+function updateTrail(now) {
+  if (!settings.trailEnabled || game.phase === "waiting") {
+    clearTrail();
+    return;
+  }
+
+  const last = trailPoints[trailPoints.length - 1];
+  const movedEnough = !last || Math.hypot(marble.x - last.x, marble.y - last.y) >= trailMinDistance;
+  const waitedEnough = !last || now - last.t >= trailMinIntervalMs;
+
+  if (movedEnough && waitedEnough) {
+    trailPoints.push({ x: marble.x, y: marble.y, t: now });
+  }
+
+  const oldest = now - trailDurationMs;
+  while (trailPoints.length > 0 && trailPoints[0].t < oldest) {
+    trailPoints.shift();
+  }
+
+  if (trailPoints.length < 2) {
+    trailSegmentsEl.replaceChildren();
+    return;
+  }
+
+  const segments = [];
+  for (let i = 1; i < trailPoints.length; i++) {
+    const a = trailPoints[i - 1];
+    const b = trailPoints[i];
+    const opacity = clamp(1 - (now - b.t) / trailDurationMs, 0, 1) * 0.5;
+    segments.push(
+      "<line x1=\"" + a.x.toFixed(1) +
+      "\" y1=\"" + a.y.toFixed(1) +
+      "\" x2=\"" + b.x.toFixed(1) +
+      "\" y2=\"" + b.y.toFixed(1) +
+      "\" opacity=\"" + opacity.toFixed(3) + "\"/>"
+    );
+  }
+  trailSegmentsEl.innerHTML = segments.join("");
 }
 
 function mapEdgeWalls() {
@@ -286,6 +345,7 @@ function setReleasedBounds() {
 function setupMap() {
   worldEl.style.width = world.width + "px";
   worldEl.style.height = world.height + "px";
+  trailEl.setAttribute("viewBox", "0 0 " + world.width + " " + world.height);
   setReleasedBounds();
   renderWalls(mapWallsEl, mapEdgeWalls());
   renderRoughPatches();
@@ -549,6 +609,7 @@ function resetGameState() {
 
   haptics.impact.lastPulse = 0;
   haptics.surface.lastPulse = 0;
+  clearTrail();
 
   worldEl.classList.remove("map-open");
   controlsEl.hidden = false;
@@ -709,6 +770,11 @@ hapticsSetting.addEventListener("change", () => {
   applySettings();
   saveSettings();
 });
+trailSetting.addEventListener("change", () => {
+  settings.trailEnabled = trailSetting.checked;
+  applySettings();
+  saveSettings();
+});
 fullscreenSetting.addEventListener("change", () => {
   settings.fullscreenEnabled = fullscreenSetting.checked;
   saveSettings();
@@ -761,6 +827,7 @@ function loop() {
   marbleEl.style.setProperty("--marble-scale-x", (1 + marble.impactSquash * 0.08).toFixed(3));
   marbleEl.style.setProperty("--marble-scale-y", (1 - marble.impactSquash * 0.06).toFixed(3));
   updateMarbleLighting();
+  updateTrail(now);
   updateDebugPanel();
 
   requestAnimationFrame(loop);

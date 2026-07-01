@@ -13,6 +13,8 @@ export const els = {
   mapWalls: requiredElement("mapWalls"),
   roughPatches: requiredElement("roughPatches"),
   obstacles: requiredElement("obstacles"),
+  trail: requiredElement("trail"),
+  trailSegments: requiredElement("trailSegments"),
   marble: requiredElement("marble"),
   messageOverlay: requiredElement("messageOverlay"),
   controls: requiredElement("controls"),
@@ -25,6 +27,7 @@ export const els = {
   sensitivitySetting: requiredElement("sensitivitySetting"),
   rotationSetting: requiredElement("rotationSetting"),
   hapticsSetting: requiredElement("hapticsSetting"),
+  trailSetting: requiredElement("trailSetting"),
   fullscreenSetting: requiredElement("fullscreenSetting"),
   hint: requiredElement("hint"),
   debug: requiredElement("debug")
