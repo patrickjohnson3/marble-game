@@ -658,6 +658,13 @@ function setNeutralNow() {
   setHint("neutral reset to current hand position.");
 }
 
+function requestStartFullscreen() {
+  if (startBtn.disabled || game.phase !== "waiting") return;
+
+  requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
+}
+
+startBtn.addEventListener("pointerdown", requestStartFullscreen);
 startBtn.addEventListener("click", start);
 neutralBtn.addEventListener("click", setNeutralNow);
 
