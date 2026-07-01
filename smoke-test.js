@@ -5,6 +5,7 @@ import { mapConfig } from "./config.js";
 const html = readFileSync("index.html", "utf8");
 const scripts = [
   "app.js",
+  "camera.js",
   "config.js",
   "debug.js",
   "dom.js",

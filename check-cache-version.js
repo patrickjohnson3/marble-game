@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 
 const runtimeFiles = [
   "app.js",
+  "camera.js",
   "config.js",
   "debug.js",
   "dom.js",

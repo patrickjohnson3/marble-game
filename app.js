@@ -1,6 +1,7 @@
 const assetVersion = new URL(import.meta.url).searchParams.get("v") || "dev";
 const versioned = (path) => path + "?v=" + encodeURIComponent(assetVersion);
 const [
+  cameraModule,
   configModule,
   debugModule,
   domModule,
@@ -15,6 +16,7 @@ const [
   stateModule,
   trailModule
 ] = await Promise.all([
+  import(versioned("./camera.js")),
   import(versioned("./config.js")),
   import(versioned("./debug.js")),
   import(versioned("./dom.js")),
@@ -42,6 +44,7 @@ const {
   settingsConfig,
   settingsControls
 } = configModule;
+const { createCameraController } = cameraModule;
 const { debugLines } = debugModule;
 const { els } = domModule;
 const { clamp, distance, angle, midpoint } = geometryModule;
@@ -131,8 +134,6 @@ const {
   physics
 } = state;
 
-const pointers = new Map();
-let gesture = null;
 let lastFrame = performance.now();
 let sensorWatchdog = 0;
 let sensorWatchdogStartedAt = 0;
@@ -180,6 +181,22 @@ function applyFullscreenSetting() {
 }
 
 const hapticFeedback = createHapticsController(haptics, hapticTuning);
+const cameraController = createCameraController({
+  camera,
+  cameraEl: worldEl,
+  game,
+  intro,
+  marble,
+  tuning,
+  clamp,
+  distance,
+  angle,
+  midpoint,
+  viewport: {
+    width: () => innerWidth,
+    height: () => innerHeight
+  }
+});
 const trailRenderer = createTrailRenderer({
   trailEl,
   trailSegmentsEl,
@@ -292,13 +309,6 @@ function updateMarbleLighting() {
   marbleEl.style.setProperty("--marble-roll", marble.roll.toFixed(3) + "rad");
 }
 
-function centerCameraOnMarble() {
-  const transformed = transformedWorldPoint(marble.x, marble.y);
-  camera.x = innerWidth / 2 - transformed.x;
-  camera.y = innerHeight / 2 - transformed.y;
-  applyCameraTransform();
-}
-
 function updateIntroBounds() {
   updateIntroMapBounds({
     bounds,
@@ -330,119 +340,11 @@ function resize() {
   if (!intro.released) updateIntroBounds();
   marble.x = clamp(marble.x, bounds.left + marble.r, bounds.right - marble.r);
   marble.y = clamp(marble.y, bounds.top + marble.r, bounds.bottom - marble.r);
-  if (!intro.released) centerCameraOnMarble();
-  else applyCameraTransform();
+  if (!intro.released) cameraController.centerOnMarble();
+  else cameraController.applyTransform();
 }
 addEventListener("resize", resize);
 document.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
-
-function applyCameraTransform() {
-  worldEl.style.transform =
-    "translate(" + camera.x + "px, " + camera.y + "px) " +
-    "scale(" + camera.scale + ") " +
-    "rotate(" + camera.rotation + "rad)";
-}
-
-function transformedWorldPoint(x, y) {
-  const c = Math.cos(camera.rotation);
-  const s = Math.sin(camera.rotation);
-
-  return {
-    x: (x * c - y * s) * camera.scale,
-    y: (x * s + y * c) * camera.scale
-  };
-}
-
-function updateCameraFollow(dt) {
-  if (!intro.released) return;
-
-  camera.gestureCooldown = Math.max(0, camera.gestureCooldown - dt);
-  if (camera.gestureCooldown > 0) return;
-
-  const transformed = transformedWorldPoint(marble.x, marble.y);
-  const targetX = innerWidth / 2 - transformed.x;
-  const targetY = innerHeight / 2 - transformed.y;
-  const followStep = 1 - Math.pow(1 - camera.followLag, dt);
-
-  camera.x += (targetX - camera.x) * followStep;
-  camera.y += (targetY - camera.y) * followStep;
-  applyCameraTransform();
-}
-
-function pointerPoint(e) {
-  return { x: e.clientX, y: e.clientY };
-}
-
-function getGesturePoints() {
-  return Array.from(pointers.values()).slice(0, 2);
-}
-
-function startGesture() {
-  const [a, b] = getGesturePoints();
-  if (!a || !b) return;
-
-  gesture = {
-    distance: Math.max(distance(a, b), 1),
-    angle: angle(a, b),
-    midpoint: midpoint(a, b),
-    x: camera.x,
-    y: camera.y,
-    scale: camera.scale,
-    rotation: camera.rotation
-  };
-}
-
-function updateGesture() {
-  if (!gesture || pointers.size < 2) return;
-
-  const [a, b] = getGesturePoints();
-  const nextMidpoint = midpoint(a, b);
-  camera.scale = clamp(
-    gesture.scale * (distance(a, b) / gesture.distance),
-    camera.minScale,
-    camera.maxScale
-  );
-  camera.rotation = camera.rotationEnabled
-    ? gesture.rotation + angle(a, b) - gesture.angle
-    : 0;
-  if (!intro.released) {
-    centerCameraOnMarble();
-    return;
-  }
-
-  camera.x = gesture.x + nextMidpoint.x - gesture.midpoint.x;
-  camera.y = gesture.y + nextMidpoint.y - gesture.midpoint.y;
-  camera.gestureCooldown = tuning.gestureCooldownFrames;
-  applyCameraTransform();
-}
-
-function onPointerDown(e) {
-  if (game.paused) return;
-
-  pointers.set(e.pointerId, pointerPoint(e));
-  if (gameEl.setPointerCapture) {
-    try {
-      gameEl.setPointerCapture(e.pointerId);
-    } catch {
-      // Losing capture is acceptable; pointercancel/up will still clear state.
-    }
-  }
-  if (pointers.size === 2) startGesture();
-}
-
-function onPointerMove(e) {
-  if (game.paused) return;
-  if (!pointers.has(e.pointerId)) return;
-
-  pointers.set(e.pointerId, pointerPoint(e));
-  updateGesture();
-}
-
-function onPointerEnd(e) {
-  pointers.delete(e.pointerId);
-  gesture = null;
-  if (pointers.size === 2) startGesture();
-}
 
 function setIntroTimer(stage, delay, callback) {
   clearIntroTimers();
@@ -590,8 +492,7 @@ function pauseGame() {
   game.paused = true;
   keyboard.x = 0;
   keyboard.y = 0;
-  gesture = null;
-  pointers.clear();
+  cameraController.resetGesture();
   pauseSensorWatchdog();
   pauseIntroTimers();
 }
@@ -643,8 +544,7 @@ function resetGameState() {
   camera.scale = 1;
   camera.rotation = 0;
   camera.gestureCooldown = 0;
-  gesture = null;
-  pointers.clear();
+  cameraController.resetGesture();
 
   haptics.impact.lastPulse = 0;
   haptics.surface.lastPulse = 0;
@@ -657,7 +557,7 @@ function resetGameState() {
   hideMessage();
   setReleasedBounds();
   updateIntroBounds();
-  centerCameraOnMarble();
+  cameraController.centerOnMarble();
 }
 
 function onKeyDown(e) {
@@ -710,10 +610,10 @@ const inputSystems = {
   },
   gestures: {
     enable() {
-      gameEl.addEventListener("pointerdown", onPointerDown);
-      gameEl.addEventListener("pointermove", onPointerMove);
-      gameEl.addEventListener("pointerup", onPointerEnd);
-      gameEl.addEventListener("pointercancel", onPointerEnd);
+      gameEl.addEventListener("pointerdown", cameraController.onPointerDown);
+      gameEl.addEventListener("pointermove", cameraController.onPointerMove);
+      gameEl.addEventListener("pointerup", cameraController.onPointerEnd);
+      gameEl.addEventListener("pointercancel", cameraController.onPointerEnd);
     }
   }
 };
@@ -798,7 +698,7 @@ rotationSetting.addEventListener("change", () => {
   saveSettings();
   if (!settings.rotationEnabled) {
     camera.rotation = 0;
-    centerCameraOnMarble();
+    cameraController.centerOnMarble();
   }
 });
 hapticsSetting.addEventListener("change", () => {
@@ -855,7 +755,7 @@ function loop() {
     });
     marble.roll += Math.hypot(marble.vx, marble.vy) * dt / Math.max(marble.r, 1);
     marble.impactSquash = Math.max(0, marble.impactSquash - 0.12 * dt);
-    updateCameraFollow(dt);
+    cameraController.updateFollow(dt);
   }
 
   marbleEl.style.left = marble.x + "px";
@@ -873,7 +773,7 @@ try {
   setupMap();
   applySettings();
   syncMarbleRadius();
-  centerCameraOnMarble();
+  cameraController.centerOnMarble();
   inputSystems.keyboard.enable();
   inputSystems.gestures.enable();
   loop();
