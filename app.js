@@ -615,12 +615,17 @@ const inputSystems = {
 };
 
 async function start() {
+  startBtn.disabled = true;
+  controlsEl.hidden = true;
+
   const fullscreenRequest = requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
 
   const ok = await requestMotionPermissionIfNeeded();
   if (!ok) {
     await fullscreenRequest;
     if (settings.fullscreenEnabled) exitFullscreenMode();
+    controlsEl.hidden = false;
+    startBtn.disabled = false;
     setHint("motion permission denied. check chrome site settings.");
     return;
   }
@@ -630,7 +635,6 @@ async function start() {
   inputSystems.motion.enable();
   game.phase = "calibrating";
 
-  controlsEl.hidden = true;
   setHint("keep holding normally for half a sec...");
 
   clearTimeout(sensorWatchdog);
