@@ -1,7 +1,14 @@
 let wakeLock = null;
 
+function fullscreenElement() {
+  return document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.msFullscreenElement ||
+    null;
+}
+
 export async function requestFullscreenMode({ fullscreenOnStart }) {
-  if (!fullscreenOnStart || document.fullscreenElement) return;
+  if (!fullscreenOnStart || fullscreenElement()) return;
 
   const target = document.documentElement;
   const requestFullscreen = target.requestFullscreen ||
@@ -18,7 +25,7 @@ export async function requestFullscreenMode({ fullscreenOnStart }) {
 }
 
 export async function exitFullscreenMode() {
-  if (!document.fullscreenElement) return;
+  if (!fullscreenElement()) return;
 
   const exitFullscreen = document.exitFullscreen ||
     document.webkitExitFullscreen ||
