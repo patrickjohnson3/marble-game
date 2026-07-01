@@ -2,6 +2,8 @@
   "type": "module",
   "scripts": {
     "test": "node test-all.js",
-    "bump-cache": "node bump-cache-version.js"
+    "bump-cache": "node bump-cache-version.js",
+    "check-cache": "node check-cache-version.js",
+    "install-hooks": "git config core.hooksPath .githooks"
   }
 }

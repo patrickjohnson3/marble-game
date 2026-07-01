@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 
-const tests = ["smoke-test.js", "physics-test.js"];
+const tests = ["smoke-test.js", "physics-test.js", "check-cache-version.js"];
 
 for (const test of tests) {
   const result = spawnSync(process.execPath, [test], {
