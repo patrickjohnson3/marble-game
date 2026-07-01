@@ -74,10 +74,40 @@ function testRoughPatchAddsDrag() {
   assert.equal(marble.vx, 5);
 }
 
+function testLowSpeedDriftSettles() {
+  const marble = { x: 50, y: 50, vx: 0.02, vy: 0.01, r: 10 };
+
+  updatePhysics({
+    marble,
+    bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+    intro: { released: true },
+    tilt: { smoothX: 0.1, smoothY: 0.1 },
+    obstacles: [],
+    roughPatches: [],
+    physics: {
+      accel: 0,
+      friction: 1,
+      roughPatchFriction: 0.5,
+      bounce: 0.5,
+      maxSpeed: 100,
+      maxStepDistance: 100,
+      settleSpeed: 0.04,
+      settleTilt: 0.5
+    }
+  }, 1, {
+    onImpact: () => {},
+    onSurface: () => {}
+  });
+
+  assert.equal(marble.vx, 0);
+  assert.equal(marble.vy, 0);
+}
+
 testCircleRectContact();
 testObstacleBounce();
 testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
 testRoughPatchAddsDrag();
+testLowSpeedDriftSettles();
 
 console.log("Physics tests passed.");

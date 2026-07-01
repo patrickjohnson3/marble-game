@@ -85,7 +85,9 @@ export const physicsConfig = {
   keyboardTilt: 18,
   maxStepDistance: 10,
   roughPatchFriction: 0.82,
-  scrapeHapticScale: 0.08
+  scrapeHapticScale: 0.08,
+  settleSpeed: 0.035,
+  settleTilt: 0.8
 };
 
 export const settingsConfig = {
