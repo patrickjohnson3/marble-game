@@ -25,6 +25,19 @@ function testObstacleBounce() {
   assert.deepEqual(impacts, [8]);
 }
 
+function testGlancingImpactReportsScrapeFeedback() {
+  const marble = { x: 90, y: 50, vx: 8, vy: 4, r: 12 };
+  const obstacle = { x: 100, y: 30, w: 40, h: 40 };
+  const impacts = [];
+
+  resolveObstacleCollision(marble, obstacle, {
+    bounce: 0.5,
+    scrapeHapticScale: 0.25
+  }, (impact) => impacts.push(impact));
+
+  assert.equal(impacts[0], 9);
+}
+
 function testDeepOverlapPushesToNearestEdge() {
   const marble = { x: 120, y: 55, vx: 0, vy: 0, r: 10 };
   const obstacle = { x: 100, y: 50, w: 80, h: 80 };
@@ -63,6 +76,7 @@ function testRoughPatchAddsDrag() {
 
 testCircleRectContact();
 testObstacleBounce();
+testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
 testRoughPatchAddsDrag();
 

@@ -51,6 +51,10 @@ function applySurfaceDrag(context, dt) {
   context.marble.vy *= drag;
 }
 
+function collisionFeedback(normalSpeed, tangentSpeed, physics) {
+  return normalSpeed + tangentSpeed * (physics.scrapeHapticScale ?? 0);
+}
+
 export function resolveObstacleCollision(marble, obstacle, physics, onImpact = () => {}) {
   const contact = circleRectContact(marble, obstacle);
 
@@ -77,7 +81,8 @@ export function resolveObstacleCollision(marble, obstacle, physics, onImpact = (
 
   const impact = marble.vx * nx + marble.vy * ny;
   if (impact < 0) {
-    onImpact(-impact);
+    const tangent = Math.abs(marble.vx * -ny + marble.vy * nx);
+    onImpact(collisionFeedback(-impact, tangent, physics));
     marble.vx -= (1 + physics.bounce) * impact * nx;
     marble.vy -= (1 + physics.bounce) * impact * ny;
   }
@@ -85,22 +90,22 @@ export function resolveObstacleCollision(marble, obstacle, physics, onImpact = (
 
 function handleWallCollisions({ marble, bounds, intro, obstacles, physics }, onImpact) {
   if (marble.x < bounds.left + marble.r) {
-    onImpact(Math.abs(marble.vx));
+    onImpact(collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics));
     marble.x = bounds.left + marble.r;
     marble.vx = -marble.vx * physics.bounce;
   }
   if (marble.x > bounds.right - marble.r) {
-    onImpact(Math.abs(marble.vx));
+    onImpact(collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics));
     marble.x = bounds.right - marble.r;
     marble.vx = -marble.vx * physics.bounce;
   }
   if (marble.y < bounds.top + marble.r) {
-    onImpact(Math.abs(marble.vy));
+    onImpact(collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics));
     marble.y = bounds.top + marble.r;
     marble.vy = -marble.vy * physics.bounce;
   }
   if (marble.y > bounds.bottom - marble.r) {
-    onImpact(Math.abs(marble.vy));
+    onImpact(collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics));
     marble.y = bounds.bottom - marble.r;
     marble.vy = -marble.vy * physics.bounce;
   }
