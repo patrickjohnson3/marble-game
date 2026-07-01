@@ -7,6 +7,7 @@ const [
   domModule,
   geometryModule,
   hapticsModule,
+  introSequenceModule,
   introTimersModule,
   mapModule,
   physicsModule,
@@ -22,6 +23,7 @@ const [
   import(versioned("./dom.js")),
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
+  import(versioned("./intro-sequence.js")),
   import(versioned("./intro-timers.js")),
   import(versioned("./map.js")),
   import(versioned("./physics.js")),
@@ -49,12 +51,10 @@ const { debugLines } = debugModule;
 const { els } = domModule;
 const { clamp, distance, angle, midpoint } = geometryModule;
 const { createHapticsController } = hapticsModule;
+const { createIntroSequence } = introSequenceModule;
 const {
-  pauseIntroTimerState,
   resetIntroTimerState,
-  resumeIntroTimerAction,
-  shouldPauseGame,
-  trackIntroTimer
+  shouldPauseGame
 } = introTimersModule;
 const {
   introPenWalls,
@@ -231,7 +231,7 @@ function runSensorWatchdog() {
     tilt.neutralX = 0;
     tilt.neutralY = 0;
     calibration.autoNeutralDone = true;
-    scheduleIntroSequence();
+    introSequence.schedule();
   }
 }
 
@@ -269,15 +269,6 @@ function renderObstacles() {
 
 function renderRoughPatches() {
   renderMapElements(roughPatchesEl, "roughPatch", roughPatches);
-}
-
-function showMessage(message) {
-  messageOverlay.textContent = message;
-  messageOverlay.classList.add("show");
-}
-
-function hideMessage() {
-  messageOverlay.classList.remove("show");
 }
 
 function syncMarbleRadius() {
@@ -346,68 +337,23 @@ function resize() {
 addEventListener("resize", resize);
 document.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
 
-function setIntroTimer(stage, delay, callback) {
-  clearIntroTimers();
-  trackIntroTimer(intro, stage, delay, performance.now());
-  intro.messageTimer = setTimeout(callback, delay);
-}
-
-function scheduleCountdownTick(delay = timing.countdownTickMs) {
-  clearIntroTimers();
-  trackIntroTimer(intro, "countdown", delay, performance.now());
-  intro.countdownTimer = setTimeout(() => {
-    if (game.paused) return;
-
-    intro.countdownValue--;
-    if (intro.countdownValue <= 0) {
-      intro.countdownTimer = 0;
-      intro.sequenceStage = "idle";
-      releaseMap();
-      return;
-    }
-
-    showCountdown();
-    scheduleCountdownTick();
-  }, delay);
-}
-
-function showIntroPrompt() {
-  showMessage("Pinch to zoom out. Reverse pinch to zoom in. Rotation is available in settings.");
-  setIntroTimer("countdownWait", timing.countdownDelayMs, startReleaseCountdown);
-}
-
-function scheduleIntroSequence() {
-  if (intro.started) return;
-
-  intro.started = true;
-  setIntroTimer("promptWait", timing.introPromptDelayMs, showIntroPrompt);
-}
-
-function startReleaseCountdown() {
-  clearIntroTimers();
-  intro.sequenceStage = "countdown";
-  intro.countdownValue = timing.countdownStart;
-  showCountdown();
-  scheduleCountdownTick();
-}
-
-function showCountdown() {
-  const countdown = document.createElement("span");
-  countdown.className = "countdown";
-  countdown.textContent = intro.countdownValue;
-  messageOverlay.replaceChildren("Ready?", countdown);
-  messageOverlay.classList.add("show");
-}
-
 function releaseMap() {
   intro.released = true;
   intro.sequenceStage = "idle";
   introWallsEl.innerHTML = "";
   worldEl.classList.add("map-open");
   setReleasedBounds();
-  hideMessage();
+  introSequence.hideMessage();
   setHint("map open. pinch to zoom and explore.");
 }
+
+const introSequence = createIntroSequence({
+  intro,
+  game,
+  timing,
+  messageOverlay,
+  onRelease: releaseMap
+});
 
 function maybeAutoNeutral() {
   if (game.paused) return;
@@ -426,7 +372,7 @@ function maybeAutoNeutral() {
     game.phase = "running";
     marble.vx = 0; marble.vy = 0;
     setHint("neutral set. tilt from your normal holding angle.");
-    scheduleIntroSequence();
+    introSequence.schedule();
   }
 }
 
@@ -460,32 +406,6 @@ function resetCalibration() {
   tilt.neutralY = null;
 }
 
-function clearIntroTimers() {
-  clearTimeout(intro.messageTimer);
-  clearTimeout(intro.countdownTimer);
-  intro.messageTimer = 0;
-  intro.countdownTimer = 0;
-}
-
-function pauseIntroTimers() {
-  const hadActiveTimer = pauseIntroTimerState(intro, performance.now());
-  if (!hadActiveTimer) return;
-
-  clearIntroTimers();
-}
-
-function resumeIntroTimers() {
-  const delay = Math.max(0, intro.timerDelayMs);
-  const action = resumeIntroTimerAction(intro);
-  if (action === "prompt") {
-    setIntroTimer("promptWait", delay, showIntroPrompt);
-  } else if (action === "countdownStart") {
-    setIntroTimer("countdownWait", delay, startReleaseCountdown);
-  } else if (action === "countdownTick") {
-    scheduleCountdownTick(delay);
-  }
-}
-
 function pauseGame() {
   if (!shouldPauseGame(game)) return;
 
@@ -494,7 +414,7 @@ function pauseGame() {
   keyboard.y = 0;
   cameraController.resetGesture();
   pauseSensorWatchdog();
-  pauseIntroTimers();
+  introSequence.pause();
 }
 
 function resumeGame() {
@@ -503,7 +423,7 @@ function resumeGame() {
   game.paused = false;
   lastFrame = performance.now();
   resumeSensorWatchdog();
-  resumeIntroTimers();
+  introSequence.resume();
 }
 
 function resetGameState() {
@@ -511,7 +431,7 @@ function resetGameState() {
   sensorWatchdog = 0;
   sensorWatchdogStartedAt = 0;
   sensorWatchdogDelayMs = 0;
-  clearIntroTimers();
+  introSequence.clearTimers();
   resetCalibration();
 
   game.phase = "waiting";
@@ -554,7 +474,7 @@ function resetGameState() {
   controlsEl.hidden = false;
   startBtn.textContent = "start";
   startBtn.disabled = false;
-  hideMessage();
+  introSequence.hideMessage();
   setReleasedBounds();
   updateIntroBounds();
   cameraController.centerOnMarble();
@@ -576,7 +496,7 @@ function onKeyDown(e) {
       tilt.neutralX = 0;
       tilt.neutralY = 0;
       calibration.autoNeutralDone = true;
-      scheduleIntroSequence();
+      introSequence.schedule();
     }
   }
 }
