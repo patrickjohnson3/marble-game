@@ -22,7 +22,9 @@ export const mapConfig = {
     shadowMinDistance: 5,
     shadowMaxDistance: 12,
     shadowMinBlur: 8,
-    shadowMaxBlur: 15
+    shadowMaxBlur: 15,
+    contactShadowY: 3,
+    contactShadowBlur: 5
   },
   elements: [
     { type: "obstacle", x: 260, y: 330, w: 310, h: 42 },
