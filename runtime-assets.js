@@ -14,7 +14,8 @@ export const runtimeScripts = [
   "rendering.js",
   "settings-store.js",
   "state.js",
-  "trail.js"
+  "trail.js",
+  "ui.js"
 ];
 
 export const runtimeStyles = [

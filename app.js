@@ -15,7 +15,8 @@ const [
   renderingModule,
   settingsStoreModule,
   stateModule,
-  trailModule
+  trailModule,
+  uiModule
 ] = await Promise.all([
   import(versioned("./camera.js")),
   import(versioned("./config.js")),
@@ -31,7 +32,8 @@ const [
   import(versioned("./rendering.js")),
   import(versioned("./settings-store.js")),
   import(versioned("./state.js")),
-  import(versioned("./trail.js"))
+  import(versioned("./trail.js")),
+  import(versioned("./ui.js"))
 ]).catch((error) => {
   showBootError(error);
   throw error;
@@ -79,6 +81,7 @@ const {
 } = settingsStoreModule;
 const { createGameState } = stateModule;
 const { createTrailRenderer } = trailModule;
+const { createUi } = uiModule;
 
 function showBootError(error) {
   const hintEl = document.getElementById("hint");
@@ -148,6 +151,7 @@ const settings = loadSettings({
   controls: settingsControls,
   clamp
 });
+const ui = createUi({ hint, debug, settingsOverlay, debugLines, state });
 
 function saveSettings() {
   persistSettings({ storage: localStorage, storageKey: settingsStorageKey, settings });
@@ -161,9 +165,6 @@ rotationSetting.checked = settings.rotationEnabled;
 hapticsSetting.checked = settings.hapticsEnabled;
 trailSetting.checked = settings.trailEnabled;
 fullscreenSetting.checked = settings.fullscreenEnabled;
-
-function setHint(message) { hint.textContent = message; }
-function isSettingsOpen() { return settingsOverlay.classList.contains("open"); }
 
 function applySettings() {
   physics.maxSpeed = settings.maxSpeed;
@@ -221,7 +222,7 @@ function runSensorWatchdog() {
   if (game.paused) return;
 
   if (sensor.using === "none") {
-    setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
+    ui.setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
     sensor.using = "keyboard";
     game.phase = "keyboard";
     tilt.neutralX = 0;
@@ -251,12 +252,6 @@ function resumeSensorWatchdog() {
   if (game.phase !== "calibrating" || sensor.using !== "none" || sensorWatchdog) return;
 
   scheduleSensorWatchdog(Math.max(0, sensorWatchdogDelayMs));
-}
-
-function updateDebugPanel() {
-  if (!isSettingsOpen()) return;
-
-  debug.textContent = debugLines(state).join("\n");
 }
 
 function renderObstacles() {
@@ -345,7 +340,7 @@ function releaseMap() {
   worldEl.classList.add("map-open");
   setReleasedBounds();
   introSequence.hideMessage();
-  setHint("map open. pinch to zoom and explore.");
+  ui.setHint("map open. pinch to zoom and explore.");
 }
 
 const introSequence = createIntroSequence({
@@ -372,7 +367,7 @@ function maybeAutoNeutral() {
     calibration.autoNeutralDone = true;
     game.phase = "running";
     marble.vx = 0; marble.vy = 0;
-    setHint("neutral set. tilt from your normal holding angle.");
+    ui.setHint("neutral set. tilt from your normal holding angle.");
     introSequence.schedule();
   }
 }
@@ -551,7 +546,7 @@ async function start() {
     if (settings.fullscreenEnabled) exitFullscreenMode();
     controlsEl.hidden = false;
     startBtn.disabled = false;
-    setHint("motion permission denied. check chrome site settings.");
+    ui.setHint("motion permission denied. check chrome site settings.");
     return;
   }
 
@@ -562,7 +557,7 @@ async function start() {
   inputSystems.motion.enable();
   game.phase = "calibrating";
 
-  setHint("keep holding normally for half a sec...");
+  ui.setHint("keep holding normally for half a sec...");
 
   scheduleSensorWatchdog();
 }
@@ -575,7 +570,7 @@ function setNeutralNow() {
   calibration.sampleCount = tuning.neutralSampleCount;
   marble.vx = 0; marble.vy = 0;
   tilt.smoothX = 0; tilt.smoothY = 0;
-  setHint("neutral reset to current hand position.");
+  ui.setHint("neutral reset to current hand position.");
 }
 
 function requestStartFullscreen() {
@@ -590,14 +585,11 @@ neutralBtn.addEventListener("click", setNeutralNow);
 
 function openSettings() {
   pauseGame();
-  settingsOverlay.classList.add("open");
-  settingsOverlay.setAttribute("aria-hidden", "false");
-  updateDebugPanel();
+  ui.openSettingsModal();
 }
 
 function closeSettingsModal() {
-  settingsOverlay.classList.remove("open");
-  settingsOverlay.setAttribute("aria-hidden", "true");
+  ui.closeSettingsModal();
   resumeGame();
 }
 
@@ -688,7 +680,7 @@ function loop() {
   marbleEl.style.setProperty("--marble-scale-y", (1 - marble.impactSquash * visualConfig.marble.impactScaleY).toFixed(3));
   updateMarbleLighting();
   if (!game.paused) trailRenderer.update(now);
-  updateDebugPanel();
+  ui.updateDebugPanel();
 
   requestAnimationFrame(loop);
 }
