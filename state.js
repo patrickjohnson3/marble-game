@@ -6,7 +6,8 @@ export function createGameState({ world, mapConfig, timing, hapticTuning, physic
       vx: 0,
       vy: 0,
       r: 0,
-      roll: 0
+      roll: 0,
+      impactSquash: 0
     },
     bounds: {
       left: 0,

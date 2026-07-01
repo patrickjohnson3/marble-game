@@ -537,6 +537,7 @@ function resetGameState() {
   marble.vx = 0;
   marble.vy = 0;
   marble.roll = 0;
+  marble.impactSquash = 0;
 
   camera.x = 0;
   camera.y = 0;
@@ -733,15 +734,21 @@ function loop() {
     const context = physicsContext();
     updatePhysicsInput(context, dt);
     updatePhysics(context, dt, {
-      onImpact: (impact) => hapticFeedback.pulseImpact(impact),
+      onImpact: (impact) => {
+        marble.impactSquash = Math.max(marble.impactSquash, clamp(impact / 12, 0, 1));
+        hapticFeedback.pulseImpact(impact);
+      },
       onSurface: (speed) => hapticFeedback.pulseSurface(speed)
     });
     marble.roll += Math.hypot(marble.vx, marble.vy) * dt / Math.max(marble.r, 1);
+    marble.impactSquash = Math.max(0, marble.impactSquash - 0.12 * dt);
     updateCameraFollow(dt);
   }
 
   marbleEl.style.left = marble.x + "px";
   marbleEl.style.top = marble.y + "px";
+  marbleEl.style.setProperty("--marble-scale-x", (1 + marble.impactSquash * 0.08).toFixed(3));
+  marbleEl.style.setProperty("--marble-scale-y", (1 - marble.impactSquash * 0.06).toFixed(3));
   updateMarbleLighting();
   updateDebugPanel();
 
