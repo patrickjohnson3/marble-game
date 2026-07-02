@@ -70,7 +70,7 @@ const {
   setReleasedBounds: setReleasedMapBounds,
   updateIntroBounds: updateIntroMapBounds
 } = mapModule;
-const { updatePhysicsInput, updatePhysics } = physicsModule;
+const { marbleOverRect, updatePhysicsInput, updatePhysics } = physicsModule;
 const {
   requestFullscreenMode,
   exitFullscreenMode,
@@ -266,6 +266,16 @@ function updateMarbleLighting() {
   marbleEl.style.setProperty("--marble-glint-x", glintX.toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-glint-y", glintY.toFixed(1) + "px");
   marbleEl.style.setProperty("--marble-roll", marble.roll.toFixed(3) + "rad");
+}
+
+function updateRoughPatchFeedback() {
+  const patchEls = roughPatchesEl.children;
+  roughPatches.forEach((patch, index) => {
+    patchEls[index]?.classList.toggle(
+      "active",
+      intro.released && marbleOverRect(marble, patch)
+    );
+  });
 }
 
 function updateIntroBounds() {
@@ -677,6 +687,7 @@ function loop() {
   marbleEl.style.setProperty("--marble-scale-x", (1 + marble.impactSquash * visualConfig.marble.impactScaleX).toFixed(3));
   marbleEl.style.setProperty("--marble-scale-y", (1 - marble.impactSquash * visualConfig.marble.impactScaleY).toFixed(3));
   updateMarbleLighting();
+  updateRoughPatchFeedback();
   if (!game.paused) trailRenderer.update(now);
   ui.updateDebugPanel();
 
