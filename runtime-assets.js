@@ -27,6 +27,7 @@ export const runtimeScripts = [
   "settings-store.js",
   "state.js",
   "terrain-view.js",
+  "timer-utils.js",
   "timing-config.js",
   "trail.js",
   "ui.js",

@@ -1,3 +1,5 @@
+import { createTimeoutRegistry } from "./timer-utils.js";
+
 function particleStyle({ x, y, dx, dy, size, lifeMs, opacity }) {
   return [
     "--x:" + x.toFixed(1) + "px",
@@ -26,7 +28,7 @@ export function createEffectsRenderer({
 }) {
   let lastImpactAt = Number.NEGATIVE_INFINITY;
   let lastSurfaceAt = 0;
-  const cleanupTimers = new Set();
+  const cleanupTimers = createTimeoutRegistry();
 
   function spawn(className, style, lifeMs) {
     while (effectsEl.childNodes.length >= config.maxParticles) {
@@ -37,11 +39,9 @@ export function createEffectsRenderer({
     particle.setAttribute("aria-hidden", "true");
     particle.style.cssText = style;
     effectsEl.appendChild(particle);
-    const timer = setTimeout(() => {
-      cleanupTimers.delete(timer);
+    cleanupTimers.schedule(() => {
       particle.remove();
     }, lifeMs);
-    cleanupTimers.add(timer);
   }
 
   function spawnImpact(impact) {
@@ -101,8 +101,7 @@ export function createEffectsRenderer({
   }
 
   function clear() {
-    cleanupTimers.forEach((timer) => clearTimeout(timer));
-    cleanupTimers.clear();
+    cleanupTimers.clearAll();
     effectsEl.replaceChildren();
     lastImpactAt = Number.NEGATIVE_INFINITY;
     lastSurfaceAt = 0;
