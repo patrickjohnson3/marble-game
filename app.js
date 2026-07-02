@@ -147,6 +147,7 @@ const {
 } = state;
 
 let lastFrame = performance.now();
+let frameRendered = false;
 const settingsStorageKey = "marbleGameSettings";
 
 const settings = loadSettings({
@@ -459,6 +460,7 @@ function resetGameState() {
   haptics.surface.lastPulse = 0;
   trailRenderer.clear();
   effectsRenderer.clear();
+  frameRendered = false;
 
   worldEl.classList.remove("map-open");
   controlsEl.hidden = false;
@@ -659,8 +661,15 @@ function loop() {
     timing.maxFrameStep
   );
   lastFrame = now;
+  const active = game.phase !== "waiting" && !game.paused;
 
-  if (game.phase !== "waiting" && !game.paused) {
+  if (!active && frameRendered) {
+    ui.updateDebugPanel();
+    requestAnimationFrame(gameController.tick);
+    return;
+  }
+
+  if (active) {
     const context = physicsContext();
     updatePhysicsInput(context, dt);
     updatePhysics(context, dt, {
@@ -690,6 +699,7 @@ function loop() {
   updateRoughPatchFeedback();
   if (!game.paused) trailRenderer.update(now);
   ui.updateDebugPanel();
+  frameRendered = true;
 
   requestAnimationFrame(gameController.tick);
 }
