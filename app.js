@@ -11,7 +11,7 @@ import {
 } from "./config.js";
 import { applyDocumentCopy, copy } from "./copy.js";
 import { debugLines } from "./debug.js";
-import { els } from "./dom.js";
+import { createDomElements } from "./dom.js";
 import { createEffectsRenderer } from "./effects.js";
 import { createFrameLoop } from "./frame-loop.js";
 import { createLifecycleController } from "./game-lifecycle.js";
@@ -53,14 +53,20 @@ import { createTrailRenderer } from "./trail.js";
 import { createUi } from "./ui.js";
 import { createViewport } from "./viewport.js";
 
-function showBootError(error) {
-  const hintEl = document.getElementById("hint");
+function showBootError(documentRef, error) {
+  const hintEl = documentRef.getElementById("hint");
   if (hintEl) {
     hintEl.textContent = copy.bootError;
   }
   console.error(error);
 }
 
+export function createApp({
+  document: documentRef = document,
+  window: windowRef = window,
+  storage = availableStorage(() => windowRef.localStorage)
+} = {}) {
+const els = createDomElements(documentRef);
 const {
   game: gameEl,
   world: worldEl,
@@ -111,7 +117,7 @@ const {
 } = state;
 
 const settingsStorageKey = "marbleGameSettings";
-const settingsStorage = availableStorage();
+const settingsStorage = storage;
 
 const persistedSettings = loadSettings({
   storage: settingsStorage,
@@ -123,7 +129,7 @@ const persistedSettings = loadSettings({
 const settings = createRuntimeSettings(persistedSettings);
 const ui = createUi({ hint, debug, settingsOverlay, debugLines, state });
 const frameLoop = createFrameLoop();
-const viewport = createViewport(window);
+const viewport = createViewport(windowRef);
 
 function saveSettings() {
   persistSettings({
@@ -237,8 +243,8 @@ function resize() {
   else cameraController.applyTransform();
   requestRender();
 }
-addEventListener("resize", resize);
-document.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
+windowRef.addEventListener("resize", resize);
+documentRef.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
 
 function releaseMap() {
   intro.released = true;
@@ -416,7 +422,7 @@ function loop() {
 }
 
 try {
-  applyDocumentCopy({ document, els });
+  applyDocumentCopy({ document: documentRef, els });
   mapRenderer.setup();
   applySettings();
   marbleView.syncRadius();
@@ -425,8 +431,17 @@ try {
   inputManager.enableKeyboard();
   inputManager.enableGestures();
   requestRender();
-  window.__marbleAppBooted = true;
+  windowRef.__marbleAppBooted = true;
 } catch (error) {
-  showBootError(error);
+  showBootError(documentRef, error);
   throw error;
 }
+
+return {
+  gameController,
+  inputManager,
+  state
+};
+}
+
+createApp();

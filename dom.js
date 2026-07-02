@@ -1,13 +1,15 @@
 import { domIds } from "./dom-ids.js";
 
-function requiredElement(id) {
-  const element = document.getElementById(id);
+function requiredElement(documentRef, id) {
+  const element = documentRef.getElementById(id);
   if (!element) {
     throw new Error("Missing required DOM element #" + id);
   }
   return element;
 }
 
-export const els = Object.fromEntries(
-  Object.entries(domIds).map(([key, id]) => [key, requiredElement(id)])
-);
+export function createDomElements(documentRef = document) {
+  return Object.fromEntries(
+    Object.entries(domIds).map(([key, id]) => [key, requiredElement(documentRef, id)])
+  );
+}
