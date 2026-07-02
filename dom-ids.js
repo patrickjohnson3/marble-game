@@ -1,0 +1,30 @@
+export const domIds = {
+  game: "game",
+  world: "world",
+  introWalls: "introWalls",
+  mapWalls: "mapWalls",
+  roughPatches: "roughPatches",
+  obstacles: "obstacles",
+  trail: "trail",
+  trailSegments: "trailSegments",
+  effects: "effects",
+  marble: "marble",
+  messageOverlay: "messageOverlay",
+  controls: "controls",
+  startBtn: "start",
+  neutralBtn: "neutral",
+  settingsToggle: "settingsToggle",
+  settingsOverlay: "settingsOverlay",
+  closeSettings: "closeSettings",
+  resumeGame: "resumeGame",
+  speedSetting: "speedSetting",
+  sensitivitySetting: "sensitivitySetting",
+  rotationSetting: "rotationSetting",
+  hapticsSetting: "hapticsSetting",
+  trailSetting: "trailSetting",
+  fullscreenSetting: "fullscreenSetting",
+  hint: "hint",
+  debug: "debug"
+};
+
+export const requiredDomIds = Object.values(domIds);

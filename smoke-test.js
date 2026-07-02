@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { spawnSync } from "child_process";
 import { mapConfig } from "./config.js";
+import { requiredDomIds } from "./dom-ids.js";
 import { runtimeScripts } from "./runtime-assets.js";
 
 const html = readFileSync("index.html", "utf8");
@@ -18,17 +19,10 @@ for (const script of scripts) {
   }
 }
 
-const domIdPatterns = [
-  /document\.getElementById\("([^"]+)"\)/g,
-  /requiredElement\("([^"]+)"\)/g
-];
-const appIds = domIdPatterns.flatMap((pattern) => (
-  [...app.matchAll(pattern)].map((match) => match[1])
-));
 const htmlIds = new Set(
   [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1])
 );
-const missingIds = appIds.filter((id) => !htmlIds.has(id));
+const missingIds = requiredDomIds.filter((id) => !htmlIds.has(id));
 
 if (missingIds.length > 0) {
   console.error("Missing DOM ids referenced by app.js:");

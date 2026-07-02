@@ -5,6 +5,7 @@ export const runtimeScripts = [
   "config.js",
   "copy.js",
   "debug.js",
+  "dom-ids.js",
   "dom.js",
   "effects.js",
   "frame-loop.js",
