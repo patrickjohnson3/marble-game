@@ -148,6 +148,7 @@ const {
 
 let lastFrame = performance.now();
 let frameRendered = false;
+let settingsPausedGame = false;
 const settingsStorageKey = "marbleGameSettings";
 
 const settings = loadSettings({
@@ -400,7 +401,7 @@ function resetCalibration() {
 }
 
 function pauseGame() {
-  if (!shouldPauseGame(game)) return;
+  if (!shouldPauseGame(game)) return false;
 
   game.paused = true;
   keyboard.x = 0;
@@ -408,6 +409,7 @@ function pauseGame() {
   cameraController.resetGesture();
   sensorWatchdog.pause();
   introSequence.pause();
+  return true;
 }
 
 function resumeGame() {
@@ -426,6 +428,7 @@ function resetGameState() {
 
   game.phase = "waiting";
   game.paused = false;
+  settingsPausedGame = false;
   sensor.gotOrientation = false;
   sensor.gotMotion = false;
   sensor.using = "none";
@@ -576,13 +579,16 @@ function requestStartFullscreen() {
 }
 
 function openSettings() {
-  gameController.pause();
+  settingsPausedGame = gameController.pause();
   ui.openSettingsModal();
 }
 
 function closeSettingsModal() {
   ui.closeSettingsModal();
-  gameController.resume();
+  if (settingsPausedGame) {
+    settingsPausedGame = false;
+    gameController.resume();
+  }
 }
 
 const gameController = {
