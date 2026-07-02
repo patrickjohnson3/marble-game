@@ -6,6 +6,7 @@ const tests = [
   "intro-sequence-test.js",
   "intro-timers-test.js",
   "config-test.js",
+  "input-manager-test.js",
   "ui-behavior-test.js",
   "lifecycle-test.js",
   "check-cache-version.js"

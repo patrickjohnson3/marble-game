@@ -13,6 +13,9 @@ export function createInputManager({
   onStartClick
 }) {
   let motionEnabled = false;
+  let keyboardEnabled = false;
+  let gesturesEnabled = false;
+  let startButtonBound = false;
 
   function enableMotion() {
     if (motionEnabled) return;
@@ -23,11 +26,17 @@ export function createInputManager({
   }
 
   function enableKeyboard() {
+    if (keyboardEnabled) return;
+
+    keyboardEnabled = true;
     target.addEventListener("keydown", onKeyDown, { passive:false });
     target.addEventListener("keyup", onKeyUp);
   }
 
   function enableGestures() {
+    if (gesturesEnabled) return;
+
+    gesturesEnabled = true;
     gameEl.addEventListener("pointerdown", onPointerDown);
     gameEl.addEventListener("pointermove", onPointerMove);
     gameEl.addEventListener("pointerup", onPointerEnd);
@@ -35,6 +44,9 @@ export function createInputManager({
   }
 
   function bindStartButton() {
+    if (startButtonBound) return;
+
+    startButtonBound = true;
     startBtn.addEventListener("pointerdown", onStartPointerDown);
     startBtn.addEventListener("click", onStartClick);
   }
