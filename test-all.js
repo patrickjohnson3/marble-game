@@ -5,6 +5,7 @@ const tests = [
   "physics-test.js",
   "intro-timers-test.js",
   "config-test.js",
+  "ui-behavior-test.js",
   "check-cache-version.js"
 ];
 
