@@ -148,6 +148,7 @@ const {
 
 let lastFrame = performance.now();
 let frameRendered = false;
+let animationFrameId = 0;
 let settingsPausedGame = false;
 let pendingStartFullscreenRequest = null;
 const settingsStorageKey = "marbleGameSettings";
@@ -163,6 +164,17 @@ const ui = createUi({ hint, debug, settingsOverlay, debugLines, state });
 
 function saveSettings() {
   persistSettings({ storage: localStorage, storageKey: settingsStorageKey, settings });
+}
+
+function scheduleFrame() {
+  if (animationFrameId) return;
+
+  animationFrameId = requestAnimationFrame(gameController.tick);
+}
+
+function requestRender() {
+  frameRendered = false;
+  scheduleFrame();
 }
 
 applyRangeConfig(speedSetting, settingsControls.maxSpeed);
@@ -314,6 +326,7 @@ function resize() {
   marble.y = clamp(marble.y, bounds.top + marble.r, bounds.bottom - marble.r);
   if (!intro.released) cameraController.centerOnMarble();
   else cameraController.applyTransform();
+  requestRender();
 }
 addEventListener("resize", resize);
 document.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
@@ -347,6 +360,7 @@ const sensorWatchdog = createSensorWatchdog({
     tilt.neutralY = 0;
     calibration.autoNeutralDone = true;
     introSequence.schedule();
+    scheduleFrame();
   }
 });
 
@@ -420,6 +434,7 @@ function resumeGame() {
   lastFrame = performance.now();
   sensorWatchdog.resume(() => game.phase === "calibrating" && sensor.using === "none");
   introSequence.resume();
+  scheduleFrame();
 }
 
 function resetGameState() {
@@ -494,6 +509,7 @@ function onKeyDown(e) {
       tilt.neutralY = 0;
       calibration.autoNeutralDone = true;
       introSequence.schedule();
+      scheduleFrame();
     }
   }
 }
@@ -559,6 +575,7 @@ async function start() {
   startBtn.disabled = true;
   inputSystems.motion.enable();
   game.phase = "calibrating";
+  scheduleFrame();
 
   ui.setHint("keep holding normally for half a sec...");
 
@@ -631,6 +648,7 @@ rotationSetting.addEventListener("change", () => {
     camera.rotation = 0;
     cameraController.centerOnMarble();
   }
+  requestRender();
 });
 hapticsSetting.addEventListener("change", () => {
   settings.hapticsEnabled = hapticsSetting.checked;
@@ -666,6 +684,7 @@ function physicsContext() {
 }
 
 function loop() {
+  animationFrameId = 0;
   const now = performance.now();
   const dt = clamp(
     (now - lastFrame) / timing.targetFrameMs,
@@ -677,7 +696,6 @@ function loop() {
 
   if (!active && frameRendered) {
     ui.updateDebugPanel();
-    requestAnimationFrame(gameController.tick);
     return;
   }
 
@@ -713,7 +731,7 @@ function loop() {
   ui.updateDebugPanel();
   frameRendered = true;
 
-  requestAnimationFrame(gameController.tick);
+  if (active) scheduleFrame();
 }
 
 try {
@@ -723,7 +741,7 @@ try {
   cameraController.centerOnMarble();
   inputSystems.keyboard.enable();
   inputSystems.gestures.enable();
-  gameController.tick();
+  requestRender();
 } catch (error) {
   showBootError(error);
   throw error;
