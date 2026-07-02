@@ -149,6 +149,7 @@ const {
 let lastFrame = performance.now();
 let frameRendered = false;
 let settingsPausedGame = false;
+let pendingStartFullscreenRequest = null;
 const settingsStorageKey = "marbleGameSettings";
 
 const settings = loadSettings({
@@ -429,6 +430,7 @@ function resetGameState() {
   game.phase = "waiting";
   game.paused = false;
   settingsPausedGame = false;
+  pendingStartFullscreenRequest = null;
   sensor.gotOrientation = false;
   sensor.gotMotion = false;
   sensor.using = "none";
@@ -537,7 +539,9 @@ async function start() {
   startBtn.disabled = true;
   controlsEl.hidden = true;
 
-  const fullscreenRequest = requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
+  const fullscreenRequest = pendingStartFullscreenRequest ||
+    requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
+  pendingStartFullscreenRequest = null;
 
   const ok = await requestMotionPermissionIfNeeded();
   if (!ok) {
@@ -575,7 +579,7 @@ function setNeutralNow() {
 function requestStartFullscreen() {
   if (startBtn.disabled || game.phase !== "waiting") return;
 
-  requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
+  pendingStartFullscreenRequest = requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
 }
 
 function openSettings() {
