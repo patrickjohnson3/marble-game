@@ -319,7 +319,7 @@ document.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
 function releaseMap() {
   intro.released = true;
   intro.sequenceStage = "idle";
-  introWallsEl.innerHTML = "";
+  introWallsEl.replaceChildren();
   worldEl.classList.add("map-open");
   setReleasedBounds();
   introSequence.hideMessage();
