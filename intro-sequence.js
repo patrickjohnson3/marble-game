@@ -4,7 +4,14 @@ import {
   trackIntroTimer
 } from "./intro-timers.js";
 
-export function createIntroSequence({ intro, game, timing, messageOverlay, onRelease }) {
+export function createIntroSequence({
+  intro,
+  game,
+  timing,
+  messageOverlay,
+  onRelease,
+  createElement = (tag) => document.createElement(tag)
+}) {
   function clearTimers() {
     clearTimeout(intro.messageTimer);
     clearTimeout(intro.countdownTimer);
@@ -29,7 +36,7 @@ export function createIntroSequence({ intro, game, timing, messageOverlay, onRel
   }
 
   function showCountdown() {
-    const countdown = document.createElement("span");
+    const countdown = createElement("span");
     countdown.className = "countdown";
     countdown.textContent = intro.countdownValue;
     messageOverlay.replaceChildren("Ready?", countdown);

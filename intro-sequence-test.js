@@ -29,7 +29,6 @@ function fakeMessageOverlay() {
 function testPausedCountdownTimeoutCanResume() {
   const originalSetTimeout = globalThis.setTimeout;
   const originalClearTimeout = globalThis.clearTimeout;
-  const originalDocument = globalThis.document;
   const originalPerformance = globalThis.performance;
   const callbacks = [];
   let now = 1000;
@@ -40,11 +39,6 @@ function testPausedCountdownTimeoutCanResume() {
     return callbacks.length;
   };
   globalThis.clearTimeout = () => {};
-  globalThis.document = {
-    createElement() {
-      return { className: "", textContent: "" };
-    }
-  };
   globalThis.performance = {
     now() {
       return now;
@@ -70,6 +64,9 @@ function testPausedCountdownTimeoutCanResume() {
         countdownTickMs: 1000
       },
       messageOverlay: fakeMessageOverlay(),
+      createElement() {
+        return { className: "", textContent: "" };
+      },
       onRelease() {
         released = true;
       }
@@ -91,7 +88,6 @@ function testPausedCountdownTimeoutCanResume() {
   } finally {
     globalThis.setTimeout = originalSetTimeout;
     globalThis.clearTimeout = originalClearTimeout;
-    globalThis.document = originalDocument;
     globalThis.performance = originalPerformance;
   }
 }
