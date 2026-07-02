@@ -26,13 +26,33 @@ html,body{
   will-change:transform;
 }
 .wall,.obstacle{
-  position:absolute;box-sizing:border-box;border-radius:6px;
-  background:linear-gradient(135deg,#e8eef8,#a9b7cc);
-  box-shadow:0 10px 24px #0008,inset 0 0 0 2px #ffffff38;
+  position:absolute;box-sizing:border-box;border-radius:6px;overflow:hidden;
+  background:
+    linear-gradient(135deg,#ffffff66 0 8%,#ffffff00 28%),
+    linear-gradient(315deg,#00000038 0 12%,#00000000 34%),
+    linear-gradient(135deg,#e8eef8,#a9b7cc);
+  box-shadow:
+    0 14px 28px #0009,
+    0 2px 3px #ffffff22 inset,
+    0 -5px 12px #0003 inset,
+    0 0 0 2px #ffffff38 inset;
+}
+.wall::after,.obstacle::after{
+  content:"";position:absolute;inset:2px;border-radius:4px;pointer-events:none;
+  background:linear-gradient(135deg,#ffffff42,#ffffff00 34%,#00000022 100%);
+  mix-blend-mode:screen;opacity:.65;
 }
 .obstacle{
   opacity:0;transition:opacity .45s ease;
-  background:linear-gradient(135deg,#ffd166,#ef476f);
+  background:
+    linear-gradient(135deg,#ffffff5c 0 10%,#ffffff00 30%),
+    linear-gradient(315deg,#7d123044 0 18%,#00000000 38%),
+    linear-gradient(135deg,#ffd166 0%,#ff9f66 46%,#ef476f 100%);
+  box-shadow:
+    0 16px 30px #0009,
+    0 2px 4px #fff3 inset,
+    0 -7px 15px #7d123033 inset,
+    0 0 0 2px #fff4 inset;
 }
 .roughPatch{
   position:absolute;box-sizing:border-box;border-radius:10px;opacity:0;
