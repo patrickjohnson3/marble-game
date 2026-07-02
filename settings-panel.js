@@ -23,7 +23,8 @@ export function bindSettingsPanel({
     rotationSetting,
     hapticsSetting,
     trailSetting,
-    fullscreenSetting
+    fullscreenSetting,
+    cameraModeSetting
   } = els;
 
   applyRangeConfig(speedSetting, controls.maxSpeed);
@@ -34,6 +35,7 @@ export function bindSettingsPanel({
   hapticsSetting.checked = settings.hapticsEnabled;
   trailSetting.checked = settings.trailEnabled;
   fullscreenSetting.checked = settings.fullscreenEnabled;
+  cameraModeSetting.value = settings.cameraMode;
 
   settingsToggle.addEventListener("click", onOpenSettings);
   closeSettings.addEventListener("click", onCloseSettings);
@@ -71,6 +73,12 @@ export function bindSettingsPanel({
     settings.fullscreenEnabled = fullscreenSetting.checked;
     saveSettings();
     applyFullscreenSetting();
+  });
+  cameraModeSetting.addEventListener("change", () => {
+    settings.cameraMode = cameraModeSetting.value;
+    applySettings();
+    saveSettings();
+    requestRender();
   });
   settingsOverlay.addEventListener("click", (event) => {
     if (event.target === settingsOverlay) onCloseSettings();

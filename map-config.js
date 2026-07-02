@@ -10,7 +10,8 @@ export const mapConfig = {
   camera: {
     minScale: 0.2,
     maxScale: 2.5,
-    followLag: 0.08
+    followLag: 0.08,
+    predictiveLookAheadFrames: 18
   },
   light: {
     x: 420,

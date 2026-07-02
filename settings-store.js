@@ -8,6 +8,10 @@ function numberSetting(value, fallback, range, clamp) {
   return Number.isFinite(value) ? clamp(value, range.min, range.max) : fallback;
 }
 
+function optionSetting(value, fallback, options) {
+  return options.includes(value) ? value : fallback;
+}
+
 export function availableStorage(getStorage = () => localStorage) {
   try {
     return getStorage();
@@ -34,7 +38,8 @@ export function loadSettings({ storage, storageKey, defaults, controls, clamp })
         ? defaults.trailEnabled
         : saved.trailEnabled,
       trailDefaultVersion: defaults.trailDefaultVersion,
-      fullscreenEnabled: typeof saved.fullscreenEnabled === "boolean" ? saved.fullscreenEnabled : defaults.fullscreenEnabled
+      fullscreenEnabled: typeof saved.fullscreenEnabled === "boolean" ? saved.fullscreenEnabled : defaults.fullscreenEnabled,
+      cameraMode: optionSetting(saved.cameraMode, defaults.cameraMode, controls.cameraModes)
     };
   } catch {
     return { ...defaults };
@@ -52,7 +57,8 @@ export function saveSettings({ storage, storageKey, settings }) {
       hapticsEnabled: settings.hapticsEnabled,
       trailEnabled: settings.trailEnabled,
       trailDefaultVersion: settings.trailDefaultVersion,
-      fullscreenEnabled: settings.fullscreenEnabled
+      fullscreenEnabled: settings.fullscreenEnabled,
+      cameraMode: settings.cameraMode
     }));
   } catch {
     // Persistence is optional; gameplay should still work without storage.

@@ -209,6 +209,6 @@ button.primaryAction{
   display:grid;grid-template-columns:96px 1fr;align-items:center;gap:12px;
   margin-bottom:12px;font-size:14px;font-weight:800;text-transform:uppercase;
 }
-.settingRow input{width:100%}
+.settingRow input,.settingRow select{width:100%}
 .checkboxRow input{justify-self:start;width:22px;height:22px}
 #settingsModal #debug{background:#0b0d11;margin:0}

@@ -28,11 +28,13 @@ const defaults = {
   hapticsEnabled: true,
   trailEnabled: false,
   trailDefaultVersion: 2,
-  fullscreenEnabled: true
+  fullscreenEnabled: true,
+  cameraMode: "follow"
 };
 const controls = {
   maxSpeed: { min: 8, max: 24 },
-  acceleration: { min: 0.06, max: 0.18 }
+  acceleration: { min: 0.06, max: 0.18 },
+  cameraModes: ["follow", "lockedCenter", "predictiveLookAhead"]
 };
 
 function testTrailMigrationDefaultsOldSavedTrailOff() {
@@ -102,9 +104,41 @@ function testUnavailableStorageFallsBackToDefaults() {
   }));
 }
 
+function testCameraModePersistsValidChoice() {
+  const settings = loadSettings({
+    storage: storageWith(JSON.stringify({
+      ...defaults,
+      cameraMode: "predictiveLookAhead"
+    })),
+    storageKey: "settings",
+    defaults,
+    controls,
+    clamp
+  });
+
+  assert.equal(settings.cameraMode, "predictiveLookAhead");
+}
+
+function testCameraModeFallsBackForInvalidChoice() {
+  const settings = loadSettings({
+    storage: storageWith(JSON.stringify({
+      ...defaults,
+      cameraMode: "orbit"
+    })),
+    storageKey: "settings",
+    defaults,
+    controls,
+    clamp
+  });
+
+  assert.equal(settings.cameraMode, "follow");
+}
+
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
 testRuntimeSettingsAreIndependentFromPersistedSettings();
 testUnavailableStorageFallsBackToDefaults();
+testCameraModePersistsValidChoice();
+testCameraModeFallsBackForInvalidChoice();
 
 console.log("Settings store tests passed.");

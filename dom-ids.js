@@ -24,6 +24,7 @@ export const domIds = {
   hapticsSetting: "hapticsSetting",
   trailSetting: "trailSetting",
   fullscreenSetting: "fullscreenSetting",
+  cameraModeSetting: "cameraModeSetting",
   hint: "hint",
   debug: "debug"
 };

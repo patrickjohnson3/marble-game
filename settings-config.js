@@ -8,8 +8,15 @@ export const settingsConfig = {
   hapticsEnabled: true,
   trailEnabled: false,
   trailDefaultVersion: 2,
-  fullscreenEnabled: appConfig.fullscreenOnStart
+  fullscreenEnabled: appConfig.fullscreenOnStart,
+  cameraMode: "follow"
 };
+
+export const cameraModes = [
+  "follow",
+  "lockedCenter",
+  "predictiveLookAhead"
+];
 
 export const settingsControls = {
   maxSpeed: {
@@ -21,5 +28,6 @@ export const settingsControls = {
     min: 0.06,
     max: 0.18,
     step: 0.005
-  }
+  },
+  cameraModes
 };

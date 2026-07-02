@@ -67,6 +67,10 @@ export class FakeElement {
   setAttribute(name, value) {
     this.attributes[name] = String(value);
   }
+
+  querySelector() {
+    return null;
+  }
 }
 
 export function createFakeDocument() {
@@ -80,7 +84,8 @@ export function createFakeDocument() {
       "rotationSetting",
       "hapticsSetting",
       "trailSetting",
-      "fullscreenSetting"
+      "fullscreenSetting",
+      "cameraModeSetting"
     ].map((id) => [id, new FakeElement()])
   );
 

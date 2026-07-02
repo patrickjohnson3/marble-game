@@ -6,7 +6,8 @@ export function createRuntimeSettings(persistedSettings) {
     hapticsEnabled: persistedSettings.hapticsEnabled,
     trailEnabled: persistedSettings.trailEnabled,
     trailDefaultVersion: persistedSettings.trailDefaultVersion,
-    fullscreenEnabled: persistedSettings.fullscreenEnabled
+    fullscreenEnabled: persistedSettings.fullscreenEnabled,
+    cameraMode: persistedSettings.cameraMode
   };
 }
 
@@ -18,6 +19,7 @@ export function persistedSettingsFromRuntime(settings) {
     hapticsEnabled: settings.hapticsEnabled,
     trailEnabled: settings.trailEnabled,
     trailDefaultVersion: settings.trailDefaultVersion,
-    fullscreenEnabled: settings.fullscreenEnabled
+    fullscreenEnabled: settings.fullscreenEnabled,
+    cameraMode: settings.cameraMode
   };
 }

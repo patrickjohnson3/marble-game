@@ -152,6 +152,7 @@ function requestRender() {
 function applySettings() {
   physics.maxSpeed = settings.maxSpeed;
   physics.accel = settings.acceleration;
+  camera.mode = settings.cameraMode;
   camera.rotationEnabled = settings.rotationEnabled;
   haptics.enabled = settings.hapticsEnabled;
   trailRenderer.setEnabled(settings.trailEnabled);

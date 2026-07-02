@@ -61,6 +61,8 @@ function testPhysicsAndSettingsRanges() {
   assert.equal(settingsControls.acceleration.min <= settingsConfig.acceleration, true, "accel setting min");
   assert.equal(settingsControls.acceleration.max >= settingsConfig.acceleration, true, "accel setting max");
   assert.equal(settingsConfig.trailEnabled, false, "trail defaults off");
+  assert.equal(settingsConfig.cameraMode, "follow", "camera mode defaults to follow");
+  assert.ok(settingsControls.cameraModes.includes(settingsConfig.cameraMode), "camera mode setting option");
   assertPositiveNumber(settingsConfig.trailDefaultVersion, "trail default version");
 }
 

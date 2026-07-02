@@ -38,16 +38,30 @@ export function createCameraController({
     applyTransform();
   }
 
+  function followTarget() {
+    if (camera.mode !== "predictiveLookAhead") {
+      return { x: marble.x, y: marble.y };
+    }
+
+    return {
+      x: marble.x + marble.vx * camera.predictiveLookAheadFrames,
+      y: marble.y + marble.vy * camera.predictiveLookAheadFrames
+    };
+  }
+
   function updateFollow(dt) {
     if (!intro.released) return;
 
     camera.gestureCooldown = Math.max(0, camera.gestureCooldown - dt);
     if (camera.gestureCooldown > 0) return;
 
-    const transformed = transformedWorldPoint(marble.x, marble.y);
+    const target = followTarget();
+    const transformed = transformedWorldPoint(target.x, target.y);
     const targetX = viewport.width() / 2 - transformed.x;
     const targetY = viewport.height() / 2 - transformed.y;
-    const followStep = 1 - Math.pow(1 - camera.followLag, dt);
+    const followStep = camera.mode === "lockedCenter"
+      ? 1
+      : 1 - Math.pow(1 - camera.followLag, dt);
 
     camera.x += (targetX - camera.x) * followStep;
     camera.y += (targetY - camera.y) * followStep;

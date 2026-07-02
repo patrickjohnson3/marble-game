@@ -43,10 +43,12 @@ export function createGameState({ world, mapConfig, timing, hapticTuning, physic
       y: 0,
       scale: 1,
       rotation: 0,
+      mode: "follow",
       rotationEnabled: false,
       minScale: mapConfig.camera.minScale,
       maxScale: mapConfig.camera.maxScale,
       followLag: mapConfig.camera.followLag,
+      predictiveLookAheadFrames: mapConfig.camera.predictiveLookAheadFrames,
       gestureCooldown: 0
     },
     haptics: {

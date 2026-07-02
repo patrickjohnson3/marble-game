@@ -30,7 +30,13 @@ export const copy = {
       rotationSetting: "rotation",
       hapticsSetting: "haptics",
       trailSetting: "trail",
-      fullscreenSetting: "fullscreen"
+      fullscreenSetting: "fullscreen",
+      cameraModeSetting: "camera"
+    },
+    cameraModes: {
+      follow: "follow",
+      lockedCenter: "locked center",
+      predictiveLookAhead: "look-ahead"
     }
   },
   debugFallback: "waiting for sensors..."
@@ -56,5 +62,10 @@ export function applyDocumentCopy({
   for (const [controlId, label] of Object.entries(copy.settings.labels)) {
     const labelEl = document.querySelector('label[for="' + controlId + '"] span');
     if (labelEl) labelEl.textContent = label;
+  }
+
+  for (const [mode, label] of Object.entries(copy.settings.cameraModes)) {
+    const optionEl = els.cameraModeSetting.querySelector('option[value="' + mode + '"]');
+    if (optionEl) optionEl.textContent = label;
   }
 }
