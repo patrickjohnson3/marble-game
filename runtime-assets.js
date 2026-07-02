@@ -4,6 +4,7 @@ export const runtimeScripts = [
   "config.js",
   "debug.js",
   "dom.js",
+  "effects.js",
   "geometry.js",
   "haptics.js",
   "intro-sequence.js",

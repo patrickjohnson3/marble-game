@@ -15,6 +15,7 @@ export const els = {
   obstacles: requiredElement("obstacles"),
   trail: requiredElement("trail"),
   trailSegments: requiredElement("trailSegments"),
+  effects: requiredElement("effects"),
   marble: requiredElement("marble"),
   messageOverlay: requiredElement("messageOverlay"),
   controls: requiredElement("controls"),

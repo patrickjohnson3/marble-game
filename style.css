@@ -46,6 +46,35 @@ html,body{
 #trail line{
   stroke:#bfe7ff;stroke-width:8;stroke-linecap:round;
 }
+#effects{
+  position:absolute;left:0;top:0;width:100%;height:100%;
+  overflow:visible;pointer-events:none;
+}
+.effectParticle{
+  position:absolute;left:0;top:0;width:var(--size);height:var(--size);
+  border-radius:50%;opacity:0;
+  transform:translate(var(--x),var(--y)) translate(-50%,-50%) scale(.9);
+  animation:effectFade var(--life) ease-out forwards;
+  will-change:transform,opacity;
+}
+.effectParticle.spark{
+  background:radial-gradient(circle,#fff7d0 0 20%,#ffc857cc 42%,#ffffff00 72%);
+  box-shadow:0 0 7px #ffd16688;
+}
+.effectParticle.dust{
+  background:radial-gradient(circle,#d1d1c8cc 0 26%,#8a898066 58%,#ffffff00 76%);
+  filter:blur(.4px);
+}
+@keyframes effectFade{
+  0%{
+    opacity:var(--opacity);
+    transform:translate(var(--x),var(--y)) translate(-50%,-50%) scale(.7);
+  }
+  100%{
+    opacity:0;
+    transform:translate(calc(var(--x) + var(--dx)),calc(var(--y) + var(--dy))) translate(-50%,-50%) scale(1.45);
+  }
+}
 #marble{
   position:absolute;width:58px;height:58px;border-radius:50%;
   transform:translate(-50%,-50%) scale(var(--marble-scale-x,1),var(--marble-scale-y,1));

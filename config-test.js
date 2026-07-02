@@ -73,6 +73,12 @@ function testHapticAndVisualRanges() {
   assert.equal(visualConfig.trail.maxOpacity > 0 && visualConfig.trail.maxOpacity <= 1, true, "trail opacity");
   assertPositiveNumber(visualConfig.marble.impactSquashDivisor, "impact squash divisor");
   assertPositiveNumber(visualConfig.marble.glintLightOffset, "glint light offset");
+  assertPositiveNumber(visualConfig.effects.impactMin, "effect impact minimum");
+  assertPositiveNumber(visualConfig.effects.impactReference, "effect impact reference");
+  assertPositiveNumber(visualConfig.effects.surfaceMinSpeed, "effect surface minimum speed");
+  assertPositiveNumber(visualConfig.effects.surfaceCooldownMs, "effect surface cooldown");
+  assert.equal(visualConfig.effects.impactOpacity > 0 && visualConfig.effects.impactOpacity <= 1, true, "impact effect opacity");
+  assert.equal(visualConfig.effects.surfaceOpacity > 0 && visualConfig.effects.surfaceOpacity <= 1, true, "surface effect opacity");
 }
 
 testWorldAndMapElements();

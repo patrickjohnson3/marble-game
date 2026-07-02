@@ -5,6 +5,7 @@ const [
   configModule,
   debugModule,
   domModule,
+  effectsModule,
   geometryModule,
   hapticsModule,
   introSequenceModule,
@@ -23,6 +24,7 @@ const [
   import(versioned("./config.js")),
   import(versioned("./debug.js")),
   import(versioned("./dom.js")),
+  import(versioned("./effects.js")),
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
   import(versioned("./intro-sequence.js")),
@@ -54,6 +56,7 @@ const {
 const { createCameraController } = cameraModule;
 const { debugLines } = debugModule;
 const { els } = domModule;
+const { createEffectsRenderer } = effectsModule;
 const { clamp, distance, angle, midpoint } = geometryModule;
 const { createHapticsController } = hapticsModule;
 const { createIntroSequence } = introSequenceModule;
@@ -103,6 +106,7 @@ const {
   obstacles: obstaclesEl,
   trail: trailEl,
   trailSegments: trailSegmentsEl,
+  effects: effectsEl,
   marble: marbleEl,
   messageOverlay,
   controls: controlsEl,
@@ -206,6 +210,12 @@ const trailRenderer = createTrailRenderer({
   game,
   settings,
   config: visualConfig.trail,
+  clamp
+});
+const effectsRenderer = createEffectsRenderer({
+  effectsEl,
+  marble,
+  config: visualConfig.effects,
   clamp
 });
 
@@ -437,6 +447,7 @@ function resetGameState() {
   haptics.impact.lastPulse = 0;
   haptics.surface.lastPulse = 0;
   trailRenderer.clear();
+  effectsRenderer.clear();
 
   worldEl.classList.remove("map-open");
   controlsEl.hidden = false;
@@ -646,9 +657,13 @@ function loop() {
           marble.impactSquash,
           clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1)
         );
+        effectsRenderer.spawnImpact(impact);
         hapticFeedback.pulseImpact(impact);
       },
-      onSurface: (speed) => hapticFeedback.pulseSurface(speed)
+      onSurface: (speed) => {
+        effectsRenderer.spawnSurface(speed, now);
+        hapticFeedback.pulseSurface(speed);
+      }
     });
     marble.roll += Math.hypot(marble.vx, marble.vy) * dt / Math.max(marble.r, 1);
     marble.impactSquash = Math.max(0, marble.impactSquash - visualConfig.marble.impactSquashDecay * dt);
