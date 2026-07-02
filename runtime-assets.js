@@ -38,6 +38,7 @@ export const runtimeScripts = [
   "timing-config.js",
   "trail.js",
   "ui.js",
+  "viewport.js",
   "visual-config.js"
 ];
 

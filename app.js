@@ -51,6 +51,7 @@ import { createGameState } from "./state.js";
 import { createTerrainView } from "./terrain-view.js";
 import { createTrailRenderer } from "./trail.js";
 import { createUi } from "./ui.js";
+import { createViewport } from "./viewport.js";
 
 function showBootError(error) {
   const hintEl = document.getElementById("hint");
@@ -122,6 +123,7 @@ const persistedSettings = loadSettings({
 const settings = createRuntimeSettings(persistedSettings);
 const ui = createUi({ hint, debug, settingsOverlay, debugLines, state });
 const frameLoop = createFrameLoop();
+const viewport = createViewport(window);
 
 function saveSettings() {
   persistSettings({
@@ -167,10 +169,7 @@ const cameraController = createCameraController({
   distance,
   angle,
   midpoint,
-  viewport: {
-    width: () => innerWidth,
-    height: () => innerHeight
-  }
+  viewport
 });
 const trailRenderer = createTrailRenderer({
   trailEl,
@@ -214,10 +213,7 @@ const mapRenderer = createMapRenderer({
   intro,
   marble,
   world,
-  viewport: {
-    width: () => innerWidth,
-    height: () => innerHeight
-  },
+  viewport,
   terrainView,
   renderWalls,
   introPenWalls,
