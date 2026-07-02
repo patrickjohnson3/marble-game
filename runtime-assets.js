@@ -1,5 +1,6 @@
 export const runtimeScripts = [
   "app.js",
+  "app-config.js",
   "camera.js",
   "config.js",
   "debug.js",
@@ -9,21 +10,27 @@ export const runtimeScripts = [
   "game-controller.js",
   "geometry.js",
   "haptics.js",
+  "haptic-config.js",
   "input-manager.js",
   "intro-sequence.js",
   "intro-timers.js",
   "map.js",
+  "map-config.js",
   "marble-view.js",
   "physics.js",
+  "physics-config.js",
   "platform.js",
   "rendering.js",
   "sensor-watchdog.js",
   "settings-panel.js",
+  "settings-config.js",
   "settings-store.js",
   "state.js",
   "terrain-view.js",
+  "timing-config.js",
   "trail.js",
-  "ui.js"
+  "ui.js",
+  "visual-config.js"
 ];
 
 export const runtimeStyles = [

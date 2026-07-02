@@ -1,0 +1,53 @@
+export const visualConfig = {
+  trail: {
+    durationMs: 2500,
+    minDistance: 3,
+    minIntervalMs: 50,
+    maxOpacity: 0.5
+  },
+  marble: {
+    impactSquashDivisor: 12,
+    impactSquashDecay: 0.12,
+    impactScaleX: 0.08,
+    impactScaleY: 0.06,
+    glintCenter: 29,
+    glintLightOffset: 11,
+    glintVelocityScale: 0.08,
+    glintVelocityLimit: 1.5
+  },
+  effects: {
+    impactMin: 1.9,
+    impactReference: 10,
+    impactCooldownMs: 70,
+    maxParticles: 80,
+    impactMinParticles: 2,
+    impactExtraParticles: 5,
+    impactEdgeRatio: 0.82,
+    impactJitterRatio: 0.32,
+    impactSpread: 18,
+    impactDriftMin: 10,
+    impactDriftRange: 24,
+    impactSizeMin: 3,
+    impactSizeRange: 4,
+    impactLifeMinMs: 180,
+    impactLifeRangeMs: 190,
+    impactOpacity: 0.82,
+    surfaceMinSpeed: 1.5,
+    surfaceReferenceSpeed: 8,
+    surfaceCooldownMs: 110,
+    surfaceMinParticles: 1,
+    surfaceExtraParticles: 2,
+    surfaceBackRatio: 0.55,
+    surfaceWidthRatio: 1.1,
+    surfaceLiftMin: 2,
+    surfaceLiftRange: 6,
+    surfaceDriftMin: 6,
+    surfaceDriftRange: 12,
+    surfaceScatter: 0.08,
+    surfaceSizeMin: 5,
+    surfaceSizeRange: 7,
+    surfaceLifeMinMs: 260,
+    surfaceLifeRangeMs: 260,
+    surfaceOpacity: 0.38
+  }
+};
