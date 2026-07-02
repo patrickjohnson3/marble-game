@@ -128,8 +128,12 @@ html,body{
 #settingsToggle{
   position:fixed;right:12px;top:calc(28px + env(safe-area-inset-top));width:44px;height:44px;
   display:grid;place-items:center;border-radius:50%;padding:0;
-  background:#0009;color:white;font-size:24px;line-height:1;
-  backdrop-filter:blur(8px);
+  background:#0009;color:white;line-height:1;
+  backdrop-filter:blur(8px);box-shadow:0 8px 24px #0007,inset 0 0 0 1px #ffffff18;
+}
+#settingsToggle svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linejoin:round}
+#settingsToggle:active{transform:scale(.96);background:#111d}
+#settingsToggle:focus-visible{outline:2px solid #ffffffcc;outline-offset:3px}
 }
 #controls{
   position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));

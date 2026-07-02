@@ -10,7 +10,7 @@
   #settingsOverlay,#messageOverlay{display:none}
 </style>
 <script>
-  const assetVersion = "20260702.010212";
+  const assetVersion = "20260702.010726";
   const appStylesheet = document.createElement("link");
   appStylesheet.rel = "stylesheet";
   appStylesheet.href = "style.css?v=" + assetVersion;
@@ -36,7 +36,12 @@
   <div id="hint">hold phone normally, then tap start</div>
 </div>
 
-<button id="settingsToggle" aria-label="settings" title="Settings">⚙</button>
+<button id="settingsToggle" aria-label="settings" title="Settings">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M19.4 13.5c.1-.5.1-1 .1-1.5s0-1-.1-1.5l2-1.5-2-3.5-2.4 1a8 8 0 0 0-2.6-1.5L14 2h-4l-.4 3a8 8 0 0 0-2.6 1.5l-2.4-1-2 3.5 2 1.5a9.7 9.7 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 2.6 1.5l.4 3h4l.4-3a8 8 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5Z"/>
+    <circle cx="12" cy="12" r="3.2"/>
+  </svg>
+</button>
 
 <div id="controls">
   <button id="start">start</button>
