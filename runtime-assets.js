@@ -13,6 +13,7 @@ export const runtimeScripts = [
   "intro-sequence.js",
   "intro-timers.js",
   "map.js",
+  "marble-view.js",
   "physics.js",
   "platform.js",
   "rendering.js",
