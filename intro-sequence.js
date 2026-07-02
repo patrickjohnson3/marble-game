@@ -3,6 +3,7 @@ import {
   resumeIntroTimerAction,
   trackIntroTimer
 } from "./intro-timers.js";
+import { copy } from "./copy.js";
 
 export function createIntroSequence({
   intro,
@@ -39,7 +40,7 @@ export function createIntroSequence({
     const countdown = createElement("span");
     countdown.className = "countdown";
     countdown.textContent = intro.countdownValue;
-    messageOverlay.replaceChildren("Ready?", countdown);
+    messageOverlay.replaceChildren(copy.intro.ready, countdown);
     messageOverlay.classList.remove("toast");
     messageOverlay.classList.add("show", "countdownMode");
   }
@@ -76,7 +77,7 @@ export function createIntroSequence({
   }
 
   function showIntroPrompt() {
-    showMessage("Pinch to zoom out. Reverse pinch to zoom in. Rotation is available in settings.");
+    showMessage(copy.intro.prompt);
     setTimer("countdownWait", timing.countdownDelayMs, startReleaseCountdown);
   }
 

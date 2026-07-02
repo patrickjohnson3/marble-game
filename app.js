@@ -9,6 +9,7 @@ import {
   settingsConfig,
   settingsControls
 } from "./config.js";
+import { copy } from "./copy.js";
 import { debugLines } from "./debug.js";
 import { els } from "./dom.js";
 import { createEffectsRenderer } from "./effects.js";
@@ -53,7 +54,7 @@ import { createUi } from "./ui.js";
 function showBootError(error) {
   const hintEl = document.getElementById("hint");
   if (hintEl) {
-    hintEl.textContent = "game failed to load. refresh and try again.";
+    hintEl.textContent = copy.bootError;
   }
   console.error(error);
 }
@@ -252,7 +253,7 @@ function releaseMap() {
   worldEl.classList.add("map-open");
   setReleasedBounds();
   introSequence.hideMessage();
-  ui.setHint("map open. pinch to zoom and explore.");
+  ui.setHint(copy.hints.mapOpen);
 }
 
 const introSequence = createIntroSequence({
@@ -267,7 +268,7 @@ const sensorWatchdog = createSensorWatchdog({
   game,
   sensor,
   onFallback() {
-    ui.setHint("no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
+    ui.setHint(copy.hints.noMotionSensor);
     sensor.using = "keyboard";
     game.phase = "keyboard";
     tilt.neutralX = 0;
@@ -294,7 +295,7 @@ function maybeAutoNeutral() {
     calibration.autoNeutralDone = true;
     game.phase = "running";
     marble.vx = 0; marble.vy = 0;
-    ui.setHint("neutral set. tilt from your normal holding angle.");
+    ui.setHint(copy.hints.neutralSet);
     introSequence.schedule();
   }
 }
@@ -398,7 +399,7 @@ function resetGameState() {
 
   worldEl.classList.remove("map-open");
   controlsEl.hidden = false;
-  startBtn.textContent = "start";
+  startBtn.textContent = copy.buttons.start;
   startBtn.disabled = false;
   introSequence.hideMessage();
   setReleasedBounds();
@@ -453,7 +454,7 @@ async function start() {
     if (settings.fullscreenEnabled) exitFullscreenMode();
     controlsEl.hidden = false;
     startBtn.disabled = false;
-    ui.setHint("motion permission denied. check chrome site settings.");
+    ui.setHint(copy.hints.motionDenied);
     return;
   }
 
@@ -465,7 +466,7 @@ async function start() {
   game.phase = "calibrating";
   scheduleFrame();
 
-  ui.setHint("keep holding normally for half a sec...");
+  ui.setHint(copy.hints.calibrating);
 
   sensorWatchdog.schedule();
 }
@@ -478,7 +479,7 @@ function setNeutralNow() {
   calibration.sampleCount = tuning.neutralSampleCount;
   marble.vx = 0; marble.vy = 0;
   tilt.smoothX = 0; tilt.smoothY = 0;
-  ui.setHint("neutral reset to current hand position.");
+  ui.setHint(copy.hints.neutralReset);
 }
 
 function requestStartFullscreen() {
