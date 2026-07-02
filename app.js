@@ -6,6 +6,7 @@ const [
   debugModule,
   domModule,
   effectsModule,
+  gameControllerModule,
   geometryModule,
   hapticsModule,
   introSequenceModule,
@@ -25,6 +26,7 @@ const [
   import(versioned("./debug.js")),
   import(versioned("./dom.js")),
   import(versioned("./effects.js")),
+  import(versioned("./game-controller.js")),
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
   import(versioned("./intro-sequence.js")),
@@ -57,6 +59,7 @@ const { createCameraController } = cameraModule;
 const { debugLines } = debugModule;
 const { els } = domModule;
 const { createEffectsRenderer } = effectsModule;
+const { createGameController } = gameControllerModule;
 const { clamp, distance, angle, midpoint } = geometryModule;
 const { createHapticsController } = hapticsModule;
 const { createIntroSequence } = introSequenceModule;
@@ -614,7 +617,7 @@ function closeSettingsModal() {
   }
 }
 
-const gameController = {
+const gameController = createGameController({
   start,
   reset: resetGameState,
   pause: pauseGame,
@@ -622,7 +625,7 @@ const gameController = {
   openSettings,
   closeSettings: closeSettingsModal,
   tick: loop
-};
+});
 
 startBtn.addEventListener("pointerdown", requestStartFullscreen);
 startBtn.addEventListener("click", gameController.start);
