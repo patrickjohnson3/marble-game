@@ -20,7 +20,8 @@ export function createIntroSequence({ intro, game, timing, messageOverlay, onRel
 
   function showMessage(message) {
     messageOverlay.textContent = message;
-    messageOverlay.classList.add("show");
+    messageOverlay.classList.remove("countdownMode");
+    messageOverlay.classList.add("show", "toast");
   }
 
   function hideMessage() {
@@ -32,7 +33,8 @@ export function createIntroSequence({ intro, game, timing, messageOverlay, onRel
     countdown.className = "countdown";
     countdown.textContent = intro.countdownValue;
     messageOverlay.replaceChildren("Ready?", countdown);
-    messageOverlay.classList.add("show");
+    messageOverlay.classList.remove("toast");
+    messageOverlay.classList.add("show", "countdownMode");
   }
 
   function scheduleCountdownTick(delay = timing.countdownTickMs) {
