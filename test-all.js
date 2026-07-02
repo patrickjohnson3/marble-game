@@ -9,7 +9,8 @@ const tests = [
   "intro-timers-test.js",
   "config-test.js",
   "input-manager-test.js",
-  "ui-behavior-test.js",
+  "settings-store-test.js",
+  "effects-test.js",
   "lifecycle-test.js",
   "check-cache-version.js"
 ];
