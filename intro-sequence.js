@@ -41,7 +41,11 @@ export function createIntroSequence({ intro, game, timing, messageOverlay, onRel
     clearTimers();
     trackIntroTimer(intro, "countdown", delay, performance.now());
     intro.countdownTimer = setTimeout(() => {
-      if (game.paused) return;
+      if (game.paused) {
+        intro.countdownTimer = 0;
+        trackIntroTimer(intro, "countdown", timing.countdownTickMs, performance.now());
+        return;
+      }
 
       intro.countdownValue--;
       if (intro.countdownValue <= 0) {
