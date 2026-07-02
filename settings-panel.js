@@ -17,7 +17,7 @@ export function bindSettingsPanel({
     settingsToggle,
     settingsOverlay,
     closeSettings,
-    resumeBtn,
+    resumeGame,
     speedSetting,
     sensitivitySetting,
     rotationSetting,
@@ -37,7 +37,7 @@ export function bindSettingsPanel({
 
   settingsToggle.addEventListener("click", onOpenSettings);
   closeSettings.addEventListener("click", onCloseSettings);
-  resumeBtn.addEventListener("click", onCloseSettings);
+  resumeGame.addEventListener("click", onCloseSettings);
   neutralBtn.addEventListener("click", onSetNeutral);
 
   speedSetting.addEventListener("input", () => {
