@@ -16,6 +16,7 @@ export const runtimeScripts = [
   "platform.js",
   "rendering.js",
   "sensor-watchdog.js",
+  "settings-panel.js",
   "settings-store.js",
   "state.js",
   "trail.js",

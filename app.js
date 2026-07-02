@@ -17,6 +17,7 @@ const [
   platformModule,
   renderingModule,
   sensorWatchdogModule,
+  settingsPanelModule,
   settingsStoreModule,
   stateModule,
   trailModule,
@@ -38,6 +39,7 @@ const [
   import(versioned("./platform.js")),
   import(versioned("./rendering.js")),
   import(versioned("./sensor-watchdog.js")),
+  import(versioned("./settings-panel.js")),
   import(versioned("./settings-store.js")),
   import(versioned("./state.js")),
   import(versioned("./trail.js")),
@@ -86,6 +88,7 @@ const {
 } = platformModule;
 const { renderMapElements, renderWalls } = renderingModule;
 const { createSensorWatchdog } = sensorWatchdogModule;
+const { bindSettingsPanel } = settingsPanelModule;
 const {
   applyRangeConfig,
   loadSettings,
@@ -178,15 +181,6 @@ function scheduleFrame() {
 function requestRender() {
   frameLoop.requestRender();
 }
-
-applyRangeConfig(speedSetting, settingsControls.maxSpeed);
-applyRangeConfig(sensitivitySetting, settingsControls.acceleration);
-speedSetting.value = settings.maxSpeed;
-sensitivitySetting.value = settings.acceleration;
-rotationSetting.checked = settings.rotationEnabled;
-hapticsSetting.checked = settings.hapticsEnabled;
-trailSetting.checked = settings.trailEnabled;
-fullscreenSetting.checked = settings.fullscreenEnabled;
 
 function applySettings() {
   physics.maxSpeed = settings.maxSpeed;
@@ -629,47 +623,22 @@ frameLoop.setTick(gameController.tick);
 
 startBtn.addEventListener("pointerdown", requestStartFullscreen);
 startBtn.addEventListener("click", gameController.start);
-neutralBtn.addEventListener("click", setNeutralNow);
-settingsToggle.addEventListener("click", gameController.openSettings);
-closeSettings.addEventListener("click", gameController.closeSettings);
-resumeBtn.addEventListener("click", gameController.closeSettings);
-speedSetting.addEventListener("input", () => {
-  settings.maxSpeed = Number(speedSetting.value);
-  applySettings();
-  saveSettings();
-});
-sensitivitySetting.addEventListener("input", () => {
-  settings.acceleration = Number(sensitivitySetting.value);
-  applySettings();
-  saveSettings();
-});
-rotationSetting.addEventListener("change", () => {
-  settings.rotationEnabled = rotationSetting.checked;
-  applySettings();
-  saveSettings();
-  if (!settings.rotationEnabled) {
+bindSettingsPanel({
+  els,
+  settings,
+  controls: settingsControls,
+  applyRangeConfig,
+  applySettings,
+  applyFullscreenSetting,
+  saveSettings,
+  onOpenSettings: gameController.openSettings,
+  onCloseSettings: gameController.closeSettings,
+  onSetNeutral: setNeutralNow,
+  onRotationDisabled() {
     camera.rotation = 0;
     cameraController.centerOnMarble();
-  }
-  requestRender();
-});
-hapticsSetting.addEventListener("change", () => {
-  settings.hapticsEnabled = hapticsSetting.checked;
-  applySettings();
-  saveSettings();
-});
-trailSetting.addEventListener("change", () => {
-  settings.trailEnabled = trailSetting.checked;
-  applySettings();
-  saveSettings();
-});
-fullscreenSetting.addEventListener("change", () => {
-  settings.fullscreenEnabled = fullscreenSetting.checked;
-  saveSettings();
-  applyFullscreenSetting();
-});
-settingsOverlay.addEventListener("click", (e) => {
-  if (e.target === settingsOverlay) gameController.closeSettings();
+  },
+  requestRender
 });
 
 function physicsContext() {
