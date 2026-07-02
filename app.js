@@ -6,6 +6,7 @@ const [
   debugModule,
   domModule,
   effectsModule,
+  frameLoopModule,
   gameControllerModule,
   geometryModule,
   hapticsModule,
@@ -26,6 +27,7 @@ const [
   import(versioned("./debug.js")),
   import(versioned("./dom.js")),
   import(versioned("./effects.js")),
+  import(versioned("./frame-loop.js")),
   import(versioned("./game-controller.js")),
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
@@ -59,6 +61,7 @@ const { createCameraController } = cameraModule;
 const { debugLines } = debugModule;
 const { els } = domModule;
 const { createEffectsRenderer } = effectsModule;
+const { createFrameLoop } = frameLoopModule;
 const { createGameController } = gameControllerModule;
 const { clamp, distance, angle, midpoint } = geometryModule;
 const { createHapticsController } = hapticsModule;
@@ -150,8 +153,6 @@ const {
 } = state;
 
 let lastFrame = performance.now();
-let frameRendered = false;
-let animationFrameId = 0;
 let settingsPausedGame = false;
 let pendingStartFullscreenRequest = null;
 const settingsStorageKey = "marbleGameSettings";
@@ -164,20 +165,18 @@ const settings = loadSettings({
   clamp
 });
 const ui = createUi({ hint, debug, settingsOverlay, debugLines, state });
+const frameLoop = createFrameLoop();
 
 function saveSettings() {
   persistSettings({ storage: localStorage, storageKey: settingsStorageKey, settings });
 }
 
 function scheduleFrame() {
-  if (animationFrameId) return;
-
-  animationFrameId = requestAnimationFrame(gameController.tick);
+  frameLoop.schedule();
 }
 
 function requestRender() {
-  frameRendered = false;
-  scheduleFrame();
+  frameLoop.requestRender();
 }
 
 applyRangeConfig(speedSetting, settingsControls.maxSpeed);
@@ -483,7 +482,7 @@ function resetGameState() {
   haptics.surface.lastPulse = 0;
   trailRenderer.clear();
   effectsRenderer.clear();
-  frameRendered = false;
+  frameLoop.requestRender();
 
   worldEl.classList.remove("map-open");
   controlsEl.hidden = false;
@@ -626,6 +625,7 @@ const gameController = createGameController({
   closeSettings: closeSettingsModal,
   tick: loop
 });
+frameLoop.setTick(gameController.tick);
 
 startBtn.addEventListener("pointerdown", requestStartFullscreen);
 startBtn.addEventListener("click", gameController.start);
@@ -687,7 +687,7 @@ function physicsContext() {
 }
 
 function loop() {
-  animationFrameId = 0;
+  frameLoop.beginFrame();
   const now = performance.now();
   const dt = clamp(
     (now - lastFrame) / timing.targetFrameMs,
@@ -697,7 +697,7 @@ function loop() {
   lastFrame = now;
   const active = game.phase !== "waiting" && !game.paused;
 
-  if (!active && frameRendered) {
+  if (frameLoop.shouldSkipIdle(active)) {
     ui.updateDebugPanel();
     return;
   }
@@ -732,7 +732,7 @@ function loop() {
   updateRoughPatchFeedback();
   if (!game.paused) trailRenderer.update(now);
   ui.updateDebugPanel();
-  frameRendered = true;
+  frameLoop.markRendered();
 
   if (active) scheduleFrame();
 }

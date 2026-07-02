@@ -5,6 +5,7 @@ export const runtimeScripts = [
   "debug.js",
   "dom.js",
   "effects.js",
+  "frame-loop.js",
   "game-controller.js",
   "geometry.js",
   "haptics.js",
