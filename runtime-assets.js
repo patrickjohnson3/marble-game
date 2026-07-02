@@ -9,6 +9,7 @@ export const runtimeScripts = [
   "dom.js",
   "effects.js",
   "frame-loop.js",
+  "game-loop.js",
   "game-controller.js",
   "game-lifecycle.js",
   "geometry.js",

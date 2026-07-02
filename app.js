@@ -14,6 +14,7 @@ import { debugLines } from "./debug.js";
 import { createDomElements } from "./dom.js";
 import { createEffectsRenderer } from "./effects.js";
 import { createFrameLoop } from "./frame-loop.js";
+import { createGameLoop } from "./game-loop.js";
 import { createLifecycleController } from "./game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./geometry.js";
 import { createHapticsController } from "./haptics.js";
@@ -28,9 +29,10 @@ import {
 } from "./map.js";
 import { createMapRenderer } from "./map-renderer.js";
 import { createMarbleView } from "./marble-view.js";
-import { marbleOverRect, updatePhysicsInput, updatePhysics } from "./physics.js";
+import { marbleOverRect } from "./physics.js";
 import {
   exitFullscreenMode,
+  requestFullscreenMode,
   requestWakeLock
 } from "./platform.js";
 import { renderMapElements, renderWalls } from "./rendering.js";
@@ -288,6 +290,7 @@ const sensorController = createSensorController({
   ui
 });
 
+let gameLoop;
 let inputManager;
 const lifecycle = createLifecycleController({
   cameraController,
@@ -314,7 +317,7 @@ const lifecycle = createLifecycleController({
   ui,
   world,
   enableMotion: () => inputManager.enableMotion(),
-  tick: loop
+  tick: () => gameLoop.tick()
 });
 const { gameController } = lifecycle;
 const keyboardController = createKeyboardController({
@@ -374,52 +377,24 @@ function physicsContext() {
   };
 }
 
-function loop() {
-  frameLoop.beginFrame();
-  const now = performance.now();
-  const dt = clamp(
-    (now - lifecycle.getLastFrame()) / timing.targetFrameMs,
-    timing.minFrameStep,
-    timing.maxFrameStep
-  );
-  lifecycle.setLastFrame(now);
-  const active = game.phase !== "waiting" && !game.paused;
-
-  if (frameLoop.shouldSkipIdle(active)) {
-    ui.updateDebugPanel();
-    return;
-  }
-
-  if (active) {
-    const context = physicsContext();
-    updatePhysicsInput(context, dt);
-    updatePhysics(context, dt, {
-      onImpact: (impact) => {
-        marble.impactSquash = Math.max(
-          marble.impactSquash,
-          clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1)
-        );
-        effectsRenderer.spawnImpact(impact);
-        hapticFeedback.pulseImpact(impact);
-      },
-      onSurface: (speed) => {
-        effectsRenderer.spawnSurface(speed, now);
-        hapticFeedback.pulseSurface(speed);
-      }
-    });
-    marble.roll += Math.hypot(marble.vx, marble.vy) * dt / Math.max(marble.r, 1);
-    marble.impactSquash = Math.max(0, marble.impactSquash - visualConfig.marble.impactSquashDecay * dt);
-    cameraController.updateFollow(dt);
-  }
-
-  marbleView.render();
-  terrainView.updateRoughPatchFeedback();
-  if (!game.paused) trailRenderer.update(now);
-  ui.updateDebugPanel();
-  frameLoop.markRendered();
-
-  if (active) scheduleFrame();
-}
+gameLoop = createGameLoop({
+  cameraController,
+  clamp,
+  effectsRenderer,
+  frameLoop,
+  game,
+  hapticFeedback,
+  lifecycle,
+  marble,
+  marbleView,
+  physicsContext,
+  scheduleFrame,
+  terrainView,
+  timing,
+  trailRenderer,
+  ui,
+  visualConfig
+});
 
 try {
   applyDocumentCopy({ document: documentRef, els });
