@@ -30,10 +30,10 @@ import { createMarbleView } from "./marble-view.js";
 import { marbleOverRect, updatePhysicsInput, updatePhysics } from "./physics.js";
 import {
   exitFullscreenMode,
-  requestWakeLock,
-  screenAdjusted
+  requestWakeLock
 } from "./platform.js";
 import { renderMapElements, renderWalls } from "./rendering.js";
+import { createSensorController } from "./sensor-controller.js";
 import { createSensorWatchdog } from "./sensor-watchdog.js";
 import { bindSettingsPanel } from "./settings-panel.js";
 import {
@@ -273,57 +273,17 @@ const sensorWatchdog = createSensorWatchdog({
     scheduleFrame();
   }
 });
-
-function maybeAutoNeutral() {
-  if (game.paused) return;
-  if (calibration.autoNeutralDone) return;
-
-  calibration.sampleX += tilt.rawX;
-  calibration.sampleY += tilt.rawY;
-  calibration.sampleCount++;
-
-  // first few frames become the user's normal holding posture.
-  // not table-flat. not lab-instrument nonsense.
-  if (calibration.sampleCount >= tuning.neutralSampleCount) {
-    tilt.neutralX = calibration.sampleX / calibration.sampleCount;
-    tilt.neutralY = calibration.sampleY / calibration.sampleCount;
-    calibration.autoNeutralDone = true;
-    game.phase = "running";
-    marble.vx = 0; marble.vy = 0;
-    ui.setHint(copy.hints.neutralSet);
-    introSequence.schedule();
-  }
-}
-
-function onOrientation(e) {
-  if (e.beta == null || e.gamma == null) return;
-  sensor.gotOrientation = true;
-  sensor.using = "deviceorientation";
-  const [tx, ty] = screenAdjusted(e.gamma, e.beta);
-  tilt.rawX = tx;
-  tilt.rawY = ty;
-  maybeAutoNeutral();
-}
-
-function onMotion(e) {
-  if (sensor.gotOrientation) return;
-  const g = e.accelerationIncludingGravity;
-  if (!g) return;
-  sensor.gotMotion = true;
-  sensor.using = "devicemotion fallback";
-  tilt.rawX = -(g.x || 0) * tuning.motionGravityScale;
-  tilt.rawY = (g.y || 0) * tuning.motionGravityScale;
-  maybeAutoNeutral();
-}
-
-function resetCalibration() {
-  calibration.sampleCount = 0;
-  calibration.sampleX = 0;
-  calibration.sampleY = 0;
-  calibration.autoNeutralDone = false;
-  tilt.neutralX = null;
-  tilt.neutralY = null;
-}
+const sensorController = createSensorController({
+  calibration,
+  game,
+  introSequence,
+  marble,
+  scheduleFrame,
+  sensor,
+  tilt,
+  tuning,
+  ui
+});
 
 function onKeyDown(e) {
   const k = e.key.toLowerCase();
@@ -358,17 +318,6 @@ function onKeyUp(e) {
   if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
 }
 
-function setNeutralNow() {
-  tilt.neutralX = tilt.rawX;
-  tilt.neutralY = tilt.rawY;
-  calibration.autoNeutralDone = true;
-  if (game.phase === "calibrating") game.phase = "running";
-  calibration.sampleCount = tuning.neutralSampleCount;
-  marble.vx = 0; marble.vy = 0;
-  tilt.smoothX = 0; tilt.smoothY = 0;
-  ui.setHint(copy.hints.neutralReset);
-}
-
 let inputManager;
 const lifecycle = createLifecycleController({
   cameraController,
@@ -383,7 +332,7 @@ const lifecycle = createLifecycleController({
   keyboard,
   mapRenderer,
   marble,
-  resetCalibration,
+  resetCalibration: sensorController.resetCalibration,
   scheduleFrame,
   sensor,
   sensorWatchdog,
@@ -402,8 +351,8 @@ frameLoop.setTick(gameController.tick);
 inputManager = createInputManager({
   gameEl,
   startBtn,
-  onOrientation,
-  onMotion,
+  onOrientation: sensorController.onOrientation,
+  onMotion: sensorController.onMotion,
   onKeyDown,
   onKeyUp,
   onPointerDown: cameraController.onPointerDown,
@@ -423,7 +372,7 @@ bindSettingsPanel({
   saveSettings,
   onOpenSettings: gameController.openSettings,
   onCloseSettings: gameController.closeSettings,
-  onSetNeutral: setNeutralNow,
+  onSetNeutral: sensorController.setNeutralNow,
   onRotationDisabled() {
     camera.rotation = 0;
     cameraController.centerOnMarble();

@@ -25,6 +25,7 @@ export const runtimeScripts = [
   "physics-config.js",
   "platform.js",
   "rendering.js",
+  "sensor-controller.js",
   "sensor-watchdog.js",
   "settings-panel.js",
   "settings-config.js",
