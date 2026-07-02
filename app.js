@@ -1,61 +1,5 @@
-const assetVersion = new URL(import.meta.url).searchParams.get("v") || "dev";
-const versioned = (path) => path + "?v=" + encodeURIComponent(assetVersion);
-const [
-  cameraModule,
-  configModule,
-  debugModule,
-  domModule,
-  effectsModule,
-  frameLoopModule,
-  gameControllerModule,
-  geometryModule,
-  hapticsModule,
-  inputManagerModule,
-  introSequenceModule,
-  introTimersModule,
-  mapModule,
-  marbleViewModule,
-  physicsModule,
-  platformModule,
-  renderingModule,
-  sensorWatchdogModule,
-  settingsPanelModule,
-  settingsStoreModule,
-  stateModule,
-  terrainViewModule,
-  trailModule,
-  uiModule
-] = await Promise.all([
-  import(versioned("./camera.js")),
-  import(versioned("./config.js")),
-  import(versioned("./debug.js")),
-  import(versioned("./dom.js")),
-  import(versioned("./effects.js")),
-  import(versioned("./frame-loop.js")),
-  import(versioned("./game-controller.js")),
-  import(versioned("./geometry.js")),
-  import(versioned("./haptics.js")),
-  import(versioned("./input-manager.js")),
-  import(versioned("./intro-sequence.js")),
-  import(versioned("./intro-timers.js")),
-  import(versioned("./map.js")),
-  import(versioned("./marble-view.js")),
-  import(versioned("./physics.js")),
-  import(versioned("./platform.js")),
-  import(versioned("./rendering.js")),
-  import(versioned("./sensor-watchdog.js")),
-  import(versioned("./settings-panel.js")),
-  import(versioned("./settings-store.js")),
-  import(versioned("./state.js")),
-  import(versioned("./terrain-view.js")),
-  import(versioned("./trail.js")),
-  import(versioned("./ui.js"))
-]).catch((error) => {
-  showBootError(error);
-  throw error;
-});
-
-const {
+import { createCameraController } from "./camera.js";
+import {
   mapConfig,
   timing,
   tuning,
@@ -64,48 +8,47 @@ const {
   physicsConfig,
   settingsConfig,
   settingsControls
-} = configModule;
-const { createCameraController } = cameraModule;
-const { debugLines } = debugModule;
-const { els } = domModule;
-const { createEffectsRenderer } = effectsModule;
-const { createFrameLoop } = frameLoopModule;
-const { createGameController } = gameControllerModule;
-const { clamp, distance, angle, midpoint } = geometryModule;
-const { createHapticsController } = hapticsModule;
-const { createInputManager } = inputManagerModule;
-const { createIntroSequence } = introSequenceModule;
-const {
+} from "./config.js";
+import { debugLines } from "./debug.js";
+import { els } from "./dom.js";
+import { createEffectsRenderer } from "./effects.js";
+import { createFrameLoop } from "./frame-loop.js";
+import { createGameController } from "./game-controller.js";
+import { clamp, distance, angle, midpoint } from "./geometry.js";
+import { createHapticsController } from "./haptics.js";
+import { createInputManager } from "./input-manager.js";
+import { createIntroSequence } from "./intro-sequence.js";
+import {
   resetIntroTimerState,
   shouldPauseGame
-} = introTimersModule;
-const {
+} from "./intro-timers.js";
+import {
   introPenWalls,
   mapEdgeWalls,
-  setReleasedBounds: setReleasedMapBounds,
-  updateIntroBounds: updateIntroMapBounds
-} = mapModule;
-const { createMarbleView } = marbleViewModule;
-const { marbleOverRect, updatePhysicsInput, updatePhysics } = physicsModule;
-const {
+  setReleasedBounds as setReleasedMapBounds,
+  updateIntroBounds as updateIntroMapBounds
+} from "./map.js";
+import { createMarbleView } from "./marble-view.js";
+import { marbleOverRect, updatePhysicsInput, updatePhysics } from "./physics.js";
+import {
   requestFullscreenMode,
   exitFullscreenMode,
   requestWakeLock,
   requestMotionPermissionIfNeeded,
   screenAdjusted
-} = platformModule;
-const { renderMapElements, renderWalls } = renderingModule;
-const { createSensorWatchdog } = sensorWatchdogModule;
-const { bindSettingsPanel } = settingsPanelModule;
-const {
+} from "./platform.js";
+import { renderMapElements, renderWalls } from "./rendering.js";
+import { createSensorWatchdog } from "./sensor-watchdog.js";
+import { bindSettingsPanel } from "./settings-panel.js";
+import {
   applyRangeConfig,
   loadSettings,
-  saveSettings: persistSettings
-} = settingsStoreModule;
-const { createGameState } = stateModule;
-const { createTerrainView } = terrainViewModule;
-const { createTrailRenderer } = trailModule;
-const { createUi } = uiModule;
+  saveSettings as persistSettings
+} from "./settings-store.js";
+import { createGameState } from "./state.js";
+import { createTerrainView } from "./terrain-view.js";
+import { createTrailRenderer } from "./trail.js";
+import { createUi } from "./ui.js";
 
 function showBootError(error) {
   const hintEl = document.getElementById("hint");
