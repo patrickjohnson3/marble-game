@@ -10,6 +10,7 @@ const [
   gameControllerModule,
   geometryModule,
   hapticsModule,
+  inputManagerModule,
   introSequenceModule,
   introTimersModule,
   mapModule,
@@ -32,6 +33,7 @@ const [
   import(versioned("./game-controller.js")),
   import(versioned("./geometry.js")),
   import(versioned("./haptics.js")),
+  import(versioned("./input-manager.js")),
   import(versioned("./intro-sequence.js")),
   import(versioned("./intro-timers.js")),
   import(versioned("./map.js")),
@@ -67,6 +69,7 @@ const { createFrameLoop } = frameLoopModule;
 const { createGameController } = gameControllerModule;
 const { clamp, distance, angle, midpoint } = geometryModule;
 const { createHapticsController } = hapticsModule;
+const { createInputManager } = inputManagerModule;
 const { createIntroSequence } = introSequenceModule;
 const {
   resetIntroTimerState,
@@ -521,32 +524,6 @@ function onKeyUp(e) {
   if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
 }
 
-const inputSystems = {
-  motion: {
-    enabled: false,
-    enable() {
-      if (this.enabled) return;
-      this.enabled = true;
-      addEventListener("deviceorientation", onOrientation, true);
-      addEventListener("devicemotion", onMotion, true);
-    }
-  },
-  keyboard: {
-    enable() {
-      addEventListener("keydown", onKeyDown, { passive:false });
-      addEventListener("keyup", onKeyUp);
-    }
-  },
-  gestures: {
-    enable() {
-      gameEl.addEventListener("pointerdown", cameraController.onPointerDown);
-      gameEl.addEventListener("pointermove", cameraController.onPointerMove);
-      gameEl.addEventListener("pointerup", cameraController.onPointerEnd);
-      gameEl.addEventListener("pointercancel", cameraController.onPointerEnd);
-    }
-  }
-};
-
 async function start() {
   startBtn.disabled = true;
   controlsEl.hidden = true;
@@ -569,7 +546,7 @@ async function start() {
   gameController.reset();
   controlsEl.hidden = true;
   startBtn.disabled = true;
-  inputSystems.motion.enable();
+  inputManager.enableMotion();
   game.phase = "calibrating";
   scheduleFrame();
 
@@ -620,9 +597,20 @@ const gameController = createGameController({
   tick: loop
 });
 frameLoop.setTick(gameController.tick);
+const inputManager = createInputManager({
+  gameEl,
+  startBtn,
+  onOrientation,
+  onMotion,
+  onKeyDown,
+  onKeyUp,
+  onPointerDown: cameraController.onPointerDown,
+  onPointerMove: cameraController.onPointerMove,
+  onPointerEnd: cameraController.onPointerEnd,
+  onStartPointerDown: requestStartFullscreen,
+  onStartClick: gameController.start
+});
 
-startBtn.addEventListener("pointerdown", requestStartFullscreen);
-startBtn.addEventListener("click", gameController.start);
 bindSettingsPanel({
   els,
   settings,
@@ -711,8 +699,9 @@ try {
   applySettings();
   syncMarbleRadius();
   cameraController.centerOnMarble();
-  inputSystems.keyboard.enable();
-  inputSystems.gestures.enable();
+  inputManager.bindStartButton();
+  inputManager.enableKeyboard();
+  inputManager.enableGestures();
   requestRender();
 } catch (error) {
   showBootError(error);
