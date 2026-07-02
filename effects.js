@@ -26,6 +26,7 @@ export function createEffectsRenderer({
 }) {
   let lastImpactAt = Number.NEGATIVE_INFINITY;
   let lastSurfaceAt = 0;
+  const cleanupTimers = new Set();
 
   function spawn(className, style, lifeMs) {
     while (effectsEl.childNodes.length >= config.maxParticles) {
@@ -36,7 +37,11 @@ export function createEffectsRenderer({
     particle.setAttribute("aria-hidden", "true");
     particle.style.cssText = style;
     effectsEl.appendChild(particle);
-    setTimeout(() => particle.remove(), lifeMs);
+    const timer = setTimeout(() => {
+      cleanupTimers.delete(timer);
+      particle.remove();
+    }, lifeMs);
+    cleanupTimers.add(timer);
   }
 
   function spawnImpact(impact) {
@@ -96,6 +101,8 @@ export function createEffectsRenderer({
   }
 
   function clear() {
+    cleanupTimers.forEach((timer) => clearTimeout(timer));
+    cleanupTimers.clear();
     effectsEl.replaceChildren();
     lastImpactAt = Number.NEGATIVE_INFINITY;
     lastSurfaceAt = 0;

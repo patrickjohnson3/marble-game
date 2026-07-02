@@ -113,14 +113,20 @@ class FakeElement {
 async function testEffectsThrottleAndParticleCap() {
   const originalDocument = globalThis.document;
   const originalSetTimeout = globalThis.setTimeout;
+  const originalClearTimeout = globalThis.clearTimeout;
   let currentTime = 0;
+  let nextTimer = 1;
+  const clearedTimers = [];
 
   globalThis.document = {
     createElement() {
       return new FakeParticle();
     }
   };
-  globalThis.setTimeout = () => 1;
+  globalThis.setTimeout = () => nextTimer++;
+  globalThis.clearTimeout = (timer) => {
+    clearedTimers.push(timer);
+  };
 
   try {
     const { createEffectsRenderer } = await import("./effects.js?test=" + Date.now());
@@ -179,11 +185,13 @@ async function testEffectsThrottleAndParticleCap() {
 
     effects.clear();
     assert.equal(effectsEl.childNodes.length, 0);
+    assert.deepEqual(clearedTimers, [1, 2, 3, 4]);
     effects.spawnImpact(5);
     assert.equal(effectsEl.childNodes.length, 2);
   } finally {
     globalThis.document = originalDocument;
     globalThis.setTimeout = originalSetTimeout;
+    globalThis.clearTimeout = originalClearTimeout;
   }
 }
 
