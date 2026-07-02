@@ -615,6 +615,7 @@ try {
   inputManager.enableKeyboard();
   inputManager.enableGestures();
   requestRender();
+  window.__marbleAppBooted = true;
 } catch (error) {
   showBootError(error);
   throw error;

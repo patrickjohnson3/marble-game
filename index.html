@@ -10,7 +10,7 @@
   #settingsOverlay,#messageOverlay{display:none}
 </style>
 <script>
-  const assetVersion = "20260702.015759";
+  const assetVersion = "20260702.094119";
   const runtimeModuleScripts = [
     "app-config.js",
     "camera.js",
@@ -58,6 +58,20 @@
     ]))
   });
   document.head.appendChild(importMapScript);
+
+  window.__marbleAppBooted = false;
+  window.__showMarbleBootError = function(error) {
+    if (window.__marbleAppBooted) return;
+    const hintEl = document.getElementById("hint");
+    if (hintEl) hintEl.textContent = "game failed to load. refresh and try again.";
+    if (error) console.error(error);
+  };
+  window.addEventListener("error", function(event) {
+    window.__showMarbleBootError(event.error || event.message);
+  });
+  window.addEventListener("unhandledrejection", function(event) {
+    window.__showMarbleBootError(event.reason);
+  });
 
   const appStylesheet = document.createElement("link");
   appStylesheet.rel = "stylesheet";
@@ -135,6 +149,9 @@
   const appScript = document.createElement("script");
   appScript.type = "module";
   appScript.src = "app.js?v=" + assetVersion;
+  appScript.addEventListener("error", function(event) {
+    window.__showMarbleBootError(event);
+  });
   document.body.appendChild(appScript);
 </script>
 </body>
