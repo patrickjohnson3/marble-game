@@ -21,6 +21,7 @@ export const runtimeScripts = [
   "settings-panel.js",
   "settings-store.js",
   "state.js",
+  "terrain-view.js",
   "trail.js",
   "ui.js"
 ];

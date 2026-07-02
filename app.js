@@ -22,6 +22,7 @@ const [
   settingsPanelModule,
   settingsStoreModule,
   stateModule,
+  terrainViewModule,
   trailModule,
   uiModule
 ] = await Promise.all([
@@ -46,6 +47,7 @@ const [
   import(versioned("./settings-panel.js")),
   import(versioned("./settings-store.js")),
   import(versioned("./state.js")),
+  import(versioned("./terrain-view.js")),
   import(versioned("./trail.js")),
   import(versioned("./ui.js"))
 ]).catch((error) => {
@@ -101,6 +103,7 @@ const {
   saveSettings: persistSettings
 } = settingsStoreModule;
 const { createGameState } = stateModule;
+const { createTerrainView } = terrainViewModule;
 const { createTrailRenderer } = trailModule;
 const { createUi } = uiModule;
 
@@ -244,29 +247,21 @@ const marbleView = createMarbleView({
   visualConfig,
   clamp
 });
+const terrainView = createTerrainView({
+  roughPatchesEl,
+  obstaclesEl,
+  roughPatches,
+  obstacles,
+  intro,
+  marble,
+  marbleOverRect,
+  renderMapElements
+});
 
 function keepDisplayAwakeWhenVisible() {
   if (document.visibilityState === "visible" && game.phase !== "waiting") {
     requestWakeLock();
   }
-}
-
-function renderObstacles() {
-  renderMapElements(obstaclesEl, "obstacle", obstacles);
-}
-
-function renderRoughPatches() {
-  renderMapElements(roughPatchesEl, "roughPatch", roughPatches);
-}
-
-function updateRoughPatchFeedback() {
-  const patchEls = roughPatchesEl.children;
-  roughPatches.forEach((patch, index) => {
-    patchEls[index]?.classList.toggle(
-      "active",
-      intro.released && marbleOverRect(marble, patch)
-    );
-  });
 }
 
 function updateIntroBounds() {
@@ -290,8 +285,8 @@ function setupMap() {
   trailEl.setAttribute("viewBox", "0 0 " + world.width + " " + world.height);
   setReleasedBounds();
   renderWalls(mapWallsEl, mapEdgeWalls(world, intro));
-  renderRoughPatches();
-  renderObstacles();
+  terrainView.renderRoughPatches();
+  terrainView.renderObstacles();
   updateIntroBounds();
 }
 
@@ -659,7 +654,7 @@ function loop() {
   }
 
   marbleView.render();
-  updateRoughPatchFeedback();
+  terrainView.updateRoughPatchFeedback();
   if (!game.paused) trailRenderer.update(now);
   ui.updateDebugPanel();
   frameLoop.markRendered();
