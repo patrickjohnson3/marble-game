@@ -174,7 +174,6 @@ html,body{
 #settingsToggle svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linejoin:round}
 #settingsToggle:active{transform:scale(.96);background:#111d}
 #settingsToggle:focus-visible{outline:2px solid #ffffffcc;outline-offset:3px}
-}
 #controls{
   position:fixed;left:calc(12px + var(--safe-left));right:calc(12px + var(--safe-right));bottom:var(--bottom-ui);
   display:flex;gap:10px;

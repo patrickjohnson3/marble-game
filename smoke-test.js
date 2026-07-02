@@ -6,6 +6,7 @@ import { requiredDomIds } from "./dom-ids.js";
 import { runtimeModuleScripts, runtimeScripts } from "./runtime-assets.js";
 
 const html = readFileSync("index.html", "utf8");
+const css = readFileSync("style.css", "utf8");
 const scripts = runtimeScripts;
 const app = scripts.map((file) => readFileSync(file, "utf8")).join("\n");
 
@@ -48,6 +49,20 @@ assert.deepEqual(
 
 if (!html.includes("./\" + script + \"?v=\" + assetVersion")) {
   console.error("index.html import map must version runtime module imports.");
+  process.exit(1);
+}
+
+let cssBraceBalance = 0;
+for (const char of css) {
+  if (char === "{") cssBraceBalance++;
+  if (char === "}") cssBraceBalance--;
+  if (cssBraceBalance < 0) {
+    console.error("style.css has an unmatched closing brace.");
+    process.exit(1);
+  }
+}
+if (cssBraceBalance !== 0) {
+  console.error("style.css has unbalanced braces.");
   process.exit(1);
 }
 
