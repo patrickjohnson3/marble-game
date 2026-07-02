@@ -60,6 +60,8 @@ function testPhysicsAndSettingsRanges() {
   assert.equal(settingsControls.maxSpeed.max >= settingsConfig.maxSpeed, true, "max speed setting max");
   assert.equal(settingsControls.acceleration.min <= settingsConfig.acceleration, true, "accel setting min");
   assert.equal(settingsControls.acceleration.max >= settingsConfig.acceleration, true, "accel setting max");
+  assert.equal(settingsConfig.trailEnabled, false, "trail defaults off");
+  assertPositiveNumber(settingsConfig.trailDefaultVersion, "trail default version");
 }
 
 function testHapticAndVisualRanges() {

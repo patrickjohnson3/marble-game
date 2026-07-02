@@ -117,7 +117,8 @@ export const settingsConfig = {
   acceleration: physicsConfig.accel,
   rotationEnabled: false,
   hapticsEnabled: true,
-  trailEnabled: true,
+  trailEnabled: false,
+  trailDefaultVersion: 2,
   fullscreenEnabled: appConfig.fullscreenOnStart
 };
 
