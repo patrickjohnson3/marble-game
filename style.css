@@ -145,6 +145,10 @@ button{
 }
 button:disabled{opacity:.72}
 button.secondary{background:#2e3440;color:white}
+button.primaryAction{
+  width:100%;margin:4px 0 12px;background:#eef4ff;color:#111827;
+  box-shadow:0 8px 22px #0006;
+}
 #settingsOverlay{
   position:fixed;inset:0;display:none;place-items:center;
   padding:18px;background:#0009;z-index:10;

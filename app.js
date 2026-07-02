@@ -115,6 +115,7 @@ const {
   settingsToggle,
   settingsOverlay,
   closeSettings,
+  resumeGame: resumeBtn,
   speedSetting,
   sensitivitySetting,
   rotationSetting,
@@ -587,6 +588,7 @@ startBtn.addEventListener("click", gameController.start);
 neutralBtn.addEventListener("click", setNeutralNow);
 settingsToggle.addEventListener("click", gameController.openSettings);
 closeSettings.addEventListener("click", gameController.closeSettings);
+resumeBtn.addEventListener("click", gameController.closeSettings);
 speedSetting.addEventListener("input", () => {
   settings.maxSpeed = Number(speedSetting.value);
   applySettings();

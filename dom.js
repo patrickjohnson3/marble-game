@@ -24,6 +24,7 @@ export const els = {
   settingsToggle: requiredElement("settingsToggle"),
   settingsOverlay: requiredElement("settingsOverlay"),
   closeSettings: requiredElement("closeSettings"),
+  resumeGame: requiredElement("resumeGame"),
   speedSetting: requiredElement("speedSetting"),
   sensitivitySetting: requiredElement("sensitivitySetting"),
   rotationSetting: requiredElement("rotationSetting"),

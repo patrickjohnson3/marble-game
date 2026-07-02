@@ -10,7 +10,7 @@
   #settingsOverlay,#messageOverlay{display:none}
 </style>
 <script>
-  const assetVersion = "20260702.010726";
+  const assetVersion = "20260702.010800";
   const appStylesheet = document.createElement("link");
   appStylesheet.rel = "stylesheet";
   appStylesheet.href = "style.css?v=" + assetVersion;
@@ -78,6 +78,7 @@
       <span>fullscreen</span>
       <input id="fullscreenSetting" type="checkbox">
     </label>
+    <button id="resumeGame" class="primaryAction">resume</button>
     <div id="debug">waiting for sensors...</div>
   </div>
 </div>
