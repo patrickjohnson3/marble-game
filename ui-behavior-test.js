@@ -3,7 +3,7 @@ import {
   createRuntimeSettings,
   persistedSettingsFromRuntime
 } from "./settings-runtime.js";
-import { loadSettings } from "./settings-store.js";
+import { availableStorage, loadSettings, saveSettings } from "./settings-store.js";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -96,6 +96,39 @@ function testRuntimeSettingsAreIndependentFromPersistedSettings() {
     ...persisted,
     maxSpeed: 20
   });
+}
+
+function testUnavailableStorageFallsBackToDefaults() {
+  const defaults = {
+    maxSpeed: 14,
+    acceleration: 0.115,
+    rotationEnabled: false,
+    hapticsEnabled: true,
+    trailEnabled: false,
+    trailDefaultVersion: 2,
+    fullscreenEnabled: true
+  };
+  const controls = {
+    maxSpeed: { min: 8, max: 24 },
+    acceleration: { min: 0.06, max: 0.18 }
+  };
+  const storage = availableStorage(() => {
+    throw new Error("storage blocked");
+  });
+
+  assert.equal(storage, null);
+  assert.deepEqual(loadSettings({
+    storage,
+    storageKey: "settings",
+    defaults,
+    controls,
+    clamp
+  }), defaults);
+  assert.doesNotThrow(() => saveSettings({
+    storage,
+    storageKey: "settings",
+    settings: defaults
+  }));
 }
 
 class FakeParticle {
@@ -223,6 +256,7 @@ async function testEffectsThrottleAndParticleCap() {
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
 testRuntimeSettingsAreIndependentFromPersistedSettings();
+testUnavailableStorageFallsBackToDefaults();
 await testEffectsThrottleAndParticleCap();
 
 console.log("UI behavior tests passed.");

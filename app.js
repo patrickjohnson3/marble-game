@@ -48,6 +48,7 @@ import {
 } from "./settings-runtime.js";
 import {
   applyRangeConfig,
+  availableStorage,
   loadSettings,
   saveSettings as persistSettings
 } from "./settings-store.js";
@@ -117,9 +118,10 @@ let lastFrame = performance.now();
 let settingsPausedGame = false;
 let pendingStartFullscreenRequest = null;
 const settingsStorageKey = "marbleGameSettings";
+const settingsStorage = availableStorage();
 
 const persistedSettings = loadSettings({
-  storage: localStorage,
+  storage: settingsStorage,
   storageKey: settingsStorageKey,
   defaults: settingsConfig,
   controls: settingsControls,
@@ -131,7 +133,7 @@ const frameLoop = createFrameLoop();
 
 function saveSettings() {
   persistSettings({
-    storage: localStorage,
+    storage: settingsStorage,
     storageKey: settingsStorageKey,
     settings: persistedSettingsFromRuntime(settings)
   });

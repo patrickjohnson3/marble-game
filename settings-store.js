@@ -8,8 +8,18 @@ function numberSetting(value, fallback, range, clamp) {
   return Number.isFinite(value) ? clamp(value, range.min, range.max) : fallback;
 }
 
+export function availableStorage(getStorage = () => localStorage) {
+  try {
+    return getStorage();
+  } catch {
+    return null;
+  }
+}
+
 export function loadSettings({ storage, storageKey, defaults, controls, clamp }) {
   try {
+    if (!storage) return { ...defaults };
+
     const saved = JSON.parse(storage.getItem(storageKey) || "null");
     if (!saved || typeof saved !== "object") return { ...defaults };
     const trailDefaultVersion = Number.isFinite(saved.trailDefaultVersion) ? saved.trailDefaultVersion : 1;
@@ -33,6 +43,8 @@ export function loadSettings({ storage, storageKey, defaults, controls, clamp })
 
 export function saveSettings({ storage, storageKey, settings }) {
   try {
+    if (!storage) return;
+
     storage.setItem(storageKey, JSON.stringify({
       maxSpeed: settings.maxSpeed,
       acceleration: settings.acceleration,
