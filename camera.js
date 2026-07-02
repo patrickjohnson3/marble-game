@@ -136,6 +136,7 @@ export function createCameraController({
 
   return {
     applyTransform,
+    camera,
     centerOnMarble,
     onPointerDown,
     onPointerEnd,

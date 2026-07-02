@@ -10,6 +10,7 @@ export const runtimeScripts = [
   "effects.js",
   "frame-loop.js",
   "game-controller.js",
+  "game-lifecycle.js",
   "geometry.js",
   "haptics.js",
   "haptic-config.js",

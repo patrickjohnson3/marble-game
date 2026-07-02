@@ -14,15 +14,11 @@ import { debugLines } from "./debug.js";
 import { els } from "./dom.js";
 import { createEffectsRenderer } from "./effects.js";
 import { createFrameLoop } from "./frame-loop.js";
-import { createGameController } from "./game-controller.js";
+import { createLifecycleController } from "./game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./geometry.js";
 import { createHapticsController } from "./haptics.js";
 import { createInputManager } from "./input-manager.js";
 import { createIntroSequence } from "./intro-sequence.js";
-import {
-  resetIntroTimerState,
-  shouldPauseGame
-} from "./intro-timers.js";
 import {
   introPenWalls,
   mapEdgeWalls,
@@ -33,10 +29,8 @@ import { createMapRenderer } from "./map-renderer.js";
 import { createMarbleView } from "./marble-view.js";
 import { marbleOverRect, updatePhysicsInput, updatePhysics } from "./physics.js";
 import {
-  requestFullscreenMode,
   exitFullscreenMode,
   requestWakeLock,
-  requestMotionPermissionIfNeeded,
   screenAdjusted
 } from "./platform.js";
 import { renderMapElements, renderWalls } from "./rendering.js";
@@ -114,9 +108,6 @@ const {
   physics
 } = state;
 
-let lastFrame = performance.now();
-let settingsPausedGame = false;
-let pendingStartFullscreenRequest = null;
 const settingsStorageKey = "marbleGameSettings";
 const settingsStorage = availableStorage();
 
@@ -334,81 +325,6 @@ function resetCalibration() {
   tilt.neutralY = null;
 }
 
-function pauseGame() {
-  if (!shouldPauseGame(game)) return false;
-
-  game.paused = true;
-  keyboard.x = 0;
-  keyboard.y = 0;
-  cameraController.resetGesture();
-  sensorWatchdog.pause();
-  introSequence.pause();
-  return true;
-}
-
-function resumeGame() {
-  if (!game.paused) return;
-
-  game.paused = false;
-  lastFrame = performance.now();
-  sensorWatchdog.resume(() => game.phase === "calibrating" && sensor.using === "none");
-  introSequence.resume();
-  scheduleFrame();
-}
-
-function resetGameState() {
-  sensorWatchdog.reset();
-  introSequence.clearTimers();
-  resetCalibration();
-
-  game.phase = "waiting";
-  game.paused = false;
-  settingsPausedGame = false;
-  pendingStartFullscreenRequest = null;
-  sensor.gotOrientation = false;
-  sensor.gotMotion = false;
-  sensor.using = "none";
-
-  intro.started = false;
-  intro.released = false;
-  intro.countdownValue = timing.countdownStart;
-  resetIntroTimerState(intro);
-
-  keyboard.x = 0;
-  keyboard.y = 0;
-  tilt.rawX = 0;
-  tilt.rawY = 0;
-  tilt.smoothX = 0;
-  tilt.smoothY = 0;
-
-  marble.x = world.width / 2;
-  marble.y = world.height / 2;
-  marble.vx = 0;
-  marble.vy = 0;
-  marble.roll = 0;
-  marble.impactSquash = 0;
-
-  camera.x = 0;
-  camera.y = 0;
-  camera.scale = 1;
-  camera.rotation = 0;
-  camera.gestureCooldown = 0;
-  cameraController.resetGesture();
-
-  haptics.impact.lastPulse = 0;
-  haptics.surface.lastPulse = 0;
-  trailRenderer.clear();
-  effectsRenderer.clear();
-  frameLoop.requestRender();
-
-  controlsEl.hidden = false;
-  startBtn.textContent = copy.buttons.start;
-  startBtn.disabled = false;
-  introSequence.hideMessage();
-  mapRenderer.resetIntroPen();
-  cameraController.centerOnMarble();
-}
-
 function onKeyDown(e) {
   const k = e.key.toLowerCase();
   if (game.paused) return;
@@ -442,37 +358,6 @@ function onKeyUp(e) {
   if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
 }
 
-async function start() {
-  startBtn.disabled = true;
-  controlsEl.hidden = true;
-
-  const fullscreenRequest = pendingStartFullscreenRequest ||
-    requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
-  pendingStartFullscreenRequest = null;
-
-  const ok = await requestMotionPermissionIfNeeded();
-  if (!ok) {
-    await fullscreenRequest;
-    if (settings.fullscreenEnabled) exitFullscreenMode();
-    controlsEl.hidden = false;
-    startBtn.disabled = false;
-    ui.setHint(copy.hints.motionDenied);
-    return;
-  }
-
-  requestWakeLock();
-  gameController.reset();
-  controlsEl.hidden = true;
-  startBtn.disabled = true;
-  inputManager.enableMotion();
-  game.phase = "calibrating";
-  scheduleFrame();
-
-  ui.setHint(copy.hints.calibrating);
-
-  sensorWatchdog.schedule();
-}
-
 function setNeutralNow() {
   tilt.neutralX = tilt.rawX;
   tilt.neutralY = tilt.rawY;
@@ -484,38 +369,37 @@ function setNeutralNow() {
   ui.setHint(copy.hints.neutralReset);
 }
 
-function requestStartFullscreen() {
-  if (startBtn.disabled || game.phase !== "waiting") return;
-
-  pendingStartFullscreenRequest = requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
-}
-
-function openSettings() {
-  if (ui.isSettingsOpen()) return;
-
-  settingsPausedGame = gameController.pause();
-  ui.openSettingsModal();
-}
-
-function closeSettingsModal() {
-  ui.closeSettingsModal();
-  if (settingsPausedGame) {
-    settingsPausedGame = false;
-    gameController.resume();
-  }
-}
-
-const gameController = createGameController({
-  start,
-  reset: resetGameState,
-  pause: pauseGame,
-  resume: resumeGame,
-  openSettings,
-  closeSettings: closeSettingsModal,
+let inputManager;
+const lifecycle = createLifecycleController({
+  cameraController,
+  calibration,
+  controlsEl,
+  effectsRenderer,
+  frameLoop,
+  game,
+  haptics,
+  intro,
+  introSequence,
+  keyboard,
+  mapRenderer,
+  marble,
+  resetCalibration,
+  scheduleFrame,
+  sensor,
+  sensorWatchdog,
+  settings,
+  startBtn,
+  tilt,
+  timing,
+  trailRenderer,
+  ui,
+  world,
+  enableMotion: () => inputManager.enableMotion(),
   tick: loop
 });
+const { gameController } = lifecycle;
 frameLoop.setTick(gameController.tick);
-const inputManager = createInputManager({
+inputManager = createInputManager({
   gameEl,
   startBtn,
   onOrientation,
@@ -525,7 +409,7 @@ const inputManager = createInputManager({
   onPointerDown: cameraController.onPointerDown,
   onPointerMove: cameraController.onPointerMove,
   onPointerEnd: cameraController.onPointerEnd,
-  onStartPointerDown: requestStartFullscreen,
+  onStartPointerDown: lifecycle.requestStartFullscreen,
   onStartClick: gameController.start
 });
 
@@ -565,11 +449,11 @@ function loop() {
   frameLoop.beginFrame();
   const now = performance.now();
   const dt = clamp(
-    (now - lastFrame) / timing.targetFrameMs,
+    (now - lifecycle.getLastFrame()) / timing.targetFrameMs,
     timing.minFrameStep,
     timing.maxFrameStep
   );
-  lastFrame = now;
+  lifecycle.setLastFrame(now);
   const active = game.phase !== "waiting" && !game.paused;
 
   if (frameLoop.shouldSkipIdle(active)) {
