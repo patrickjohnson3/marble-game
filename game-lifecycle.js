@@ -36,11 +36,14 @@ export function createLifecycleController({
   ui,
   world,
   enableMotion,
+  requestFullscreen = requestFullscreenMode,
+  exitFullscreen = exitFullscreenMode,
+  requestMotionPermission = requestMotionPermissionIfNeeded,
+  keepDisplayAwake = requestWakeLock,
   now = () => performance.now(),
   tick
 }) {
   let settingsPausedGame = false;
-  let pendingStartFullscreenRequest = null;
   let lastFrame = now();
 
   function pauseGame() {
@@ -73,7 +76,6 @@ export function createLifecycleController({
     game.phase = "waiting";
     game.paused = false;
     settingsPausedGame = false;
-    pendingStartFullscreenRequest = null;
     sensor.gotOrientation = false;
     sensor.gotMotion = false;
     sensor.using = "none";
@@ -123,21 +125,19 @@ export function createLifecycleController({
     startBtn.disabled = true;
     controlsEl.hidden = true;
 
-    const fullscreenRequest = pendingStartFullscreenRequest ||
-      requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
-    pendingStartFullscreenRequest = null;
+    const fullscreenRequest = requestFullscreen({ fullscreenOnStart: settings.fullscreenEnabled });
 
-    const ok = await requestMotionPermissionIfNeeded();
+    const ok = await requestMotionPermission();
     if (!ok) {
       await fullscreenRequest;
-      if (settings.fullscreenEnabled) exitFullscreenMode();
+      if (settings.fullscreenEnabled) exitFullscreen();
       controlsEl.hidden = false;
       startBtn.disabled = false;
       ui.setHint(copy.hints.motionDenied);
       return;
     }
 
-    requestWakeLock();
+    keepDisplayAwake();
     gameController.reset();
     controlsEl.hidden = true;
     startBtn.disabled = true;
@@ -151,9 +151,8 @@ export function createLifecycleController({
   }
 
   function requestStartFullscreen() {
-    if (startBtn.disabled || game.phase !== "waiting") return;
-
-    pendingStartFullscreenRequest = requestFullscreenMode({ fullscreenOnStart: settings.fullscreenEnabled });
+    // Fullscreen is requested from the click handler. Some mobile browsers
+    // reject pointerdown fullscreen and would otherwise skip the click retry.
   }
 
   function openSettings() {
