@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title>marble tilt</title>
+<title></title>
 <style>
   html,body{margin:0;height:100%;overflow:hidden;background:#101114;color:white}
   #game{position:fixed;inset:0;overflow:hidden;background:#101114}
   #settingsOverlay,#messageOverlay{display:none}
 </style>
 <script>
-  const assetVersion = "20260702.094200";
+  const assetVersion = "20260702.094331";
   const runtimeModuleScripts = [
     "app-config.js",
     "camera.js",
@@ -95,10 +95,10 @@
 <div id="messageOverlay" aria-live="polite"></div>
 
 <div id="panel">
-  <div id="hint">hold phone normally, then tap start</div>
+  <div id="hint"></div>
 </div>
 
-<button id="settingsToggle" aria-label="settings" title="Settings">
+<button id="settingsToggle" aria-label="" title="">
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M19.4 13.5c.1-.5.1-1 .1-1.5s0-1-.1-1.5l2-1.5-2-3.5-2.4 1a8 8 0 0 0-2.6-1.5L14 2h-4l-.4 3a8 8 0 0 0-2.6 1.5l-2.4-1-2 3.5 2 1.5a9.7 9.7 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 2.6 1.5l.4 3h4l.4-3a8 8 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5Z"/>
     <circle cx="12" cy="12" r="3.2"/>
@@ -106,42 +106,42 @@
 </button>
 
 <div id="controls">
-  <button id="start">start</button>
+  <button id="start"></button>
 </div>
 
 <div id="settingsOverlay" aria-hidden="true">
   <div id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div id="settingsHeader">
-      <h2 id="settingsTitle">Settings</h2>
-      <button id="closeSettings" aria-label="close settings">×</button>
+      <h2 id="settingsTitle"></h2>
+      <button id="closeSettings" aria-label=""></button>
     </div>
-    <button id="neutral" class="secondary">set neutral</button>
+    <button id="neutral" class="secondary"></button>
     <label class="settingRow" for="speedSetting">
-      <span>speed</span>
+      <span></span>
       <input id="speedSetting" type="range">
     </label>
     <label class="settingRow" for="sensitivitySetting">
-      <span>sensitivity</span>
+      <span></span>
       <input id="sensitivitySetting" type="range">
     </label>
     <label class="settingRow checkboxRow" for="rotationSetting">
-      <span>rotation</span>
+      <span></span>
       <input id="rotationSetting" type="checkbox">
     </label>
     <label class="settingRow checkboxRow" for="hapticsSetting">
-      <span>haptics</span>
+      <span></span>
       <input id="hapticsSetting" type="checkbox">
     </label>
     <label class="settingRow checkboxRow" for="trailSetting">
-      <span>trail</span>
+      <span></span>
       <input id="trailSetting" type="checkbox">
     </label>
     <label class="settingRow checkboxRow" for="fullscreenSetting">
-      <span>fullscreen</span>
+      <span></span>
       <input id="fullscreenSetting" type="checkbox">
     </label>
-    <button id="resumeGame" class="primaryAction">resume</button>
-    <div id="debug">waiting for sensors...</div>
+    <button id="resumeGame" class="primaryAction"></button>
+    <div id="debug"></div>
   </div>
 </div>
 

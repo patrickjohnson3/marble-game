@@ -9,7 +9,7 @@ import {
   settingsConfig,
   settingsControls
 } from "./config.js";
-import { copy } from "./copy.js";
+import { applyDocumentCopy, copy } from "./copy.js";
 import { debugLines } from "./debug.js";
 import { els } from "./dom.js";
 import { createEffectsRenderer } from "./effects.js";
@@ -607,6 +607,7 @@ function loop() {
 }
 
 try {
+  applyDocumentCopy({ document, els });
   mapRenderer.setup();
   applySettings();
   marbleView.syncRadius();

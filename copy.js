@@ -1,5 +1,7 @@
 export const copy = {
   bootError: "game failed to load. refresh and try again.",
+  title: "marble tilt",
+  initialHint: "hold phone normally, then tap start",
   hints: {
     mapOpen: "map open. pinch to zoom and explore.",
     noMotionSensor: "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
@@ -13,6 +15,46 @@ export const copy = {
     ready: "Ready?"
   },
   buttons: {
-    start: "start"
-  }
+    start: "start",
+    closeSettings: "×",
+    neutral: "set neutral",
+    resume: "resume"
+  },
+  settings: {
+    toggleLabel: "settings",
+    title: "Settings",
+    closeLabel: "close settings",
+    labels: {
+      speedSetting: "speed",
+      sensitivitySetting: "sensitivity",
+      rotationSetting: "rotation",
+      hapticsSetting: "haptics",
+      trailSetting: "trail",
+      fullscreenSetting: "fullscreen"
+    }
+  },
+  debugFallback: "waiting for sensors..."
 };
+
+export function applyDocumentCopy({
+  document,
+  els
+}) {
+  document.title = copy.title;
+
+  els.hint.textContent = copy.initialHint;
+  els.startBtn.textContent = copy.buttons.start;
+  els.settingsToggle.setAttribute("aria-label", copy.settings.toggleLabel);
+  els.settingsToggle.title = copy.settings.title;
+  els.settingsTitle.textContent = copy.settings.title;
+  els.closeSettings.setAttribute("aria-label", copy.settings.closeLabel);
+  els.closeSettings.textContent = copy.buttons.closeSettings;
+  els.neutralBtn.textContent = copy.buttons.neutral;
+  els.resumeGame.textContent = copy.buttons.resume;
+  els.debug.textContent = copy.debugFallback;
+
+  for (const [controlId, label] of Object.entries(copy.settings.labels)) {
+    const labelEl = document.querySelector('label[for="' + controlId + '"] span');
+    if (labelEl) labelEl.textContent = label;
+  }
+}

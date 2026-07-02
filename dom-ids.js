@@ -15,6 +15,7 @@ export const domIds = {
   neutralBtn: "neutral",
   settingsToggle: "settingsToggle",
   settingsOverlay: "settingsOverlay",
+  settingsTitle: "settingsTitle",
   closeSettings: "closeSettings",
   resumeGame: "resumeGame",
   speedSetting: "speedSetting",
