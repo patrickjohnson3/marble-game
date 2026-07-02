@@ -75,6 +75,8 @@ function testHapticAndVisualRanges() {
   assertPositiveNumber(visualConfig.marble.glintLightOffset, "glint light offset");
   assertPositiveNumber(visualConfig.effects.impactMin, "effect impact minimum");
   assertPositiveNumber(visualConfig.effects.impactReference, "effect impact reference");
+  assertPositiveNumber(visualConfig.effects.impactCooldownMs, "effect impact cooldown");
+  assertPositiveNumber(visualConfig.effects.maxParticles, "effect particle cap");
   assertPositiveNumber(visualConfig.effects.surfaceMinSpeed, "effect surface minimum speed");
   assertPositiveNumber(visualConfig.effects.surfaceCooldownMs, "effect surface cooldown");
   assert.equal(visualConfig.effects.impactOpacity > 0 && visualConfig.effects.impactOpacity <= 1, true, "impact effect opacity");

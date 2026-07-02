@@ -94,6 +94,8 @@ export const visualConfig = {
   effects: {
     impactMin: 1.9,
     impactReference: 10,
+    impactCooldownMs: 70,
+    maxParticles: 80,
     impactMinParticles: 2,
     impactExtraParticles: 5,
     impactEdgeRatio: 0.82,

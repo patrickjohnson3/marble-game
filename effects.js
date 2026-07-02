@@ -16,10 +16,21 @@ function velocityUnit(marble) {
   return { x: marble.vx / speed, y: marble.vy / speed };
 }
 
-export function createEffectsRenderer({ effectsEl, marble, config, clamp, random = Math.random }) {
+export function createEffectsRenderer({
+  effectsEl,
+  marble,
+  config,
+  clamp,
+  random = Math.random,
+  now = () => performance.now()
+}) {
+  let lastImpactAt = Number.NEGATIVE_INFINITY;
   let lastSurfaceAt = 0;
 
   function spawn(className, style, lifeMs) {
+    while (effectsEl.childNodes.length >= config.maxParticles) {
+      effectsEl.firstChild.remove();
+    }
     const particle = document.createElement("i");
     particle.className = "effectParticle " + className;
     particle.setAttribute("aria-hidden", "true");
@@ -30,6 +41,9 @@ export function createEffectsRenderer({ effectsEl, marble, config, clamp, random
 
   function spawnImpact(impact) {
     if (impact < config.impactMin) return;
+    const currentTime = now();
+    if (currentTime - lastImpactAt < config.impactCooldownMs) return;
+    lastImpactAt = currentTime;
 
     const intensity = clamp(impact / config.impactReference, 0, 1);
     const count = Math.round(config.impactMinParticles + intensity * config.impactExtraParticles);
@@ -83,6 +97,7 @@ export function createEffectsRenderer({ effectsEl, marble, config, clamp, random
 
   function clear() {
     effectsEl.replaceChildren();
+    lastImpactAt = Number.NEGATIVE_INFINITY;
     lastSurfaceAt = 0;
   }
 
