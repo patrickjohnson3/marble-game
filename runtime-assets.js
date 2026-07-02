@@ -18,6 +18,7 @@ export const runtimeScripts = [
   "intro-timers.js",
   "map.js",
   "map-config.js",
+  "map-renderer.js",
   "marble-view.js",
   "physics.js",
   "physics-config.js",

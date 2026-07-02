@@ -29,6 +29,7 @@ import {
   setReleasedBounds as setReleasedMapBounds,
   updateIntroBounds as updateIntroMapBounds
 } from "./map.js";
+import { createMapRenderer } from "./map-renderer.js";
 import { createMarbleView } from "./marble-view.js";
 import { marbleOverRect, updatePhysicsInput, updatePhysics } from "./physics.js";
 import {
@@ -201,6 +202,26 @@ const terrainView = createTerrainView({
   marbleOverRect,
   renderMapElements
 });
+const mapRenderer = createMapRenderer({
+  worldEl,
+  introWallsEl,
+  mapWallsEl,
+  trailEl,
+  bounds,
+  intro,
+  marble,
+  world,
+  viewport: {
+    width: () => innerWidth,
+    height: () => innerHeight
+  },
+  terrainView,
+  renderWalls,
+  introPenWalls,
+  mapEdgeWalls,
+  setReleasedMapBounds,
+  updateIntroMapBounds
+});
 
 function keepDisplayAwakeWhenVisible() {
   if (document.visibilityState === "visible" && game.phase !== "waiting") {
@@ -208,35 +229,9 @@ function keepDisplayAwakeWhenVisible() {
   }
 }
 
-function updateIntroBounds() {
-  updateIntroMapBounds({
-    bounds,
-    intro,
-    marble,
-    viewport: { width: innerWidth, height: innerHeight },
-    world
-  });
-  renderWalls(introWallsEl, introPenWalls(bounds, intro));
-}
-
-function setReleasedBounds() {
-  setReleasedMapBounds(bounds, world);
-}
-
-function setupMap() {
-  worldEl.style.width = world.width + "px";
-  worldEl.style.height = world.height + "px";
-  trailEl.setAttribute("viewBox", "0 0 " + world.width + " " + world.height);
-  setReleasedBounds();
-  renderWalls(mapWallsEl, mapEdgeWalls(world, intro));
-  terrainView.renderRoughPatches();
-  terrainView.renderObstacles();
-  updateIntroBounds();
-}
-
 function resize() {
   marbleView.syncRadius();
-  if (!intro.released) updateIntroBounds();
+  if (!intro.released) mapRenderer.updateIntroBounds();
   marble.x = clamp(marble.x, bounds.left + marble.r, bounds.right - marble.r);
   marble.y = clamp(marble.y, bounds.top + marble.r, bounds.bottom - marble.r);
   if (!intro.released) cameraController.centerOnMarble();
@@ -249,9 +244,7 @@ document.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
 function releaseMap() {
   intro.released = true;
   intro.sequenceStage = "idle";
-  introWallsEl.replaceChildren();
-  worldEl.classList.add("map-open");
-  setReleasedBounds();
+  mapRenderer.openMap();
   introSequence.hideMessage();
   ui.setHint(copy.hints.mapOpen);
 }
@@ -397,13 +390,11 @@ function resetGameState() {
   effectsRenderer.clear();
   frameLoop.requestRender();
 
-  worldEl.classList.remove("map-open");
   controlsEl.hidden = false;
   startBtn.textContent = copy.buttons.start;
   startBtn.disabled = false;
   introSequence.hideMessage();
-  setReleasedBounds();
-  updateIntroBounds();
+  mapRenderer.resetIntroPen();
   cameraController.centerOnMarble();
 }
 
@@ -607,7 +598,7 @@ function loop() {
 }
 
 try {
-  setupMap();
+  mapRenderer.setup();
   applySettings();
   marbleView.syncRadius();
   cameraController.centerOnMarble();
