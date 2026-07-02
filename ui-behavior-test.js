@@ -1,4 +1,8 @@
 import assert from "node:assert/strict";
+import {
+  createRuntimeSettings,
+  persistedSettingsFromRuntime
+} from "./settings-runtime.js";
 import { loadSettings } from "./settings-store.js";
 
 function clamp(value, min, max) {
@@ -71,6 +75,27 @@ function testTrailMigrationPreservesCurrentSavedTrailChoice() {
   });
 
   assert.equal(settings.trailEnabled, true);
+}
+
+function testRuntimeSettingsAreIndependentFromPersistedSettings() {
+  const persisted = {
+    maxSpeed: 14,
+    acceleration: 0.115,
+    rotationEnabled: false,
+    hapticsEnabled: true,
+    trailEnabled: false,
+    trailDefaultVersion: 2,
+    fullscreenEnabled: true
+  };
+  const runtime = createRuntimeSettings(persisted);
+
+  runtime.maxSpeed = 20;
+
+  assert.equal(persisted.maxSpeed, 14);
+  assert.deepEqual(persistedSettingsFromRuntime(runtime), {
+    ...persisted,
+    maxSpeed: 20
+  });
 }
 
 class FakeParticle {
@@ -197,6 +222,7 @@ async function testEffectsThrottleAndParticleCap() {
 
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
+testRuntimeSettingsAreIndependentFromPersistedSettings();
 await testEffectsThrottleAndParticleCap();
 
 console.log("UI behavior tests passed.");

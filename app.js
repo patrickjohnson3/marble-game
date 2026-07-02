@@ -43,6 +43,10 @@ import { renderMapElements, renderWalls } from "./rendering.js";
 import { createSensorWatchdog } from "./sensor-watchdog.js";
 import { bindSettingsPanel } from "./settings-panel.js";
 import {
+  createRuntimeSettings,
+  persistedSettingsFromRuntime
+} from "./settings-runtime.js";
+import {
   applyRangeConfig,
   loadSettings,
   saveSettings as persistSettings
@@ -114,18 +118,23 @@ let settingsPausedGame = false;
 let pendingStartFullscreenRequest = null;
 const settingsStorageKey = "marbleGameSettings";
 
-const settings = loadSettings({
+const persistedSettings = loadSettings({
   storage: localStorage,
   storageKey: settingsStorageKey,
   defaults: settingsConfig,
   controls: settingsControls,
   clamp
 });
+const settings = createRuntimeSettings(persistedSettings);
 const ui = createUi({ hint, debug, settingsOverlay, debugLines, state });
 const frameLoop = createFrameLoop();
 
 function saveSettings() {
-  persistSettings({ storage: localStorage, storageKey: settingsStorageKey, settings });
+  persistSettings({
+    storage: localStorage,
+    storageKey: settingsStorageKey,
+    settings: persistedSettingsFromRuntime(settings)
+  });
 }
 
 function scheduleFrame() {

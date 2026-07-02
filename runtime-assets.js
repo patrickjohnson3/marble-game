@@ -27,6 +27,7 @@ export const runtimeScripts = [
   "sensor-watchdog.js",
   "settings-panel.js",
   "settings-config.js",
+  "settings-runtime.js",
   "settings-store.js",
   "state.js",
   "terrain-view.js",
