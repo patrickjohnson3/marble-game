@@ -19,6 +19,7 @@ import { clamp, distance, angle, midpoint } from "./geometry.js";
 import { createHapticsController } from "./haptics.js";
 import { createInputManager } from "./input-manager.js";
 import { createIntroSequence } from "./intro-sequence.js";
+import { createKeyboardController } from "./keyboard-controller.js";
 import {
   introPenWalls,
   mapEdgeWalls,
@@ -285,39 +286,6 @@ const sensorController = createSensorController({
   ui
 });
 
-function onKeyDown(e) {
-  const k = e.key.toLowerCase();
-  if (game.paused) return;
-
-  if (k === "arrowleft" || k === "a") keyboard.x = -1;
-  if (k === "arrowright" || k === "d") keyboard.x = 1;
-  if (k === "arrowup" || k === "w") keyboard.y = -1;
-  if (k === "arrowdown" || k === "s") keyboard.y = 1;
-  if (["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(k)) {
-    e.preventDefault();
-    sensor.using = sensor.using === "none" ? "keyboard" : sensor.using;
-    if (game.phase === "waiting" || game.phase === "calibrating") {
-      game.phase = "keyboard";
-      tilt.neutralX = 0;
-      tilt.neutralY = 0;
-      calibration.autoNeutralDone = true;
-      introSequence.schedule();
-      scheduleFrame();
-    }
-  }
-}
-
-function onKeyUp(e) {
-  const k = e.key.toLowerCase();
-  if (k === "escape") gameController.closeSettings();
-  if (game.paused) return;
-
-  if ((k === "arrowleft" || k === "a") && keyboard.x < 0) keyboard.x = 0;
-  if ((k === "arrowright" || k === "d") && keyboard.x > 0) keyboard.x = 0;
-  if ((k === "arrowup" || k === "w") && keyboard.y < 0) keyboard.y = 0;
-  if ((k === "arrowdown" || k === "s") && keyboard.y > 0) keyboard.y = 0;
-}
-
 let inputManager;
 const lifecycle = createLifecycleController({
   cameraController,
@@ -347,14 +315,24 @@ const lifecycle = createLifecycleController({
   tick: loop
 });
 const { gameController } = lifecycle;
+const keyboardController = createKeyboardController({
+  calibration,
+  game,
+  introSequence,
+  keyboard,
+  scheduleFrame,
+  sensor,
+  tilt,
+  closeSettings: gameController.closeSettings
+});
 frameLoop.setTick(gameController.tick);
 inputManager = createInputManager({
   gameEl,
   startBtn,
   onOrientation: sensorController.onOrientation,
   onMotion: sensorController.onMotion,
-  onKeyDown,
-  onKeyUp,
+  onKeyDown: keyboardController.onKeyDown,
+  onKeyUp: keyboardController.onKeyUp,
   onPointerDown: cameraController.onPointerDown,
   onPointerMove: cameraController.onPointerMove,
   onPointerEnd: cameraController.onPointerEnd,

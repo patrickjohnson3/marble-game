@@ -17,6 +17,7 @@ export const runtimeScripts = [
   "input-manager.js",
   "intro-sequence.js",
   "intro-timers.js",
+  "keyboard-controller.js",
   "map.js",
   "map-config.js",
   "map-renderer.js",
