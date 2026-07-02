@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 const tests = [
   "smoke-test.js",
   "physics-test.js",
+  "platform-test.js",
   "intro-sequence-test.js",
   "intro-timers-test.js",
   "config-test.js",

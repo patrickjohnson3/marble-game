@@ -1,4 +1,5 @@
 let wakeLock = null;
+let wakeLockRequest = null;
 
 function fullscreenElement() {
   return document.fullscreenElement ||
@@ -42,15 +43,19 @@ export async function exitFullscreenMode() {
 
 export async function requestWakeLock() {
   if (!("wakeLock" in navigator)) return;
-  if (wakeLock || document.visibilityState !== "visible") return;
+  if (wakeLock || wakeLockRequest || document.visibilityState !== "visible") return;
 
+  wakeLockRequest = navigator.wakeLock.request("screen");
   try {
-    wakeLock = await navigator.wakeLock.request("screen");
+    const lock = await wakeLockRequest;
+    wakeLock = lock;
     wakeLock.addEventListener("release", () => {
       wakeLock = null;
     });
   } catch {
     wakeLock = null;
+  } finally {
+    wakeLockRequest = null;
   }
 }
 
