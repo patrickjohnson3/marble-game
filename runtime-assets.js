@@ -38,6 +38,8 @@ export const runtimeScripts = [
   "visual-config.js"
 ];
 
+export const runtimeModuleScripts = runtimeScripts.filter((script) => script !== "app.js");
+
 export const runtimeStyles = [
   "style.css"
 ];

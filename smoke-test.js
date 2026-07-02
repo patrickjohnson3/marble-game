@@ -1,8 +1,9 @@
+import assert from "node:assert/strict";
 import { readFileSync } from "fs";
 import { spawnSync } from "child_process";
 import { mapConfig } from "./config.js";
 import { requiredDomIds } from "./dom-ids.js";
-import { runtimeScripts } from "./runtime-assets.js";
+import { runtimeModuleScripts, runtimeScripts } from "./runtime-assets.js";
 
 const html = readFileSync("index.html", "utf8");
 const scripts = runtimeScripts;
@@ -27,6 +28,26 @@ const missingIds = requiredDomIds.filter((id) => !htmlIds.has(id));
 if (missingIds.length > 0) {
   console.error("Missing DOM ids referenced by app.js:");
   missingIds.forEach((id) => console.error("- " + id));
+  process.exit(1);
+}
+
+const moduleScriptListMatch = html.match(/const runtimeModuleScripts = \[([\s\S]*?)\];/);
+if (!moduleScriptListMatch) {
+  console.error("index.html is missing runtimeModuleScripts for import map cache busting.");
+  process.exit(1);
+}
+
+const htmlRuntimeModuleScripts = [...moduleScriptListMatch[1].matchAll(/"([^"]+\.js)"/g)]
+  .map((match) => match[1]);
+
+assert.deepEqual(
+  htmlRuntimeModuleScripts,
+  runtimeModuleScripts,
+  "index.html runtimeModuleScripts must match runtime-assets.js"
+);
+
+if (!html.includes("./\" + script + \"?v=\" + assetVersion")) {
+  console.error("index.html import map must version runtime module imports.");
   process.exit(1);
 }
 
