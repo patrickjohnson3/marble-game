@@ -583,6 +583,8 @@ function requestStartFullscreen() {
 }
 
 function openSettings() {
+  if (ui.isSettingsOpen()) return;
+
   settingsPausedGame = gameController.pause();
   ui.openSettingsModal();
 }
