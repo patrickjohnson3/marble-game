@@ -10,6 +10,7 @@ const tests = [
   "intro-timers-test.js",
   "config-test.js",
   "input-manager-test.js",
+  "settings-panel-test.js",
   "settings-store-test.js",
   "effects-test.js",
   "lifecycle-test.js",

@@ -75,7 +75,11 @@ export function bindSettingsPanel({
     applyFullscreenSetting();
   });
   cameraModeSetting.addEventListener("change", () => {
-    settings.cameraMode = cameraModeSetting.value;
+    if (controls.cameraModes.includes(cameraModeSetting.value)) {
+      settings.cameraMode = cameraModeSetting.value;
+    } else {
+      cameraModeSetting.value = settings.cameraMode;
+    }
     applySettings();
     saveSettings();
     requestRender();
