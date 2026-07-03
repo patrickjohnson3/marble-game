@@ -232,7 +232,7 @@ const mapRenderer = createMapRenderer({
 });
 
 function keepDisplayAwakeWhenVisible() {
-  if (document.visibilityState === "visible" && game.phase !== "waiting") {
+  if (documentRef.visibilityState === "visible" && game.phase !== "waiting") {
     requestWakeLock();
   }
 }
