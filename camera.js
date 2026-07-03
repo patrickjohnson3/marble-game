@@ -68,6 +68,16 @@ export function createCameraController({
     applyTransform();
   }
 
+  function applyMode() {
+    camera.gestureCooldown = 0;
+    if (!intro.released || camera.mode === "lockedCenter") {
+      centerOnMarble();
+      return;
+    }
+
+    updateFollow(1);
+  }
+
   function pointerPoint(e) {
     return { x: e.clientX, y: e.clientY };
   }
@@ -155,6 +165,7 @@ export function createCameraController({
   }
 
   return {
+    applyMode,
     applyTransform,
     camera,
     centerOnMarble,

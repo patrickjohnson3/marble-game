@@ -80,6 +80,20 @@ function testLockedCenterGestureKeepsMarbleCentered() {
   assert.equal(camera.gestureCooldown, 0);
 }
 
+function testApplyModeCentersLockedCameraImmediately() {
+  const { camera, controller } = createController("follow");
+  camera.x = -200;
+  camera.y = -150;
+  camera.gestureCooldown = 10;
+  camera.mode = "lockedCenter";
+
+  controller.applyMode();
+
+  assert.equal(camera.x, 50);
+  assert.equal(camera.y, 50);
+  assert.equal(camera.gestureCooldown, 0);
+}
+
 function testPredictiveLookAheadTargetsVelocityOffset() {
   const { camera, controller } = createController("predictiveLookAhead");
 
@@ -93,6 +107,7 @@ testFollowModePreservesSmoothFollow();
 testLockedCenterSnapsToMarble();
 testLockedCenterIgnoresGestureCooldown();
 testLockedCenterGestureKeepsMarbleCentered();
+testApplyModeCentersLockedCameraImmediately();
 testPredictiveLookAheadTargetsVelocityOffset();
 
 console.log("Camera tests passed.");
