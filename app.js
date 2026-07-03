@@ -12,24 +12,12 @@ import {
 import { applyDocumentCopy, copy } from "./copy.js";
 import { debugLines } from "./debug.js";
 import { createDomElements } from "./dom.js";
-import { createEffectsRenderer } from "./effects.js";
 import { createFrameLoop } from "./frame-loop.js";
 import { createGameLoop } from "./game-loop.js";
 import { createLifecycleController } from "./game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./geometry.js";
-import { createHapticsController } from "./haptics.js";
-import { createInputManager } from "./input-manager.js";
 import { createIntroSequence } from "./intro-sequence.js";
 import { createKeyboardController } from "./keyboard-controller.js";
-import {
-  introPenWalls,
-  mapEdgeWalls,
-  setReleasedBounds as setReleasedMapBounds,
-  updateIntroBounds as updateIntroMapBounds
-} from "./map.js";
-import { createMapRenderer } from "./map-renderer.js";
-import { createMarbleView } from "./marble-view.js";
-import { marbleOverRect } from "./physics.js";
 import {
   exitFullscreenMode,
   requestFullscreenMode,
@@ -37,9 +25,12 @@ import {
   requestWakeLock,
   screenAdjusted
 } from "./platform.js";
-import { renderMapElements, renderWalls } from "./rendering.js";
-import { createSensorController } from "./sensor-controller.js";
-import { createSensorWatchdog } from "./sensor-watchdog.js";
+import {
+  setupFeedback,
+  setupInput,
+  setupRenderers,
+  setupSensors
+} from "./app-setup.js";
 import { bindSettingsPanel } from "./settings-panel.js";
 import {
   createRuntimeSettings,
@@ -52,8 +43,6 @@ import {
   saveSettings as persistSettings
 } from "./settings-store.js";
 import { createGameState } from "./state.js";
-import { createTerrainView } from "./terrain-view.js";
-import { createTrailRenderer } from "./trail.js";
 import { createUi } from "./ui.js";
 import { createViewport } from "./viewport.js";
 
@@ -72,16 +61,7 @@ export function createApp({
 } = {}) {
 const els = createDomElements(documentRef);
 const {
-  game: gameEl,
   world: worldEl,
-  introWalls: introWallsEl,
-  mapWalls: mapWallsEl,
-  roughPatches: roughPatchesEl,
-  obstacles: obstaclesEl,
-  trail: trailEl,
-  trailSegments: trailSegmentsEl,
-  effects: effectsEl,
-  marble: marbleEl,
   messageOverlay,
   controls: controlsEl,
   startBtn,
@@ -169,7 +149,7 @@ function applyFullscreenSetting() {
   }
 }
 
-const hapticFeedback = createHapticsController(haptics, hapticTuning);
+const hapticFeedback = setupFeedback(haptics);
 const cameraController = createCameraController({
   camera,
   cameraEl: worldEl,
@@ -183,55 +163,21 @@ const cameraController = createCameraController({
   midpoint,
   viewport
 });
-const trailRenderer = createTrailRenderer({
-  trailEl,
-  trailSegmentsEl,
-  marble,
-  game,
-  settings,
-  config: visualConfig.trail,
-  clamp
-});
-const effectsRenderer = createEffectsRenderer({
-  effectsEl,
-  marble,
-  config: visualConfig.effects,
-  clamp
-});
-const marbleView = createMarbleView({
-  marbleEl,
-  marble,
-  world,
-  mapConfig,
-  visualConfig,
-  clamp
-});
-const terrainView = createTerrainView({
-  roughPatchesEl,
-  obstaclesEl,
-  roughPatches,
-  obstacles,
-  intro,
-  marble,
-  marbleOverRect,
-  renderMapElements
-});
-const mapRenderer = createMapRenderer({
-  worldEl,
-  introWallsEl,
-  mapWallsEl,
-  trailEl,
-  bounds,
-  intro,
-  marble,
+const {
+  effectsRenderer,
+  mapRenderer,
+  marbleView,
+  terrainView,
+  trailRenderer
+} = setupRenderers({
+  els,
+  state,
   world,
   viewport,
-  terrainView,
-  renderWalls,
-  introPenWalls,
-  mapEdgeWalls,
-  setReleasedMapBounds,
-  updateIntroMapBounds
+  settings,
+  clamp,
+  obstacles,
+  roughPatches
 });
 
 function keepDisplayAwakeWhenVisible() {
@@ -267,30 +213,13 @@ const introSequence = createIntroSequence({
   messageOverlay,
   onRelease: releaseMap
 });
-const sensorWatchdog = createSensorWatchdog({
-  delayMs: timing.sensorFallbackMs,
-  game,
-  sensor,
-  onFallback() {
-    ui.setHint(copy.hints.noMotionSensor);
-    sensor.using = "keyboard";
-    game.phase = "keyboard";
-    tilt.neutralX = 0;
-    tilt.neutralY = 0;
-    calibration.autoNeutralDone = true;
-    introSequence.schedule();
-    scheduleFrame();
-  }
-});
-const sensorController = createSensorController({
-  calibration,
-  game,
+const {
+  sensorController,
+  sensorWatchdog
+} = setupSensors({
+  state,
   introSequence,
-  marble,
   scheduleFrame,
-  sensor,
-  tilt,
-  tuning,
   ui,
   adjustScreen: (gamma, beta) => screenAdjusted(gamma, beta, {
     screenRef: windowRef.screen,
@@ -343,17 +272,12 @@ const keyboardController = createKeyboardController({
   closeSettings: gameController.closeSettings
 });
 frameLoop.setTick(gameController.tick);
-inputManager = createInputManager({
-  gameEl,
-  startBtn,
-  onOrientation: sensorController.onOrientation,
-  onMotion: sensorController.onMotion,
-  onKeyDown: keyboardController.onKeyDown,
-  onKeyUp: keyboardController.onKeyUp,
-  onPointerDown: cameraController.onPointerDown,
-  onPointerMove: cameraController.onPointerMove,
-  onPointerEnd: cameraController.onPointerEnd,
-  onStartClick: gameController.start
+inputManager = setupInput({
+  els,
+  sensorController,
+  keyboardController,
+  cameraController,
+  gameController
 });
 
 bindSettingsPanel({
