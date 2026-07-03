@@ -53,7 +53,7 @@ export function createCameraController({
     if (!intro.released) return;
 
     camera.gestureCooldown = Math.max(0, camera.gestureCooldown - dt);
-    if (camera.gestureCooldown > 0) return;
+    if (camera.gestureCooldown > 0 && camera.mode !== "lockedCenter") return;
 
     const target = followTarget();
     const transformed = transformedWorldPoint(target.x, target.y);
@@ -105,6 +105,12 @@ export function createCameraController({
       ? gesture.rotation + angle(a, b) - gesture.angle
       : 0;
     if (!intro.released) {
+      centerOnMarble();
+      return;
+    }
+
+    if (camera.mode === "lockedCenter") {
+      camera.gestureCooldown = 0;
       centerOnMarble();
       return;
     }

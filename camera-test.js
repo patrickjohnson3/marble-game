@@ -11,7 +11,10 @@ function createController(mode) {
     mode,
     followLag: 0.5,
     predictiveLookAheadFrames: 10,
-    gestureCooldown: 0
+    gestureCooldown: 0,
+    minScale: 0.35,
+    maxScale: 3,
+    rotationEnabled: false
   };
   const marble = { x: 100, y: 100, vx: 5, vy: -2 };
   const cameraEl = { style: {} };
@@ -53,6 +56,30 @@ function testLockedCenterSnapsToMarble() {
   assert.equal(camera.y, 50);
 }
 
+function testLockedCenterIgnoresGestureCooldown() {
+  const { camera, controller } = createController("lockedCenter");
+  camera.x = -300;
+  camera.y = -300;
+  camera.gestureCooldown = 10;
+
+  controller.updateFollow(1);
+
+  assert.equal(camera.x, 50);
+  assert.equal(camera.y, 50);
+}
+
+function testLockedCenterGestureKeepsMarbleCentered() {
+  const { camera, controller } = createController("lockedCenter");
+
+  controller.onPointerDown({ pointerId: 1, clientX: 0, clientY: 0 });
+  controller.onPointerDown({ pointerId: 2, clientX: 100, clientY: 0 });
+  controller.onPointerMove({ pointerId: 1, clientX: 20, clientY: 0 });
+
+  assert.equal(camera.x, 70);
+  assert.equal(camera.y, 70);
+  assert.equal(camera.gestureCooldown, 0);
+}
+
 function testPredictiveLookAheadTargetsVelocityOffset() {
   const { camera, controller } = createController("predictiveLookAhead");
 
@@ -64,6 +91,8 @@ function testPredictiveLookAheadTargetsVelocityOffset() {
 
 testFollowModePreservesSmoothFollow();
 testLockedCenterSnapsToMarble();
+testLockedCenterIgnoresGestureCooldown();
+testLockedCenterGestureKeepsMarbleCentered();
 testPredictiveLookAheadTargetsVelocityOffset();
 
 console.log("Camera tests passed.");
