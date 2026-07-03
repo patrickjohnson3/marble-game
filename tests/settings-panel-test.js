@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { bindSettingsPanel } from "./settings-panel.js";
+import { bindSettingsPanel } from "../settings/settings-panel.js";
 
 function fakeControl(initialValue = "") {
   const listeners = {};

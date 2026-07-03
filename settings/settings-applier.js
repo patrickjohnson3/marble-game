@@ -1,7 +1,7 @@
 import {
   exitFullscreenMode,
   requestFullscreenMode
-} from "./platform.js";
+} from "../platform/platform.js";
 
 export function createSettingsApplier({
   camera,

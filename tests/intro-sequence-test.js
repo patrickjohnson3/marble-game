@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createIntroSequence } from "./intro-sequence.js";
+import { createIntroSequence } from "../core/intro-sequence.js";
 
 function fakeClassList() {
   const classes = new Set();

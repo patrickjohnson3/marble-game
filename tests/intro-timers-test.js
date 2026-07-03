@@ -5,7 +5,7 @@ import {
   resumeIntroTimerAction,
   shouldPauseGame,
   trackIntroTimer
-} from "./intro-timers.js";
+} from "../core/intro-timers.js";
 
 function introState(overrides = {}) {
   return {

@@ -9,7 +9,7 @@ import {
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
   requestWakeLock
-} from "./platform.js";
+} from "../platform/platform.js";
 
 export function createLifecycleController({
   cameraController,

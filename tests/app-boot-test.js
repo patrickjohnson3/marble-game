@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createFakeDocument } from "./test-dom.js";
-import { createApp } from "./app.js";
+import { createApp } from "../app.js";
 
 const originalGlobals = {
   addEventListener: globalThis.addEventListener,

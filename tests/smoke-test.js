@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "fs";
 import { spawnSync } from "child_process";
-import { mapConfig } from "./config.js";
-import { requiredDomIds } from "./dom-ids.js";
-import { runtimeModuleScripts, runtimeScripts } from "./runtime-assets.js";
+import { mapConfig } from "../core/config.js";
+import { requiredDomIds } from "../core/dom-ids.js";
+import { runtimeModuleScripts, runtimeScripts } from "../runtime-assets.js";
 
 const html = readFileSync("index.html", "utf8");
 const css = readFileSync("style.css", "utf8");

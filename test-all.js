@@ -1,19 +1,19 @@
 import { spawnSync } from "node:child_process";
 
 const tests = [
-  "smoke-test.js",
-  "app-boot-test.js",
-  "camera-test.js",
-  "physics-test.js",
-  "platform-test.js",
-  "intro-sequence-test.js",
-  "intro-timers-test.js",
-  "config-test.js",
-  "input-manager-test.js",
-  "settings-panel-test.js",
-  "settings-store-test.js",
-  "effects-test.js",
-  "lifecycle-test.js",
+  "tests/smoke-test.js",
+  "tests/app-boot-test.js",
+  "tests/camera-test.js",
+  "tests/physics-test.js",
+  "tests/platform-test.js",
+  "tests/intro-sequence-test.js",
+  "tests/intro-timers-test.js",
+  "tests/config-test.js",
+  "tests/input-manager-test.js",
+  "tests/settings-panel-test.js",
+  "tests/settings-store-test.js",
+  "tests/effects-test.js",
+  "tests/lifecycle-test.js",
   "check-cache-version.js"
 ];
 

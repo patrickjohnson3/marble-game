@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import {
   createRuntimeSettings,
   persistedSettingsFromRuntime
-} from "./settings-runtime.js";
-import { availableStorage, loadSettings, saveSettings } from "./settings-store.js";
+} from "../settings/settings-runtime.js";
+import { availableStorage, loadSettings, saveSettings } from "../settings/settings-store.js";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));

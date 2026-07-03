@@ -1,5 +1,5 @@
-import { appConfig } from "./app-config.js";
-import { physicsConfig } from "./physics-config.js";
+import { appConfig } from "../core/app-config.js";
+import { physicsConfig } from "../core/physics-config.js";
 
 export const settingsConfig = {
   maxSpeed: physicsConfig.maxSpeed,

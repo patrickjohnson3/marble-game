@@ -1,4 +1,4 @@
-import { createTimeoutRegistry } from "./timer-utils.js";
+import { createTimeoutRegistry } from "../core/timer-utils.js";
 
 function particleStyle({ x, y, dx, dy, size, lifeMs, opacity }) {
   return [

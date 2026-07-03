@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createInputManager } from "./input-manager.js";
+import { createInputManager } from "../input/input-manager.js";
 
 function createTarget() {
   const listeners = [];

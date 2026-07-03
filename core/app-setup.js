@@ -6,23 +6,23 @@ import {
   visualConfig
 } from "./config.js";
 import { copy } from "./copy.js";
-import { createEffectsRenderer } from "./effects.js";
+import { createEffectsRenderer } from "../rendering/effects.js";
 import { createHapticsController } from "./haptics.js";
-import { createInputManager } from "./input-manager.js";
+import { createInputManager } from "../input/input-manager.js";
 import {
   introPenWalls,
   mapEdgeWalls,
   setReleasedBounds as setReleasedMapBounds,
   updateIntroBounds as updateIntroMapBounds
 } from "./map.js";
-import { createMapRenderer } from "./map-renderer.js";
-import { createMarbleView } from "./marble-view.js";
+import { createMapRenderer } from "../rendering/map-renderer.js";
+import { createMarbleView } from "../rendering/marble-view.js";
 import { marbleOverRect } from "./physics.js";
-import { renderMapElements, renderWalls } from "./rendering.js";
-import { createSensorController } from "./sensor-controller.js";
-import { createSensorWatchdog } from "./sensor-watchdog.js";
-import { createTerrainView } from "./terrain-view.js";
-import { createTrailRenderer } from "./trail.js";
+import { renderMapElements, renderWalls } from "../rendering/rendering.js";
+import { createSensorController } from "../input/sensor-controller.js";
+import { createSensorWatchdog } from "../input/sensor-watchdog.js";
+import { createTerrainView } from "../rendering/terrain-view.js";
+import { createTrailRenderer } from "../rendering/trail.js";
 
 export function setupRenderers({
   els,

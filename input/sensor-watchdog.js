@@ -1,4 +1,4 @@
-import { createPausableTimeout } from "./timer-utils.js";
+import { createPausableTimeout } from "../core/timer-utils.js";
 
 export function createSensorWatchdog({ delayMs, game, sensor, onFallback }) {
   const timer = createPausableTimeout({

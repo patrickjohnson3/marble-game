@@ -8,7 +8,7 @@ import {
   timing,
   tuning,
   visualConfig
-} from "./config.js";
+} from "../core/config.js";
 
 function assertPositiveNumber(value, label) {
   assert.equal(Number.isFinite(value), true, label + " must be finite");

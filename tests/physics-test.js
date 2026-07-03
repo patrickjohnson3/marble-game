@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { circleRectContact } from "./geometry.js";
-import { marbleOverRect, resolveObstacleCollision, updatePhysics, updatePhysicsInput } from "./physics.js";
+import { circleRectContact } from "../core/geometry.js";
+import { marbleOverRect, resolveObstacleCollision, updatePhysics, updatePhysicsInput } from "../core/physics.js";
 
 function testCircleRectContact() {
   const circle = { x: 15, y: 15, r: 10 };

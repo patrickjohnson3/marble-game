@@ -1,4 +1,4 @@
-import { createCameraController } from "./camera.js";
+import { createCameraController } from "./core/camera.js";
 import {
   mapConfig,
   timing,
@@ -8,44 +8,44 @@ import {
   physicsConfig,
   settingsConfig,
   settingsControls
-} from "./config.js";
-import { applyDocumentCopy, copy } from "./copy.js";
-import { debugLines } from "./debug.js";
-import { createDomElements } from "./dom.js";
-import { createFrameLoop } from "./frame-loop.js";
-import { createGameLoop } from "./game-loop.js";
-import { createLifecycleController } from "./game-lifecycle.js";
-import { clamp, distance, angle, midpoint } from "./geometry.js";
-import { createIntroSequence } from "./intro-sequence.js";
-import { createKeyboardController } from "./keyboard-controller.js";
+} from "./core/config.js";
+import { applyDocumentCopy, copy } from "./core/copy.js";
+import { debugLines } from "./core/debug.js";
+import { createDomElements } from "./core/dom.js";
+import { createFrameLoop } from "./core/frame-loop.js";
+import { createGameLoop } from "./core/game-loop.js";
+import { createLifecycleController } from "./core/game-lifecycle.js";
+import { clamp, distance, angle, midpoint } from "./core/geometry.js";
+import { createIntroSequence } from "./core/intro-sequence.js";
+import { createKeyboardController } from "./input/keyboard-controller.js";
 import {
   exitFullscreenMode,
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
   requestWakeLock,
   screenAdjusted
-} from "./platform.js";
+} from "./platform/platform.js";
 import {
   setupFeedback,
   setupInput,
   setupRenderers,
   setupSensors
-} from "./app-setup.js";
-import { bindSettingsPanel } from "./settings-panel.js";
-import { createSettingsApplier } from "./settings-applier.js";
+} from "./core/app-setup.js";
+import { bindSettingsPanel } from "./settings/settings-panel.js";
+import { createSettingsApplier } from "./settings/settings-applier.js";
 import {
   createRuntimeSettings,
   persistedSettingsFromRuntime
-} from "./settings-runtime.js";
+} from "./settings/settings-runtime.js";
 import {
   applyRangeConfig,
   availableStorage,
   loadSettings,
   saveSettings as persistSettings
-} from "./settings-store.js";
-import { createGameState } from "./state.js";
-import { createUi } from "./ui.js";
-import { createViewport } from "./viewport.js";
+} from "./settings/settings-store.js";
+import { createGameState } from "./core/state.js";
+import { createUi } from "./rendering/ui.js";
+import { createViewport } from "./platform/viewport.js";
 
 function showBootError(documentRef, error) {
   const hintEl = documentRef.getElementById("hint");

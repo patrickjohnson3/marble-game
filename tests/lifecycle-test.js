@@ -4,11 +4,11 @@ import {
   mapConfig,
   physicsConfig,
   timing
-} from "./config.js";
-import { createGameController } from "./game-controller.js";
-import { createLifecycleController } from "./game-lifecycle.js";
-import { resetIntroTimerState } from "./intro-timers.js";
-import { createGameState } from "./state.js";
+} from "../core/config.js";
+import { createGameController } from "../core/game-controller.js";
+import { createLifecycleController } from "../core/game-lifecycle.js";
+import { resetIntroTimerState } from "../core/intro-timers.js";
+import { createGameState } from "../core/state.js";
 
 function createLifecycleHarness() {
   const state = createGameState({

@@ -60,7 +60,7 @@ async function testEffectsThrottleAndParticleCap() {
   };
 
   try {
-    const { createEffectsRenderer } = await import("./effects.js?test=" + Date.now());
+    const { createEffectsRenderer } = await import("../rendering/effects.js?test=" + Date.now());
     const effectsEl = new FakeElement();
     const effects = createEffectsRenderer({
       effectsEl,

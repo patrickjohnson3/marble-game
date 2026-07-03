@@ -1,5 +1,5 @@
-import { copy } from "./copy.js";
-import { screenAdjusted } from "./platform.js";
+import { copy } from "../core/copy.js";
+import { screenAdjusted } from "../platform/platform.js";
 
 export function createSensorController({
   calibration,
