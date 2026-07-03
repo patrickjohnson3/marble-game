@@ -34,6 +34,18 @@ try {
   assert.equal(globalThis.__marbleAppBooted, true);
   assert.equal(document.getElementById("settingsTitle").textContent, "Settings");
   assert.equal(document.getElementById("resumeGame").textContent, "resume");
+  assert.equal(
+    document.getElementById("cameraModeSetting").querySelector('option[value="follow"]').textContent,
+    "follow"
+  );
+  assert.equal(
+    document.getElementById("cameraModeSetting").querySelector('option[value="lockedCenter"]').textContent,
+    "locked center"
+  );
+  assert.equal(
+    document.getElementById("cameraModeSetting").querySelector('option[value="predictiveLookAhead"]').textContent,
+    "look-ahead"
+  );
 } finally {
   for (const [key, value] of Object.entries(originalGlobals)) {
     if (value === undefined) {
