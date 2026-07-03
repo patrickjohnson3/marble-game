@@ -169,9 +169,6 @@ async function testStartRequestsFullscreenFromClickPath() {
     tick() {}
   });
 
-  lifecycle.requestStartFullscreen();
-  assert.equal(fullscreenRequests, 0);
-
   await lifecycle.gameController.start();
   assert.equal(fullscreenRequests, 1);
   assert.equal(motionEnabled, true);

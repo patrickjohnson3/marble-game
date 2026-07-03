@@ -27,7 +27,6 @@ const inputManager = createInputManager({
   onPointerDown() {},
   onPointerMove() {},
   onPointerEnd() {},
-  onStartPointerDown() {},
   onStartClick() {}
 });
 
@@ -59,7 +58,6 @@ assert.deepEqual(gameEl.listeners.map((listener) => listener.type), [
 inputManager.bindStartButton();
 inputManager.bindStartButton();
 assert.deepEqual(startBtn.listeners.map((listener) => listener.type), [
-  "pointerdown",
   "click"
 ]);
 

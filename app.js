@@ -342,7 +342,6 @@ inputManager = createInputManager({
   onPointerDown: cameraController.onPointerDown,
   onPointerMove: cameraController.onPointerMove,
   onPointerEnd: cameraController.onPointerEnd,
-  onStartPointerDown: lifecycle.requestStartFullscreen,
   onStartClick: gameController.start
 });
 

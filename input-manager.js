@@ -9,7 +9,6 @@ export function createInputManager({
   onPointerDown,
   onPointerMove,
   onPointerEnd,
-  onStartPointerDown,
   onStartClick
 }) {
   let motionEnabled = false;
@@ -47,7 +46,6 @@ export function createInputManager({
     if (startButtonBound) return;
 
     startButtonBound = true;
-    startBtn.addEventListener("pointerdown", onStartPointerDown);
     startBtn.addEventListener("click", onStartClick);
   }
 

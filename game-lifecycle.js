@@ -150,11 +150,6 @@ export function createLifecycleController({
     sensorWatchdog.schedule();
   }
 
-  function requestStartFullscreen() {
-    // Fullscreen is requested from the click handler. Some mobile browsers
-    // reject pointerdown fullscreen and would otherwise skip the click retry.
-  }
-
   function openSettings() {
     if (ui.isSettingsOpen()) return;
 
@@ -183,7 +178,6 @@ export function createLifecycleController({
   return {
     gameController,
     getLastFrame: () => lastFrame,
-    requestStartFullscreen,
     setLastFrame: (value) => {
       lastFrame = value;
     }
