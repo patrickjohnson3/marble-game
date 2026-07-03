@@ -418,5 +418,3 @@ return {
   state
 };
 }
-
-createApp();

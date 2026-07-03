@@ -10,9 +10,10 @@
   #settingsOverlay,#messageOverlay{display:none}
 </style>
 <script>
-  const assetVersion = "20260703.133434";
+  const assetVersion = "20260703.134702";
   const runtimeModuleScripts = [
     "app-config.js",
+    "boot.js",
     "camera.js",
     "config.js",
     "copy.js",
@@ -161,7 +162,7 @@
 <script>
   const appScript = document.createElement("script");
   appScript.type = "module";
-  appScript.src = "app.js?v=" + assetVersion;
+  appScript.src = "boot.js?v=" + assetVersion;
   appScript.addEventListener("error", function(event) {
     window.__showMarbleBootError(event);
   });

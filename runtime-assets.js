@@ -1,6 +1,7 @@
 export const runtimeScripts = [
   "app.js",
   "app-config.js",
+  "boot.js",
   "camera.js",
   "config.js",
   "copy.js",

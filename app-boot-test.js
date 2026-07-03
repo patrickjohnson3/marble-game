@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createFakeDocument } from "./test-dom.js";
+import { createApp } from "./app.js";
 
 const originalGlobals = {
   addEventListener: globalThis.addEventListener,
@@ -30,7 +31,11 @@ globalThis.screen = { orientation: { angle: 0 } };
 globalThis.window = globalThis;
 
 try {
-  await import("./app.js?boot=" + Date.now());
+  createApp({
+    document,
+    window: globalThis,
+    storage: globalThis.localStorage
+  });
   assert.equal(globalThis.__marbleAppBooted, true);
   assert.equal(document.getElementById("settingsTitle").textContent, "Settings");
   assert.equal(document.getElementById("resumeGame").textContent, "resume");
