@@ -25,6 +25,7 @@ export const runtimeScripts = [
   "map-config.js",
   "map-renderer.js",
   "marble-view.js",
+  "physics-collisions.js",
   "physics.js",
   "physics-config.js",
   "platform.js",
