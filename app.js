@@ -33,7 +33,9 @@ import { marbleOverRect } from "./physics.js";
 import {
   exitFullscreenMode,
   requestFullscreenMode,
-  requestWakeLock
+  requestMotionPermissionIfNeeded,
+  requestWakeLock,
+  screenAdjusted
 } from "./platform.js";
 import { renderMapElements, renderWalls } from "./rendering.js";
 import { createSensorController } from "./sensor-controller.js";
@@ -161,9 +163,9 @@ function applySettings() {
 
 function applyFullscreenSetting() {
   if (settings.fullscreenEnabled) {
-    requestFullscreenMode({ fullscreenOnStart: true });
+    requestFullscreenMode({ fullscreenOnStart: true, documentRef });
   } else {
-    exitFullscreenMode();
+    exitFullscreenMode({ documentRef });
   }
 }
 
@@ -234,7 +236,7 @@ const mapRenderer = createMapRenderer({
 
 function keepDisplayAwakeWhenVisible() {
   if (documentRef.visibilityState === "visible" && game.phase !== "waiting") {
-    requestWakeLock();
+    requestWakeLock({ documentRef, navigatorRef: windowRef.navigator });
   }
 }
 
@@ -289,7 +291,11 @@ const sensorController = createSensorController({
   sensor,
   tilt,
   tuning,
-  ui
+  ui,
+  adjustScreen: (gamma, beta) => screenAdjusted(gamma, beta, {
+    screenRef: windowRef.screen,
+    windowRef
+  })
 });
 
 let gameLoop;
@@ -319,6 +325,10 @@ const lifecycle = createLifecycleController({
   ui,
   world,
   enableMotion: () => inputManager.enableMotion(),
+  requestFullscreen: (options) => requestFullscreenMode({ ...options, documentRef }),
+  exitFullscreen: () => exitFullscreenMode({ documentRef }),
+  requestMotionPermission: () => requestMotionPermissionIfNeeded({ windowRef }),
+  keepDisplayAwake: () => requestWakeLock({ documentRef, navigatorRef: windowRef.navigator }),
   tick: () => gameLoop.tick()
 });
 const { gameController } = lifecycle;

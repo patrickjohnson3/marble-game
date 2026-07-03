@@ -10,7 +10,8 @@ export function createSensorController({
   sensor,
   tilt,
   tuning,
-  ui
+  ui,
+  adjustScreen = screenAdjusted
 }) {
   function maybeAutoNeutral() {
     if (game.paused) return;
@@ -36,7 +37,7 @@ export function createSensorController({
     if (e.beta == null || e.gamma == null) return;
     sensor.gotOrientation = true;
     sensor.using = "deviceorientation";
-    const [tx, ty] = screenAdjusted(e.gamma, e.beta);
+    const [tx, ty] = adjustScreen(e.gamma, e.beta);
     tilt.rawX = tx;
     tilt.rawY = ty;
     maybeAutoNeutral();
