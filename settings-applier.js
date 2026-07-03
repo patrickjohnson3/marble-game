@@ -1,0 +1,39 @@
+import {
+  exitFullscreenMode,
+  requestFullscreenMode
+} from "./platform.js";
+
+export function createSettingsApplier({
+  camera,
+  cameraController,
+  documentRef,
+  haptics,
+  physics,
+  settings,
+  trailRenderer,
+  requestFullscreen = requestFullscreenMode,
+  exitFullscreen = exitFullscreenMode
+}) {
+  function applySettings() {
+    physics.maxSpeed = settings.maxSpeed;
+    physics.accel = settings.acceleration;
+    camera.mode = settings.cameraMode;
+    camera.rotationEnabled = settings.rotationEnabled;
+    cameraController.applyMode();
+    haptics.enabled = settings.hapticsEnabled;
+    trailRenderer.setEnabled(settings.trailEnabled);
+  }
+
+  function applyFullscreenSetting() {
+    if (settings.fullscreenEnabled) {
+      requestFullscreen({ fullscreenOnStart: true, documentRef });
+    } else {
+      exitFullscreen({ documentRef });
+    }
+  }
+
+  return {
+    applyFullscreenSetting,
+    applySettings
+  };
+}

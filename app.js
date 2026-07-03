@@ -32,6 +32,7 @@ import {
   setupSensors
 } from "./app-setup.js";
 import { bindSettingsPanel } from "./settings-panel.js";
+import { createSettingsApplier } from "./settings-applier.js";
 import {
   createRuntimeSettings,
   persistedSettingsFromRuntime
@@ -131,24 +132,6 @@ function requestRender() {
   frameLoop.requestRender();
 }
 
-function applySettings() {
-  physics.maxSpeed = settings.maxSpeed;
-  physics.accel = settings.acceleration;
-  camera.mode = settings.cameraMode;
-  camera.rotationEnabled = settings.rotationEnabled;
-  cameraController.applyMode();
-  haptics.enabled = settings.hapticsEnabled;
-  trailRenderer.setEnabled(settings.trailEnabled);
-}
-
-function applyFullscreenSetting() {
-  if (settings.fullscreenEnabled) {
-    requestFullscreenMode({ fullscreenOnStart: true, documentRef });
-  } else {
-    exitFullscreenMode({ documentRef });
-  }
-}
-
 const hapticFeedback = setupFeedback(haptics);
 const cameraController = createCameraController({
   camera,
@@ -178,6 +161,18 @@ const {
   clamp,
   obstacles,
   roughPatches
+});
+const {
+  applyFullscreenSetting,
+  applySettings
+} = createSettingsApplier({
+  camera,
+  cameraController,
+  documentRef,
+  haptics,
+  physics,
+  settings,
+  trailRenderer
 });
 
 function keepDisplayAwakeWhenVisible() {
