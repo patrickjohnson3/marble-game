@@ -304,6 +304,7 @@ const lifecycle = createLifecycleController({
   keyboard,
   mapRenderer,
   marble,
+  resetMap: () => setCurrentMap(mapConfig),
   resetCalibration: sensorController.resetCalibration,
   scheduleFrame,
   sensor,

@@ -112,6 +112,7 @@ async function testStartRequestsFullscreenFromClickPath() {
   });
   let fullscreenRequests = 0;
   let motionEnabled = false;
+  let mapResets = 0;
 
   const lifecycle = createLifecycleController({
     cameraController: {
@@ -136,6 +137,9 @@ async function testStartRequestsFullscreenFromClickPath() {
     keyboard: state.keyboard,
     mapRenderer: { resetIntroPen() {} },
     marble: state.marble,
+    resetMap() {
+      mapResets++;
+    },
     resetCalibration() {},
     scheduleFrame() {},
     sensor: state.sensor,
@@ -172,6 +176,7 @@ async function testStartRequestsFullscreenFromClickPath() {
   await lifecycle.gameController.start();
   assert.equal(fullscreenRequests, 1);
   assert.equal(motionEnabled, true);
+  assert.equal(mapResets, 1);
   assert.equal(state.game.phase, "calibrating");
 }
 

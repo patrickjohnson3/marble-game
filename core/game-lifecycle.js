@@ -24,6 +24,7 @@ export function createLifecycleController({
   keyboard,
   mapRenderer,
   marble,
+  resetMap = () => {},
   resetCalibration,
   scheduleFrame,
   sensor,
@@ -72,6 +73,7 @@ export function createLifecycleController({
     sensorWatchdog.reset();
     introSequence.clearTimers();
     resetCalibration();
+    resetMap();
 
     game.phase = "waiting";
     game.paused = false;
