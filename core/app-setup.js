@@ -44,6 +44,7 @@ export function setupRenderers({
     mapWalls: mapWallsEl,
     roughPatches: roughPatchesEl,
     obstacles: obstaclesEl,
+    goal: goalEl,
     trail: trailEl,
     trailSegments: trailSegmentsEl,
     effects: effectsEl,
@@ -76,6 +77,8 @@ export function setupRenderers({
   const terrainView = createTerrainView({
     roughPatchesEl,
     obstaclesEl,
+    goalEl,
+    goal: mapConfig.goal,
     roughPatches,
     obstacles,
     intro,

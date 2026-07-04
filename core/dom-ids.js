@@ -5,6 +5,7 @@ export const domIds = {
   mapWalls: "mapWalls",
   roughPatches: "roughPatches",
   obstacles: "obstacles",
+  goal: "goal",
   trail: "trail",
   trailSegments: "trailSegments",
   effects: "effects",
