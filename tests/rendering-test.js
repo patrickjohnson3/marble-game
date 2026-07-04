@@ -43,6 +43,7 @@ function testObstacleVisualsTrimTouchingJoinOverhangs() {
   ]);
 
   assert.equal(vertical.h, 40);
+  assert.equal(vertical.w, 20);
 }
 
 testObstacleVisualsTrimTouchingJoinOverhangs();

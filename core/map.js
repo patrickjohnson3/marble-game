@@ -30,18 +30,26 @@ export function normalizedObstacleRects(rects) {
       const threshold = Math.max(horizontal.h, vertical.w);
 
       if (verticalBottomGap <= threshold && verticalBottomGap <= verticalTopGap) {
-        vertical.h = horizontalBottom - vertical.y;
+        const height = horizontalBottom - vertical.y;
+        if (height > 0) vertical.h = height;
       } else if (verticalTopGap <= threshold) {
         const bottom = verticalBottom;
-        vertical.y = horizontal.y;
-        vertical.h = bottom - vertical.y;
+        const height = bottom - horizontal.y;
+        if (height > 0) {
+          vertical.y = horizontal.y;
+          vertical.h = height;
+        }
       }
       if (horizontalRightGap <= threshold && horizontalRightGap <= horizontalLeftGap) {
-        vertical.w = horizontalRight - vertical.x;
+        const width = horizontalRight - vertical.x;
+        if (width > 0) vertical.w = width;
       } else if (horizontalLeftGap <= threshold) {
         const right = verticalRight;
-        vertical.x = horizontal.x;
-        vertical.w = right - vertical.x;
+        const width = right - horizontal.x;
+        if (width > 0) {
+          vertical.x = horizontal.x;
+          vertical.w = width;
+        }
       }
     }
   }
