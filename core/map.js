@@ -194,42 +194,47 @@ export function normalizedObstacleRects(rects) {
 }
 
 export function validateMapConfig(config, {
-  normalizedObstacles = normalizedObstacleRects(config.elements.filter((element) => element.type === "obstacle")),
-  spawn = {
-    x: config.world.width / 2,
-    y: config.world.height / 2,
-    r: config.marbleRadius ?? 29
-  }
+  normalizedObstacles,
+  spawn
 } = {}) {
   const errors = [];
   const allowedTypes = new Set(["obstacle", "roughPatch"]);
-  const gridSize = config.grid?.size;
+  const world = config?.world ?? {};
+  const elements = Array.isArray(config?.elements) ? config.elements : [];
+  const gridSize = config?.grid?.size;
 
-  if (!Number.isFinite(config.world.width) || config.world.width <= 0) {
+  if (!config || typeof config !== "object") {
+    errors.push("map config is required");
+  }
+  if (!Array.isArray(config?.elements)) {
+    errors.push("elements must be an array");
+  }
+
+  if (!Number.isFinite(world.width) || world.width <= 0) {
     errors.push("world width must be positive");
   }
-  if (!Number.isFinite(config.world.height) || config.world.height <= 0) {
+  if (!Number.isFinite(world.height) || world.height <= 0) {
     errors.push("world height must be positive");
   }
   if (gridSize !== undefined) {
     if (!Number.isFinite(gridSize) || gridSize <= 0) {
       errors.push("grid size must be positive");
     } else {
-      if (!isMultipleOf(config.world.width, gridSize)) {
+      if (!isMultipleOf(world.width, gridSize)) {
         errors.push("world width must align to grid");
       }
-      if (!isMultipleOf(config.world.height, gridSize)) {
+      if (!isMultipleOf(world.height, gridSize)) {
         errors.push("world height must align to grid");
       }
     }
   }
 
-  config.elements.forEach((element, index) => {
+  elements.forEach((element, index) => {
     if (!allowedTypes.has(element.type)) {
       errors.push("element " + index + " has unknown type " + element.type);
     }
     validateRect(element, {
-      world: config.world,
+      world,
       label: "element " + index,
       errors
     });
@@ -243,22 +248,30 @@ export function validateMapConfig(config, {
     }
   });
 
-  normalizedObstacles.forEach((obstacle, index) => {
+  const checkedObstacles = normalizedObstacles ??
+    normalizedObstacleRects(elements.filter((element) => element.type === "obstacle"));
+  const checkedSpawn = spawn ?? {
+    x: world.width / 2,
+    y: world.height / 2,
+    r: config?.marbleRadius ?? 29
+  };
+
+  checkedObstacles.forEach((obstacle, index) => {
     validateRect(obstacle, {
-      world: config.world,
+      world,
       label: "normalized obstacle " + index,
       errors
     });
   });
 
-  validateGoal(config.goal, {
-    world: config.world,
-    obstacles: normalizedObstacles,
+  validateGoal(config?.goal, {
+    world,
+    obstacles: checkedObstacles,
     errors
   });
-  validateSpawn(spawn, {
-    world: config.world,
-    obstacles: normalizedObstacles,
+  validateSpawn(checkedSpawn, {
+    world,
+    obstacles: checkedObstacles,
     errors
   });
 

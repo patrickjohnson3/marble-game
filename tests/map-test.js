@@ -78,6 +78,22 @@ function testMapValidationRejectsBlockedSpawn() {
 
 testMapValidationRejectsBlockedSpawn();
 
+function testMapValidationReportsMalformedConfig() {
+  assert.deepEqual(
+    validateMapConfig({}),
+    [
+      "elements must be an array",
+      "world width must be positive",
+      "world height must be positive",
+      "goal is required",
+      "spawn has non-finite x",
+      "spawn has non-finite y"
+    ]
+  );
+}
+
+testMapValidationReportsMalformedConfig();
+
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizedObstacleRects([
     { x: 0, y: 20, w: 100, h: 20 },
