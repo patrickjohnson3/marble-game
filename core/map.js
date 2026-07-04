@@ -1,5 +1,54 @@
 import { clamp } from "./geometry.js";
 
+function touchesOrOverlaps(aStart, aEnd, bStart, bEnd) {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
+function isHorizontal(rect) {
+  return rect.w >= rect.h;
+}
+
+export function normalizedObstacleRects(rects) {
+  const normalized = rects.map((rect) => ({ ...rect }));
+
+  for (const horizontal of normalized.filter(isHorizontal)) {
+    for (const vertical of normalized.filter((rect) => !isHorizontal(rect))) {
+      const horizontalBottom = horizontal.y + horizontal.h;
+      const verticalBottom = vertical.y + vertical.h;
+      const horizontalRight = horizontal.x + horizontal.w;
+      const verticalRight = vertical.x + vertical.w;
+
+      if (!touchesOrOverlaps(horizontal.x, horizontalRight, vertical.x, verticalRight) ||
+          !touchesOrOverlaps(horizontal.y, horizontalBottom, vertical.y, verticalBottom)) {
+        continue;
+      }
+
+      const verticalBottomGap = Math.abs(verticalBottom - horizontalBottom);
+      const verticalTopGap = Math.abs(vertical.y - horizontal.y);
+      const horizontalRightGap = Math.abs(verticalRight - horizontalRight);
+      const horizontalLeftGap = Math.abs(vertical.x - horizontal.x);
+      const threshold = Math.max(horizontal.h, vertical.w);
+
+      if (verticalBottomGap <= threshold && verticalBottomGap <= verticalTopGap) {
+        vertical.h = horizontalBottom - vertical.y;
+      } else if (verticalTopGap <= threshold) {
+        const bottom = verticalBottom;
+        vertical.y = horizontal.y;
+        vertical.h = bottom - vertical.y;
+      }
+      if (horizontalRightGap <= threshold && horizontalRightGap <= horizontalLeftGap) {
+        vertical.w = horizontalRight - vertical.x;
+      } else if (horizontalLeftGap <= threshold) {
+        const right = verticalRight;
+        vertical.x = horizontal.x;
+        vertical.w = right - vertical.x;
+      }
+    }
+  }
+
+  return normalized;
+}
+
 export function mapEdgeWalls(world, intro) {
   const t = intro.wallThickness;
   return [

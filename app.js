@@ -17,6 +17,7 @@ import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
+import { normalizedObstacleRects } from "./core/map.js";
 import { createKeyboardController } from "./input/keyboard-controller.js";
 import {
   exitFullscreenMode,
@@ -83,7 +84,7 @@ const {
 
 const world = mapConfig.world;
 const mapElements = mapConfig.elements;
-const obstacles = mapElements.filter((element) => element.type === "obstacle");
+const obstacles = normalizedObstacleRects(mapElements.filter((element) => element.type === "obstacle"));
 const roughPatches = mapElements.filter((element) => element.type === "roughPatch");
 
 const state = createGameState({ world, mapConfig, timing, hapticTuning, physicsConfig });

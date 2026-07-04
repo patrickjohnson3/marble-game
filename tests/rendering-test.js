@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import {
-  normalizedObstacleRects,
   renderObstacleWalls,
   wallFrameGeometry
 } from "../rendering/rendering.js";
+import { normalizedObstacleRects } from "../core/map.js";
 import { FakeElement } from "./test-dom.js";
 
 function testWallFrameGeometryKeepsPositiveInterior() {
