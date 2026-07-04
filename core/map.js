@@ -98,6 +98,31 @@ function validateGoal(goal, { world, obstacles, errors }) {
   }
 }
 
+function validateSpawn(spawn, { world, obstacles, errors }) {
+  if (!spawn) {
+    errors.push("spawn is required");
+    return;
+  }
+
+  for (const key of ["x", "y", "r"]) {
+    if (!Number.isFinite(spawn[key])) {
+      errors.push("spawn has non-finite " + key);
+    }
+  }
+  if (spawn.r <= 0) {
+    errors.push("spawn radius must be positive");
+  }
+  if (spawn.x - spawn.r < 0 ||
+      spawn.y - spawn.r < 0 ||
+      spawn.x + spawn.r > world.width ||
+      spawn.y + spawn.r > world.height) {
+    errors.push("spawn must fit inside world bounds");
+  }
+  if (obstacles.some((obstacle) => circleRectContact(spawn, obstacle).intersects)) {
+    errors.push("spawn must not overlap obstacles");
+  }
+}
+
 function validateRect(rect, { world, label, errors }) {
   for (const key of ["x", "y", "w", "h"]) {
     if (!Number.isFinite(rect[key])) {
@@ -166,7 +191,12 @@ export function normalizedObstacleRects(rects) {
 }
 
 export function validateMapConfig(config, {
-  normalizedObstacles = normalizedObstacleRects(config.elements.filter((element) => element.type === "obstacle"))
+  normalizedObstacles = normalizedObstacleRects(config.elements.filter((element) => element.type === "obstacle")),
+  spawn = {
+    x: config.world.width / 2,
+    y: config.world.height / 2,
+    r: config.marbleRadius ?? 29
+  }
 } = {}) {
   const errors = [];
   const allowedTypes = new Set(["obstacle", "roughPatch"]);
@@ -219,6 +249,11 @@ export function validateMapConfig(config, {
   });
 
   validateGoal(config.goal, {
+    world: config.world,
+    obstacles: normalizedObstacles,
+    errors
+  });
+  validateSpawn(spawn, {
     world: config.world,
     obstacles: normalizedObstacles,
     errors

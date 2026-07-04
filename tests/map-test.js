@@ -6,7 +6,8 @@ import {
   resolveSeededMapConfig,
   selectSeededMapVariant,
   snapRectToGrid,
-  snapToGrid
+  snapToGrid,
+  validateMapConfig
 } from "../core/map.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
 import { FakeElement } from "./test-dom.js";
@@ -59,6 +60,22 @@ function testResolveSeededMapConfigCopiesSelectedElements() {
 }
 
 testResolveSeededMapConfigCopiesSelectedElements();
+
+function testMapValidationRejectsBlockedSpawn() {
+  const config = {
+    world: { width: 100, height: 100 },
+    elements: [
+      { type: "obstacle", x: 45, y: 45, w: 10, h: 10 }
+    ],
+    goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
+  };
+
+  assert.ok(
+    validateMapConfig(config, { spawn: { x: 50, y: 50, r: 8 } }).includes("spawn must not overlap obstacles")
+  );
+}
+
+testMapValidationRejectsBlockedSpawn();
 
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizedObstacleRects([
