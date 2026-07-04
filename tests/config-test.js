@@ -9,6 +9,7 @@ import {
   tuning,
   visualConfig
 } from "../core/config.js";
+import { normalizedObstacleRects } from "../core/map.js";
 
 function assertPositiveNumber(value, label) {
   assert.equal(Number.isFinite(value), true, label + " must be finite");
@@ -44,6 +45,27 @@ function testMapIncludesConnectedObstacleGroups() {
   );
 
   assert.equal(connectedPairs.length >= 3, true, "map should include connected wall groups");
+}
+
+function testNormalizedMapObstaclesStayValid() {
+  const obstacles = normalizedObstacleRects(mapConfig.elements.filter((element) => element.type === "obstacle"));
+
+  for (const [index, obstacle] of obstacles.entries()) {
+    assertPositiveNumber(obstacle.w, "normalized obstacle " + index + " width");
+    assertPositiveNumber(obstacle.h, "normalized obstacle " + index + " height");
+    assert.equal(obstacle.x >= 0, true, "normalized obstacle " + index + " x");
+    assert.equal(obstacle.y >= 0, true, "normalized obstacle " + index + " y");
+    assert.equal(
+      obstacle.x + obstacle.w <= mapConfig.world.width,
+      true,
+      "normalized obstacle " + index + " right edge"
+    );
+    assert.equal(
+      obstacle.y + obstacle.h <= mapConfig.world.height,
+      true,
+      "normalized obstacle " + index + " bottom edge"
+    );
+  }
 }
 
 function testTimingAndTuning() {
@@ -101,6 +123,7 @@ function testHapticAndVisualRanges() {
 
 testWorldAndMapElements();
 testMapIncludesConnectedObstacleGroups();
+testNormalizedMapObstaclesStayValid();
 testTimingAndTuning();
 testPhysicsAndSettingsRanges();
 testHapticAndVisualRanges();
