@@ -36,6 +36,7 @@ export function setupRenderers({
   settings,
   clamp,
   obstacles,
+  goal,
   roughPatches
 }) {
   const {
@@ -78,7 +79,7 @@ export function setupRenderers({
     roughPatchesEl,
     obstaclesEl,
     goalEl,
-    goal: mapConfig.goal,
+    goal,
     roughPatches,
     obstacles,
     intro,

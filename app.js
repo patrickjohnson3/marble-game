@@ -1,5 +1,6 @@
 import { createCameraController } from "./core/camera.js";
 import {
+  baseMapConfig,
   mapConfig,
   timing,
   tuning,
@@ -17,7 +18,7 @@ import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
-import { normalizedObstacleRects } from "./core/map.js";
+import { normalizedObstacleRects, resolveMapVariantConfig } from "./core/map.js";
 import { createKeyboardController } from "./input/keyboard-controller.js";
 import {
   exitFullscreenMode,
@@ -83,9 +84,13 @@ const {
 } = els;
 
 const world = mapConfig.world;
-const mapElements = mapConfig.elements;
-const obstacles = normalizedObstacleRects(mapElements.filter((element) => element.type === "obstacle"));
-const roughPatches = mapElements.filter((element) => element.type === "roughPatch");
+let currentMap = mapConfig;
+let mapElements = currentMap.elements;
+let obstacles = normalizedObstacleRects(mapElements.filter((element) => element.type === "obstacle"));
+let roughPatches = mapElements.filter((element) => element.type === "roughPatch");
+let goal = currentMap.goal;
+let goalHoldMs = 0;
+let goalCompleted = false;
 
 const state = createGameState({ world, mapConfig, timing, hapticTuning, physicsConfig });
 const {
@@ -161,6 +166,7 @@ const {
   settings,
   clamp,
   obstacles,
+  goal,
   roughPatches
 });
 const {
@@ -200,6 +206,66 @@ function releaseMap() {
   mapRenderer.openMap();
   introSequence.hideMessage();
   ui.setHint(copy.hints.mapOpen);
+}
+
+function setCurrentMap(nextMap) {
+  currentMap = nextMap;
+  mapElements = currentMap.elements;
+  obstacles = normalizedObstacleRects(mapElements.filter((element) => element.type === "obstacle"));
+  roughPatches = mapElements.filter((element) => element.type === "roughPatch");
+  goal = currentMap.goal;
+  goalHoldMs = 0;
+  goalCompleted = false;
+  terrainView.setTerrain({ goal, obstacles, roughPatches });
+}
+
+function nextMapVariant() {
+  const variants = baseMapConfig.variants;
+  const currentIndex = Math.max(0, variants.findIndex((variant) => variant.id === currentMap.variantId));
+  return variants[(currentIndex + 1) % variants.length];
+}
+
+function advanceToNextMap() {
+  const variant = nextMapVariant();
+  const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id, variant.id);
+  setCurrentMap(nextMap);
+  marble.x = world.width / 2;
+  marble.y = world.height / 2;
+  marble.vx = 0;
+  marble.vy = 0;
+  marble.roll = 0;
+  trailRenderer.clear();
+  effectsRenderer.clear();
+  cameraController.centerOnMarble();
+  ui.setHint("goal reached. next map: " + currentMap.variantId + ".");
+  requestRender();
+}
+
+function marbleInsideGoal() {
+  return intro.released && distance(marble, goal) + marble.r <= goal.r;
+}
+
+function updateGoalHold(dt) {
+  if (goalCompleted) return;
+
+  if (!marbleInsideGoal()) {
+    if (goalHoldMs > 0) {
+      goalHoldMs = 0;
+      terrainView.updateGoalProgress(0);
+      ui.setHint(copy.hints.mapOpen);
+    }
+    return;
+  }
+
+  goalHoldMs = Math.min(goal.holdMs, goalHoldMs + dt * timing.targetFrameMs);
+  const progress = goalHoldMs / goal.holdMs;
+  terrainView.updateGoalProgress(progress);
+  ui.setHint("hold goal " + Math.ceil((goal.holdMs - goalHoldMs) / 1000) + "s");
+
+  if (goalHoldMs >= goal.holdMs) {
+    goalCompleted = true;
+    advanceToNextMap();
+  }
 }
 
 const introSequence = createIntroSequence({
@@ -315,6 +381,9 @@ gameLoop = createGameLoop({
   frameLoop,
   game,
   hapticFeedback,
+  goalController: {
+    update: updateGoalHold
+  },
   lifecycle,
   marble,
   marbleView,

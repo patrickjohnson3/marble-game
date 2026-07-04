@@ -65,10 +65,13 @@ html,body{
 #goal{
   position:absolute;box-sizing:border-box;border-radius:50%;opacity:0;
   border:3px solid #88f7c5cc;
-  background:radial-gradient(circle,#88f7c522 0 42%,#88f7c50f 43% 66%,transparent 67%);
+  background:
+    conic-gradient(#8fffd0dd var(--goal-progress,0%),transparent 0),
+    radial-gradient(circle,#88f7c522 0 42%,#88f7c50f 43% 66%,transparent 67%);
   box-shadow:inset 0 0 0 2px #ffffff26,0 0 20px #53d59a55;
   pointer-events:none;
 }
+#goal.active{box-shadow:inset 0 0 0 2px #ffffff3d,0 0 28px #53d59a77}
 #world.map-open #goal{opacity:1}
 #trail{
   position:absolute;left:0;top:0;width:100%;height:100%;

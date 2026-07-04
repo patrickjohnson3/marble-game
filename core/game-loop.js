@@ -8,6 +8,7 @@ export function createGameLoop({
   game,
   hapticFeedback,
   lifecycle,
+  goalController,
   marble,
   marbleView,
   physicsContext,
@@ -53,6 +54,7 @@ export function createGameLoop({
       });
       marble.roll += Math.hypot(marble.vx, marble.vy) * dt / Math.max(marble.r, 1);
       marble.impactSquash = Math.max(0, marble.impactSquash - visualConfig.marble.impactSquashDecay * dt);
+      goalController?.update(dt, currentTime);
       cameraController.updateFollow(dt);
     }
 
