@@ -86,17 +86,36 @@ function mergedRectPaths(rects) {
 }
 
 function wallFramePath(walls) {
+  const frame = wallFrameGeometry(walls);
+
+  return rectPath(frame.left, frame.top, frame.right - frame.left, frame.bottom - frame.top) +
+    rectPath(frame.innerLeft, frame.innerTop, frame.innerRight - frame.innerLeft, frame.innerBottom - frame.innerTop);
+}
+
+export function wallFrameGeometry(walls) {
   const left = Math.min(...walls.map((wall) => wall.x));
   const top = Math.min(...walls.map((wall) => wall.y));
   const right = Math.max(...walls.map((wall) => wall.x + wall.w));
   const bottom = Math.max(...walls.map((wall) => wall.y + wall.h));
-  const innerLeft = Math.max(...walls.filter((wall) => wall.w < wall.h).map((wall) => wall.x + wall.w));
-  const innerRight = Math.min(...walls.filter((wall) => wall.w < wall.h).map((wall) => wall.x));
-  const innerTop = Math.max(...walls.filter((wall) => wall.w > wall.h).map((wall) => wall.y + wall.h));
-  const innerBottom = Math.min(...walls.filter((wall) => wall.w > wall.h).map((wall) => wall.y));
+  const verticalWalls = walls.filter((wall) => wall.w < wall.h);
+  const horizontalWalls = walls.filter((wall) => wall.w > wall.h);
+  const innerLeft = Math.min(...verticalWalls.map((wall) => wall.x + wall.w));
+  const innerRight = Math.max(...verticalWalls.map((wall) => wall.x));
+  const innerTop = Math.min(...horizontalWalls.map((wall) => wall.y + wall.h));
+  const innerBottom = Math.max(...horizontalWalls.map((wall) => wall.y));
+  const thickness = Math.max(innerLeft - left, innerTop - top, right - innerRight, bottom - innerBottom);
 
-  return rectPath(left, top, right - left, bottom - top) +
-    rectPath(innerLeft, innerTop, innerRight - innerLeft, innerBottom - innerTop);
+  return {
+    bottom,
+    innerBottom,
+    innerLeft,
+    innerRight,
+    innerTop,
+    left,
+    right,
+    thickness,
+    top
+  };
 }
 
 function createWallSvg(className, walls) {
@@ -122,8 +141,8 @@ export function renderWalls(container, walls) {
 
   const svg = createWallSvg("wallSvg", walls);
   const fill = addLinearGradient(svg, [
-    ["0%", "#f8fbff"],
-    ["42%", "#dce5f0"],
+    ["0%", "#f2f6fd"],
+    ["48%", "#d8e2f0"],
     ["100%", "#a9b7cc"]
   ]);
   const frame = svgEl("path");

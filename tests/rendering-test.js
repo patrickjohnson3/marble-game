@@ -1,6 +1,24 @@
 import assert from "node:assert/strict";
-import { renderObstacleWalls } from "../rendering/rendering.js";
+import { renderObstacleWalls, wallFrameGeometry } from "../rendering/rendering.js";
 import { FakeElement } from "./test-dom.js";
+
+function testWallFrameGeometryKeepsPositiveInterior() {
+  const frame = wallFrameGeometry([
+    { x: -34, y: -34, w: 2268, h: 34 },
+    { x: -34, y: 2200, w: 2268, h: 34 },
+    { x: -34, y: 0, w: 34, h: 2200 },
+    { x: 2200, y: 0, w: 34, h: 2200 }
+  ]);
+
+  assert.equal(frame.innerLeft, 0);
+  assert.equal(frame.innerRight, 2200);
+  assert.equal(frame.innerTop, 0);
+  assert.equal(frame.innerBottom, 2200);
+  assert.equal(frame.innerRight > frame.innerLeft, true);
+  assert.equal(frame.innerBottom > frame.innerTop, true);
+}
+
+testWallFrameGeometryKeepsPositiveInterior();
 
 const originalDocument = globalThis.document;
 

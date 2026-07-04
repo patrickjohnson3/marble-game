@@ -28,11 +28,17 @@ html,body{
 .wallSvg,.obstacleSvg{
   position:absolute;overflow:visible;pointer-events:none;
 }
-.wallFrame,.obstacleWallFill{
+.obstacleWallFill{
   filter:drop-shadow(0 14px 18px #0009);
 }
 .wallFrame{
-  stroke:#ffffff5c;stroke-width:2px;stroke-linejoin:miter;
+  filter:
+    drop-shadow(0 8px 12px #0007)
+    drop-shadow(0 0 2px #ffffff55);
+  stroke-linejoin:miter;stroke-linecap:square;
+}
+.wallFrame{
+  stroke:#ffffffaa;stroke-width:3px;
 }
 .obstacleSvg{
   opacity:0;transition:opacity .45s ease;
