@@ -18,7 +18,11 @@ import {
 import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
 import { marbleOverRect } from "./physics.js";
-import { renderMapElements, renderWalls } from "../rendering/rendering.js";
+import {
+  renderMapElements,
+  renderObstacleWalls,
+  renderWalls
+} from "../rendering/rendering.js";
 import { createSensorController } from "../input/sensor-controller.js";
 import { createSensorWatchdog } from "../input/sensor-watchdog.js";
 import { createTerrainView } from "../rendering/terrain-view.js";
@@ -77,6 +81,7 @@ export function setupRenderers({
     intro,
     marble,
     marbleOverRect,
+    renderObstacleWalls,
     renderMapElements
   });
   const mapRenderer = createMapRenderer({

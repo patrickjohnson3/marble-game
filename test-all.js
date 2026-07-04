@@ -12,6 +12,7 @@ const tests = [
   "tests/input-manager-test.js",
   "tests/settings-panel-test.js",
   "tests/settings-store-test.js",
+  "tests/rendering-test.js",
   "tests/effects-test.js",
   "tests/lifecycle-test.js",
   "check-cache-version.js"

@@ -59,6 +59,11 @@ export class FakeElement {
     return child;
   }
 
+  append(...children) {
+    this.children.push(...children);
+    this.childNodes = this.children;
+  }
+
   replaceChildren(...children) {
     this.children = children;
     this.childNodes = this.children;
@@ -115,6 +120,9 @@ export function createFakeDocument() {
     visibilityState: "visible",
     addEventListener() {},
     createElement() {
+      return new FakeElement();
+    },
+    createElementNS() {
       return new FakeElement();
     },
     getElementById(id) {

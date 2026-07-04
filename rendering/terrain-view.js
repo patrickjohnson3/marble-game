@@ -6,10 +6,11 @@ export function createTerrainView({
   intro,
   marble,
   marbleOverRect,
+  renderObstacleWalls,
   renderMapElements
 }) {
   function renderObstacles() {
-    renderMapElements(obstaclesEl, "obstacle", obstacles);
+    renderObstacleWalls(obstaclesEl, obstacles);
   }
 
   function renderRoughPatches() {
