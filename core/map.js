@@ -8,6 +8,24 @@ function isHorizontal(rect) {
   return rect.w >= rect.h;
 }
 
+function isMultipleOf(value, size) {
+  return Math.abs(value / size - Math.round(value / size)) < 0.000001;
+}
+
+export function snapToGrid(value, gridSize) {
+  return Math.round(value / gridSize) * gridSize;
+}
+
+export function snapRectToGrid(rect, gridSize) {
+  return {
+    ...rect,
+    x: snapToGrid(rect.x, gridSize),
+    y: snapToGrid(rect.y, gridSize),
+    w: snapToGrid(rect.w, gridSize),
+    h: snapToGrid(rect.h, gridSize)
+  };
+}
+
 function validateRect(rect, { world, label, errors }) {
   for (const key of ["x", "y", "w", "h"]) {
     if (!Number.isFinite(rect[key])) {
@@ -80,12 +98,25 @@ export function validateMapConfig(config, {
 } = {}) {
   const errors = [];
   const allowedTypes = new Set(["obstacle", "roughPatch"]);
+  const gridSize = config.grid?.size;
 
   if (!Number.isFinite(config.world.width) || config.world.width <= 0) {
     errors.push("world width must be positive");
   }
   if (!Number.isFinite(config.world.height) || config.world.height <= 0) {
     errors.push("world height must be positive");
+  }
+  if (gridSize !== undefined) {
+    if (!Number.isFinite(gridSize) || gridSize <= 0) {
+      errors.push("grid size must be positive");
+    } else {
+      if (!isMultipleOf(config.world.width, gridSize)) {
+        errors.push("world width must align to grid");
+      }
+      if (!isMultipleOf(config.world.height, gridSize)) {
+        errors.push("world height must align to grid");
+      }
+    }
   }
 
   config.elements.forEach((element, index) => {
@@ -97,6 +128,14 @@ export function validateMapConfig(config, {
       label: "element " + index,
       errors
     });
+    if (Number.isFinite(gridSize) && gridSize > 0) {
+      if (!isMultipleOf(element.x, gridSize)) {
+        errors.push("element " + index + " x must align to grid");
+      }
+      if (!isMultipleOf(element.y, gridSize)) {
+        errors.push("element " + index + " y must align to grid");
+      }
+    }
   });
 
   normalizedObstacles.forEach((obstacle, index) => {

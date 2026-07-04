@@ -19,6 +19,7 @@ function assertPositiveNumber(value, label) {
 function testWorldAndMapElements() {
   assertPositiveNumber(mapConfig.world.width, "world width");
   assertPositiveNumber(mapConfig.world.height, "world height");
+  assertPositiveNumber(mapConfig.grid.size, "grid size");
   assertPositiveNumber(mapConfig.intro.wallThickness, "intro wall thickness");
   assertPositiveNumber(mapConfig.intro.viewportMargin, "intro viewport margin");
 

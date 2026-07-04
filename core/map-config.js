@@ -3,6 +3,9 @@ export const mapConfig = {
     width: 2200,
     height: 2200
   },
+  grid: {
+    size: 10
+  },
   intro: {
     wallThickness: 34,
     viewportMargin: 18

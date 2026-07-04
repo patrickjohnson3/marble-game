@@ -1,12 +1,23 @@
 import assert from "node:assert/strict";
 import { mapConfig } from "../core/config.js";
-import { normalizedObstacleRects } from "../core/map.js";
+import { normalizedObstacleRects, snapRectToGrid, snapToGrid } from "../core/map.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
 import { FakeElement } from "./test-dom.js";
 
 function currentMapObstacles() {
   return normalizedObstacleRects(mapConfig.elements.filter((element) => element.type === "obstacle"));
 }
+
+function testGridSnapping() {
+  assert.equal(snapToGrid(264, 10), 260);
+  assert.equal(snapToGrid(266, 10), 270);
+  assert.deepEqual(
+    snapRectToGrid({ type: "obstacle", x: 264, y: 336, w: 53, h: 47 }, 10),
+    { type: "obstacle", x: 260, y: 340, w: 50, h: 50 }
+  );
+}
+
+testGridSnapping();
 
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizedObstacleRects([
