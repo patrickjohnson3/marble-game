@@ -39,6 +39,7 @@ function testSeededMapVariantSelection() {
     selectSeededMapVariant(variants, seed),
     selectSeededMapVariant(variants, seed)
   );
+  assert.equal(selectSeededMapVariant(variants, "b").id, "b");
 }
 
 testSeededMapVariantSelection();

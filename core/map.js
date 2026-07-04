@@ -41,6 +41,9 @@ export function hashMapSeed(seed) {
 export function selectSeededMapVariant(variants, seed) {
   if (!Array.isArray(variants) || variants.length === 0) return null;
 
+  const exactVariant = variants.find((variant) => variant.id === seed);
+  if (exactVariant) return exactVariant;
+
   return variants[hashMapSeed(seed) % variants.length];
 }
 
