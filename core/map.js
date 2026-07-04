@@ -1,4 +1,4 @@
-import { clamp } from "./geometry.js";
+import { circleRectContact, clamp } from "./geometry.js";
 
 function touchesOrOverlaps(aStart, aEnd, bStart, bEnd) {
   return aStart <= bEnd && bStart <= aEnd;
@@ -44,17 +44,58 @@ export function selectSeededMapVariant(variants, seed) {
   return variants[hashMapSeed(seed) % variants.length];
 }
 
-export function resolveSeededMapConfig(config, seed = config.seed) {
-  const variant = selectSeededMapVariant(config.variants, seed);
-
+function resolvedMapConfig(config, { seed, variant }) {
   if (!variant) return { ...config, seed };
 
   return {
     ...config,
     seed,
     variantId: variant.id,
+    goal: { ...variant.goal },
     elements: variant.elements.map((element) => ({ ...element }))
   };
+}
+
+export function resolveSeededMapConfig(config, seed = config.seed) {
+  return resolvedMapConfig(config, {
+    seed,
+    variant: selectSeededMapVariant(config.variants, seed)
+  });
+}
+
+export function resolveMapVariantConfig(config, variantId, seed = config.seed) {
+  return resolvedMapConfig(config, {
+    seed,
+    variant: config.variants?.find((variant) => variant.id === variantId)
+  });
+}
+
+function validateGoal(goal, { world, obstacles, errors }) {
+  if (!goal) {
+    errors.push("goal is required");
+    return;
+  }
+
+  for (const key of ["x", "y", "r", "holdMs"]) {
+    if (!Number.isFinite(goal[key])) {
+      errors.push("goal has non-finite " + key);
+    }
+  }
+  if (goal.r <= 0) {
+    errors.push("goal radius must be positive");
+  }
+  if (goal.holdMs <= 0) {
+    errors.push("goal hold time must be positive");
+  }
+  if (goal.x - goal.r < 0 ||
+      goal.y - goal.r < 0 ||
+      goal.x + goal.r > world.width ||
+      goal.y + goal.r > world.height) {
+    errors.push("goal must fit inside world bounds");
+  }
+  if (obstacles.some((obstacle) => circleRectContact({ x: goal.x, y: goal.y, r: goal.r }, obstacle).intersects)) {
+    errors.push("goal must not overlap obstacles");
+  }
 }
 
 function validateRect(rect, { world, label, errors }) {
@@ -175,6 +216,12 @@ export function validateMapConfig(config, {
       label: "normalized obstacle " + index,
       errors
     });
+  });
+
+  validateGoal(config.goal, {
+    world: config.world,
+    obstacles: normalizedObstacles,
+    errors
   });
 
   return errors;

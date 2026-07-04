@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  baseMapConfig,
   hapticTuning,
   mapConfig,
   physicsConfig,
@@ -9,7 +10,7 @@ import {
   tuning,
   visualConfig
 } from "../core/config.js";
-import { normalizedObstacleRects, validateMapConfig } from "../core/map.js";
+import { normalizedObstacleRects, resolveMapVariantConfig, validateMapConfig } from "../core/map.js";
 
 function assertPositiveNumber(value, label) {
   assert.equal(Number.isFinite(value), true, label + " must be finite");
@@ -24,6 +25,8 @@ function testWorldAndMapElements() {
   assertPositiveNumber(mapConfig.intro.viewportMargin, "intro viewport margin");
   assert.equal(mapConfig.seed, "default", "map seed");
   assert.equal(mapConfig.variantId, "default", "map variant");
+  assertPositiveNumber(mapConfig.goal.r, "goal radius");
+  assertPositiveNumber(mapConfig.goal.holdMs, "goal hold time");
 
   for (const [index, element] of mapConfig.elements.entries()) {
     assert.ok(["obstacle", "roughPatch"].includes(element.type), "element " + index + " type");
@@ -38,6 +41,13 @@ function testWorldAndMapElements() {
 
 function testMapConfigValidationPasses() {
   assert.deepEqual(validateMapConfig(mapConfig), []);
+  for (const variant of baseMapConfig.variants) {
+    assert.deepEqual(
+      validateMapConfig(resolveMapVariantConfig(baseMapConfig, variant.id)),
+      [],
+      "variant " + variant.id + " should validate"
+    );
+  }
 }
 
 function testMapIncludesConnectedObstacleGroups() {

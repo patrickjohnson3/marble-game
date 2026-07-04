@@ -17,12 +17,35 @@ const defaultElements = [
   { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 }
 ];
 
+const generatedOneElements = [
+  { type: "obstacle", x: 360, y: 420, w: 560, h: 50 },
+  { type: "obstacle", x: 870, y: 420, w: 50, h: 360 },
+  { type: "obstacle", x: 1260, y: 300, w: 50, h: 470 },
+  { type: "obstacle", x: 1260, y: 720, w: 520, h: 50 },
+  { type: "obstacle", x: 300, y: 1080, w: 680, h: 50 },
+  { type: "obstacle", x: 300, y: 1080, w: 50, h: 420 },
+  { type: "obstacle", x: 1160, y: 1180, w: 660, h: 50 },
+  { type: "obstacle", x: 1770, y: 1180, w: 50, h: 500 },
+  { type: "obstacle", x: 620, y: 1680, w: 600, h: 50 },
+  { type: "obstacle", x: 1170, y: 1460, w: 50, h: 270 },
+  { type: "roughPatch", x: 460, y: 660, w: 310, h: 240 },
+  { type: "roughPatch", x: 1450, y: 440, w: 280, h: 210 },
+  { type: "roughPatch", x: 720, y: 1320, w: 350, h: 230 },
+  { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 }
+];
+
 export const baseMapConfig = {
   seed: "default",
   variants: [
     {
       id: "default",
+      goal: { x: 1920, y: 1900, r: 95, holdMs: 5000 },
       elements: defaultElements
+    },
+    {
+      id: "generated-1",
+      goal: { x: 1840, y: 1850, r: 95, holdMs: 5000 },
+      elements: generatedOneElements
     }
   ],
   world: {
