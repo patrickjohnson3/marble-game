@@ -44,7 +44,7 @@ html,body{
   opacity:0;transition:opacity .45s ease;
 }
 .obstacleWallOutline{
-  fill:none;stroke:#ffffff52;stroke-width:2px;stroke-linejoin:miter;
+  fill:none;stroke:#ffffff44;stroke-width:1px;stroke-linejoin:miter;
 }
 .wallFrame,.obstacleWallFill,.obstacleWallOutline{
   shape-rendering:geometricPrecision;

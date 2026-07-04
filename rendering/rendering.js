@@ -50,6 +50,59 @@ function coveredByAny(rects, left, top, right, bottom) {
   );
 }
 
+function overlaps(aStart, aEnd, bStart, bEnd) {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+function touchesOrOverlaps(aStart, aEnd, bStart, bEnd) {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
+function isHorizontal(rect) {
+  return rect.w >= rect.h;
+}
+
+export function normalizedObstacleRects(rects) {
+  const normalized = rects.map((rect) => ({ ...rect }));
+
+  for (const horizontal of normalized.filter(isHorizontal)) {
+    for (const vertical of normalized.filter((rect) => !isHorizontal(rect))) {
+      const horizontalBottom = horizontal.y + horizontal.h;
+      const verticalBottom = vertical.y + vertical.h;
+      const horizontalRight = horizontal.x + horizontal.w;
+      const verticalRight = vertical.x + vertical.w;
+
+      if (!touchesOrOverlaps(horizontal.x, horizontalRight, vertical.x, verticalRight) ||
+          !touchesOrOverlaps(horizontal.y, horizontalBottom, vertical.y, verticalBottom)) {
+        continue;
+      }
+
+      const verticalBottomGap = Math.abs(verticalBottom - horizontalBottom);
+      const verticalTopGap = Math.abs(vertical.y - horizontal.y);
+      const horizontalRightGap = Math.abs(verticalRight - horizontalRight);
+      const horizontalLeftGap = Math.abs(vertical.x - horizontal.x);
+      const threshold = Math.max(horizontal.h, vertical.w);
+
+      if (verticalBottomGap <= threshold && verticalBottomGap <= verticalTopGap) {
+        vertical.h = horizontalBottom - vertical.y;
+      } else if (verticalTopGap <= threshold) {
+        const bottom = verticalBottom;
+        vertical.y = horizontal.y;
+        vertical.h = bottom - vertical.y;
+      }
+      if (horizontalRightGap <= threshold && horizontalRightGap <= horizontalLeftGap) {
+        vertical.w = horizontalRight - vertical.x;
+      } else if (horizontalLeftGap <= threshold) {
+        const right = verticalRight;
+        vertical.x = horizontal.x;
+        vertical.w = right - vertical.x;
+      }
+    }
+  }
+
+  return normalized;
+}
+
 function mergedRectPaths(rects) {
   const xs = [...new Set(rects.flatMap((rect) => [rect.x, rect.x + rect.w]))].sort((a, b) => a - b);
   const ys = [...new Set(rects.flatMap((rect) => [rect.y, rect.y + rect.h]))].sort((a, b) => a - b);
@@ -160,13 +213,14 @@ export function renderObstacleWalls(container, obstacles) {
     return;
   }
 
-  const svg = createWallSvg("obstacleSvg", obstacles);
+  const visualObstacles = normalizedObstacleRects(obstacles);
+  const svg = createWallSvg("obstacleSvg", visualObstacles);
   const fill = addLinearGradient(svg, [
     ["0%", "#ffd166"],
     ["46%", "#ff9f66"],
     ["100%", "#ef476f"]
   ]);
-  const paths = mergedRectPaths(obstacles);
+  const paths = mergedRectPaths(visualObstacles);
   const fillPath = svgEl("path");
   fillPath.classList.add("obstacleWallFill");
   fillPath.setAttribute("d", paths.fill);

@@ -32,6 +32,20 @@ function testWorldAndMapElements() {
   }
 }
 
+function testMapIncludesConnectedObstacleGroups() {
+  const obstacles = mapConfig.elements.filter((element) => element.type === "obstacle");
+  const connectedPairs = obstacles.filter((a, index) =>
+    obstacles.slice(index + 1).some((b) =>
+      a.x <= b.x + b.w &&
+      b.x <= a.x + a.w &&
+      a.y <= b.y + b.h &&
+      b.y <= a.y + a.h
+    )
+  );
+
+  assert.equal(connectedPairs.length >= 3, true, "map should include connected wall groups");
+}
+
 function testTimingAndTuning() {
   [
     "introPromptDelayMs",
@@ -86,6 +100,7 @@ function testHapticAndVisualRanges() {
 }
 
 testWorldAndMapElements();
+testMapIncludesConnectedObstacleGroups();
 testTimingAndTuning();
 testPhysicsAndSettingsRanges();
 testHapticAndVisualRanges();
