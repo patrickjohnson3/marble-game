@@ -48,7 +48,6 @@ export function createGameLoop({
           hapticFeedback.pulseImpact(impact);
         },
         onSurface: (speed) => {
-          effectsRenderer.spawnSurface(speed, currentTime);
           hapticFeedback.pulseSurface(speed);
         }
       });
