@@ -26,6 +26,37 @@ export function snapRectToGrid(rect, gridSize) {
   };
 }
 
+export function hashMapSeed(seed) {
+  const text = String(seed ?? "");
+  let hash = 2166136261;
+
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
+export function selectSeededMapVariant(variants, seed) {
+  if (!Array.isArray(variants) || variants.length === 0) return null;
+
+  return variants[hashMapSeed(seed) % variants.length];
+}
+
+export function resolveSeededMapConfig(config, seed = config.seed) {
+  const variant = selectSeededMapVariant(config.variants, seed);
+
+  if (!variant) return { ...config, seed };
+
+  return {
+    ...config,
+    seed,
+    variantId: variant.id,
+    elements: variant.elements.map((element) => ({ ...element }))
+  };
+}
+
 function validateRect(rect, { world, label, errors }) {
   for (const key of ["x", "y", "w", "h"]) {
     if (!Number.isFinite(rect[key])) {

@@ -22,6 +22,8 @@ function testWorldAndMapElements() {
   assertPositiveNumber(mapConfig.grid.size, "grid size");
   assertPositiveNumber(mapConfig.intro.wallThickness, "intro wall thickness");
   assertPositiveNumber(mapConfig.intro.viewportMargin, "intro viewport margin");
+  assert.equal(mapConfig.seed, "default", "map seed");
+  assert.equal(mapConfig.variantId, "default", "map variant");
 
   for (const [index, element] of mapConfig.elements.entries()) {
     assert.ok(["obstacle", "roughPatch"].includes(element.type), "element " + index + " type");

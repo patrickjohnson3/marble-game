@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { mapConfig } from "../core/config.js";
-import { normalizedObstacleRects, snapRectToGrid, snapToGrid } from "../core/map.js";
+import {
+  hashMapSeed,
+  normalizedObstacleRects,
+  resolveSeededMapConfig,
+  selectSeededMapVariant,
+  snapRectToGrid,
+  snapToGrid
+} from "../core/map.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
 import { FakeElement } from "./test-dom.js";
 
@@ -18,6 +25,40 @@ function testGridSnapping() {
 }
 
 testGridSnapping();
+
+function testSeededMapVariantSelection() {
+  const variants = [
+    { id: "a", elements: [{ type: "obstacle", x: 0, y: 0, w: 10, h: 10 }] },
+    { id: "b", elements: [{ type: "roughPatch", x: 10, y: 10, w: 20, h: 20 }] }
+  ];
+  const seed = "same-seed";
+
+  assert.equal(hashMapSeed(seed), hashMapSeed(seed));
+  assert.equal(
+    selectSeededMapVariant(variants, seed),
+    selectSeededMapVariant(variants, seed)
+  );
+}
+
+testSeededMapVariantSelection();
+
+function testResolveSeededMapConfigCopiesSelectedElements() {
+  const config = {
+    seed: "seed-a",
+    variants: [
+      { id: "only", elements: [{ type: "obstacle", x: 0, y: 0, w: 10, h: 10 }] }
+    ],
+    world: { width: 100, height: 100 }
+  };
+  const resolved = resolveSeededMapConfig(config);
+
+  assert.equal(resolved.seed, "seed-a");
+  assert.equal(resolved.variantId, "only");
+  assert.deepEqual(resolved.elements, config.variants[0].elements);
+  assert.notEqual(resolved.elements, config.variants[0].elements);
+}
+
+testResolveSeededMapConfigCopiesSelectedElements();
 
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizedObstacleRects([
