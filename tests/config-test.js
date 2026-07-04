@@ -9,7 +9,7 @@ import {
   tuning,
   visualConfig
 } from "../core/config.js";
-import { normalizedObstacleRects } from "../core/map.js";
+import { normalizedObstacleRects, validateMapConfig } from "../core/map.js";
 
 function assertPositiveNumber(value, label) {
   assert.equal(Number.isFinite(value), true, label + " must be finite");
@@ -31,6 +31,10 @@ function testWorldAndMapElements() {
     assert.equal(element.x + element.w <= mapConfig.world.width, true, "element " + index + " right edge");
     assert.equal(element.y + element.h <= mapConfig.world.height, true, "element " + index + " bottom edge");
   }
+}
+
+function testMapConfigValidationPasses() {
+  assert.deepEqual(validateMapConfig(mapConfig), []);
 }
 
 function testMapIncludesConnectedObstacleGroups() {
@@ -122,6 +126,7 @@ function testHapticAndVisualRanges() {
 }
 
 testWorldAndMapElements();
+testMapConfigValidationPasses();
 testMapIncludesConnectedObstacleGroups();
 testNormalizedMapObstaclesStayValid();
 testTimingAndTuning();

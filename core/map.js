@@ -8,6 +8,24 @@ function isHorizontal(rect) {
   return rect.w >= rect.h;
 }
 
+function validateRect(rect, { world, label, errors }) {
+  for (const key of ["x", "y", "w", "h"]) {
+    if (!Number.isFinite(rect[key])) {
+      errors.push(label + " has non-finite " + key);
+    }
+  }
+
+  if (rect.w <= 0 || rect.h <= 0) {
+    errors.push(label + " must have positive dimensions");
+  }
+  if (rect.x < 0 || rect.y < 0) {
+    errors.push(label + " must start inside world bounds");
+  }
+  if (rect.x + rect.w > world.width || rect.y + rect.h > world.height) {
+    errors.push(label + " must fit inside world bounds");
+  }
+}
+
 export function normalizedObstacleRects(rects) {
   const normalized = rects.map((rect) => ({ ...rect }));
 
@@ -55,6 +73,41 @@ export function normalizedObstacleRects(rects) {
   }
 
   return normalized;
+}
+
+export function validateMapConfig(config, {
+  normalizedObstacles = normalizedObstacleRects(config.elements.filter((element) => element.type === "obstacle"))
+} = {}) {
+  const errors = [];
+  const allowedTypes = new Set(["obstacle", "roughPatch"]);
+
+  if (!Number.isFinite(config.world.width) || config.world.width <= 0) {
+    errors.push("world width must be positive");
+  }
+  if (!Number.isFinite(config.world.height) || config.world.height <= 0) {
+    errors.push("world height must be positive");
+  }
+
+  config.elements.forEach((element, index) => {
+    if (!allowedTypes.has(element.type)) {
+      errors.push("element " + index + " has unknown type " + element.type);
+    }
+    validateRect(element, {
+      world: config.world,
+      label: "element " + index,
+      errors
+    });
+  });
+
+  normalizedObstacles.forEach((obstacle, index) => {
+    validateRect(obstacle, {
+      world: config.world,
+      label: "normalized obstacle " + index,
+      errors
+    });
+  });
+
+  return errors;
 }
 
 export function mapEdgeWalls(world, intro) {
