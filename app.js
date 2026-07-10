@@ -18,7 +18,12 @@ import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
-import { normalizedObstacleRects, resolveMapVariantConfig, selectNextMapVariant } from "./core/map.js";
+import {
+  normalizedObstacleRects,
+  resolveMapVariantConfig,
+  selectNextMapVariant,
+  validateMapConfig
+} from "./core/map.js";
 import { createKeyboardController } from "./input/keyboard-controller.js";
 import {
   exitFullscreenMode,
@@ -233,6 +238,15 @@ function advanceToNextMap() {
     return;
   }
   const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id, variant.id);
+  const validationErrors = validateMapConfig(nextMap);
+  if (validationErrors.length > 0) {
+    goalCompleted = false;
+    terrainView.updateGoalProgress(0);
+    ui.setHint("goal reached. next map invalid.");
+    console.error("Invalid next map:", validationErrors);
+    requestRender();
+    return;
+  }
   setCurrentMap(nextMap);
   marble.x = world.width / 2;
   marble.y = world.height / 2;
