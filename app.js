@@ -18,7 +18,7 @@ import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
-import { normalizedObstacleRects, resolveMapVariantConfig } from "./core/map.js";
+import { normalizedObstacleRects, resolveMapVariantConfig, selectNextMapVariant } from "./core/map.js";
 import { createKeyboardController } from "./input/keyboard-controller.js";
 import {
   exitFullscreenMode,
@@ -220,13 +220,18 @@ function setCurrentMap(nextMap) {
 }
 
 function nextMapVariant() {
-  const variants = baseMapConfig.variants;
-  const currentIndex = Math.max(0, variants.findIndex((variant) => variant.id === currentMap.variantId));
-  return variants[(currentIndex + 1) % variants.length];
+  return selectNextMapVariant(baseMapConfig.variants, currentMap.variantId);
 }
 
 function advanceToNextMap() {
   const variant = nextMapVariant();
+  if (!variant) {
+    goalCompleted = false;
+    terrainView.updateGoalProgress(0);
+    ui.setHint("goal reached. no next map available.");
+    requestRender();
+    return;
+  }
   const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id, variant.id);
   setCurrentMap(nextMap);
   marble.x = world.width / 2;

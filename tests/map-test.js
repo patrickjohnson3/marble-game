@@ -4,6 +4,7 @@ import {
   hashMapSeed,
   normalizedObstacleRects,
   resolveSeededMapConfig,
+  selectNextMapVariant,
   selectSeededMapVariant,
   snapRectToGrid,
   snapToGrid,
@@ -43,6 +44,20 @@ function testSeededMapVariantSelection() {
 }
 
 testSeededMapVariantSelection();
+
+function testNextMapVariantSelectionIsGuarded() {
+  const variants = [
+    { id: "a" },
+    { id: "b" }
+  ];
+
+  assert.equal(selectNextMapVariant(variants, "a").id, "b");
+  assert.equal(selectNextMapVariant(variants, "b").id, "a");
+  assert.equal(selectNextMapVariant([], "a"), null);
+  assert.equal(selectNextMapVariant(null, "a"), null);
+}
+
+testNextMapVariantSelectionIsGuarded();
 
 function testResolveSeededMapConfigCopiesSelectedElements() {
   const config = {

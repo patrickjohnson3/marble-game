@@ -47,6 +47,13 @@ export function selectSeededMapVariant(variants, seed) {
   return variants[hashMapSeed(seed) % variants.length];
 }
 
+export function selectNextMapVariant(variants, currentVariantId) {
+  if (!Array.isArray(variants) || variants.length === 0) return null;
+
+  const currentIndex = Math.max(0, variants.findIndex((variant) => variant.id === currentVariantId));
+  return variants[(currentIndex + 1) % variants.length];
+}
+
 function resolvedMapConfig(config, { seed, variant }) {
   if (!variant) return { ...config, seed };
   const elements = Array.isArray(variant.elements) ?
