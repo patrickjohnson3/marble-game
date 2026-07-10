@@ -34,20 +34,22 @@ const generatedOneElements = [
   { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 }
 ];
 
+export const mapVariants = [
+  {
+    id: "default",
+    goal: { x: 1920, y: 1900, r: 95, holdMs: 5000 },
+    elements: defaultElements
+  },
+  {
+    id: "generated-1",
+    goal: { x: 1840, y: 1850, r: 95, holdMs: 5000 },
+    elements: generatedOneElements
+  }
+];
+
 export const baseMapConfig = {
   seed: "default",
-  variants: [
-    {
-      id: "default",
-      goal: { x: 1920, y: 1900, r: 95, holdMs: 5000 },
-      elements: defaultElements
-    },
-    {
-      id: "generated-1",
-      goal: { x: 1840, y: 1850, r: 95, holdMs: 5000 },
-      elements: generatedOneElements
-    }
-  ],
+  variants: mapVariants,
   world: {
     width: 2200,
     height: 2200
@@ -77,4 +79,4 @@ export const baseMapConfig = {
   }
 };
 
-export const mapConfig = resolveSeededMapConfig(baseMapConfig);
+export const resolvedMapConfig = resolveSeededMapConfig(baseMapConfig);

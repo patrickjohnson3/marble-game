@@ -1,7 +1,7 @@
 import { createCameraController } from "./core/camera.js";
 import {
   baseMapConfig,
-  mapConfig,
+  resolvedMapConfig,
   timing,
   tuning,
   hapticTuning,
@@ -84,11 +84,17 @@ const {
   debug
 } = els;
 
-const mapRuntime = createMapRuntime({ initialMap: mapConfig });
+const mapRuntime = createMapRuntime({ initialMap: resolvedMapConfig });
 const mapState = mapRuntime.state;
 const world = mapState.activeMap.world;
 
-const state = createGameState({ world, mapConfig, timing, hapticTuning, physicsConfig });
+const state = createGameState({
+  world,
+  resolvedMapConfig,
+  timing,
+  hapticTuning,
+  physicsConfig
+});
 const {
   marble,
   bounds,
@@ -298,7 +304,7 @@ const lifecycle = createLifecycleController({
   keyboard,
   mapRenderer,
   marble,
-  resetMap: () => setCurrentMap(mapConfig),
+  resetMap: () => setCurrentMap(resolvedMapConfig),
   resetCalibration: sensorController.resetCalibration,
   scheduleFrame,
   sensor,

@@ -1,6 +1,6 @@
 import {
   hapticTuning,
-  mapConfig,
+  resolvedMapConfig,
   timing,
   tuning,
   visualConfig
@@ -70,7 +70,7 @@ export function setupRenderers({
     marbleEl,
     marble,
     world,
-    mapConfig,
+    mapConfig: resolvedMapConfig,
     visualConfig,
     clamp
   });

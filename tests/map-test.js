@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mapConfig } from "../core/config.js";
+import { resolvedMapConfig } from "../core/config.js";
 import {
   hashMapSeed,
   normalizedObstacleRects,
@@ -28,7 +28,7 @@ import {
 import { FakeElement } from "./test-dom.js";
 
 function currentMapObstacles() {
-  return normalizedObstacleRects(mapConfig.elements.filter((element) => element.type === "obstacle"));
+  return normalizedObstacleRects(resolvedMapConfig.elements.filter((element) => element.type === "obstacle"));
 }
 
 function testGridSnapping() {

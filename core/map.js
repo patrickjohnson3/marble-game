@@ -60,7 +60,7 @@ export function selectNextMapVariant(variants, currentVariantId) {
   return validVariants[(currentIndex + 1) % validVariants.length];
 }
 
-function resolvedMapConfig(config, { seed, variant }) {
+function resolveMapConfig(config, { seed, variant }) {
   if (!variant) return { ...config, seed };
   const elements = Array.isArray(variant.elements) ?
     variant.elements.map((element) => ({ ...element })) :
@@ -76,14 +76,14 @@ function resolvedMapConfig(config, { seed, variant }) {
 }
 
 export function resolveSeededMapConfig(config, seed = config.seed) {
-  return resolvedMapConfig(config, {
+  return resolveMapConfig(config, {
     seed,
     variant: selectSeededMapVariant(config.variants, seed)
   });
 }
 
 export function resolveMapVariantConfig(config, variantId, seed = config.seed) {
-  return resolvedMapConfig(config, {
+  return resolveMapConfig(config, {
     seed,
     variant: validMapVariants(config.variants).find((variant) => variant.id === variantId)
   });

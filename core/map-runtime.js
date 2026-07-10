@@ -1,12 +1,12 @@
 import { normalizedObstacleRects } from "./map.js";
 
-function deriveMapElements(mapConfig, normalizeObstacles) {
-  const elements = mapConfig.elements;
+function deriveMapElements(activeMap, normalizeObstacles) {
+  const elements = activeMap.elements;
   return {
     elements,
     obstacles: normalizeObstacles(elements.filter((element) => element.type === "obstacle")),
     roughPatches: elements.filter((element) => element.type === "roughPatch"),
-    goal: mapConfig.goal
+    goal: activeMap.goal
   };
 }
 

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import {
   hapticTuning,
-  mapConfig,
   physicsConfig,
+  resolvedMapConfig,
   timing
 } from "../core/config.js";
 import { createGameController } from "../core/game-controller.js";
@@ -12,8 +12,8 @@ import { createGameState } from "../core/state.js";
 
 function createLifecycleHarness() {
   const state = createGameState({
-    world: mapConfig.world,
-    mapConfig,
+    world: resolvedMapConfig.world,
+    resolvedMapConfig,
     timing,
     hapticTuning,
     physicsConfig
@@ -104,8 +104,8 @@ function testStartPauseResumeReleaseReset() {
 
 async function testStartRequestsFullscreenFromClickPath() {
   const state = createGameState({
-    world: mapConfig.world,
-    mapConfig,
+    world: resolvedMapConfig.world,
+    resolvedMapConfig,
     timing,
     hapticTuning,
     physicsConfig
@@ -158,7 +158,7 @@ async function testStartRequestsFullscreenFromClickPath() {
     timing,
     trailRenderer: { clear() {} },
     ui: { isSettingsOpen: () => false, setHint() {} },
-    world: mapConfig.world,
+    world: resolvedMapConfig.world,
     enableMotion() {
       motionEnabled = true;
     },

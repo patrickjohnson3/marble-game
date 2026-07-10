@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {
   baseMapConfig,
   hapticTuning,
-  mapConfig,
+  resolvedMapConfig,
   physicsConfig,
   settingsConfig,
   settingsControls,
@@ -18,29 +18,29 @@ function assertPositiveNumber(value, label) {
 }
 
 function testWorldAndMapElements() {
-  assertPositiveNumber(mapConfig.world.width, "world width");
-  assertPositiveNumber(mapConfig.world.height, "world height");
-  assertPositiveNumber(mapConfig.grid.size, "grid size");
-  assertPositiveNumber(mapConfig.intro.wallThickness, "intro wall thickness");
-  assertPositiveNumber(mapConfig.intro.viewportMargin, "intro viewport margin");
-  assert.equal(mapConfig.seed, "default", "map seed");
-  assert.equal(mapConfig.variantId, "default", "map variant");
-  assertPositiveNumber(mapConfig.goal.r, "goal radius");
-  assertPositiveNumber(mapConfig.goal.holdMs, "goal hold time");
+  assertPositiveNumber(resolvedMapConfig.world.width, "world width");
+  assertPositiveNumber(resolvedMapConfig.world.height, "world height");
+  assertPositiveNumber(resolvedMapConfig.grid.size, "grid size");
+  assertPositiveNumber(resolvedMapConfig.intro.wallThickness, "intro wall thickness");
+  assertPositiveNumber(resolvedMapConfig.intro.viewportMargin, "intro viewport margin");
+  assert.equal(resolvedMapConfig.seed, "default", "map seed");
+  assert.equal(resolvedMapConfig.variantId, "default", "map variant");
+  assertPositiveNumber(resolvedMapConfig.goal.r, "goal radius");
+  assertPositiveNumber(resolvedMapConfig.goal.holdMs, "goal hold time");
 
-  for (const [index, element] of mapConfig.elements.entries()) {
+  for (const [index, element] of resolvedMapConfig.elements.entries()) {
     assert.ok(["obstacle", "roughPatch"].includes(element.type), "element " + index + " type");
     assertPositiveNumber(element.w, "element " + index + " width");
     assertPositiveNumber(element.h, "element " + index + " height");
     assert.equal(element.x >= 0, true, "element " + index + " x");
     assert.equal(element.y >= 0, true, "element " + index + " y");
-    assert.equal(element.x + element.w <= mapConfig.world.width, true, "element " + index + " right edge");
-    assert.equal(element.y + element.h <= mapConfig.world.height, true, "element " + index + " bottom edge");
+    assert.equal(element.x + element.w <= resolvedMapConfig.world.width, true, "element " + index + " right edge");
+    assert.equal(element.y + element.h <= resolvedMapConfig.world.height, true, "element " + index + " bottom edge");
   }
 }
 
 function testMapConfigValidationPasses() {
-  assert.deepEqual(validateMapConfig(mapConfig), []);
+  assert.deepEqual(validateMapConfig(resolvedMapConfig), []);
   for (const variant of baseMapConfig.variants) {
     assert.deepEqual(
       validateMapConfig(resolveMapVariantConfig(baseMapConfig, variant.id)),
@@ -51,7 +51,7 @@ function testMapConfigValidationPasses() {
 }
 
 function testMapIncludesConnectedObstacleGroups() {
-  const obstacles = mapConfig.elements.filter((element) => element.type === "obstacle");
+  const obstacles = resolvedMapConfig.elements.filter((element) => element.type === "obstacle");
   const connectedPairs = obstacles.filter((a, index) =>
     obstacles.slice(index + 1).some((b) =>
       a.x <= b.x + b.w &&
@@ -65,7 +65,7 @@ function testMapIncludesConnectedObstacleGroups() {
 }
 
 function testNormalizedMapObstaclesStayValid() {
-  const obstacles = normalizedObstacleRects(mapConfig.elements.filter((element) => element.type === "obstacle"));
+  const obstacles = normalizedObstacleRects(resolvedMapConfig.elements.filter((element) => element.type === "obstacle"));
 
   for (const [index, obstacle] of obstacles.entries()) {
     assertPositiveNumber(obstacle.w, "normalized obstacle " + index + " width");
@@ -73,12 +73,12 @@ function testNormalizedMapObstaclesStayValid() {
     assert.equal(obstacle.x >= 0, true, "normalized obstacle " + index + " x");
     assert.equal(obstacle.y >= 0, true, "normalized obstacle " + index + " y");
     assert.equal(
-      obstacle.x + obstacle.w <= mapConfig.world.width,
+      obstacle.x + obstacle.w <= resolvedMapConfig.world.width,
       true,
       "normalized obstacle " + index + " right edge"
     );
     assert.equal(
-      obstacle.y + obstacle.h <= mapConfig.world.height,
+      obstacle.y + obstacle.h <= resolvedMapConfig.world.height,
       true,
       "normalized obstacle " + index + " bottom edge"
     );
