@@ -59,7 +59,6 @@ export function createGameLoop({
     }
 
     marbleView.render();
-    terrainView.updateRoughPatchFeedback();
     if (!game.paused) trailRenderer.update(currentTime);
     ui.updateDebugPanel();
     frameLoop.markRendered();

@@ -5,9 +5,6 @@ export function createTerrainView({
   goal,
   roughPatches,
   obstacles,
-  intro,
-  marble,
-  marbleOverRect,
   renderObstacleWalls,
   renderMapElements
 }) {
@@ -49,23 +46,12 @@ export function createTerrainView({
     goalEl.style.setProperty("--goal-progress", Math.max(0, Math.min(progress, 1) * 100).toFixed(1) + "%");
   }
 
-  function updateRoughPatchFeedback() {
-    const patchEls = roughPatchesEl.children;
-    currentRoughPatches.forEach((patch, index) => {
-      patchEls[index]?.classList.toggle(
-        "active",
-        intro.released && marbleOverRect(marble, patch)
-      );
-    });
-  }
-
   return {
     renderGoal,
     renderObstacles,
     renderTerrain,
     renderRoughPatches,
     setTerrain,
-    updateGoalProgress,
-    updateRoughPatchFeedback
+    updateGoalProgress
   };
 }

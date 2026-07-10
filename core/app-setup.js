@@ -17,7 +17,6 @@ import {
 } from "./map.js";
 import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
-import { marbleOverRect } from "./physics.js";
 import {
   renderMapElements,
   renderObstacleWalls,
@@ -82,9 +81,6 @@ export function setupRenderers({
     goal,
     roughPatches,
     obstacles,
-    intro,
-    marble,
-    marbleOverRect,
     renderObstacleWalls,
     renderMapElements
   });
