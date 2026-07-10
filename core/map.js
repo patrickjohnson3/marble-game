@@ -44,6 +44,10 @@ function validMapVariants(variants) {
     [];
 }
 
+function sameWorldSize(a, b) {
+  return a?.width === b?.width && a?.height === b?.height;
+}
+
 export function selectSeededMapVariant(variants, seed) {
   const validVariants = validMapVariants(variants);
   if (validVariants.length === 0) return null;
@@ -241,6 +245,11 @@ export function validateMapConfig(config, {
   if (!Number.isFinite(world.height) || world.height <= 0) {
     errors.push("world height must be positive");
   }
+  validMapVariants(config?.variants).forEach((variant) => {
+    if (variant.world && !sameWorldSize(variant.world, world)) {
+      errors.push("variant " + variant.id + " world must match base world");
+    }
+  });
   if (gridSize !== undefined) {
     if (!Number.isFinite(gridSize) || gridSize <= 0) {
       errors.push("grid size must be positive");

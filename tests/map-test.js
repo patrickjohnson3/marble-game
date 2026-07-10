@@ -179,6 +179,21 @@ function testMapValidationReportsInvalidNormalizedObstacles() {
 
 testMapValidationReportsInvalidNormalizedObstacles();
 
+function testMapValidationRejectsVariantWorldMismatch() {
+  const config = {
+    world: { width: 100, height: 100 },
+    elements: [],
+    goal: { x: 80, y: 80, r: 10, holdMs: 5000 },
+    variants: [
+      { id: "other-size", world: { width: 120, height: 100 } }
+    ]
+  };
+
+  assert.ok(validateMapConfig(config).includes("variant other-size world must match base world"));
+}
+
+testMapValidationRejectsVariantWorldMismatch();
+
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizedObstacleRects([
     { x: 0, y: 20, w: 100, h: 20 },
