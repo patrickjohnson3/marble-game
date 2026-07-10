@@ -15,7 +15,10 @@ export function createMapProgression({
   logger = console
 }) {
   function nextMapVariant() {
-    return selectNextMapVariant(baseMapConfig.variants, getCurrentMap().variantId);
+    const currentMap = getCurrentMap();
+    if (!currentMap || typeof currentMap !== "object") return null;
+
+    return selectNextMapVariant(baseMapConfig.variants, currentMap.variantId);
   }
 
   function blockAdvance(message) {

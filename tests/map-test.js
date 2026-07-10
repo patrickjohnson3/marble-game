@@ -12,6 +12,7 @@ import {
   snapToGrid,
   validateMapConfig
 } from "../core/map.js";
+import { createMapProgression } from "../core/map-progression.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
 import {
   blockedSpawnConfig,
@@ -72,6 +73,30 @@ function testNextMapVariantSelectionIsGuarded() {
 }
 
 testNextMapVariantSelectionIsGuarded();
+
+function testMapProgressionHandlesMissingCurrentMap() {
+  const hints = [];
+  let renderRequests = 0;
+  const progression = createMapProgression({
+    baseMapConfig: simpleSeededMapConfig,
+    getCurrentMap: () => null,
+    applyMap() {
+      throw new Error("missing current map should not apply next map");
+    },
+    resetForNextMap() {},
+    terrainView: { updateGoalProgress() {} },
+    ui: { setHint: (hint) => hints.push(hint) },
+    requestRender: () => {
+      renderRequests++;
+    }
+  });
+
+  assert.equal(progression.advanceToNextMap(), false);
+  assert.deepEqual(hints, ["goal reached. no next map available."]);
+  assert.equal(renderRequests, 1);
+}
+
+testMapProgressionHandlesMissingCurrentMap();
 
 function testResolveSeededMapConfigCopiesSelectedElements() {
   const config = simpleSeededMapConfig;
