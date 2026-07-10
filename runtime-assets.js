@@ -19,6 +19,7 @@ export const runtimeScripts = [
   "core/intro-sequence.js",
   "core/intro-timers.js",
   "core/map-config.js",
+  "core/map-progression.js",
   "core/map-reachability.js",
   "core/map-validation.js",
   "core/map.js",

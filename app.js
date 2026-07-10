@@ -18,12 +18,8 @@ import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
-import {
-  normalizedObstacleRects,
-  resolveMapVariantConfig,
-  selectNextMapVariant,
-  validateMapConfig
-} from "./core/map.js";
+import { normalizedObstacleRects } from "./core/map.js";
+import { createMapProgression } from "./core/map-progression.js";
 import { createKeyboardController } from "./input/keyboard-controller.js";
 import {
   exitFullscreenMode,
@@ -224,30 +220,7 @@ function setCurrentMap(nextMap) {
   terrainView.setTerrain({ goal, obstacles, roughPatches });
 }
 
-function nextMapVariant() {
-  return selectNextMapVariant(baseMapConfig.variants, currentMap.variantId);
-}
-
-function advanceToNextMap() {
-  const variant = nextMapVariant();
-  if (!variant) {
-    goalCompleted = false;
-    terrainView.updateGoalProgress(0);
-    ui.setHint("goal reached. no next map available.");
-    requestRender();
-    return;
-  }
-  const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id, variant.id);
-  const validationErrors = validateMapConfig(nextMap);
-  if (validationErrors.length > 0) {
-    goalCompleted = false;
-    terrainView.updateGoalProgress(0);
-    ui.setHint("goal reached. next map invalid.");
-    console.error("Invalid next map:", validationErrors);
-    requestRender();
-    return;
-  }
-  setCurrentMap(nextMap);
+function resetForNextMap() {
   marble.x = world.width / 2;
   marble.y = world.height / 2;
   marble.vx = 0;
@@ -256,9 +229,17 @@ function advanceToNextMap() {
   trailRenderer.clear();
   effectsRenderer.clear();
   cameraController.centerOnMarble();
-  ui.setHint("goal reached. next map: " + currentMap.variantId + ".");
-  requestRender();
 }
+
+const mapProgression = createMapProgression({
+  baseMapConfig,
+  getCurrentMap: () => currentMap,
+  applyMap: setCurrentMap,
+  resetForNextMap,
+  terrainView,
+  ui,
+  requestRender
+});
 
 function marbleInsideGoal() {
   return intro.released && distance(marble, goal) + marble.r <= goal.r;
@@ -283,7 +264,9 @@ function updateGoalHold(dt) {
 
   if (goalHoldMs >= goal.holdMs) {
     goalCompleted = true;
-    advanceToNextMap();
+    if (!mapProgression.advanceToNextMap()) {
+      goalCompleted = false;
+    }
   }
 }
 
