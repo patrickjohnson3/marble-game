@@ -194,6 +194,23 @@ function testMapValidationRejectsVariantWorldMismatch() {
 
 testMapValidationRejectsVariantWorldMismatch();
 
+function testMapValidationRejectsUnreachableGoal() {
+  const config = {
+    world: { width: 100, height: 100 },
+    grid: { size: 10 },
+    elements: [
+      { type: "obstacle", x: 50, y: 0, w: 10, h: 100 }
+    ],
+    goal: { x: 80, y: 50, r: 12, holdMs: 5000 }
+  };
+
+  assert.ok(
+    validateMapConfig(config, { spawn: { x: 20, y: 50, r: 5 } }).includes("goal must be reachable from spawn")
+  );
+}
+
+testMapValidationRejectsUnreachableGoal();
+
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizedObstacleRects([
     { x: 0, y: 20, w: 100, h: 20 },
