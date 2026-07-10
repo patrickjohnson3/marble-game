@@ -1,6 +1,11 @@
 import { clamp } from "./geometry.js";
 import { validateMapConfig as validateMapConfigWithDeps } from "./map-validation.js";
 
+export const MAP_ELEMENT_TYPES = Object.freeze({
+  obstacle: "obstacle",
+  roughPatch: "roughPatch"
+});
+
 function touchesOrOverlaps(aStart, aEnd, bStart, bEnd) {
   return aStart <= bEnd && bStart <= aEnd;
 }
@@ -89,6 +94,22 @@ export function resolveMapVariantConfig(config, variantId, seed = config.seed) {
   });
 }
 
+export function isObstacleElement(element) {
+  return element?.type === MAP_ELEMENT_TYPES.obstacle;
+}
+
+export function isRoughPatchElement(element) {
+  return element?.type === MAP_ELEMENT_TYPES.roughPatch;
+}
+
+export function mapObstacleElements(elements) {
+  return elements.filter(isObstacleElement);
+}
+
+export function mapRoughPatchElements(elements) {
+  return elements.filter(isRoughPatchElement);
+}
+
 export function normalizedObstacleRects(rects) {
   const normalized = rects.map((rect) => ({ ...rect }));
 
@@ -140,7 +161,9 @@ export function normalizedObstacleRects(rects) {
 
 export function validateMapConfig(config, options = {}) {
   return validateMapConfigWithDeps(config, options, {
+    elementTypes: MAP_ELEMENT_TYPES,
     normalizedObstacleRects,
+    mapObstacleElements,
     validMapVariants
   });
 }

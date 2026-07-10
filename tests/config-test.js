@@ -10,7 +10,12 @@ import {
   tuning,
   visualConfig
 } from "../core/config.js";
-import { normalizedObstacleRects, resolveMapVariantConfig, validateMapConfig } from "../core/map.js";
+import {
+  mapObstacleElements,
+  normalizedObstacleRects,
+  resolveMapVariantConfig,
+  validateMapConfig
+} from "../core/map.js";
 
 function assertPositiveNumber(value, label) {
   assert.equal(Number.isFinite(value), true, label + " must be finite");
@@ -51,7 +56,7 @@ function testMapConfigValidationPasses() {
 }
 
 function testMapIncludesConnectedObstacleGroups() {
-  const obstacles = resolvedMapConfig.elements.filter((element) => element.type === "obstacle");
+  const obstacles = mapObstacleElements(resolvedMapConfig.elements);
   const connectedPairs = obstacles.filter((a, index) =>
     obstacles.slice(index + 1).some((b) =>
       a.x <= b.x + b.w &&
@@ -65,7 +70,7 @@ function testMapIncludesConnectedObstacleGroups() {
 }
 
 function testNormalizedMapObstaclesStayValid() {
-  const obstacles = normalizedObstacleRects(resolvedMapConfig.elements.filter((element) => element.type === "obstacle"));
+  const obstacles = normalizedObstacleRects(mapObstacleElements(resolvedMapConfig.elements));
 
   for (const [index, obstacle] of obstacles.entries()) {
     assertPositiveNumber(obstacle.w, "normalized obstacle " + index + " width");

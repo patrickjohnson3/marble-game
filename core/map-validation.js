@@ -84,16 +84,18 @@ export function validateMapConfig(config, {
   normalizedObstacles,
   spawn
 } = {}, {
+  elementTypes,
+  mapObstacleElements,
   normalizedObstacleRects,
   validMapVariants
 }) {
   const errors = [];
-  const allowedTypes = new Set(["obstacle", "roughPatch"]);
+  const allowedTypes = new Set(Object.values(elementTypes));
   const world = config?.world ?? {};
   const elements = Array.isArray(config?.elements) ? config.elements : [];
   const objectElements = elements.filter((element) => element && typeof element === "object");
   const checkedObstaclesSource = normalizedObstacles ??
-    normalizedObstacleRects(objectElements.filter((element) => element.type === "obstacle"));
+    normalizedObstacleRects(mapObstacleElements(objectElements));
   const checkedObstacles = Array.isArray(checkedObstaclesSource) ?
     checkedObstaclesSource.filter((obstacle) => obstacle && typeof obstacle === "object") :
     [];
