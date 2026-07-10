@@ -51,9 +51,12 @@ export function selectSeededMapVariant(variants, seed) {
 
 export function selectNextMapVariant(variants, currentVariantId) {
   if (!Array.isArray(variants) || variants.length === 0) return null;
+  const validVariants = variants.filter((variant) => variant && typeof variant === "object");
+  if (validVariants.length === 0) return null;
 
-  const currentIndex = Math.max(0, variants.findIndex((variant) => variant.id === currentVariantId));
-  return variants[(currentIndex + 1) % variants.length];
+  const currentIndex = validVariants.findIndex((variant) => variant.id === currentVariantId);
+  if (currentIndex < 0) return validVariants[0];
+  return validVariants[(currentIndex + 1) % validVariants.length];
 }
 
 function resolvedMapConfig(config, { seed, variant }) {

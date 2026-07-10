@@ -55,8 +55,11 @@ function testNextMapVariantSelectionIsGuarded() {
 
   assert.equal(selectNextMapVariant(variants, "a").id, "b");
   assert.equal(selectNextMapVariant(variants, "b").id, "a");
+  assert.equal(selectNextMapVariant([null, variants[0]], "a").id, "a");
+  assert.equal(selectNextMapVariant(variants, "missing").id, "a");
   assert.equal(selectNextMapVariant([], "a"), null);
   assert.equal(selectNextMapVariant(null, "a"), null);
+  assert.equal(selectNextMapVariant([null], "a"), null);
 }
 
 testNextMapVariantSelectionIsGuarded();
