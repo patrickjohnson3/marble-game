@@ -40,11 +40,13 @@ export function hashMapSeed(seed) {
 
 export function selectSeededMapVariant(variants, seed) {
   if (!Array.isArray(variants) || variants.length === 0) return null;
+  const validVariants = variants.filter((variant) => variant && typeof variant === "object");
+  if (validVariants.length === 0) return null;
 
-  const exactVariant = variants.find((variant) => variant.id === seed);
+  const exactVariant = validVariants.find((variant) => variant.id === seed);
   if (exactVariant) return exactVariant;
 
-  return variants[hashMapSeed(seed) % variants.length];
+  return validVariants[hashMapSeed(seed) % validVariants.length];
 }
 
 export function selectNextMapVariant(variants, currentVariantId) {

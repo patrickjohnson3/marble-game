@@ -41,6 +41,8 @@ function testSeededMapVariantSelection() {
     selectSeededMapVariant(variants, seed)
   );
   assert.equal(selectSeededMapVariant(variants, "b").id, "b");
+  assert.equal(selectSeededMapVariant([null, variants[0]], "a").id, "a");
+  assert.equal(selectSeededMapVariant([null], "a"), null);
 }
 
 testSeededMapVariantSelection();
