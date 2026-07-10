@@ -12,6 +12,19 @@ import {
   validateMapConfig
 } from "../core/map.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
+import {
+  blockedSpawnConfig,
+  emptyElementMapConfig,
+  invalidElementConfig,
+  malformedVariantConfig,
+  missingElementsVariantConfig,
+  simpleSeededMapConfig,
+  smallJoinOverhangRects,
+  touchingJoinOverhangRects,
+  unreachableGoalConfig,
+  variantSelectionFixtures,
+  variantWorldMismatchConfig
+} from "./map-fixtures.js";
 import { FakeElement } from "./test-dom.js";
 
 function currentMapObstacles() {
@@ -30,10 +43,7 @@ function testGridSnapping() {
 testGridSnapping();
 
 function testSeededMapVariantSelection() {
-  const variants = [
-    { id: "a", elements: [{ type: "obstacle", x: 0, y: 0, w: 10, h: 10 }] },
-    { id: "b", elements: [{ type: "roughPatch", x: 10, y: 10, w: 20, h: 20 }] }
-  ];
+  const variants = variantSelectionFixtures;
   const seed = "same-seed";
 
   assert.equal(hashMapSeed(seed), hashMapSeed(seed));
@@ -49,10 +59,7 @@ function testSeededMapVariantSelection() {
 testSeededMapVariantSelection();
 
 function testNextMapVariantSelectionIsGuarded() {
-  const variants = [
-    { id: "a" },
-    { id: "b" }
-  ];
+  const variants = variantSelectionFixtures;
 
   assert.equal(selectNextMapVariant(variants, "a").id, "b");
   assert.equal(selectNextMapVariant(variants, "b").id, "a");
@@ -66,13 +73,7 @@ function testNextMapVariantSelectionIsGuarded() {
 testNextMapVariantSelectionIsGuarded();
 
 function testResolveSeededMapConfigCopiesSelectedElements() {
-  const config = {
-    seed: "seed-a",
-    variants: [
-      { id: "only", elements: [{ type: "obstacle", x: 0, y: 0, w: 10, h: 10 }] }
-    ],
-    world: { width: 100, height: 100 }
-  };
+  const config = simpleSeededMapConfig;
   const resolved = resolveSeededMapConfig(config);
 
   assert.equal(resolved.seed, "seed-a");
@@ -84,13 +85,7 @@ function testResolveSeededMapConfigCopiesSelectedElements() {
 testResolveSeededMapConfigCopiesSelectedElements();
 
 function testResolveSeededMapConfigAllowsValidationOfMissingVariantElements() {
-  const resolved = resolveSeededMapConfig({
-    seed: "bad-variant",
-    variants: [
-      { id: "bad-variant", goal: { x: 80, y: 80, r: 10, holdMs: 5000 } }
-    ],
-    world: { width: 100, height: 100 }
-  });
+  const resolved = resolveSeededMapConfig(missingElementsVariantConfig);
 
   assert.equal(resolved.variantId, "bad-variant");
   assert.ok(validateMapConfig(resolved).includes("elements must be an array"));
@@ -99,19 +94,7 @@ function testResolveSeededMapConfigAllowsValidationOfMissingVariantElements() {
 testResolveSeededMapConfigAllowsValidationOfMissingVariantElements();
 
 function testResolveMapVariantConfigIgnoresMalformedVariants() {
-  const config = {
-    seed: "seed-a",
-    variants: [
-      null,
-      {
-        id: "safe",
-        elements: [],
-        goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
-      }
-    ],
-    world: { width: 100, height: 100 }
-  };
-  const resolved = resolveMapVariantConfig(config, "safe");
+  const resolved = resolveMapVariantConfig(malformedVariantConfig, "safe");
 
   assert.equal(resolved.variantId, "safe");
 }
@@ -119,16 +102,8 @@ function testResolveMapVariantConfigIgnoresMalformedVariants() {
 testResolveMapVariantConfigIgnoresMalformedVariants();
 
 function testMapValidationRejectsBlockedSpawn() {
-  const config = {
-    world: { width: 100, height: 100 },
-    elements: [
-      { type: "obstacle", x: 45, y: 45, w: 10, h: 10 }
-    ],
-    goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
-  };
-
   assert.ok(
-    validateMapConfig(config, { spawn: { x: 50, y: 50, r: 8 } }).includes("spawn must not overlap obstacles")
+    validateMapConfig(blockedSpawnConfig, { spawn: { x: 50, y: 50, r: 8 } }).includes("spawn must not overlap obstacles")
   );
 }
 
@@ -151,71 +126,38 @@ function testMapValidationReportsMalformedConfig() {
 testMapValidationReportsMalformedConfig();
 
 function testMapValidationReportsInvalidElementEntries() {
-  const config = {
-    world: { width: 100, height: 100 },
-    elements: [null],
-    goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
-  };
-
-  assert.ok(validateMapConfig(config).includes("element 0 must be an object"));
+  assert.ok(validateMapConfig(invalidElementConfig).includes("element 0 must be an object"));
 }
 
 testMapValidationReportsInvalidElementEntries();
 
 function testMapValidationReportsInvalidNormalizedObstacles() {
-  const config = {
-    world: { width: 100, height: 100 },
-    elements: [],
-    goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
-  };
-
   assert.ok(
-    validateMapConfig(config, { normalizedObstacles: [null] }).includes("normalized obstacle 0 must be an object")
+    validateMapConfig(emptyElementMapConfig, { normalizedObstacles: [null] }).includes("normalized obstacle 0 must be an object")
   );
   assert.ok(
-    validateMapConfig(config, { normalizedObstacles: "bad" }).includes("normalized obstacles must be an array")
+    validateMapConfig(emptyElementMapConfig, { normalizedObstacles: "bad" }).includes("normalized obstacles must be an array")
   );
 }
 
 testMapValidationReportsInvalidNormalizedObstacles();
 
 function testMapValidationRejectsVariantWorldMismatch() {
-  const config = {
-    world: { width: 100, height: 100 },
-    elements: [],
-    goal: { x: 80, y: 80, r: 10, holdMs: 5000 },
-    variants: [
-      { id: "other-size", world: { width: 120, height: 100 } }
-    ]
-  };
-
-  assert.ok(validateMapConfig(config).includes("variant other-size world must match base world"));
+  assert.ok(validateMapConfig(variantWorldMismatchConfig).includes("variant other-size world must match base world"));
 }
 
 testMapValidationRejectsVariantWorldMismatch();
 
 function testMapValidationRejectsUnreachableGoal() {
-  const config = {
-    world: { width: 100, height: 100 },
-    grid: { size: 10 },
-    elements: [
-      { type: "obstacle", x: 50, y: 0, w: 10, h: 100 }
-    ],
-    goal: { x: 80, y: 50, r: 12, holdMs: 5000 }
-  };
-
   assert.ok(
-    validateMapConfig(config, { spawn: { x: 20, y: 50, r: 5 } }).includes("goal must be reachable from spawn")
+    validateMapConfig(unreachableGoalConfig, { spawn: { x: 20, y: 50, r: 5 } }).includes("goal must be reachable from spawn")
   );
 }
 
 testMapValidationRejectsUnreachableGoal();
 
 function testObstacleVisualsTrimSmallJoinOverhangs() {
-  const [horizontal, vertical] = normalizedObstacleRects([
-    { x: 0, y: 20, w: 100, h: 20 },
-    { x: 80, y: 0, w: 20, h: 50 }
-  ]);
+  const [horizontal, vertical] = normalizedObstacleRects(smallJoinOverhangRects);
 
   assert.equal(horizontal.h, 20);
   assert.equal(vertical.h, 40);
@@ -224,10 +166,7 @@ function testObstacleVisualsTrimSmallJoinOverhangs() {
 testObstacleVisualsTrimSmallJoinOverhangs();
 
 function testObstacleVisualsTrimTouchingJoinOverhangs() {
-  const [, vertical] = normalizedObstacleRects([
-    { x: 0, y: 20, w: 100, h: 20 },
-    { x: 100, y: 0, w: 20, h: 50 }
-  ]);
+  const [, vertical] = normalizedObstacleRects(touchingJoinOverhangRects);
 
   assert.equal(vertical.h, 40);
   assert.equal(vertical.w, 20);
