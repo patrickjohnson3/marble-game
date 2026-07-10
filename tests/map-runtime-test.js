@@ -27,7 +27,8 @@ assert.equal(runtime.state.obstacles.length, 1);
 assert.equal(runtime.state.roughPatches.length, 1);
 
 assert.equal(runtime.addGoalHold(1000), 0.2);
-runtime.state.goalCompleted = true;
+runtime.completeGoal();
+assert.equal(runtime.state.goalCompleted, true);
 runtime.setActiveMap(secondMap);
 
 assert.equal(runtime.state.activeMap, secondMap);
@@ -40,3 +41,6 @@ assert.equal(runtime.state.goalCompleted, false);
 runtime.addGoalHold(5000);
 assert.equal(runtime.state.goalHoldMs, secondMap.goal.holdMs);
 assert.equal(runtime.addGoalHold(5000), 1);
+runtime.completeGoal();
+runtime.clearGoalCompleted();
+assert.equal(runtime.state.goalCompleted, false);

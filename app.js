@@ -261,9 +261,9 @@ function updateGoalHold(dt) {
   ui.setHint("hold goal " + Math.ceil((mapState.goal.holdMs - mapState.goalHoldMs) / 1000) + "s");
 
   if (mapState.goalHoldMs >= mapState.goal.holdMs) {
-    mapState.goalCompleted = true;
+    mapRuntime.completeGoal();
     if (!mapProgression.advanceToNextMap()) {
-      mapState.goalCompleted = false;
+      mapRuntime.clearGoalCompleted();
     }
   }
 }

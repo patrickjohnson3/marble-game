@@ -49,11 +49,21 @@ export function createMapRuntime({
     return state.goalHoldMs / state.goal.holdMs;
   }
 
+  function completeGoal() {
+    state.goalCompleted = true;
+  }
+
+  function clearGoalCompleted() {
+    state.goalCompleted = false;
+  }
+
   setActiveMap(initialMap);
 
   return {
     state,
     addGoalHold,
+    clearGoalCompleted,
+    completeGoal,
     resetGoalProgress,
     setActiveMap
   };
