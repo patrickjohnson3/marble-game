@@ -3,32 +3,40 @@ import { createFakeDocument } from "./test-dom.js";
 import { createApp } from "../app.js";
 
 const originalGlobals = {
-  addEventListener: globalThis.addEventListener,
-  document: globalThis.document,
-  innerHeight: globalThis.innerHeight,
-  innerWidth: globalThis.innerWidth,
-  localStorage: globalThis.localStorage,
-  navigator: globalThis.navigator,
-  requestAnimationFrame: globalThis.requestAnimationFrame,
-  screen: globalThis.screen,
-  window: globalThis.window
+  addEventListener: Object.getOwnPropertyDescriptor(globalThis, "addEventListener"),
+  document: Object.getOwnPropertyDescriptor(globalThis, "document"),
+  innerHeight: Object.getOwnPropertyDescriptor(globalThis, "innerHeight"),
+  innerWidth: Object.getOwnPropertyDescriptor(globalThis, "innerWidth"),
+  localStorage: Object.getOwnPropertyDescriptor(globalThis, "localStorage"),
+  navigator: Object.getOwnPropertyDescriptor(globalThis, "navigator"),
+  requestAnimationFrame: Object.getOwnPropertyDescriptor(globalThis, "requestAnimationFrame"),
+  screen: Object.getOwnPropertyDescriptor(globalThis, "screen"),
+  window: Object.getOwnPropertyDescriptor(globalThis, "window")
 };
 
+function setTestGlobal(name, value) {
+  Object.defineProperty(globalThis, name, {
+    configurable: true,
+    writable: true,
+    value
+  });
+}
+
 const document = createFakeDocument();
-globalThis.addEventListener = () => {};
-globalThis.document = document;
-globalThis.innerHeight = 844;
-globalThis.innerWidth = 390;
-globalThis.localStorage = {
+setTestGlobal("addEventListener", () => {});
+setTestGlobal("document", document);
+setTestGlobal("innerHeight", 844);
+setTestGlobal("innerWidth", 390);
+setTestGlobal("localStorage", {
   getItem() {
     return null;
   },
   setItem() {}
-};
-globalThis.navigator = {};
-globalThis.requestAnimationFrame = () => 1;
-globalThis.screen = { orientation: { angle: 0 } };
-globalThis.window = globalThis;
+});
+setTestGlobal("navigator", {});
+setTestGlobal("requestAnimationFrame", () => 1);
+setTestGlobal("screen", { orientation: { angle: 0 } });
+setTestGlobal("window", globalThis);
 
 try {
   createApp({
@@ -52,11 +60,11 @@ try {
     "look-ahead"
   );
 } finally {
-  for (const [key, value] of Object.entries(originalGlobals)) {
-    if (value === undefined) {
+  for (const [key, descriptor] of Object.entries(originalGlobals)) {
+    if (descriptor === undefined) {
       delete globalThis[key];
     } else {
-      globalThis[key] = value;
+      Object.defineProperty(globalThis, key, descriptor);
     }
   }
 }
