@@ -21,6 +21,7 @@ export const runtimeScripts = [
   "core/map-config.js",
   "core/map-progression.js",
   "core/map-reachability.js",
+  "core/map-runtime.js",
   "core/map-validation.js",
   "core/map.js",
   "core/physics-collisions.js",

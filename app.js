@@ -18,8 +18,8 @@ import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
-import { normalizedObstacleRects } from "./core/map.js";
 import { createMapProgression } from "./core/map-progression.js";
+import { createMapRuntime } from "./core/map-runtime.js";
 import { createKeyboardController } from "./input/keyboard-controller.js";
 import {
   exitFullscreenMode,
@@ -84,14 +84,9 @@ const {
   debug
 } = els;
 
-const world = mapConfig.world;
-let currentMap = mapConfig;
-let mapElements = currentMap.elements;
-let obstacles = normalizedObstacleRects(mapElements.filter((element) => element.type === "obstacle"));
-let roughPatches = mapElements.filter((element) => element.type === "roughPatch");
-let goal = currentMap.goal;
-let goalHoldMs = 0;
-let goalCompleted = false;
+const mapRuntime = createMapRuntime({ initialMap: mapConfig });
+const mapState = mapRuntime.state;
+const world = mapState.activeMap.world;
 
 const state = createGameState({ world, mapConfig, timing, hapticTuning, physicsConfig });
 const {
@@ -166,9 +161,9 @@ const {
   viewport,
   settings,
   clamp,
-  obstacles,
-  goal,
-  roughPatches
+  obstacles: mapState.obstacles,
+  goal: mapState.goal,
+  roughPatches: mapState.roughPatches
 });
 const {
   applyFullscreenSetting,
@@ -210,14 +205,12 @@ function releaseMap() {
 }
 
 function setCurrentMap(nextMap) {
-  currentMap = nextMap;
-  mapElements = currentMap.elements;
-  obstacles = normalizedObstacleRects(mapElements.filter((element) => element.type === "obstacle"));
-  roughPatches = mapElements.filter((element) => element.type === "roughPatch");
-  goal = currentMap.goal;
-  goalHoldMs = 0;
-  goalCompleted = false;
-  terrainView.setTerrain({ goal, obstacles, roughPatches });
+  mapRuntime.setActiveMap(nextMap);
+  terrainView.setTerrain({
+    goal: mapState.goal,
+    obstacles: mapState.obstacles,
+    roughPatches: mapState.roughPatches
+  });
 }
 
 function resetForNextMap() {
@@ -233,7 +226,7 @@ function resetForNextMap() {
 
 const mapProgression = createMapProgression({
   baseMapConfig,
-  getCurrentMap: () => currentMap,
+  getCurrentMap: () => mapState.activeMap,
   applyMap: setCurrentMap,
   resetForNextMap,
   terrainView,
@@ -242,30 +235,29 @@ const mapProgression = createMapProgression({
 });
 
 function marbleInsideGoal() {
-  return intro.released && distance(marble, goal) + marble.r <= goal.r;
+  return intro.released && distance(marble, mapState.goal) + marble.r <= mapState.goal.r;
 }
 
 function updateGoalHold(dt) {
-  if (goalCompleted) return;
+  if (mapState.goalCompleted) return;
 
   if (!marbleInsideGoal()) {
-    if (goalHoldMs > 0) {
-      goalHoldMs = 0;
+    if (mapState.goalHoldMs > 0) {
+      mapRuntime.resetGoalProgress();
       terrainView.updateGoalProgress(0);
       ui.setHint(copy.hints.mapOpen);
     }
     return;
   }
 
-  goalHoldMs = Math.min(goal.holdMs, goalHoldMs + dt * timing.targetFrameMs);
-  const progress = goalHoldMs / goal.holdMs;
+  const progress = mapRuntime.addGoalHold(dt * timing.targetFrameMs);
   terrainView.updateGoalProgress(progress);
-  ui.setHint("hold goal " + Math.ceil((goal.holdMs - goalHoldMs) / 1000) + "s");
+  ui.setHint("hold goal " + Math.ceil((mapState.goal.holdMs - mapState.goalHoldMs) / 1000) + "s");
 
-  if (goalHoldMs >= goal.holdMs) {
-    goalCompleted = true;
+  if (mapState.goalHoldMs >= mapState.goal.holdMs) {
+    mapState.goalCompleted = true;
     if (!mapProgression.advanceToNextMap()) {
-      goalCompleted = false;
+      mapState.goalCompleted = false;
     }
   }
 }
@@ -372,8 +364,8 @@ function physicsContext() {
     keyboard,
     camera,
     physics,
-    obstacles,
-    roughPatches
+    obstacles: mapState.obstacles,
+    roughPatches: mapState.roughPatches
   };
 }
 
