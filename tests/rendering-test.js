@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   renderObstacleWalls,
+  renderWalls,
   wallFrameGeometry
 } from "../rendering/rendering.js";
 import { FakeElement } from "./test-dom.js";
@@ -23,6 +24,15 @@ function testWallFrameGeometryKeepsPositiveInterior() {
 
 testWallFrameGeometryKeepsPositiveInterior();
 
+function testWallFrameGeometryRejectsInvalidWalls() {
+  assert.equal(wallFrameGeometry([]), null);
+  assert.equal(wallFrameGeometry([{ x: 0, y: 0, w: 100, h: 10 }]), null);
+  assert.equal(wallFrameGeometry([{ x: 0, y: 0, w: 10, h: 100 }]), null);
+  assert.equal(wallFrameGeometry([{ x: 0, y: 0, w: Number.NaN, h: 10 }]), null);
+}
+
+testWallFrameGeometryRejectsInvalidWalls();
+
 const originalDocument = globalThis.document;
 
 globalThis.document = {
@@ -32,6 +42,10 @@ globalThis.document = {
 };
 
 try {
+  const wallsContainer = new FakeElement();
+  renderWalls(wallsContainer, [{ x: 0, y: 0, w: 100, h: 10 }]);
+  assert.deepEqual(wallsContainer.children, [], "invalid wall frame should clear container");
+
   const container = new FakeElement();
 
   renderObstacleWalls(container, [

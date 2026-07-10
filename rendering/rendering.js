@@ -112,23 +112,32 @@ function mergedRectPaths(rects) {
 
 function wallFramePath(walls) {
   const frame = wallFrameGeometry(walls);
+  if (!frame) return "";
 
   return rectPath(frame.left, frame.top, frame.right - frame.left, frame.bottom - frame.top) +
     rectPath(frame.innerLeft, frame.innerTop, frame.innerRight - frame.innerLeft, frame.innerBottom - frame.innerTop);
 }
 
 export function wallFrameGeometry(walls) {
+  if (!Array.isArray(walls) || walls.length === 0) return null;
+
   const left = Math.min(...walls.map((wall) => wall.x));
   const top = Math.min(...walls.map((wall) => wall.y));
   const right = Math.max(...walls.map((wall) => wall.x + wall.w));
   const bottom = Math.max(...walls.map((wall) => wall.y + wall.h));
   const verticalWalls = walls.filter((wall) => wall.w < wall.h);
   const horizontalWalls = walls.filter((wall) => wall.w > wall.h);
+  if (verticalWalls.length === 0 || horizontalWalls.length === 0) return null;
+
   const innerLeft = Math.min(...verticalWalls.map((wall) => wall.x + wall.w));
   const innerRight = Math.max(...verticalWalls.map((wall) => wall.x));
   const innerTop = Math.min(...horizontalWalls.map((wall) => wall.y + wall.h));
   const innerBottom = Math.max(...horizontalWalls.map((wall) => wall.y));
   const thickness = Math.max(innerLeft - left, innerTop - top, right - innerRight, bottom - innerBottom);
+  if (![left, top, right, bottom, innerLeft, innerRight, innerTop, innerBottom, thickness].every(Number.isFinite)) {
+    return null;
+  }
+  if (right <= left || bottom <= top || innerRight <= innerLeft || innerBottom <= innerTop) return null;
 
   return {
     bottom,
@@ -159,7 +168,12 @@ function createWallSvg(className, walls) {
 }
 
 export function renderWalls(container, walls) {
-  if (walls.length === 0) {
+  if (!Array.isArray(walls) || walls.length === 0) {
+    container.replaceChildren();
+    return;
+  }
+  const framePath = wallFramePath(walls);
+  if (!framePath) {
     container.replaceChildren();
     return;
   }
@@ -172,7 +186,7 @@ export function renderWalls(container, walls) {
   ]);
   const frame = svgEl("path");
   frame.classList.add("wallFrame");
-  frame.setAttribute("d", wallFramePath(walls));
+  frame.setAttribute("d", framePath);
   frame.setAttribute("fill-rule", "evenodd");
   frame.setAttribute("fill", fill);
   svg.append(frame);
