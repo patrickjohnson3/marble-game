@@ -38,9 +38,14 @@ export function hashMapSeed(seed) {
   return hash >>> 0;
 }
 
+function validMapVariants(variants) {
+  return Array.isArray(variants) ?
+    variants.filter((variant) => variant && typeof variant === "object") :
+    [];
+}
+
 export function selectSeededMapVariant(variants, seed) {
-  if (!Array.isArray(variants) || variants.length === 0) return null;
-  const validVariants = variants.filter((variant) => variant && typeof variant === "object");
+  const validVariants = validMapVariants(variants);
   if (validVariants.length === 0) return null;
 
   const exactVariant = validVariants.find((variant) => variant.id === seed);
@@ -50,8 +55,7 @@ export function selectSeededMapVariant(variants, seed) {
 }
 
 export function selectNextMapVariant(variants, currentVariantId) {
-  if (!Array.isArray(variants) || variants.length === 0) return null;
-  const validVariants = variants.filter((variant) => variant && typeof variant === "object");
+  const validVariants = validMapVariants(variants);
   if (validVariants.length === 0) return null;
 
   const currentIndex = validVariants.findIndex((variant) => variant.id === currentVariantId);
@@ -84,7 +88,7 @@ export function resolveSeededMapConfig(config, seed = config.seed) {
 export function resolveMapVariantConfig(config, variantId, seed = config.seed) {
   return resolvedMapConfig(config, {
     seed,
-    variant: config.variants?.find((variant) => variant.id === variantId)
+    variant: validMapVariants(config.variants).find((variant) => variant.id === variantId)
   });
 }
 

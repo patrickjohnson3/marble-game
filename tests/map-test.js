@@ -3,6 +3,7 @@ import { mapConfig } from "../core/config.js";
 import {
   hashMapSeed,
   normalizedObstacleRects,
+  resolveMapVariantConfig,
   resolveSeededMapConfig,
   selectNextMapVariant,
   selectSeededMapVariant,
@@ -96,6 +97,26 @@ function testResolveSeededMapConfigAllowsValidationOfMissingVariantElements() {
 }
 
 testResolveSeededMapConfigAllowsValidationOfMissingVariantElements();
+
+function testResolveMapVariantConfigIgnoresMalformedVariants() {
+  const config = {
+    seed: "seed-a",
+    variants: [
+      null,
+      {
+        id: "safe",
+        elements: [],
+        goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
+      }
+    ],
+    world: { width: 100, height: 100 }
+  };
+  const resolved = resolveMapVariantConfig(config, "safe");
+
+  assert.equal(resolved.variantId, "safe");
+}
+
+testResolveMapVariantConfigIgnoresMalformedVariants();
 
 function testMapValidationRejectsBlockedSpawn() {
   const config = {
