@@ -109,6 +109,18 @@ function testMapValidationReportsMalformedConfig() {
 
 testMapValidationReportsMalformedConfig();
 
+function testMapValidationReportsInvalidElementEntries() {
+  const config = {
+    world: { width: 100, height: 100 },
+    elements: [null],
+    goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
+  };
+
+  assert.ok(validateMapConfig(config).includes("element 0 must be an object"));
+}
+
+testMapValidationReportsInvalidElementEntries();
+
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizedObstacleRects([
     { x: 0, y: 20, w: 100, h: 20 },

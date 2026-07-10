@@ -204,6 +204,7 @@ export function validateMapConfig(config, {
   const allowedTypes = new Set(["obstacle", "roughPatch"]);
   const world = config?.world ?? {};
   const elements = Array.isArray(config?.elements) ? config.elements : [];
+  const objectElements = elements.filter((element) => element && typeof element === "object");
   const gridSize = config?.grid?.size;
 
   if (!config || typeof config !== "object") {
@@ -233,6 +234,10 @@ export function validateMapConfig(config, {
   }
 
   elements.forEach((element, index) => {
+    if (!element || typeof element !== "object") {
+      errors.push("element " + index + " must be an object");
+      return;
+    }
     if (!allowedTypes.has(element.type)) {
       errors.push("element " + index + " has unknown type " + element.type);
     }
@@ -252,7 +257,7 @@ export function validateMapConfig(config, {
   });
 
   const checkedObstacles = normalizedObstacles ??
-    normalizedObstacleRects(elements.filter((element) => element.type === "obstacle"));
+    normalizedObstacleRects(objectElements.filter((element) => element.type === "obstacle"));
   const checkedSpawn = spawn ?? {
     x: world.width / 2,
     y: world.height / 2,
