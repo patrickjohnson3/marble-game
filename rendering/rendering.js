@@ -50,6 +50,31 @@ function coveredByAny(rects, left, top, right, bottom) {
   );
 }
 
+function rectsTouchOrOverlap(a, b) {
+  return a.x <= b.x + b.w &&
+    b.x <= a.x + a.w &&
+    a.y <= b.y + b.h &&
+    b.y <= a.y + a.h;
+}
+
+function connectedRectGroups(rects) {
+  const remaining = [...rects];
+  const groups = [];
+
+  while (remaining.length > 0) {
+    const group = [remaining.shift()];
+    for (let index = 0; index < group.length; index++) {
+      for (let candidate = remaining.length - 1; candidate >= 0; candidate--) {
+        if (!rectsTouchOrOverlap(group[index], remaining[candidate])) continue;
+        group.push(remaining.splice(candidate, 1)[0]);
+      }
+    }
+    groups.push(group);
+  }
+
+  return groups;
+}
+
 function mergedRectPaths(rects) {
   const xs = [...new Set(rects.flatMap((rect) => [rect.x, rect.x + rect.w]))].sort((a, b) => a - b);
   const ys = [...new Set(rects.flatMap((rect) => [rect.y, rect.y + rect.h]))].sort((a, b) => a - b);
@@ -161,19 +186,23 @@ export function renderObstacleWalls(container, obstacles) {
   }
 
   const svg = createWallSvg("obstacleSvg", obstacles);
-  const fill = addLinearGradient(svg, [
-    ["0%", "#ffd166"],
-    ["46%", "#ff9f66"],
-    ["100%", "#ef476f"]
-  ]);
+  const obstacleGroups = connectedRectGroups(obstacles);
+  obstacleGroups.forEach((group) => {
+    const fill = addLinearGradient(svg, [
+      ["0%", "#ffd166"],
+      ["46%", "#ff9f66"],
+      ["100%", "#ef476f"]
+    ]);
+    const fillPath = svgEl("path");
+    fillPath.classList.add("obstacleWallFill");
+    fillPath.setAttribute("d", mergedRectPaths(group).fill);
+    fillPath.setAttribute("fill", fill);
+    svg.append(fillPath);
+  });
   const paths = mergedRectPaths(obstacles);
-  const fillPath = svgEl("path");
-  fillPath.classList.add("obstacleWallFill");
-  fillPath.setAttribute("d", paths.fill);
-  fillPath.setAttribute("fill", fill);
   const outlinePath = svgEl("path");
   outlinePath.classList.add("obstacleWallOutline");
   outlinePath.setAttribute("d", paths.outline);
-  svg.append(fillPath, outlinePath);
+  svg.append(outlinePath);
   container.replaceChildren(svg);
 }

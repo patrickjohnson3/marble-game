@@ -206,7 +206,7 @@ function testCurrentMapJoinedWallsSurviveNormalization() {
 
 testCurrentMapJoinedWallsSurviveNormalization();
 
-function renderCurrentMapObstacleOutline() {
+function renderCurrentMapObstacles() {
   const originalDocument = globalThis.document;
 
   globalThis.document = {
@@ -218,11 +218,7 @@ function renderCurrentMapObstacleOutline() {
   try {
     const container = new FakeElement();
     renderObstacleWalls(container, currentMapObstacles());
-    const svg = container.children[0];
-    const outline = svg.children.find((child) => child.classList.contains("obstacleWallOutline"));
-
-    assert.ok(outline, "current map obstacle outline should render");
-    return outline.attributes.d;
+    return container.children[0];
   } finally {
     if (originalDocument === undefined) {
       delete globalThis.document;
@@ -230,6 +226,14 @@ function renderCurrentMapObstacleOutline() {
       globalThis.document = originalDocument;
     }
   }
+}
+
+function renderCurrentMapObstacleOutline() {
+  const svg = renderCurrentMapObstacles();
+  const outline = svg.children.find((child) => child.classList.contains("obstacleWallOutline"));
+
+  assert.ok(outline, "current map obstacle outline should render");
+  return outline.attributes.d;
 }
 
 function testCurrentMapJoinedWallsDoNotRenderInternalSeams() {
@@ -250,5 +254,14 @@ function testCurrentMapJoinedWallsDoNotRenderInternalSeams() {
 }
 
 testCurrentMapJoinedWallsDoNotRenderInternalSeams();
+
+function testCurrentMapObstaclesUseGroupFills() {
+  const svg = renderCurrentMapObstacles();
+  const fillPaths = svg.children.filter((child) => child.classList.contains("obstacleWallFill"));
+
+  assert.equal(fillPaths.length > 1, true, "current map obstacle groups should render separate gradient fills");
+}
+
+testCurrentMapObstaclesUseGroupFills();
 
 console.log("Map tests passed.");
