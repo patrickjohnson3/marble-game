@@ -62,6 +62,21 @@ function testResolveSeededMapConfigCopiesSelectedElements() {
 
 testResolveSeededMapConfigCopiesSelectedElements();
 
+function testResolveSeededMapConfigAllowsValidationOfMissingVariantElements() {
+  const resolved = resolveSeededMapConfig({
+    seed: "bad-variant",
+    variants: [
+      { id: "bad-variant", goal: { x: 80, y: 80, r: 10, holdMs: 5000 } }
+    ],
+    world: { width: 100, height: 100 }
+  });
+
+  assert.equal(resolved.variantId, "bad-variant");
+  assert.ok(validateMapConfig(resolved).includes("elements must be an array"));
+}
+
+testResolveSeededMapConfigAllowsValidationOfMissingVariantElements();
+
 function testMapValidationRejectsBlockedSpawn() {
   const config = {
     world: { width: 100, height: 100 },

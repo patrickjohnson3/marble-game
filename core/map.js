@@ -49,13 +49,16 @@ export function selectSeededMapVariant(variants, seed) {
 
 function resolvedMapConfig(config, { seed, variant }) {
   if (!variant) return { ...config, seed };
+  const elements = Array.isArray(variant.elements) ?
+    variant.elements.map((element) => ({ ...element })) :
+    variant.elements;
 
   return {
     ...config,
     seed,
     variantId: variant.id,
     goal: { ...variant.goal },
-    elements: variant.elements.map((element) => ({ ...element }))
+    elements
   };
 }
 
