@@ -217,6 +217,11 @@ export function validateMapConfig(config, {
   const world = config?.world ?? {};
   const elements = Array.isArray(config?.elements) ? config.elements : [];
   const objectElements = elements.filter((element) => element && typeof element === "object");
+  const checkedObstaclesSource = normalizedObstacles ??
+    normalizedObstacleRects(objectElements.filter((element) => element.type === "obstacle"));
+  const checkedObstacles = Array.isArray(checkedObstaclesSource) ?
+    checkedObstaclesSource.filter((obstacle) => obstacle && typeof obstacle === "object") :
+    [];
   const gridSize = config?.grid?.size;
 
   if (!config || typeof config !== "object") {
@@ -268,21 +273,28 @@ export function validateMapConfig(config, {
     }
   });
 
-  const checkedObstacles = normalizedObstacles ??
-    normalizedObstacleRects(objectElements.filter((element) => element.type === "obstacle"));
+  if (normalizedObstacles !== undefined && !Array.isArray(normalizedObstacles)) {
+    errors.push("normalized obstacles must be an array");
+  }
   const checkedSpawn = spawn ?? {
     x: world.width / 2,
     y: world.height / 2,
     r: config?.marbleRadius ?? 29
   };
 
-  checkedObstacles.forEach((obstacle, index) => {
-    validateRect(obstacle, {
-      world,
-      label: "normalized obstacle " + index,
-      errors
+  if (Array.isArray(checkedObstaclesSource)) {
+    checkedObstaclesSource.forEach((obstacle, index) => {
+      if (!obstacle || typeof obstacle !== "object") {
+        errors.push("normalized obstacle " + index + " must be an object");
+        return;
+      }
+      validateRect(obstacle, {
+        world,
+        label: "normalized obstacle " + index,
+        errors
+      });
     });
-  });
+  }
 
   validateGoal(config?.goal, {
     world,
