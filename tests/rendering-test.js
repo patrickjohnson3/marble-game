@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   renderObstacleWalls,
+  renderRoughPatches,
   renderWalls,
   wallFrameGeometry
 } from "../rendering/rendering.js";
@@ -91,6 +92,17 @@ try {
   assert.equal(wallCanvas.context.calls.some((call) => call[0] === "clearRect"), true, "wall canvas should clear interior");
 
   const container = new FakeElement();
+  const roughPatchContainer = new FakeElement();
+
+  renderRoughPatches(roughPatchContainer, [{ x: 20, y: 30, w: 80, h: 60 }]);
+  const roughPatchCanvas = roughPatchContainer.children[0];
+  assert.equal(roughPatchCanvas.classList.contains("roughPatchCanvas"), true, "rough patches should render to canvas");
+  assert.equal(roughPatchCanvas.attributes["data-rough-patches"], "1");
+  assert.equal(
+    roughPatchCanvas.context.calls.some((call) => call[0] === "fillRect"),
+    true,
+    "rough patch canvas should draw grit"
+  );
 
   renderObstacleWalls(container, [
     { x: 0, y: 0, w: 10, h: 20 },

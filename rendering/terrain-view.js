@@ -6,7 +6,7 @@ export function createTerrainView({
   roughPatches,
   obstacles,
   renderObstacleWalls,
-  renderMapElements
+  renderRoughPatches: drawRoughPatches
 }) {
   let currentGoal = goal;
   let currentObstacles = obstacles;
@@ -17,7 +17,7 @@ export function createTerrainView({
   }
 
   function renderRoughPatches() {
-    renderMapElements(roughPatchesEl, "roughPatch", currentRoughPatches);
+    drawRoughPatches(roughPatchesEl, currentRoughPatches);
   }
 
   function renderGoal() {

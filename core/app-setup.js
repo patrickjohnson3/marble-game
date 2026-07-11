@@ -18,8 +18,8 @@ import {
 import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
 import {
-  renderMapElements,
   renderObstacleWalls,
+  renderRoughPatches,
   renderWalls
 } from "../rendering/rendering.js";
 import { createSensorController } from "../input/sensor-controller.js";
@@ -82,7 +82,7 @@ export function setupRenderers({
     roughPatches,
     obstacles,
     renderObstacleWalls,
-    renderMapElements
+    renderRoughPatches
   });
   const mapRenderer = createMapRenderer({
     worldEl,

@@ -1,15 +1,3 @@
-export function renderMapElements(container, className, elements) {
-  container.replaceChildren(...elements.map((element) => {
-    const el = document.createElement("div");
-    el.className = className;
-    el.style.left = element.x + "px";
-    el.style.top = element.y + "px";
-    el.style.width = element.w + "px";
-    el.style.height = element.h + "px";
-    return el;
-  }));
-}
-
 function rectPath(x, y, w, h) {
   return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
 }
@@ -252,6 +240,57 @@ function drawObstacleOutline(context, obstacles) {
   context.restore();
 }
 
+function patchDotOffset(x, y) {
+  return (Math.imul(Math.round(x), 31) + Math.imul(Math.round(y), 17)) % 5;
+}
+
+function drawRoundedRect(context, rect, radius) {
+  if (context.roundRect) {
+    context.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
+    return;
+  }
+  context.rect(rect.x, rect.y, rect.w, rect.h);
+}
+
+function drawRoughPatch(context, patch) {
+  const gradient = context.createLinearGradient(patch.x, patch.y, patch.x + patch.w, patch.y + patch.h);
+  const radius = 10;
+
+  gradient.addColorStop(0, "#8b8b84");
+  gradient.addColorStop(1, "#5c5c58");
+
+  context.save();
+  context.shadowColor = "rgba(0,0,0,.24)";
+  context.shadowBlur = 12;
+  context.shadowOffsetY = 6;
+  context.fillStyle = gradient;
+  context.beginPath();
+  drawRoundedRect(context, patch, radius);
+  context.fill();
+  context.restore();
+
+  context.save();
+  context.beginPath();
+  drawRoundedRect(context, patch, radius);
+  context.clip();
+  context.fillStyle = "rgba(238,238,234,.82)";
+  for (let y = patch.y + 6; y < patch.y + patch.h; y += 12) {
+    for (let x = patch.x + 6; x < patch.x + patch.w; x += 12) {
+      const offset = patchDotOffset(x, y);
+      context.fillRect(x + offset * 0.3, y - offset * 0.2, 2, 2);
+    }
+  }
+  context.restore();
+
+  context.save();
+  context.strokeStyle = "rgba(255,255,255,.13)";
+  context.lineWidth = 2;
+  context.beginPath();
+  drawRoundedRect(context, patch, radius);
+  context.stroke();
+  context.restore();
+}
+
 export function renderWalls(container, walls) {
   if (!Array.isArray(walls) || walls.length === 0) {
     container.replaceChildren();
@@ -265,6 +304,18 @@ export function renderWalls(container, walls) {
 
   const { canvas, context } = createWallCanvas("wallCanvas", walls);
   if (context) drawWallFrame(context, frame);
+  container.replaceChildren(canvas);
+}
+
+export function renderRoughPatches(container, roughPatches) {
+  if (!Array.isArray(roughPatches) || roughPatches.length === 0) {
+    container.replaceChildren();
+    return;
+  }
+
+  const { canvas, context } = createWallCanvas("roughPatchCanvas", roughPatches);
+  canvas.setAttribute("data-rough-patches", String(roughPatches.length));
+  if (context) roughPatches.forEach((patch) => drawRoughPatch(context, patch));
   container.replaceChildren(canvas);
 }
 

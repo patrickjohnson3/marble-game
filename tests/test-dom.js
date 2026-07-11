@@ -100,6 +100,10 @@ export class FakeCanvasContext {
     this.calls.push(["clearRect", x, y, w, h]);
   }
 
+  clip() {
+    this.calls.push(["clip"]);
+  }
+
   fill() {
     this.calls.push(["fill"]);
   }
@@ -126,6 +130,10 @@ export class FakeCanvasContext {
 
   save() {
     this.calls.push(["save"]);
+  }
+
+  roundRect(x, y, w, h, radius) {
+    this.calls.push(["roundRect", x, y, w, h, radius]);
   }
 
   setTransform(a, b, c, d, e, f) {
