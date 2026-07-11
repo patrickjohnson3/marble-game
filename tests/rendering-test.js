@@ -79,6 +79,17 @@ try {
   renderWalls(wallsContainer, [{ x: 0, y: 0, w: 100, h: 10 }]);
   assert.deepEqual(wallsContainer.children, [], "invalid wall frame should clear container");
 
+  renderWalls(wallsContainer, [
+    { x: -10, y: -10, w: 120, h: 10 },
+    { x: -10, y: 100, w: 120, h: 10 },
+    { x: -10, y: 0, w: 10, h: 100 },
+    { x: 100, y: 0, w: 10, h: 100 }
+  ]);
+  const wallCanvas = wallsContainer.children[0];
+  assert.equal(wallCanvas.classList.contains("wallCanvas"), true, "wall frame should render to canvas");
+  assert.equal(wallCanvas.context.calls.some((call) => call[0] === "fillRect"), true, "wall canvas should draw fill");
+  assert.equal(wallCanvas.context.calls.some((call) => call[0] === "clearRect"), true, "wall canvas should clear interior");
+
   const container = new FakeElement();
 
   renderObstacleWalls(container, [

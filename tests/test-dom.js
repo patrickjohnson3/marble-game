@@ -96,8 +96,16 @@ export class FakeCanvasContext {
     return this;
   }
 
+  clearRect(x, y, w, h) {
+    this.calls.push(["clearRect", x, y, w, h]);
+  }
+
   fill() {
     this.calls.push(["fill"]);
+  }
+
+  fillRect(x, y, w, h) {
+    this.calls.push(["fillRect", x, y, w, h]);
   }
 
   lineTo(x, y) {
@@ -126,6 +134,10 @@ export class FakeCanvasContext {
 
   stroke() {
     this.calls.push(["stroke"]);
+  }
+
+  strokeRect(x, y, w, h) {
+    this.calls.push(["strokeRect", x, y, w, h]);
   }
 }
 

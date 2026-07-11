@@ -10,33 +10,6 @@ export function renderMapElements(container, className, elements) {
   }));
 }
 
-function svgEl(tag) {
-  return document.createElementNS("http://www.w3.org/2000/svg", tag);
-}
-
-let gradientId = 0;
-
-function addLinearGradient(svg, colors) {
-  gradientId++;
-  const id = "wallGradient" + gradientId;
-  const defs = svgEl("defs");
-  const gradient = svgEl("linearGradient");
-  gradient.setAttribute("id", id);
-  gradient.setAttribute("x1", "0");
-  gradient.setAttribute("y1", "0");
-  gradient.setAttribute("x2", "1");
-  gradient.setAttribute("y2", "1");
-  colors.forEach(([offset, color]) => {
-    const stop = svgEl("stop");
-    stop.setAttribute("offset", offset);
-    stop.setAttribute("stop-color", color);
-    gradient.append(stop);
-  });
-  defs.append(gradient);
-  svg.append(defs);
-  return "url(#" + id + ")";
-}
-
 function rectPath(x, y, w, h) {
   return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
 }
@@ -147,14 +120,6 @@ function mergedRectGeometry(rects) {
   return { fill, fillRects, outline, outlineSegments };
 }
 
-function wallFramePath(walls) {
-  const frame = wallFrameGeometry(walls);
-  if (!frame) return "";
-
-  return rectPath(frame.left, frame.top, frame.right - frame.left, frame.bottom - frame.top) +
-    rectPath(frame.innerLeft, frame.innerTop, frame.innerRight - frame.innerLeft, frame.innerBottom - frame.innerTop);
-}
-
 export function wallFrameGeometry(walls) {
   if (!Array.isArray(walls) || walls.length === 0) return null;
 
@@ -189,18 +154,6 @@ export function wallFrameGeometry(walls) {
   };
 }
 
-function createWallSvg(className, walls) {
-  const { bottom, left, right, top } = rectBounds(walls);
-  const svg = svgEl("svg");
-  svg.classList.add(className);
-  svg.setAttribute("viewBox", left + " " + top + " " + (right - left) + " " + (bottom - top));
-  svg.style.left = left + "px";
-  svg.style.top = top + "px";
-  svg.style.width = (right - left) + "px";
-  svg.style.height = (bottom - top) + "px";
-  return svg;
-}
-
 function createWallCanvas(className, rects) {
   const { height, left, top, width } = rectBounds(rects);
   const canvas = document.createElement("canvas");
@@ -221,6 +174,42 @@ function createWallCanvas(className, rects) {
   }
 
   return { canvas, context };
+}
+
+function drawWallFrame(context, frame) {
+  const width = frame.right - frame.left;
+  const height = frame.bottom - frame.top;
+  const fill = context.createLinearGradient(frame.left, frame.top, frame.right, frame.bottom);
+
+  fill.addColorStop(0, "#f2f6fd");
+  fill.addColorStop(0.48, "#d8e2f0");
+  fill.addColorStop(1, "#a9b7cc");
+
+  context.save();
+  context.shadowColor = "rgba(0,0,0,.44)";
+  context.shadowBlur = 12;
+  context.shadowOffsetY = 8;
+  context.fillStyle = fill;
+  context.fillRect(frame.left, frame.top, width, height);
+  context.clearRect(
+    frame.innerLeft,
+    frame.innerTop,
+    frame.innerRight - frame.innerLeft,
+    frame.innerBottom - frame.innerTop
+  );
+  context.restore();
+
+  context.save();
+  context.strokeStyle = "rgba(255,255,255,.67)";
+  context.lineWidth = 3;
+  context.strokeRect(frame.left, frame.top, width, height);
+  context.strokeRect(
+    frame.innerLeft,
+    frame.innerTop,
+    frame.innerRight - frame.innerLeft,
+    frame.innerBottom - frame.innerTop
+  );
+  context.restore();
 }
 
 function drawFillRects(context, rects) {
@@ -268,25 +257,15 @@ export function renderWalls(container, walls) {
     container.replaceChildren();
     return;
   }
-  const framePath = wallFramePath(walls);
-  if (!framePath) {
+  const frame = wallFrameGeometry(walls);
+  if (!frame) {
     container.replaceChildren();
     return;
   }
 
-  const svg = createWallSvg("wallSvg", walls);
-  const fill = addLinearGradient(svg, [
-    ["0%", "#f2f6fd"],
-    ["48%", "#d8e2f0"],
-    ["100%", "#a9b7cc"]
-  ]);
-  const frame = svgEl("path");
-  frame.classList.add("wallFrame");
-  frame.setAttribute("d", framePath);
-  frame.setAttribute("fill-rule", "evenodd");
-  frame.setAttribute("fill", fill);
-  svg.append(frame);
-  container.replaceChildren(svg);
+  const { canvas, context } = createWallCanvas("wallCanvas", walls);
+  if (context) drawWallFrame(context, frame);
+  container.replaceChildren(canvas);
 }
 
 export function renderObstacleWalls(container, obstacles) {

@@ -25,23 +25,11 @@ html,body{
   background-size:42px 42px,42px 42px,100% 100%;
   will-change:transform;
 }
-.wallSvg,.obstacleCanvas{
+.wallCanvas,.obstacleCanvas{
   position:absolute;overflow:visible;pointer-events:none;
-}
-.wallFrame{
-  filter:
-    drop-shadow(0 8px 12px #0007)
-    drop-shadow(0 0 2px #ffffff55);
-  stroke-linejoin:miter;stroke-linecap:square;
-}
-.wallFrame{
-  stroke:#ffffffaa;stroke-width:3px;
 }
 .obstacleCanvas{
   opacity:0;transition:opacity .45s ease;
-}
-.wallFrame{
-  shape-rendering:geometricPrecision;
 }
 .roughPatch{
   position:absolute;box-sizing:border-box;border-radius:10px;opacity:0;
