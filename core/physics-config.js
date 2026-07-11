@@ -8,7 +8,7 @@ export const physicsConfig = {
   maxSpeed: 14,
   keyboardTilt: 18,
   maxStepDistance: 10,
-  roughPatchFriction: 0.95,
+  roughPatchFriction: 0.9,
   scrapeHapticScale: 0.08,
   settleSpeed: 0.035,
   settleTilt: 0.8,
