@@ -111,6 +111,7 @@ export function createLifecycleController({
 
     haptics.impact.lastPulse = 0;
     haptics.surface.lastPulse = 0;
+    haptics.goal.lastHoldPulse = 0;
     trailRenderer.clear();
     effectsRenderer.clear();
     frameLoop.requestRender();

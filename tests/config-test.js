@@ -128,6 +128,14 @@ function testPhysicsAndSettingsRanges() {
 function testHapticAndVisualRanges() {
   assertPositiveNumber(hapticTuning.impactCooldownMs, "impact cooldown");
   assertPositiveNumber(hapticTuning.surfaceCooldownMs, "surface cooldown");
+  assertPositiveNumber(hapticTuning.goalEnterDurationMs, "goal enter haptic duration");
+  assertPositiveNumber(hapticTuning.goalHoldDurationMs, "goal hold haptic duration");
+  assertPositiveNumber(hapticTuning.goalHoldCooldownMs, "goal hold haptic cooldown");
+  assert.deepEqual(
+    hapticTuning.goalCompletePattern.every((duration) => Number.isFinite(duration) && duration > 0),
+    true,
+    "goal complete haptic pattern"
+  );
   assertPositiveNumber(visualConfig.trail.durationMs, "trail duration");
   assertPositiveNumber(visualConfig.trail.minDistance, "trail min distance");
   assertPositiveNumber(visualConfig.trail.minIntervalMs, "trail min interval");

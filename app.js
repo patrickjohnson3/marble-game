@@ -248,6 +248,7 @@ const mapProgression = createMapProgression({
   ui,
   requestRender
 });
+let goalHapticActive = false;
 
 function marbleInsideGoal() {
   return intro.released && distance(marble, mapState.goal) + marble.r <= mapState.goal.r;
@@ -262,15 +263,24 @@ function updateGoalHold(dt) {
       terrainView.updateGoalProgress(0);
       ui.setHint(copy.hints.mapOpen);
     }
+    goalHapticActive = false;
     return;
+  }
+
+  if (!goalHapticActive) {
+    goalHapticActive = true;
+    hapticFeedback.pulseGoal("enter");
   }
 
   const progress = mapRuntime.addGoalHold(dt * timing.targetFrameMs);
   terrainView.updateGoalProgress(progress);
   ui.setHint("hold goal " + Math.ceil((mapState.goal.holdMs - mapState.goalHoldMs) / 1000) + "s");
+  hapticFeedback.pulseGoal("hold");
 
   if (mapState.goalHoldMs >= mapState.goal.holdMs) {
     mapRuntime.completeGoal();
+    hapticFeedback.pulseGoal("complete");
+    goalHapticActive = false;
     if (!mapProgression.advanceToNextMap()) {
       mapRuntime.clearGoalCompleted();
     }

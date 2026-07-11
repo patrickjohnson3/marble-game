@@ -62,6 +62,10 @@ export function createGameState({ world, resolvedMapConfig, timing, hapticTuning
         cooldownMs: hapticTuning.surfaceCooldownMs,
         lastPulse: 0,
         minSpeed: hapticTuning.surfaceMinSpeed
+      },
+      goal: {
+        holdCooldownMs: hapticTuning.goalHoldCooldownMs,
+        lastHoldPulse: 0
       }
     },
     calibration: {

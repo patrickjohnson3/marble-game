@@ -8,5 +8,9 @@ export const hapticTuning = {
   surfaceMinSpeed: 1.2,
   surfaceScale: 1.4,
   surfaceMinDurationMs: 5,
-  surfaceMaxDurationMs: 16
+  surfaceMaxDurationMs: 16,
+  goalEnterDurationMs: 12,
+  goalHoldDurationMs: 6,
+  goalHoldCooldownMs: 900,
+  goalCompletePattern: [18, 40, 28]
 };
