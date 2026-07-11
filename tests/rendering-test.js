@@ -5,6 +5,7 @@ import {
   renderWalls,
   wallFrameGeometry
 } from "../rendering/rendering.js";
+import { createTerrainView } from "../rendering/terrain-view.js";
 import { createUi } from "../rendering/ui.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
@@ -63,6 +64,35 @@ function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
 }
 
 testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled();
+
+function testGoalProgressUsesRadialFillRadius() {
+  const goalEl = new FakeElement();
+  const terrainView = createTerrainView({
+    roughPatchesEl: new FakeElement(),
+    obstaclesEl: new FakeElement(),
+    goalEl,
+    goal: { x: 100, y: 120, r: 50 },
+    roughPatches: [],
+    obstacles: [],
+    renderObstacleWalls() {},
+    renderRoughPatches() {}
+  });
+
+  terrainView.updateGoalProgress(.5);
+
+  assert.equal(goalEl.classList.contains("active"), true);
+  assert.equal(goalEl.style.properties["--goal-fill-radius"], "35.4%");
+  assert.equal(goalEl.style.properties["--goal-progress"], undefined);
+
+  terrainView.updateGoalProgress(2);
+  assert.equal(goalEl.style.properties["--goal-fill-radius"], "70.8%");
+
+  terrainView.updateGoalProgress(-1);
+  assert.equal(goalEl.classList.contains("active"), false);
+  assert.equal(goalEl.style.properties["--goal-fill-radius"], "0.0%");
+}
+
+testGoalProgressUsesRadialFillRadius();
 
 const originalDocument = globalThis.document;
 

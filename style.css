@@ -40,7 +40,7 @@ html,body{
   position:absolute;box-sizing:border-box;border-radius:50%;opacity:0;
   border:3px solid #88f7c5cc;
   background:
-    conic-gradient(#8fffd0dd var(--goal-progress,0%),transparent 0),
+    radial-gradient(circle,#8fffd0dd 0 var(--goal-fill-radius,0%),transparent calc(var(--goal-fill-radius,0%) + .1%)),
     radial-gradient(circle,#88f7c512 0 42%,#88f7c506 43% 66%,transparent 67%);
   box-shadow:inset 0 0 0 2px #ffffff26;
   pointer-events:none;

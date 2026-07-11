@@ -1,3 +1,5 @@
+const RADIAL_FILL_EDGE_PERCENT = 70.8;
+
 export function createTerrainView({
   roughPatchesEl,
   obstaclesEl,
@@ -42,8 +44,9 @@ export function createTerrainView({
   }
 
   function updateGoalProgress(progress) {
-    goalEl.classList.toggle("active", progress > 0);
-    goalEl.style.setProperty("--goal-progress", Math.max(0, Math.min(progress, 1) * 100).toFixed(1) + "%");
+    const clampedProgress = Math.max(0, Math.min(progress, 1));
+    goalEl.classList.toggle("active", clampedProgress > 0);
+    goalEl.style.setProperty("--goal-fill-radius", (clampedProgress * RADIAL_FILL_EDGE_PERCENT).toFixed(1) + "%");
   }
 
   return {
