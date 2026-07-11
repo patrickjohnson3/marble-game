@@ -25,8 +25,10 @@ export const domIds = {
   hapticsSetting: "hapticsSetting",
   trailSetting: "trailSetting",
   fullscreenSetting: "fullscreenSetting",
+  fpsSetting: "fpsSetting",
   cameraModeSetting: "cameraModeSetting",
   hint: "hint",
+  fpsCounter: "fpsCounter",
   debug: "debug"
 };
 

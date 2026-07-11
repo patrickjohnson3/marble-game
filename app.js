@@ -80,6 +80,7 @@ const {
   hapticsSetting,
   trailSetting,
   fullscreenSetting,
+  fpsCounter,
   hint,
   debug
 } = els;
@@ -120,7 +121,15 @@ const persistedSettings = loadSettings({
   clamp
 });
 const settings = createRuntimeSettings(persistedSettings);
-const ui = createUi({ hint, debug, settingsOverlay, debugLines, state });
+const ui = createUi({
+  hint,
+  fpsCounter,
+  debug,
+  settings,
+  settingsOverlay,
+  debugLines,
+  state
+});
 const frameLoop = createFrameLoop();
 const viewport = createViewport(windowRef);
 

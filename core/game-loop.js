@@ -60,6 +60,7 @@ export function createGameLoop({
 
     marbleView.render();
     if (!game.paused) trailRenderer.update(currentTime);
+    ui.updateFps(currentTime);
     ui.updateDebugPanel();
     frameLoop.markRendered();
 

@@ -29,6 +29,7 @@ const defaults = {
   trailEnabled: false,
   trailDefaultVersion: 2,
   fullscreenEnabled: true,
+  fpsEnabled: false,
   cameraMode: "follow"
 };
 const controls = {
@@ -134,11 +135,27 @@ function testCameraModeFallsBackForInvalidChoice() {
   assert.equal(settings.cameraMode, "follow");
 }
 
+function testFpsSettingPersistsValidChoice() {
+  const settings = loadSettings({
+    storage: storageWith(JSON.stringify({
+      ...defaults,
+      fpsEnabled: true
+    })),
+    storageKey: "settings",
+    defaults,
+    controls,
+    clamp
+  });
+
+  assert.equal(settings.fpsEnabled, true);
+}
+
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
 testRuntimeSettingsAreIndependentFromPersistedSettings();
 testUnavailableStorageFallsBackToDefaults();
 testCameraModePersistsValidChoice();
 testCameraModeFallsBackForInvalidChoice();
+testFpsSettingPersistsValidChoice();
 
 console.log("Settings store tests passed.");

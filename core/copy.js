@@ -31,6 +31,7 @@ export const copy = {
       hapticsSetting: "haptics",
       trailSetting: "trail",
       fullscreenSetting: "fullscreen",
+      fpsSetting: "fps",
       cameraModeSetting: "camera"
     },
     cameraModes: {

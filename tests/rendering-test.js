@@ -4,6 +4,7 @@ import {
   renderWalls,
   wallFrameGeometry
 } from "../rendering/rendering.js";
+import { createUi } from "../rendering/ui.js";
 import { FakeElement } from "./test-dom.js";
 
 function testWallFrameGeometryKeepsPositiveInterior() {
@@ -32,6 +33,35 @@ function testWallFrameGeometryRejectsInvalidWalls() {
 }
 
 testWallFrameGeometryRejectsInvalidWalls();
+
+function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
+  const hint = new FakeElement();
+  const fpsCounter = new FakeElement();
+  const debug = new FakeElement();
+  const settingsOverlay = new FakeElement();
+  const settings = { fpsEnabled: false };
+  const ui = createUi({
+    hint,
+    fpsCounter,
+    debug,
+    settings,
+    settingsOverlay,
+    debugLines: () => [],
+    state: {}
+  });
+
+  ui.updateFps(1000);
+  assert.equal(fpsCounter.hidden, true);
+
+  settings.fpsEnabled = true;
+  ui.updateFps(1000);
+  ui.updateFps(1500);
+
+  assert.equal(fpsCounter.hidden, false);
+  assert.equal(fpsCounter.textContent, "fps 2");
+}
+
+testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled();
 
 const originalDocument = globalThis.document;
 

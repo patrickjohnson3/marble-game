@@ -10,7 +10,7 @@
   #settingsOverlay,#messageOverlay{display:none}
 </style>
 <script>
-  const assetVersion = "20260710.095653";
+  const assetVersion = "20260711.004522";
   const runtimeModuleScripts = [
     "boot.js",
     "core/app-config.js",
@@ -110,6 +110,7 @@
 
 <div id="panel">
   <div id="hint"></div>
+  <div id="fpsCounter" hidden></div>
 </div>
 
 <button id="settingsToggle" aria-label="" title="">
@@ -153,6 +154,10 @@
     <label class="settingRow checkboxRow" for="fullscreenSetting">
       <span></span>
       <input id="fullscreenSetting" type="checkbox">
+    </label>
+    <label class="settingRow checkboxRow" for="fpsSetting">
+      <span></span>
+      <input id="fpsSetting" type="checkbox">
     </label>
     <label class="settingRow" for="cameraModeSetting">
       <span></span>

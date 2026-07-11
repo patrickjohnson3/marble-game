@@ -163,8 +163,15 @@ html,body{
   top:var(--hud-top);
   display:grid;gap:8px;pointer-events:none;
 }
-#hint,#debug{border-radius:14px;background:#0005;padding:10px 12px;backdrop-filter:blur(8px)}
+#hint,#fpsCounter,#debug{border-radius:14px;background:#0005;padding:10px 12px;backdrop-filter:blur(8px)}
 #hint{font-size:15px;text-align:center}
+#fpsCounter{
+  justify-self:start;
+  font:12px/1 ui-monospace,Menlo,Consolas,monospace;
+  font-weight:800;
+  letter-spacing:0;
+  opacity:.82;
+}
 #debug{font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;opacity:.86;white-space:pre-wrap}
 #settingsToggle{
   position:fixed;right:calc(12px + var(--safe-right));top:var(--hud-top);width:44px;height:44px;

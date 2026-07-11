@@ -24,6 +24,7 @@ export function bindSettingsPanel({
     hapticsSetting,
     trailSetting,
     fullscreenSetting,
+    fpsSetting,
     cameraModeSetting
   } = els;
 
@@ -35,6 +36,7 @@ export function bindSettingsPanel({
   hapticsSetting.checked = settings.hapticsEnabled;
   trailSetting.checked = settings.trailEnabled;
   fullscreenSetting.checked = settings.fullscreenEnabled;
+  fpsSetting.checked = settings.fpsEnabled;
   cameraModeSetting.value = settings.cameraMode;
 
   settingsToggle.addEventListener("click", onOpenSettings);
@@ -73,6 +75,11 @@ export function bindSettingsPanel({
     settings.fullscreenEnabled = fullscreenSetting.checked;
     saveSettings();
     applyFullscreenSetting();
+  });
+  fpsSetting.addEventListener("change", () => {
+    settings.fpsEnabled = fpsSetting.checked;
+    saveSettings();
+    requestRender();
   });
   cameraModeSetting.addEventListener("change", () => {
     if (controls.cameraModes.includes(cameraModeSetting.value)) {

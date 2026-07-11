@@ -32,8 +32,10 @@ function createPanelHarness() {
     hapticsEnabled: true,
     trailEnabled: false,
     fullscreenEnabled: true,
+    fpsEnabled: false,
     cameraMode: "follow"
   };
+  const fpsSetting = fakeControl();
 
   bindSettingsPanel({
     els: {
@@ -48,6 +50,7 @@ function createPanelHarness() {
       hapticsSetting: fakeControl(),
       trailSetting: fakeControl(),
       fullscreenSetting: fakeControl(),
+      fpsSetting,
       cameraModeSetting
     },
     settings,
@@ -80,6 +83,7 @@ function createPanelHarness() {
   return {
     cameraModeSetting,
     counts: () => ({ applyCount, saveCount, renderCount }),
+    fpsSetting,
     settings
   };
 }
@@ -107,5 +111,17 @@ function testInvalidCameraModeChangeFallsBack() {
 
 testValidCameraModeChangePersists();
 testInvalidCameraModeChangeFallsBack();
+
+function testFpsTogglePersistsAndRenders() {
+  const { counts, fpsSetting, settings } = createPanelHarness();
+
+  fpsSetting.checked = true;
+  fpsSetting.listeners.change();
+
+  assert.equal(settings.fpsEnabled, true);
+  assert.deepEqual(counts(), { applyCount: 0, saveCount: 1, renderCount: 1 });
+}
+
+testFpsTogglePersistsAndRenders();
 
 console.log("Settings panel tests passed.");
