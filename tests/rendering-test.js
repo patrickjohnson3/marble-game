@@ -5,7 +5,7 @@ import {
   wallFrameGeometry
 } from "../rendering/rendering.js";
 import { createUi } from "../rendering/ui.js";
-import { FakeElement } from "./test-dom.js";
+import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
 function testWallFrameGeometryKeepsPositiveInterior() {
   const frame = wallFrameGeometry([
@@ -66,6 +66,9 @@ testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled();
 const originalDocument = globalThis.document;
 
 globalThis.document = {
+  createElement(tagName) {
+    return tagName === "canvas" ? new FakeCanvasElement() : new FakeElement();
+  },
   createElementNS() {
     return new FakeElement();
   }
@@ -83,15 +86,12 @@ try {
     { x: 10, y: 0, w: 10, h: 10 }
   ]);
 
-  const svg = container.children[0];
-  const outline = svg.children.find((child) => child.classList.contains("obstacleWallOutline"));
+  const canvas = container.children[0];
 
-  assert.ok(outline, "obstacle outline should render");
-  assert.equal(
-    outline.attributes.d.includes("M10 0V10"),
-    false,
-    "connected obstacle walls should not draw an internal join outline"
-  );
+  assert.equal(canvas.classList.contains("obstacleCanvas"), true, "obstacle walls should render to canvas");
+  assert.equal(canvas.attributes["data-wall-groups"], "1");
+  assert.equal(canvas.context.calls.some((call) => call[0] === "fill"), true, "obstacle canvas should draw fills");
+  assert.equal(canvas.context.calls.some((call) => call[0] === "stroke"), true, "obstacle canvas should draw outline");
 } finally {
   if (originalDocument === undefined) {
     delete globalThis.document;

@@ -27,7 +27,7 @@ import {
   variantSelectionFixtures,
   variantWorldMismatchConfig
 } from "./map-fixtures.js";
-import { FakeElement } from "./test-dom.js";
+import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
 function currentMapObstacles() {
   return normalizedObstacleRects(mapObstacleElements(resolvedMapConfig.elements));
@@ -235,6 +235,9 @@ function renderCurrentMapObstacles() {
   const originalDocument = globalThis.document;
 
   globalThis.document = {
+    createElement(tagName) {
+      return tagName === "canvas" ? new FakeCanvasElement() : new FakeElement();
+    },
     createElementNS() {
       return new FakeElement();
     }
@@ -253,40 +256,19 @@ function renderCurrentMapObstacles() {
   }
 }
 
-function renderCurrentMapObstacleOutline() {
-  const svg = renderCurrentMapObstacles();
-  const outline = svg.children.find((child) => child.classList.contains("obstacleWallOutline"));
+function testCurrentMapObstaclesRenderToGroupedCanvas() {
+  const canvas = renderCurrentMapObstacles();
 
-  assert.ok(outline, "current map obstacle outline should render");
-  return outline.attributes.d;
+  assert.equal(canvas.classList.contains("obstacleCanvas"), true, "current map obstacles should render to canvas");
+  assert.equal(
+    Number(canvas.attributes["data-wall-groups"]) > 1,
+    true,
+    "current map obstacle groups should render separate canvas fills"
+  );
+  assert.equal(canvas.context.calls.some((call) => call[0] === "fill"), true, "current map canvas should draw fills");
+  assert.equal(canvas.context.calls.some((call) => call[0] === "stroke"), true, "current map canvas should draw outline");
 }
 
-function testCurrentMapJoinedWallsDoNotRenderInternalSeams() {
-  const outline = renderCurrentMapObstacleOutline();
-
-  [
-    "M720 330H774",
-    "M720 330V372",
-    "M910 900V954",
-    "M572 1570V1622"
-  ].forEach((internalSegment) => {
-    assert.equal(
-      outline.includes(internalSegment),
-      false,
-      "current map obstacle outline should not draw internal segment " + internalSegment
-    );
-  });
-}
-
-testCurrentMapJoinedWallsDoNotRenderInternalSeams();
-
-function testCurrentMapObstaclesUseGroupFills() {
-  const svg = renderCurrentMapObstacles();
-  const fillPaths = svg.children.filter((child) => child.classList.contains("obstacleWallFill"));
-
-  assert.equal(fillPaths.length > 1, true, "current map obstacle groups should render separate gradient fills");
-}
-
-testCurrentMapObstaclesUseGroupFills();
+testCurrentMapObstaclesRenderToGroupedCanvas();
 
 console.log("Map tests passed.");

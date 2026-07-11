@@ -78,6 +78,70 @@ export class FakeElement {
   }
 }
 
+export class FakeCanvasContext {
+  constructor() {
+    this.calls = [];
+  }
+
+  addColorStop(offset, color) {
+    this.calls.push(["addColorStop", offset, color]);
+  }
+
+  beginPath() {
+    this.calls.push(["beginPath"]);
+  }
+
+  createLinearGradient(x1, y1, x2, y2) {
+    this.calls.push(["createLinearGradient", x1, y1, x2, y2]);
+    return this;
+  }
+
+  fill() {
+    this.calls.push(["fill"]);
+  }
+
+  lineTo(x, y) {
+    this.calls.push(["lineTo", x, y]);
+  }
+
+  moveTo(x, y) {
+    this.calls.push(["moveTo", x, y]);
+  }
+
+  rect(x, y, w, h) {
+    this.calls.push(["rect", x, y, w, h]);
+  }
+
+  restore() {
+    this.calls.push(["restore"]);
+  }
+
+  save() {
+    this.calls.push(["save"]);
+  }
+
+  setTransform(a, b, c, d, e, f) {
+    this.calls.push(["setTransform", a, b, c, d, e, f]);
+  }
+
+  stroke() {
+    this.calls.push(["stroke"]);
+  }
+}
+
+export class FakeCanvasElement extends FakeElement {
+  constructor(id = "") {
+    super(id);
+    this.context = new FakeCanvasContext();
+    this.height = 0;
+    this.width = 0;
+  }
+
+  getContext(type) {
+    return type === "2d" ? this.context : null;
+  }
+}
+
 class FakeSelectElement extends FakeElement {
   constructor(id, optionValues) {
     super(id);
@@ -120,7 +184,8 @@ export function createFakeDocument() {
     title: "",
     visibilityState: "visible",
     addEventListener() {},
-    createElement() {
+    createElement(tagName = "") {
+      if (tagName === "canvas") return new FakeCanvasElement();
       return new FakeElement();
     },
     createElementNS() {

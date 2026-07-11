@@ -41,6 +41,22 @@ function rectPath(x, y, w, h) {
   return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
 }
 
+function rectBounds(rects) {
+  const left = Math.min(...rects.map((rect) => rect.x));
+  const top = Math.min(...rects.map((rect) => rect.y));
+  const right = Math.max(...rects.map((rect) => rect.x + rect.w));
+  const bottom = Math.max(...rects.map((rect) => rect.y + rect.h));
+
+  return {
+    bottom,
+    left,
+    right,
+    top,
+    height: bottom - top,
+    width: right - left
+  };
+}
+
 function coveredByAny(rects, left, top, right, bottom) {
   return rects.some((rect) =>
     left >= rect.x &&
@@ -75,10 +91,12 @@ function connectedRectGroups(rects) {
   return groups;
 }
 
-function mergedRectPaths(rects) {
+function mergedRectGeometry(rects) {
   const xs = [...new Set(rects.flatMap((rect) => [rect.x, rect.x + rect.w]))].sort((a, b) => a - b);
   const ys = [...new Set(rects.flatMap((rect) => [rect.y, rect.y + rect.h]))].sort((a, b) => a - b);
   const covered = [];
+  const fillRects = [];
+  const outlineSegments = [];
   let fill = "";
   let outline = "";
 
@@ -87,7 +105,14 @@ function mergedRectPaths(rects) {
     for (let x = 0; x < xs.length - 1; x++) {
       covered[y][x] = coveredByAny(rects, xs[x], ys[y], xs[x + 1], ys[y + 1]);
       if (covered[y][x]) {
-        fill += rectPath(xs[x], ys[y], xs[x + 1] - xs[x], ys[y + 1] - ys[y]);
+        const rect = {
+          x: xs[x],
+          y: ys[y],
+          w: xs[x + 1] - xs[x],
+          h: ys[y + 1] - ys[y]
+        };
+        fillRects.push(rect);
+        fill += rectPath(rect.x, rect.y, rect.w, rect.h);
       }
     }
   }
@@ -100,14 +125,26 @@ function mergedRectPaths(rects) {
       const right = xs[x + 1];
       const top = ys[y];
       const bottom = ys[y + 1];
-      if (!covered[y - 1]?.[x]) outline += "M" + left + " " + top + "H" + right;
-      if (!covered[y + 1]?.[x]) outline += "M" + left + " " + bottom + "H" + right;
-      if (!covered[y]?.[x - 1]) outline += "M" + left + " " + top + "V" + bottom;
-      if (!covered[y]?.[x + 1]) outline += "M" + right + " " + top + "V" + bottom;
+      if (!covered[y - 1]?.[x]) {
+        outlineSegments.push({ x1: left, y1: top, x2: right, y2: top });
+        outline += "M" + left + " " + top + "H" + right;
+      }
+      if (!covered[y + 1]?.[x]) {
+        outlineSegments.push({ x1: left, y1: bottom, x2: right, y2: bottom });
+        outline += "M" + left + " " + bottom + "H" + right;
+      }
+      if (!covered[y]?.[x - 1]) {
+        outlineSegments.push({ x1: left, y1: top, x2: left, y2: bottom });
+        outline += "M" + left + " " + top + "V" + bottom;
+      }
+      if (!covered[y]?.[x + 1]) {
+        outlineSegments.push({ x1: right, y1: top, x2: right, y2: bottom });
+        outline += "M" + right + " " + top + "V" + bottom;
+      }
     }
   }
 
-  return { fill, outline };
+  return { fill, fillRects, outline, outlineSegments };
 }
 
 function wallFramePath(walls) {
@@ -153,10 +190,7 @@ export function wallFrameGeometry(walls) {
 }
 
 function createWallSvg(className, walls) {
-  const left = Math.min(...walls.map((wall) => wall.x));
-  const top = Math.min(...walls.map((wall) => wall.y));
-  const right = Math.max(...walls.map((wall) => wall.x + wall.w));
-  const bottom = Math.max(...walls.map((wall) => wall.y + wall.h));
+  const { bottom, left, right, top } = rectBounds(walls);
   const svg = svgEl("svg");
   svg.classList.add(className);
   svg.setAttribute("viewBox", left + " " + top + " " + (right - left) + " " + (bottom - top));
@@ -165,6 +199,68 @@ function createWallSvg(className, walls) {
   svg.style.width = (right - left) + "px";
   svg.style.height = (bottom - top) + "px";
   return svg;
+}
+
+function createWallCanvas(className, rects) {
+  const { height, left, top, width } = rectBounds(rects);
+  const canvas = document.createElement("canvas");
+  const pixelRatio = Math.max(1, globalThis.devicePixelRatio || 1);
+
+  canvas.classList.add(className);
+  canvas.width = Math.ceil(width * pixelRatio);
+  canvas.height = Math.ceil(height * pixelRatio);
+  canvas.style.left = left + "px";
+  canvas.style.top = top + "px";
+  canvas.style.width = width + "px";
+  canvas.style.height = height + "px";
+  canvas.setAttribute("aria-hidden", "true");
+
+  const context = canvas.getContext?.("2d");
+  if (context) {
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, -left * pixelRatio, -top * pixelRatio);
+  }
+
+  return { canvas, context };
+}
+
+function drawFillRects(context, rects) {
+  context.beginPath();
+  rects.forEach((rect) => context.rect(rect.x, rect.y, rect.w, rect.h));
+}
+
+function drawObstacleGroup(context, group) {
+  const { bottom, left, right, top } = rectBounds(group);
+  const geometry = mergedRectGeometry(group);
+  const fill = context.createLinearGradient(left, top, right, bottom);
+
+  fill.addColorStop(0, "#ffd166");
+  fill.addColorStop(0.46, "#ff9f66");
+  fill.addColorStop(1, "#ef476f");
+
+  context.save();
+  context.shadowColor = "rgba(0,0,0,.55)";
+  context.shadowBlur = 18;
+  context.shadowOffsetY = 14;
+  context.fillStyle = fill;
+  drawFillRects(context, geometry.fillRects);
+  context.fill();
+  context.restore();
+}
+
+function drawObstacleOutline(context, obstacles) {
+  const geometry = mergedRectGeometry(obstacles);
+
+  context.save();
+  context.beginPath();
+  geometry.outlineSegments.forEach((segment) => {
+    context.moveTo(segment.x1, segment.y1);
+    context.lineTo(segment.x2, segment.y2);
+  });
+  context.strokeStyle = "rgba(255,255,255,.27)";
+  context.lineWidth = 1;
+  context.lineJoin = "miter";
+  context.stroke();
+  context.restore();
 }
 
 export function renderWalls(container, walls) {
@@ -199,24 +295,13 @@ export function renderObstacleWalls(container, obstacles) {
     return;
   }
 
-  const svg = createWallSvg("obstacleSvg", obstacles);
+  const { canvas, context } = createWallCanvas("obstacleCanvas", obstacles);
   const obstacleGroups = connectedRectGroups(obstacles);
-  obstacleGroups.forEach((group) => {
-    const fill = addLinearGradient(svg, [
-      ["0%", "#ffd166"],
-      ["46%", "#ff9f66"],
-      ["100%", "#ef476f"]
-    ]);
-    const fillPath = svgEl("path");
-    fillPath.classList.add("obstacleWallFill");
-    fillPath.setAttribute("d", mergedRectPaths(group).fill);
-    fillPath.setAttribute("fill", fill);
-    svg.append(fillPath);
-  });
-  const paths = mergedRectPaths(obstacles);
-  const outlinePath = svgEl("path");
-  outlinePath.classList.add("obstacleWallOutline");
-  outlinePath.setAttribute("d", paths.outline);
-  svg.append(outlinePath);
-  container.replaceChildren(svg);
+
+  canvas.setAttribute("data-wall-groups", String(obstacleGroups.length));
+  if (context) {
+    obstacleGroups.forEach((group) => drawObstacleGroup(context, group));
+    drawObstacleOutline(context, obstacles);
+  }
+  container.replaceChildren(canvas);
 }
