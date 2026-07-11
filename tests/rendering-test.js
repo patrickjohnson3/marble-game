@@ -133,6 +133,11 @@ try {
     true,
     "rough patch canvas should draw grit"
   );
+  assert.equal(
+    roughPatchCanvas.context.calls.filter((call) => call[0] === "fillRect").length >= 40,
+    true,
+    "rough patch canvas should draw layered grit"
+  );
 
   renderObstacleWalls(container, [
     { x: 0, y: 0, w: 10, h: 20 },

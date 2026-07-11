@@ -240,8 +240,8 @@ function drawObstacleOutline(context, obstacles) {
   context.restore();
 }
 
-function patchDotOffset(x, y) {
-  return (Math.imul(Math.round(x), 31) + Math.imul(Math.round(y), 17)) % 5;
+function patchDotOffset(x, y, salt = 0) {
+  return (Math.imul(Math.round(x) + salt, 31) + Math.imul(Math.round(y) - salt, 17)) % 5;
 }
 
 function drawRoundedRect(context, rect, radius) {
@@ -252,11 +252,36 @@ function drawRoundedRect(context, rect, radius) {
   context.rect(rect.x, rect.y, rect.w, rect.h);
 }
 
+function drawPatchGritLayer(context, patch, {
+  color,
+  stepX,
+  stepY,
+  startX,
+  startY,
+  size,
+  jitterScale,
+  salt
+}) {
+  context.fillStyle = color;
+  for (let y = patch.y + startY; y < patch.y + patch.h; y += stepY) {
+    for (let x = patch.x + startX; x < patch.x + patch.w; x += stepX) {
+      const offset = patchDotOffset(x, y, salt);
+      context.fillRect(
+        x + offset * jitterScale,
+        y - offset * jitterScale * 0.7,
+        size,
+        size
+      );
+    }
+  }
+}
+
 function drawRoughPatch(context, patch) {
   const gradient = context.createLinearGradient(patch.x, patch.y, patch.x + patch.w, patch.y + patch.h);
   const radius = 10;
 
-  gradient.addColorStop(0, "#8b8b84");
+  gradient.addColorStop(0, "#92928a");
+  gradient.addColorStop(0.56, "#74746d");
   gradient.addColorStop(1, "#5c5c58");
 
   context.save();
@@ -273,22 +298,60 @@ function drawRoughPatch(context, patch) {
   context.beginPath();
   drawRoundedRect(context, patch, radius);
   context.clip();
-  context.fillStyle = "rgba(238,238,234,.82)";
-  for (let y = patch.y + 6; y < patch.y + patch.h; y += 12) {
-    for (let x = patch.x + 6; x < patch.x + patch.w; x += 12) {
-      const offset = patchDotOffset(x, y);
-      context.fillRect(x + offset * 0.3, y - offset * 0.2, 2, 2);
-    }
-  }
+  drawPatchGritLayer(context, patch, {
+    color: "rgba(244,244,240,.86)",
+    stepX: 12,
+    stepY: 12,
+    startX: 6,
+    startY: 6,
+    size: 2,
+    jitterScale: 0.28,
+    salt: 0
+  });
+  drawPatchGritLayer(context, patch, {
+    color: "rgba(44,44,42,.34)",
+    stepX: 15,
+    stepY: 15,
+    startX: 13,
+    startY: 11,
+    size: 1.8,
+    jitterScale: 0.34,
+    salt: 3
+  });
+  drawPatchGritLayer(context, patch, {
+    color: "rgba(172,172,164,.45)",
+    stepX: 22,
+    stepY: 22,
+    startX: 19,
+    startY: 23,
+    size: 2.4,
+    jitterScale: 0.42,
+    salt: 7
+  });
   context.restore();
 
   context.save();
-  context.strokeStyle = "rgba(255,255,255,.13)";
+  context.strokeStyle = "rgba(255,255,255,.2)";
   context.lineWidth = 2;
   context.beginPath();
   drawRoundedRect(context, patch, radius);
   context.stroke();
   context.restore();
+
+  if (patch.w > 4 && patch.h > 4) {
+    context.save();
+    context.strokeStyle = "rgba(0,0,0,.28)";
+    context.lineWidth = 1;
+    context.beginPath();
+    drawRoundedRect(context, {
+      x: patch.x + 2,
+      y: patch.y + 2,
+      w: patch.w - 4,
+      h: patch.h - 4
+    }, radius - 2);
+    context.stroke();
+    context.restore();
+  }
 }
 
 export function renderWalls(container, walls) {
