@@ -57,6 +57,11 @@ export const baseMapConfig = {
   grid: {
     size: 10
   },
+  reachability: {
+    minCellSize: 5,
+    gridDivisor: 2,
+    spawnRadiusDivisor: 2
+  },
   intro: {
     wallThickness: 34,
     viewportMargin: 18

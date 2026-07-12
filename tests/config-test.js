@@ -26,6 +26,9 @@ function testWorldAndMapElements() {
   assertPositiveNumber(resolvedMapConfig.world.width, "world width");
   assertPositiveNumber(resolvedMapConfig.world.height, "world height");
   assertPositiveNumber(resolvedMapConfig.grid.size, "grid size");
+  assertPositiveNumber(resolvedMapConfig.reachability.minCellSize, "reachability min cell size");
+  assertPositiveNumber(resolvedMapConfig.reachability.gridDivisor, "reachability grid divisor");
+  assertPositiveNumber(resolvedMapConfig.reachability.spawnRadiusDivisor, "reachability spawn radius divisor");
   assertPositiveNumber(resolvedMapConfig.intro.wallThickness, "intro wall thickness");
   assertPositiveNumber(resolvedMapConfig.intro.viewportMargin, "intro viewport margin");
   assert.equal(resolvedMapConfig.seed, "default", "map seed");

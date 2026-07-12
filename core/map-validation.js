@@ -10,6 +10,22 @@ function sameWorldSize(a, b) {
   return a?.width === b?.width && a?.height === b?.height;
 }
 
+function reachabilityCellSize({ gridSize, spawn, tuning = {} }) {
+  const minCellSize = Number.isFinite(tuning.minCellSize) && tuning.minCellSize > 0 ?
+    tuning.minCellSize :
+    5;
+  const gridDivisor = Number.isFinite(tuning.gridDivisor) && tuning.gridDivisor > 0 ?
+    tuning.gridDivisor :
+    2;
+  const spawnRadiusDivisor = Number.isFinite(tuning.spawnRadiusDivisor) && tuning.spawnRadiusDivisor > 0 ?
+    tuning.spawnRadiusDivisor :
+    2;
+
+  return Number.isFinite(gridSize) && gridSize > 0 ?
+    Math.max(minCellSize, gridSize / gridDivisor) :
+    Math.max(minCellSize, spawn.r / spawnRadiusDivisor);
+}
+
 function validateGoal(goal, { world, obstacles, errors }) {
   if (!goal) {
     errors.push(mapValidationMessages.goalRequired);
@@ -199,15 +215,16 @@ export function validateMapConfig(config, {
       checkedObstacles.every((obstacle) =>
         ["x", "y", "w", "h"].every((key) => Number.isFinite(obstacle[key]))
       )) {
-    const reachabilityCellSize = Number.isFinite(gridSize) && gridSize > 0 ?
-      Math.max(5, gridSize / 2) :
-      Math.max(5, checkedSpawn.r / 2);
     if (!hasReachableGoal({
       world,
       obstacles: checkedObstacles,
       spawn: checkedSpawn,
       goal: config.goal,
-      cellSize: reachabilityCellSize
+      cellSize: reachabilityCellSize({
+        gridSize,
+        spawn: checkedSpawn,
+        tuning: config?.reachability
+      })
     })) {
       errors.push(mapValidationMessages.goalReachable);
     }
