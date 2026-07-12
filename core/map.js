@@ -103,11 +103,11 @@ export function isRoughPatchElement(element) {
 }
 
 export function mapObstacleElements(elements) {
-  return elements.filter(isObstacleElement);
+  return Array.isArray(elements) ? elements.filter(isObstacleElement) : [];
 }
 
 export function mapRoughPatchElements(elements) {
-  return elements.filter(isRoughPatchElement);
+  return Array.isArray(elements) ? elements.filter(isRoughPatchElement) : [];
 }
 
 export function normalizedObstacleRects(rects) {

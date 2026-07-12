@@ -128,6 +128,10 @@ try {
   const roughPatchCanvas = roughPatchContainer.children[0];
   assert.equal(roughPatchCanvas.classList.contains("roughPatchCanvas"), true, "rough patches should render to canvas");
   assert.equal(roughPatchCanvas.attributes["data-rough-patches"], "1");
+  assert.equal(roughPatchCanvas.style.left, "2px");
+  assert.equal(roughPatchCanvas.style.top, "12px");
+  assert.equal(roughPatchCanvas.style.width, "116px");
+  assert.equal(roughPatchCanvas.style.height, "96px");
   assert.equal(
     roughPatchCanvas.context.calls.some((call) => call[0] === "fillRect"),
     true,
@@ -147,6 +151,10 @@ try {
   const canvas = container.children[0];
 
   assert.equal(canvas.classList.contains("obstacleCanvas"), true, "obstacle walls should render to canvas");
+  assert.equal(canvas.style.left, "-32px");
+  assert.equal(canvas.style.top, "-32px");
+  assert.equal(canvas.style.width, "84px");
+  assert.equal(canvas.style.height, "84px");
   assert.equal(canvas.attributes["data-wall-groups"], "1");
   assert.equal(canvas.context.calls.some((call) => call[0] === "fill"), true, "obstacle canvas should draw fills");
   assert.equal(canvas.context.calls.some((call) => call[0] === "stroke"), true, "obstacle canvas should draw outline");

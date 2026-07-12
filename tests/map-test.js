@@ -3,6 +3,7 @@ import { resolvedMapConfig } from "../core/config.js";
 import {
   hashMapSeed,
   mapObstacleElements,
+  mapRoughPatchElements,
   normalizedObstacleRects,
   resolveMapVariantConfig,
   resolveSeededMapConfig,
@@ -73,6 +74,13 @@ function testNextMapVariantSelectionIsGuarded() {
 }
 
 testNextMapVariantSelectionIsGuarded();
+
+function testMapElementFiltersHandleMalformedInput() {
+  assert.deepEqual(mapObstacleElements(null), []);
+  assert.deepEqual(mapRoughPatchElements(undefined), []);
+}
+
+testMapElementFiltersHandleMalformedInput();
 
 function testMapProgressionHandlesMissingCurrentMap() {
   const hints = [];

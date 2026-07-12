@@ -142,8 +142,12 @@ export function wallFrameGeometry(walls) {
   };
 }
 
-function createWallCanvas(className, rects) {
-  const { height, left, top, width } = rectBounds(rects);
+function createWallCanvas(className, rects, padding = 0) {
+  const bounds = rectBounds(rects);
+  const left = bounds.left - padding;
+  const top = bounds.top - padding;
+  const width = bounds.width + padding * 2;
+  const height = bounds.height + padding * 2;
   const canvas = document.createElement("canvas");
   const pixelRatio = Math.max(1, globalThis.devicePixelRatio || 1);
 
@@ -376,7 +380,7 @@ export function renderRoughPatches(container, roughPatches) {
     return;
   }
 
-  const { canvas, context } = createWallCanvas("roughPatchCanvas", roughPatches);
+  const { canvas, context } = createWallCanvas("roughPatchCanvas", roughPatches, 18);
   canvas.setAttribute("data-rough-patches", String(roughPatches.length));
   if (context) roughPatches.forEach((patch) => drawRoughPatch(context, patch));
   container.replaceChildren(canvas);
@@ -388,7 +392,7 @@ export function renderObstacleWalls(container, obstacles) {
     return;
   }
 
-  const { canvas, context } = createWallCanvas("obstacleCanvas", obstacles);
+  const { canvas, context } = createWallCanvas("obstacleCanvas", obstacles, 32);
   const obstacleGroups = connectedRectGroups(obstacles);
 
   canvas.setAttribute("data-wall-groups", String(obstacleGroups.length));
