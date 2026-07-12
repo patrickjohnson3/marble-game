@@ -16,6 +16,11 @@ import {
 import { createMapProgression } from "../core/map-progression.js";
 import { hasReachableGoal } from "../core/map-reachability.js";
 import { mapValidationMessages } from "../core/map-validation-messages.js";
+import {
+  nextProceduralMapVariant,
+  resolveInitialMapConfig,
+  resolveProceduralMapConfig
+} from "../core/procedural-map.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
 import {
@@ -63,6 +68,14 @@ function testSeededMapVariantSelection() {
 }
 
 testSeededMapVariantSelection();
+
+function testProceduralMapBoundaryWrapsVariantSelection() {
+  assert.equal(resolveInitialMapConfig(simpleSeededMapConfig).variantId, "only");
+  assert.equal(resolveProceduralMapConfig(simpleSeededMapConfig, "only").variantId, "only");
+  assert.equal(nextProceduralMapVariant(simpleSeededMapConfig, "missing").id, "only");
+}
+
+testProceduralMapBoundaryWrapsVariantSelection();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;

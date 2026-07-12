@@ -33,6 +33,7 @@ export const runtimeScripts = [
   "core/physics-collisions.js",
   "core/physics-config.js",
   "core/physics.js",
+  "core/procedural-map.js",
   "core/state.js",
   "core/timer-utils.js",
   "core/timing-config.js",

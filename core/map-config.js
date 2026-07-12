@@ -1,4 +1,4 @@
-import { resolveSeededMapConfig } from "./map.js";
+import { resolveInitialMapConfig } from "./procedural-map.js";
 
 const defaultElements = [
   { type: "obstacle", x: 260, y: 330, w: 510, h: 40 },
@@ -89,4 +89,4 @@ export const baseMapConfig = {
   }
 };
 
-export const resolvedMapConfig = resolveSeededMapConfig(baseMapConfig);
+export const resolvedMapConfig = resolveInitialMapConfig(baseMapConfig);
