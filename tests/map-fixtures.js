@@ -1,6 +1,14 @@
+import {
+  goal,
+  mapConfig,
+  obstacle,
+  roughPatch,
+  spawn
+} from "./map-builders.js";
+
 export const variantSelectionFixtures = [
-  { id: "a", elements: [{ type: "obstacle", x: 0, y: 0, w: 10, h: 10 }] },
-  { id: "b", elements: [{ type: "roughPatch", x: 10, y: 10, w: 20, h: 20 }] }
+  { id: "a", elements: [obstacle({ x: 0, y: 0 })] },
+  { id: "b", elements: [roughPatch()] }
 ];
 
 export const simpleSeededMapConfig = {
@@ -8,20 +16,20 @@ export const simpleSeededMapConfig = {
   variants: [
     {
       id: "only",
-      elements: [{ type: "obstacle", x: 0, y: 0, w: 10, h: 10 }],
-      goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
+      elements: [obstacle({ x: 0, y: 0 })],
+      goal: goal()
     }
   ],
-  spawn: { x: 20, y: 20, r: 5 },
+  spawn: spawn(),
   world: { width: 100, height: 100 }
 };
 
 export const missingElementsVariantConfig = {
   seed: "bad-variant",
   variants: [
-    { id: "bad-variant", goal: { x: 80, y: 80, r: 10, holdMs: 5000 } }
+    { id: "bad-variant", goal: goal() }
   ],
-  spawn: { x: 20, y: 20, r: 5 },
+  spawn: spawn(),
   world: { width: 100, height: 100 }
 };
 
@@ -32,35 +40,23 @@ export const malformedVariantConfig = {
     {
       id: "safe",
       elements: [],
-      goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
+      goal: goal()
     }
   ],
-  spawn: { x: 20, y: 20, r: 5 },
+  spawn: spawn(),
   world: { width: 100, height: 100 }
 };
 
-export const blockedSpawnConfig = {
-  world: { width: 100, height: 100 },
+export const blockedSpawnConfig = mapConfig({
   elements: [
-    { type: "obstacle", x: 45, y: 45, w: 10, h: 10 }
+    obstacle({ x: 45, y: 45 })
   ],
-  spawn: { x: 50, y: 50, r: 8 },
-  goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
-};
+  spawn: spawn({ x: 50, y: 50, r: 8 })
+});
 
-export const invalidElementConfig = {
-  world: { width: 100, height: 100 },
-  elements: [null],
-  spawn: { x: 20, y: 20, r: 5 },
-  goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
-};
+export const invalidElementConfig = mapConfig({ elements: [null] });
 
-export const emptyElementMapConfig = {
-  world: { width: 100, height: 100 },
-  elements: [],
-  spawn: { x: 20, y: 20, r: 5 },
-  goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
-};
+export const emptyElementMapConfig = mapConfig();
 
 export const variantWorldMismatchConfig = {
   ...emptyElementMapConfig,
@@ -73,10 +69,10 @@ export const unreachableGoalConfig = {
   world: { width: 100, height: 100 },
   grid: { size: 10 },
   elements: [
-    { type: "obstacle", x: 50, y: 0, w: 10, h: 100 }
+    obstacle({ x: 50, y: 0, w: 10, h: 100 })
   ],
-  spawn: { x: 20, y: 50, r: 5 },
-  goal: { x: 80, y: 50, r: 12, holdMs: 5000 }
+  spawn: spawn({ x: 20, y: 50 }),
+  goal: goal({ x: 80, y: 50, r: 12 })
 };
 
 export const smallJoinOverhangRects = [
