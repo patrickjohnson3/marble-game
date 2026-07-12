@@ -4,7 +4,7 @@ import {
   hashMapSeed,
   mapObstacleElements,
   mapRoughPatchElements,
-  normalizedObstacleRects,
+  normalizeJoinedObstacleRects,
   resolveMapVariantConfig,
   resolveSeededMapConfig,
   selectNextMapVariant,
@@ -32,7 +32,7 @@ import {
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
 function currentMapObstacles() {
-  return normalizedObstacleRects(mapObstacleElements(resolvedMapConfig.elements));
+  return normalizeJoinedObstacleRects(mapObstacleElements(resolvedMapConfig.elements));
 }
 
 function testGridSnapping() {
@@ -219,7 +219,7 @@ function testReachabilityUsesExactSpawnAndGoalSamples() {
 testReachabilityUsesExactSpawnAndGoalSamples();
 
 function testObstacleVisualsTrimSmallJoinOverhangs() {
-  const [horizontal, vertical] = normalizedObstacleRects(smallJoinOverhangRects);
+  const [horizontal, vertical] = normalizeJoinedObstacleRects(smallJoinOverhangRects);
 
   assert.equal(horizontal.h, 20);
   assert.equal(vertical.h, 40);
@@ -228,7 +228,7 @@ function testObstacleVisualsTrimSmallJoinOverhangs() {
 testObstacleVisualsTrimSmallJoinOverhangs();
 
 function testObstacleVisualsTrimTouchingJoinOverhangs() {
-  const [, vertical] = normalizedObstacleRects(touchingJoinOverhangRects);
+  const [, vertical] = normalizeJoinedObstacleRects(touchingJoinOverhangRects);
 
   assert.equal(vertical.h, 40);
   assert.equal(vertical.w, 20);

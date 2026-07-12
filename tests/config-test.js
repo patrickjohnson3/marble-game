@@ -12,7 +12,7 @@ import {
 } from "../core/config.js";
 import {
   mapObstacleElements,
-  normalizedObstacleRects,
+  normalizeJoinedObstacleRects,
   resolveMapVariantConfig,
   validateMapConfig
 } from "../core/map.js";
@@ -70,7 +70,7 @@ function testMapIncludesConnectedObstacleGroups() {
 }
 
 function testNormalizedMapObstaclesStayValid() {
-  const obstacles = normalizedObstacleRects(mapObstacleElements(resolvedMapConfig.elements));
+  const obstacles = normalizeJoinedObstacleRects(mapObstacleElements(resolvedMapConfig.elements));
 
   for (const [index, obstacle] of obstacles.entries()) {
     assertPositiveNumber(obstacle.w, "normalized obstacle " + index + " width");

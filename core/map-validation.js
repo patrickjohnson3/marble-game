@@ -86,7 +86,7 @@ export function validateMapConfig(config, {
 } = {}, {
   elementTypes,
   mapObstacleElements,
-  normalizedObstacleRects,
+  normalizeJoinedObstacleRects,
   validMapVariants
 }) {
   const errors = [];
@@ -95,7 +95,7 @@ export function validateMapConfig(config, {
   const elements = Array.isArray(config?.elements) ? config.elements : [];
   const objectElements = elements.filter((element) => element && typeof element === "object");
   const checkedObstaclesSource = normalizedObstacles ??
-    normalizedObstacleRects(mapObstacleElements(objectElements));
+    normalizeJoinedObstacleRects(mapObstacleElements(objectElements));
   const checkedObstacles = Array.isArray(checkedObstaclesSource) ?
     checkedObstaclesSource.filter((obstacle) => obstacle && typeof obstacle === "object") :
     [];

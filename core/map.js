@@ -110,7 +110,7 @@ export function mapRoughPatchElements(elements) {
   return Array.isArray(elements) ? elements.filter(isRoughPatchElement) : [];
 }
 
-export function normalizedObstacleRects(rects) {
+export function normalizeJoinedObstacleRects(rects) {
   const normalized = rects.map((rect) => ({ ...rect }));
 
   for (const horizontal of normalized.filter(isHorizontal)) {
@@ -162,7 +162,7 @@ export function normalizedObstacleRects(rects) {
 export function validateMapConfig(config, options = {}) {
   return validateMapConfigWithDeps(config, options, {
     elementTypes: MAP_ELEMENT_TYPES,
-    normalizedObstacleRects,
+    normalizeJoinedObstacleRects,
     mapObstacleElements,
     validMapVariants
   });

@@ -1,7 +1,7 @@
 import {
   mapObstacleElements,
   mapRoughPatchElements,
-  normalizedObstacleRects
+  normalizeJoinedObstacleRects
 } from "./map.js";
 
 function deriveMapElements(activeMap, normalizeObstacles) {
@@ -16,7 +16,7 @@ function deriveMapElements(activeMap, normalizeObstacles) {
 
 export function createMapRuntime({
   initialMap,
-  normalizeObstacles = normalizedObstacleRects
+  normalizeObstacles = normalizeJoinedObstacleRects
 }) {
   const state = {
     activeMap: null,
