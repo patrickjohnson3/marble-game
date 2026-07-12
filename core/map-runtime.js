@@ -9,8 +9,10 @@ export function createMapRuntime({
     activeMap: null,
     elements: [],
     obstacles: [],
+    obstacleBounds: null,
     obstacleIndex: null,
     roughPatches: [],
+    roughPatchBounds: null,
     roughPatchIndex: null,
     goal: null,
     spawn: null,
@@ -28,8 +30,10 @@ export function createMapRuntime({
     state.activeMap = derived.activeMap;
     state.elements = derived.elements;
     state.obstacles = derived.obstacles;
+    state.obstacleBounds = derived.obstacleBounds;
     state.obstacleIndex = derived.obstacleIndex;
     state.roughPatches = derived.roughPatches;
+    state.roughPatchBounds = derived.roughPatchBounds;
     state.roughPatchIndex = derived.roughPatchIndex;
     state.goal = derived.goal;
     state.spawn = derived.spawn;

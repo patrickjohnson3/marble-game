@@ -114,13 +114,13 @@ function drawRoughPatch(context, patch) {
   }
 }
 
-export function renderRoughPatches(container, roughPatches, { padding = 0 } = {}) {
+export function renderRoughPatches(container, roughPatches, { bounds, padding = 0 } = {}) {
   if (!Array.isArray(roughPatches) || roughPatches.length === 0) {
     container.replaceChildren();
     return;
   }
 
-  const { canvas, context } = createCanvas("roughPatchCanvas", roughPatches, padding);
+  const { canvas, context } = createCanvas("roughPatchCanvas", roughPatches, padding, bounds);
   canvas.setAttribute("data-rough-patches", String(roughPatches.length));
   if (context) roughPatches.forEach((patch) => drawRoughPatch(context, patch));
   container.replaceChildren(canvas);

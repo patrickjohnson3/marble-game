@@ -1,21 +1,6 @@
-function rectBounds(rects) {
-  const left = Math.min(...rects.map((rect) => rect.x));
-  const top = Math.min(...rects.map((rect) => rect.y));
-  const right = Math.max(...rects.map((rect) => rect.x + rect.w));
-  const bottom = Math.max(...rects.map((rect) => rect.y + rect.h));
+import { rectBounds } from "../core/rect-bounds.js";
 
-  return {
-    bottom,
-    left,
-    right,
-    top,
-    height: bottom - top,
-    width: right - left
-  };
-}
-
-function createCanvas(className, rects, padding = 0) {
-  const bounds = rectBounds(rects);
+function createCanvas(className, rects, padding = 0, bounds = rectBounds(rects)) {
   const left = bounds.left - padding;
   const top = bounds.top - padding;
   const width = bounds.width + padding * 2;

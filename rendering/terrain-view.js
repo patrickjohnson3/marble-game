@@ -4,21 +4,25 @@ export function createTerrainView({
   goalEl,
   goal,
   roughPatches,
+  roughPatchBounds,
   obstacles,
+  obstacleBounds,
   renderObstacleWalls,
   renderRoughPatches: drawRoughPatches,
   goalFillEdgePercent = 70.8
 }) {
   let currentGoal = goal;
   let currentObstacles = obstacles;
+  let currentObstacleBounds = obstacleBounds;
   let currentRoughPatches = roughPatches;
+  let currentRoughPatchBounds = roughPatchBounds;
 
   function renderObstacles() {
-    renderObstacleWalls(obstaclesEl, currentObstacles);
+    renderObstacleWalls(obstaclesEl, currentObstacles, currentObstacleBounds);
   }
 
   function renderRoughPatches() {
-    drawRoughPatches(roughPatchesEl, currentRoughPatches);
+    drawRoughPatches(roughPatchesEl, currentRoughPatches, currentRoughPatchBounds);
   }
 
   function renderGoal() {
@@ -35,10 +39,12 @@ export function createTerrainView({
     renderObstacles();
   }
 
-  function setTerrain({ goal, obstacles, roughPatches }) {
+  function setTerrain({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds }) {
     currentGoal = goal;
     currentObstacles = obstacles;
+    currentObstacleBounds = obstacleBounds;
     currentRoughPatches = roughPatches;
+    currentRoughPatchBounds = roughPatchBounds;
     renderTerrain();
   }
 

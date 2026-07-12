@@ -3,6 +3,7 @@ import {
   mapRoughPatchElements,
   normalizeJoinedObstacleRects
 } from "./map.js";
+import { rectBounds } from "./rect-bounds.js";
 import { createSpatialIndex } from "./spatial-index.js";
 
 export function createResolvedMapState(activeMap, {
@@ -15,8 +16,10 @@ export function createResolvedMapState(activeMap, {
     activeMap,
     elements,
     obstacles,
+    obstacleBounds: rectBounds(obstacles),
     obstacleIndex: createSpatialIndex(obstacles),
     roughPatches,
+    roughPatchBounds: rectBounds(roughPatches),
     roughPatchIndex: createSpatialIndex(roughPatches),
     goal: activeMap.goal,
     spawn: activeMap.spawn,

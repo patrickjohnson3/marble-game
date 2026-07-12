@@ -177,8 +177,10 @@ const {
   settings,
   clamp,
   obstacles: mapState.obstacles,
+  obstacleBounds: mapState.obstacleBounds,
   goal: mapState.goal,
-  roughPatches: mapState.roughPatches
+  roughPatches: mapState.roughPatches,
+  roughPatchBounds: mapState.roughPatchBounds
 });
 const {
   applyFullscreenSetting,
@@ -224,7 +226,9 @@ function setCurrentMap(nextMap) {
   terrainView.setTerrain({
     goal: mapState.goal,
     obstacles: mapState.obstacles,
-    roughPatches: mapState.roughPatches
+    obstacleBounds: mapState.obstacleBounds,
+    roughPatches: mapState.roughPatches,
+    roughPatchBounds: mapState.roughPatchBounds
   });
 }
 

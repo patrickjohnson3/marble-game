@@ -35,8 +35,10 @@ export function setupRenderers({
   settings,
   clamp,
   obstacles,
+  obstacleBounds,
   goal,
-  roughPatches
+  roughPatches,
+  roughPatchBounds
 }) {
   const {
     world: worldEl,
@@ -80,11 +82,15 @@ export function setupRenderers({
 	    goalEl,
 	    goal,
 	    roughPatches,
+	    roughPatchBounds,
 	    obstacles,
-	    renderObstacleWalls: (container, renderedObstacles) => renderObstacleWalls(container, renderedObstacles, {
+	    obstacleBounds,
+	    renderObstacleWalls: (container, renderedObstacles, renderedBounds) => renderObstacleWalls(container, renderedObstacles, {
+	      bounds: renderedBounds,
 	      padding: visualConfig.map.obstacleCanvasPadding
 	    }),
-	    renderRoughPatches: (container, renderedRoughPatches) => renderRoughPatches(container, renderedRoughPatches, {
+	    renderRoughPatches: (container, renderedRoughPatches, renderedBounds) => renderRoughPatches(container, renderedRoughPatches, {
+	      bounds: renderedBounds,
 	      padding: visualConfig.map.roughPatchCanvasPadding
 	    }),
 	    goalFillEdgePercent: visualConfig.map.goalFillEdgePercent

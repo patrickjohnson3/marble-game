@@ -134,13 +134,13 @@ function drawObstacleOutline(context, obstacles) {
   context.restore();
 }
 
-export function renderObstacleWalls(container, obstacles, { padding = 0 } = {}) {
+export function renderObstacleWalls(container, obstacles, { bounds, padding = 0 } = {}) {
   if (obstacles.length === 0) {
     container.replaceChildren();
     return;
   }
 
-  const { canvas, context } = createCanvas("obstacleCanvas", obstacles, padding);
+  const { canvas, context } = createCanvas("obstacleCanvas", obstacles, padding, bounds);
   const obstacleGroups = connectedRectGroups(obstacles);
 
   canvas.setAttribute("data-wall-groups", String(obstacleGroups.length));

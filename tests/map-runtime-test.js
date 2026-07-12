@@ -29,7 +29,23 @@ assert.equal(resolvedFirstMap.activeMap, firstMap);
 assert.equal(resolvedFirstMap.goal, firstMap.goal);
 assert.equal(resolvedFirstMap.spawn, firstMap.spawn);
 assert.equal(resolvedFirstMap.obstacles.length, 1);
+assert.deepEqual(resolvedFirstMap.obstacleBounds, {
+  bottom: 60,
+  height: 40,
+  left: 10,
+  right: 40,
+  top: 20,
+  width: 30
+});
 assert.equal(resolvedFirstMap.roughPatches.length, 1);
+assert.deepEqual(resolvedFirstMap.roughPatchBounds, {
+  bottom: 140,
+  height: 80,
+  left: 50,
+  right: 120,
+  top: 60,
+  width: 70
+});
 
 assert.equal(runtime.state.activeMap, firstMap);
 assert.equal(runtime.state.goal, firstMap.goal);
@@ -46,7 +62,16 @@ assert.equal(runtime.state.activeMap, secondMap);
 assert.equal(runtime.state.goal, secondMap.goal);
 assert.equal(runtime.state.spawn, secondMap.spawn);
 assert.equal(runtime.state.obstacles.length, 2);
+assert.deepEqual(runtime.state.obstacleBounds, {
+  bottom: 360,
+  height: 240,
+  left: 110,
+  right: 240,
+  top: 120,
+  width: 130
+});
 assert.deepEqual(runtime.state.roughPatches, []);
+assert.equal(runtime.state.roughPatchBounds, null);
 assert.equal(runtime.state.goalHoldMs, 0);
 assert.equal(runtime.state.goalCompleted, false);
 
