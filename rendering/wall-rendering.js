@@ -21,7 +21,7 @@ function createCanvas(className, rects, padding = 0) {
   const width = bounds.width + padding * 2;
   const height = bounds.height + padding * 2;
   const canvas = document.createElement("canvas");
-  const pixelRatio = Math.max(1, globalThis.devicePixelRatio || 1);
+  const pixelRatio = canvasPixelRatio();
 
   canvas.classList.add(className);
   canvas.width = Math.ceil(width * pixelRatio);
@@ -38,6 +38,10 @@ function createCanvas(className, rects, padding = 0) {
   }
 
   return { canvas, context };
+}
+
+export function canvasPixelRatio() {
+  return Math.min(Math.max(1, globalThis.devicePixelRatio || 1), 2);
 }
 
 export function wallFrameGeometry(walls) {

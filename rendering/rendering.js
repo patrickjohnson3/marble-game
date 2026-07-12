@@ -1,4 +1,5 @@
 export {
+  canvasPixelRatio,
   renderWalls,
   wallFrameGeometry
 } from "./wall-rendering.js";

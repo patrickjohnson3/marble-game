@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  canvasPixelRatio,
   renderObstacleWalls,
   renderRoughPatches,
   renderWalls,
@@ -35,6 +36,23 @@ function testWallFrameGeometryRejectsInvalidWalls() {
 }
 
 testWallFrameGeometryRejectsInvalidWalls();
+
+function testCanvasPixelRatioCapsHighDensityDisplays() {
+  const originalDevicePixelRatio = globalThis.devicePixelRatio;
+  globalThis.devicePixelRatio = 4;
+
+  try {
+    assert.equal(canvasPixelRatio(), 2);
+  } finally {
+    if (originalDevicePixelRatio === undefined) {
+      delete globalThis.devicePixelRatio;
+    } else {
+      globalThis.devicePixelRatio = originalDevicePixelRatio;
+    }
+  }
+}
+
+testCanvasPixelRatioCapsHighDensityDisplays();
 
 function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
   const hint = new FakeElement();
