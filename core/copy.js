@@ -7,9 +7,12 @@ export const copy = {
     noMotionSensor: "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
     neutralSet: "neutral set. tilt from your normal holding angle.",
     motionDenied: "motion permission denied. check chrome site settings.",
-    calibrating: "keep holding normally for half a sec...",
-    neutralReset: "neutral reset to current hand position."
-  },
+	    calibrating: "keep holding normally for half a sec...",
+	    neutralReset: "neutral reset to current hand position.",
+	    goalNoNextMap: "goal reached. no next map available.",
+	    goalNextMapInvalid: "goal reached. next map invalid.",
+	    goalNextMap: (variantId) => "goal reached. next map: " + variantId + "."
+	  },
   intro: {
     prompt: "Pinch to zoom out. Reverse pinch to zoom in. Rotation is available in settings.",
     ready: "Ready?"

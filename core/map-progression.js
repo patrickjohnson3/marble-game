@@ -10,10 +10,15 @@ export function createMapProgression({
   applyMap,
   resetForNextMap,
   terrainView,
-  ui,
-  requestRender,
-  logger = console
-}) {
+	  ui,
+	  requestRender,
+	  copy = {
+	    goalNoNextMap: "goal reached. no next map available.",
+	    goalNextMapInvalid: "goal reached. next map invalid.",
+	    goalNextMap: (variantId) => "goal reached. next map: " + variantId + "."
+	  },
+	  logger = console
+	}) {
   function nextMapVariant() {
     const currentMap = getCurrentMap();
     if (!currentMap || typeof currentMap !== "object") return null;
@@ -29,21 +34,21 @@ export function createMapProgression({
   }
 
   function advanceToNextMap() {
-    const variant = nextMapVariant();
-    if (!variant) {
-      return blockAdvance("goal reached. no next map available.");
-    }
+	    const variant = nextMapVariant();
+	    if (!variant) {
+	      return blockAdvance(copy.goalNoNextMap);
+	    }
 
     const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id, variant.id);
     const validationErrors = validateMapConfig(nextMap);
-    if (validationErrors.length > 0) {
-      logger.error("Invalid next map:", validationErrors);
-      return blockAdvance("goal reached. next map invalid.");
-    }
+	    if (validationErrors.length > 0) {
+	      logger.error("Invalid next map:", validationErrors);
+	      return blockAdvance(copy.goalNextMapInvalid);
+	    }
 
     applyMap(nextMap);
     resetForNextMap();
-    ui.setHint("goal reached. next map: " + getCurrentMap().variantId + ".");
+	    ui.setHint(copy.goalNextMap(getCurrentMap().variantId));
     requestRender();
     return true;
   }

@@ -244,10 +244,11 @@ const mapProgression = createMapProgression({
   getCurrentMap: () => mapState.activeMap,
   applyMap: setCurrentMap,
   resetForNextMap,
-  terrainView,
-  ui,
-  requestRender
-});
+	  terrainView,
+	  ui,
+	  copy: copy.hints,
+	  requestRender
+	});
 let goalHapticActive = false;
 
 function marbleInsideGoal() {

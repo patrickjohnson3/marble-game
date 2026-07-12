@@ -16,6 +16,7 @@ import {
 import { createMapProgression } from "../core/map-progression.js";
 import { hasReachableGoal } from "../core/map-reachability.js";
 import { mapValidationMessages } from "../core/map-validation-messages.js";
+import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
 import {
   blockedSpawnConfig,
@@ -102,7 +103,7 @@ function testMapProgressionHandlesMissingCurrentMap() {
   });
 
   assert.equal(progression.advanceToNextMap(), false);
-  assert.deepEqual(hints, ["goal reached. no next map available."]);
+  assert.deepEqual(hints, [copy.hints.goalNoNextMap]);
   assert.equal(renderRequests, 1);
 }
 
