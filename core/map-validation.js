@@ -146,11 +146,10 @@ export function validateMapConfig(config, {
       errors
     });
     if (Number.isFinite(gridSize) && gridSize > 0) {
-      if (!isMultipleOf(element.x, gridSize)) {
-        errors.push("element " + index + " x must align to grid");
-      }
-      if (!isMultipleOf(element.y, gridSize)) {
-        errors.push("element " + index + " y must align to grid");
+      for (const key of ["x", "y", "w", "h"]) {
+        if (!isMultipleOf(element[key], gridSize)) {
+          errors.push("element " + index + " " + key + " must align to grid");
+        }
       }
     }
   });
@@ -200,8 +199,8 @@ export function validateMapConfig(config, {
         ["x", "y", "w", "h"].every((key) => Number.isFinite(obstacle[key]))
       )) {
     const reachabilityCellSize = Number.isFinite(gridSize) && gridSize > 0 ?
-      gridSize :
-      Math.max(10, checkedSpawn.r);
+      Math.max(5, gridSize / 2) :
+      Math.max(5, checkedSpawn.r / 2);
     if (!hasReachableGoal({
       world,
       obstacles: checkedObstacles,

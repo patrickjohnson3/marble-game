@@ -14,6 +14,7 @@ import {
   validateMapConfig
 } from "../core/map.js";
 import { createMapProgression } from "../core/map-progression.js";
+import { hasReachableGoal } from "../core/map-reachability.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
 import {
   blockedSpawnConfig,
@@ -165,6 +166,19 @@ function testMapValidationReportsInvalidElementEntries() {
 
 testMapValidationReportsInvalidElementEntries();
 
+function testMapValidationRejectsOffGridElementDimensions() {
+  assert.ok(validateMapConfig({
+    world: { width: 100, height: 100 },
+    grid: { size: 10 },
+    elements: [
+      { type: "roughPatch", x: 10, y: 10, w: 15, h: 20 }
+    ],
+    goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
+  }).includes("element 0 w must align to grid"));
+}
+
+testMapValidationRejectsOffGridElementDimensions();
+
 function testMapValidationReportsInvalidNormalizedObstacles() {
   assert.ok(
     validateMapConfig(emptyElementMapConfig, { normalizedObstacles: [null] }).includes("normalized obstacle 0 must be an object")
@@ -190,6 +204,20 @@ function testMapValidationRejectsUnreachableGoal() {
 
 testMapValidationRejectsUnreachableGoal();
 
+function testReachabilityUsesExactSpawnAndGoalSamples() {
+  assert.equal(hasReachableGoal({
+    world: { width: 100, height: 40 },
+    obstacles: [
+      { x: 14, y: 8, w: 2, h: 4 }
+    ],
+    spawn: { x: 6, y: 10, r: 5 },
+    goal: { x: 86, y: 10, r: 8 },
+    cellSize: 20
+  }), true);
+}
+
+testReachabilityUsesExactSpawnAndGoalSamples();
+
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizedObstacleRects(smallJoinOverhangRects);
 
@@ -214,24 +242,24 @@ function testCurrentMapJoinedWallsSurviveNormalization() {
   assert.deepEqual(
     obstacles.slice(0, 2),
     [
-      { type: "obstacle", x: 260, y: 330, w: 514, h: 42 },
-      { type: "obstacle", x: 720, y: 250, w: 54, h: 360 }
+      { type: "obstacle", x: 260, y: 330, w: 510, h: 40 },
+      { type: "obstacle", x: 720, y: 250, w: 50, h: 360 }
     ],
     "top joined wall group should survive normalization"
   );
   assert.deepEqual(
     obstacles.slice(4, 6),
     [
-      { type: "obstacle", x: 250, y: 900, w: 718, h: 54 },
-      { type: "obstacle", x: 910, y: 760, w: 58, h: 380 }
+      { type: "obstacle", x: 250, y: 900, w: 720, h: 50 },
+      { type: "obstacle", x: 910, y: 760, w: 60, h: 380 }
     ],
     "middle joined wall group should survive normalization"
   );
   assert.deepEqual(
     obstacles.slice(7, 9),
     [
-      { type: "obstacle", x: 520, y: 1380, w: 52, h: 440 },
-      { type: "obstacle", x: 520, y: 1570, w: 930, h: 52 }
+      { type: "obstacle", x: 520, y: 1380, w: 50, h: 440 },
+      { type: "obstacle", x: 520, y: 1570, w: 930, h: 50 }
     ],
     "lower joined wall group should survive normalization"
   );

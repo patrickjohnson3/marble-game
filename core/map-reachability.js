@@ -6,6 +6,15 @@ export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
   const rows = Math.ceil(world.height / cellSize);
   const visited = new Set();
   const queue = [];
+  const holdRadius = Math.max(0, goal.r - radius);
+  const goalHoldSamples = [
+    goal,
+    { x: goal.x - holdRadius, y: goal.y },
+    { x: goal.x + holdRadius, y: goal.y },
+    { x: goal.x, y: goal.y - holdRadius },
+    { x: goal.x, y: goal.y + holdRadius }
+  ];
+  let queueIndex = 0;
 
   function cellKey(x, y) {
     return x + "," + y;
@@ -23,6 +32,19 @@ export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
       x: clamp(Math.floor(point.x / cellSize), 0, columns - 1),
       y: clamp(Math.floor(point.y / cellSize), 0, rows - 1)
     };
+  }
+
+  function sameCell(point, cell) {
+    const pointCellPosition = pointCell(point);
+    return pointCellPosition.x === cell.x && pointCellPosition.y === cell.y;
+  }
+
+  function cellSamples(cell) {
+    return [
+      cellCenter(cell.x, cell.y),
+      ...(sameCell(spawn, cell) ? [spawn] : []),
+      ...goalHoldSamples.filter((point) => sameCell(point, cell))
+    ];
   }
 
   function passable(point) {
@@ -43,11 +65,11 @@ export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
   queue.push(start);
   visited.add(cellKey(start.x, start.y));
 
-  while (queue.length > 0) {
-    const cell = queue.shift();
-    const center = cellCenter(cell.x, cell.y);
-    if (!passable(center)) continue;
-    if (reachesGoal(center)) return true;
+  while (queueIndex < queue.length) {
+    const cell = queue[queueIndex++];
+    const samples = cellSamples(cell);
+    if (!samples.some(passable)) continue;
+    if (samples.some((point) => passable(point) && reachesGoal(point))) return true;
 
     [
       { x: cell.x + 1, y: cell.y },
