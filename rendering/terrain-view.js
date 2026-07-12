@@ -39,7 +39,17 @@ export function createTerrainView({
     renderObstacles();
   }
 
+  function terrainMatches({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds }) {
+    return currentGoal === goal &&
+      currentObstacles === obstacles &&
+      currentObstacleBounds === obstacleBounds &&
+      currentRoughPatches === roughPatches &&
+      currentRoughPatchBounds === roughPatchBounds;
+  }
+
   function setTerrain({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds }) {
+    if (terrainMatches({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds })) return;
+
     currentGoal = goal;
     currentObstacles = obstacles;
     currentObstacleBounds = obstacleBounds;

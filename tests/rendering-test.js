@@ -113,6 +113,40 @@ function testGoalProgressUsesRadialFillRadius() {
 
 testGoalProgressUsesRadialFillRadius();
 
+function testTerrainViewSkipsUnchangedTerrainRedraw() {
+  let obstacleRenderCount = 0;
+  let roughPatchRenderCount = 0;
+  const goal = { x: 100, y: 120, r: 50 };
+  const obstacles = [{ x: 10, y: 10, w: 20, h: 20 }];
+  const obstacleBounds = { left: 10, top: 10, right: 30, bottom: 30, width: 20, height: 20 };
+  const roughPatches = [{ x: 40, y: 40, w: 20, h: 20 }];
+  const roughPatchBounds = { left: 40, top: 40, right: 60, bottom: 60, width: 20, height: 20 };
+  const terrainView = createTerrainView({
+    roughPatchesEl: new FakeElement(),
+    obstaclesEl: new FakeElement(),
+    goalEl: new FakeElement(),
+    goal,
+    roughPatches,
+    roughPatchBounds,
+    obstacles,
+    obstacleBounds,
+    renderObstacleWalls() {
+      obstacleRenderCount++;
+    },
+    renderRoughPatches() {
+      roughPatchRenderCount++;
+    }
+  });
+
+  terrainView.renderTerrain();
+  terrainView.setTerrain({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds });
+
+  assert.equal(obstacleRenderCount, 1);
+  assert.equal(roughPatchRenderCount, 1);
+}
+
+testTerrainViewSkipsUnchangedTerrainRedraw();
+
 const originalDocument = globalThis.document;
 
 globalThis.document = {
