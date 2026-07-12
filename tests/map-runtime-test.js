@@ -5,6 +5,7 @@ import { createResolvedMapState } from "../core/map-state.js";
 const firstMap = {
   variantId: "first",
   goal: { x: 100, y: 120, r: 40, holdMs: 5000 },
+  spawn: { x: 80, y: 90, r: 12 },
   elements: [
     { type: "obstacle", x: 10, y: 20, w: 30, h: 40 },
     { type: "roughPatch", x: 50, y: 60, w: 70, h: 80 }
@@ -14,6 +15,7 @@ const firstMap = {
 const secondMap = {
   variantId: "second",
   goal: { x: 300, y: 320, r: 60, holdMs: 4000 },
+  spawn: { x: 140, y: 150, r: 12 },
   elements: [
     { type: "obstacle", x: 110, y: 120, w: 130, h: 40 },
     { type: "obstacle", x: 210, y: 220, w: 30, h: 140 }
@@ -25,11 +27,13 @@ const resolvedFirstMap = createResolvedMapState(firstMap);
 
 assert.equal(resolvedFirstMap.activeMap, firstMap);
 assert.equal(resolvedFirstMap.goal, firstMap.goal);
+assert.equal(resolvedFirstMap.spawn, firstMap.spawn);
 assert.equal(resolvedFirstMap.obstacles.length, 1);
 assert.equal(resolvedFirstMap.roughPatches.length, 1);
 
 assert.equal(runtime.state.activeMap, firstMap);
 assert.equal(runtime.state.goal, firstMap.goal);
+assert.equal(runtime.state.spawn, firstMap.spawn);
 assert.equal(runtime.state.obstacles.length, 1);
 assert.equal(runtime.state.roughPatches.length, 1);
 
@@ -40,6 +44,7 @@ runtime.setActiveMap(secondMap);
 
 assert.equal(runtime.state.activeMap, secondMap);
 assert.equal(runtime.state.goal, secondMap.goal);
+assert.equal(runtime.state.spawn, secondMap.spawn);
 assert.equal(runtime.state.obstacles.length, 2);
 assert.deepEqual(runtime.state.roughPatches, []);
 assert.equal(runtime.state.goalHoldMs, 0);

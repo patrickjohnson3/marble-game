@@ -6,8 +6,13 @@ export const variantSelectionFixtures = [
 export const simpleSeededMapConfig = {
   seed: "seed-a",
   variants: [
-    { id: "only", elements: [{ type: "obstacle", x: 0, y: 0, w: 10, h: 10 }] }
+    {
+      id: "only",
+      elements: [{ type: "obstacle", x: 0, y: 0, w: 10, h: 10 }],
+      goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
+    }
   ],
+  spawn: { x: 20, y: 20, r: 5 },
   world: { width: 100, height: 100 }
 };
 
@@ -16,6 +21,7 @@ export const missingElementsVariantConfig = {
   variants: [
     { id: "bad-variant", goal: { x: 80, y: 80, r: 10, holdMs: 5000 } }
   ],
+  spawn: { x: 20, y: 20, r: 5 },
   world: { width: 100, height: 100 }
 };
 
@@ -29,6 +35,7 @@ export const malformedVariantConfig = {
       goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
     }
   ],
+  spawn: { x: 20, y: 20, r: 5 },
   world: { width: 100, height: 100 }
 };
 
@@ -37,18 +44,21 @@ export const blockedSpawnConfig = {
   elements: [
     { type: "obstacle", x: 45, y: 45, w: 10, h: 10 }
   ],
+  spawn: { x: 50, y: 50, r: 8 },
   goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
 };
 
 export const invalidElementConfig = {
   world: { width: 100, height: 100 },
   elements: [null],
+  spawn: { x: 20, y: 20, r: 5 },
   goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
 };
 
 export const emptyElementMapConfig = {
   world: { width: 100, height: 100 },
   elements: [],
+  spawn: { x: 20, y: 20, r: 5 },
   goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
 };
 
@@ -65,6 +75,7 @@ export const unreachableGoalConfig = {
   elements: [
     { type: "obstacle", x: 50, y: 0, w: 10, h: 100 }
   ],
+  spawn: { x: 20, y: 50, r: 5 },
   goal: { x: 80, y: 50, r: 12, holdMs: 5000 }
 };
 

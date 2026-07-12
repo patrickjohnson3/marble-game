@@ -14,6 +14,7 @@ export function createResolvedMapState(activeMap, {
     obstacles: normalizeObstacles(mapObstacleElements(elements)),
     roughPatches: mapRoughPatchElements(elements),
     goal: activeMap.goal,
+    spawn: activeMap.spawn,
     world: activeMap.world
   };
 }

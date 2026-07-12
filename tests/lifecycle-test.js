@@ -156,10 +156,10 @@ async function testStartRequestsFullscreenFromClickPath() {
     },
     tilt: state.tilt,
     timing,
-    trailRenderer: { clear() {} },
-    ui: { isSettingsOpen: () => false, setHint() {} },
-    world: resolvedMapConfig.world,
-    enableMotion() {
+	    trailRenderer: { clear() {} },
+	    ui: { isSettingsOpen: () => false, setHint() {} },
+	    spawn: resolvedMapConfig.spawn,
+	    enableMotion() {
       motionEnabled = true;
     },
     requestFullscreen() {

@@ -174,11 +174,7 @@ export function validateMapConfig(config, {
   if (normalizedObstacles !== undefined && !Array.isArray(normalizedObstacles)) {
     errors.push(mapValidationMessages.normalizedObstaclesArray);
   }
-  const checkedSpawn = spawn ?? {
-    x: world.width / 2,
-    y: world.height / 2,
-    r: config?.marbleRadius ?? 29
-  };
+  const checkedSpawn = spawn ?? config?.spawn;
 
   if (Array.isArray(checkedObstaclesSource)) {
     checkedObstaclesSource.forEach((obstacle, index) => {
@@ -206,6 +202,7 @@ export function validateMapConfig(config, {
   });
   if (Number.isFinite(world.width) &&
       Number.isFinite(world.height) &&
+      checkedSpawn &&
       Number.isFinite(checkedSpawn.x) &&
       Number.isFinite(checkedSpawn.y) &&
       Number.isFinite(checkedSpawn.r) &&

@@ -46,6 +46,7 @@ function resolveMapConfig(config, { seed, variant }) {
     seed,
     variantId: variant.id,
     goal: { ...variant.goal },
+    spawn: { ...(variant.spawn ?? config.spawn) },
     elements
   };
 }

@@ -1,10 +1,11 @@
 import { resetIntroTimerState } from "./intro-timers.js";
 
 export function createGameState({ world, resolvedMapConfig, timing, hapticTuning, physicsConfig }) {
+  const spawn = resolvedMapConfig.spawn;
   const state = {
     marble: {
-      x: world.width / 2,
-      y: world.height / 2,
+      x: spawn.x,
+      y: spawn.y,
       vx: 0,
       vy: 0,
       r: 0,

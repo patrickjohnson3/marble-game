@@ -139,7 +139,7 @@ testResolveMapVariantConfigIgnoresMalformedVariants();
 
 function testMapValidationRejectsBlockedSpawn() {
   assert.ok(
-    validateMapConfig(blockedSpawnConfig, { spawn: { x: 50, y: 50, r: 8 } }).includes(mapValidationMessages.spawnObstacleOverlap)
+    validateMapConfig(blockedSpawnConfig).includes(mapValidationMessages.spawnObstacleOverlap)
   );
 }
 
@@ -153,8 +153,7 @@ function testMapValidationReportsMalformedConfig() {
       mapValidationMessages.worldWidthPositive,
       mapValidationMessages.worldHeightPositive,
       mapValidationMessages.goalRequired,
-      mapValidationMessages.fieldNonFinite("spawn", "x"),
-      mapValidationMessages.fieldNonFinite("spawn", "y")
+      mapValidationMessages.spawnRequired
     ]
   );
 }
@@ -174,6 +173,7 @@ function testMapValidationRejectsOffGridElementDimensions() {
     elements: [
       { type: "roughPatch", x: 10, y: 10, w: 15, h: 20 }
     ],
+    spawn: { x: 20, y: 20, r: 5 },
     goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
   }).includes(mapValidationMessages.elementGrid(0, "w")));
 }
@@ -199,7 +199,7 @@ testMapValidationRejectsVariantWorldMismatch();
 
 function testMapValidationRejectsUnreachableGoal() {
   assert.ok(
-    validateMapConfig(unreachableGoalConfig, { spawn: { x: 20, y: 50, r: 5 } }).includes(mapValidationMessages.goalReachable)
+    validateMapConfig(unreachableGoalConfig).includes(mapValidationMessages.goalReachable)
   );
 }
 

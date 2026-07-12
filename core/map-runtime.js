@@ -11,6 +11,7 @@ export function createMapRuntime({
     obstacles: [],
     roughPatches: [],
     goal: null,
+    spawn: null,
     goalHoldMs: 0,
     goalCompleted: false
   };
@@ -27,6 +28,7 @@ export function createMapRuntime({
     state.obstacles = derived.obstacles;
     state.roughPatches = derived.roughPatches;
     state.goal = derived.goal;
+    state.spawn = derived.spawn;
     resetGoalProgress();
     return state;
   }

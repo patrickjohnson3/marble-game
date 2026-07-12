@@ -33,6 +33,7 @@ function testWorldAndMapElements() {
   assertPositiveNumber(resolvedMapConfig.intro.viewportMargin, "intro viewport margin");
   assert.equal(resolvedMapConfig.seed, "default", "map seed");
   assert.equal(resolvedMapConfig.variantId, "default", "map variant");
+  assertPositiveNumber(resolvedMapConfig.spawn.r, "spawn radius");
   assertPositiveNumber(resolvedMapConfig.goal.r, "goal radius");
   assertPositiveNumber(resolvedMapConfig.goal.holdMs, "goal hold time");
 

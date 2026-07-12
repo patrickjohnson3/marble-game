@@ -229,8 +229,8 @@ function setCurrentMap(nextMap) {
 }
 
 function resetForNextMap() {
-  marble.x = world.width / 2;
-  marble.y = world.height / 2;
+  marble.x = mapState.spawn.x;
+  marble.y = mapState.spawn.y;
   marble.vx = 0;
   marble.vy = 0;
   marble.roll = 0;
@@ -334,7 +334,7 @@ const lifecycle = createLifecycleController({
   timing,
   trailRenderer,
   ui,
-  world,
+  spawn: mapState.spawn,
   enableMotion: () => inputManager.enableMotion(),
   requestFullscreen: (options) => requestFullscreenMode({ ...options, documentRef }),
   exitFullscreen: () => exitFullscreenMode({ documentRef }),

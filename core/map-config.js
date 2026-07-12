@@ -54,6 +54,11 @@ export const baseMapConfig = {
     width: 2200,
     height: 2200
   },
+  spawn: {
+    x: 1100,
+    y: 1100,
+    r: 29
+  },
   grid: {
     size: 10
   },
