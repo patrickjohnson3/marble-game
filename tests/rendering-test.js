@@ -124,7 +124,7 @@ try {
   const container = new FakeElement();
   const roughPatchContainer = new FakeElement();
 
-  renderRoughPatches(roughPatchContainer, [{ x: 20, y: 30, w: 80, h: 60 }]);
+  renderRoughPatches(roughPatchContainer, [{ x: 20, y: 30, w: 80, h: 60 }], { padding: 18 });
   const roughPatchCanvas = roughPatchContainer.children[0];
   assert.equal(roughPatchCanvas.classList.contains("roughPatchCanvas"), true, "rough patches should render to canvas");
   assert.equal(roughPatchCanvas.attributes["data-rough-patches"], "1");
@@ -146,7 +146,7 @@ try {
   renderObstacleWalls(container, [
     { x: 0, y: 0, w: 10, h: 20 },
     { x: 10, y: 0, w: 10, h: 10 }
-  ]);
+  ], { padding: 32 });
 
   const canvas = container.children[0];
 

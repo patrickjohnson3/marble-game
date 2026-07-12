@@ -374,25 +374,25 @@ export function renderWalls(container, walls) {
   container.replaceChildren(canvas);
 }
 
-export function renderRoughPatches(container, roughPatches) {
+export function renderRoughPatches(container, roughPatches, { padding = 0 } = {}) {
   if (!Array.isArray(roughPatches) || roughPatches.length === 0) {
     container.replaceChildren();
     return;
   }
 
-  const { canvas, context } = createWallCanvas("roughPatchCanvas", roughPatches, 18);
+  const { canvas, context } = createWallCanvas("roughPatchCanvas", roughPatches, padding);
   canvas.setAttribute("data-rough-patches", String(roughPatches.length));
   if (context) roughPatches.forEach((patch) => drawRoughPatch(context, patch));
   container.replaceChildren(canvas);
 }
 
-export function renderObstacleWalls(container, obstacles) {
+export function renderObstacleWalls(container, obstacles, { padding = 0 } = {}) {
   if (obstacles.length === 0) {
     container.replaceChildren();
     return;
   }
 
-  const { canvas, context } = createWallCanvas("obstacleCanvas", obstacles, 32);
+  const { canvas, context } = createWallCanvas("obstacleCanvas", obstacles, padding);
   const obstacleGroups = connectedRectGroups(obstacles);
 
   canvas.setAttribute("data-wall-groups", String(obstacleGroups.length));

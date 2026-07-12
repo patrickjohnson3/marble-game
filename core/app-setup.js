@@ -74,16 +74,20 @@ export function setupRenderers({
     visualConfig,
     clamp
   });
-  const terrainView = createTerrainView({
-    roughPatchesEl,
-    obstaclesEl,
-    goalEl,
-    goal,
-    roughPatches,
-    obstacles,
-    renderObstacleWalls,
-    renderRoughPatches
-  });
+	  const terrainView = createTerrainView({
+	    roughPatchesEl,
+	    obstaclesEl,
+	    goalEl,
+	    goal,
+	    roughPatches,
+	    obstacles,
+	    renderObstacleWalls: (container, renderedObstacles) => renderObstacleWalls(container, renderedObstacles, {
+	      padding: visualConfig.map.obstacleCanvasPadding
+	    }),
+	    renderRoughPatches: (container, renderedRoughPatches) => renderRoughPatches(container, renderedRoughPatches, {
+	      padding: visualConfig.map.roughPatchCanvasPadding
+	    })
+	  });
   const mapRenderer = createMapRenderer({
     worldEl,
     introWallsEl,

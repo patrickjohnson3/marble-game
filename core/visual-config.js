@@ -49,5 +49,9 @@ export const visualConfig = {
     surfaceLifeMinMs: 260,
     surfaceLifeRangeMs: 260,
     surfaceOpacity: 0.38
+  },
+  map: {
+    roughPatchCanvasPadding: 18,
+    obstacleCanvasPadding: 32
   }
 };
