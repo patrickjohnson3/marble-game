@@ -86,7 +86,8 @@ export function setupRenderers({
 	    }),
 	    renderRoughPatches: (container, renderedRoughPatches) => renderRoughPatches(container, renderedRoughPatches, {
 	      padding: visualConfig.map.roughPatchCanvasPadding
-	    })
+	    }),
+	    goalFillEdgePercent: visualConfig.map.goalFillEdgePercent
 	  });
   const mapRenderer = createMapRenderer({
     worldEl,

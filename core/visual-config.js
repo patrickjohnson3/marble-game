@@ -52,6 +52,7 @@ export const visualConfig = {
   },
   map: {
     roughPatchCanvasPadding: 18,
-    obstacleCanvasPadding: 32
+    obstacleCanvasPadding: 32,
+    goalFillEdgePercent: 70.8
   }
 };

@@ -144,6 +144,7 @@ function testHapticAndVisualRanges() {
   assertPositiveNumber(visualConfig.marble.glintLightOffset, "glint light offset");
   assertPositiveNumber(visualConfig.map.roughPatchCanvasPadding, "rough patch canvas padding");
   assertPositiveNumber(visualConfig.map.obstacleCanvasPadding, "obstacle canvas padding");
+  assertPositiveNumber(visualConfig.map.goalFillEdgePercent, "goal fill edge percent");
   assertPositiveNumber(visualConfig.effects.impactMin, "effect impact minimum");
   assertPositiveNumber(visualConfig.effects.impactReference, "effect impact reference");
   assertPositiveNumber(visualConfig.effects.impactCooldownMs, "effect impact cooldown");
