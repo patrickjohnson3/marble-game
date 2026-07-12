@@ -71,26 +71,27 @@ function isOverRoughPatch({ marble, intro, roughPatches }) {
   return intro.released && roughPatches.some((rect) => marbleOverRect(marble, rect));
 }
 
-function applySurfaceDrag(context, dt) {
-  if (!isOverRoughPatch(context)) return;
+function applySurfaceDrag(context, dt, overRoughPatch) {
+  if (!overRoughPatch) return;
 
   const drag = Math.pow(context.physics.roughPatchFriction, dt);
   context.marble.vx *= drag;
   context.marble.vy *= drag;
 }
 
-function handleSurfaceFeedback({ marble, intro, roughPatches }, onSurface) {
-  if (!isOverRoughPatch({ marble, intro, roughPatches })) return;
+function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
+  if (!overRoughPatch) return;
 
   onSurface(Math.hypot(marble.vx, marble.vy));
 }
 
 function physicsStep(context, dt, feedback) {
   updateVelocity(context, dt);
-  applySurfaceDrag(context, dt);
+  const overRoughPatch = isOverRoughPatch(context);
+  applySurfaceDrag(context, dt, overRoughPatch);
   updatePosition(context.marble, dt);
   handleWallCollisions(context, feedback.onImpact);
-  handleSurfaceFeedback(context, feedback.onSurface);
+  handleSurfaceFeedback(context, feedback.onSurface, overRoughPatch);
 }
 
 export function updatePhysics(context, dt, feedback) {
