@@ -392,7 +392,9 @@ function physicsContext() {
     camera,
     physics,
     obstacles: mapState.obstacles,
-    roughPatches: mapState.roughPatches
+    obstacleIndex: mapState.obstacleIndex,
+    roughPatches: mapState.roughPatches,
+    roughPatchIndex: mapState.roughPatchIndex
   };
 }
 

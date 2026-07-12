@@ -72,8 +72,16 @@ function updatePosition(marble, dt) {
   marble.y += marble.vy * dt;
 }
 
-function isOverRoughPatch({ marble, intro, roughPatches }) {
+function isOverRoughPatch(marble, intro, roughPatches) {
   return intro.released && roughPatches.some((rect) => marbleOverRect(marble, rect));
+}
+
+function roughPatchCandidates({ marble, roughPatches, roughPatchIndex }) {
+  return roughPatchIndex?.queryCircle(marble) ?? roughPatches;
+}
+
+function obstacleCandidates({ marble, obstacles, obstacleIndex }) {
+  return obstacleIndex?.queryCircle(marble) ?? obstacles;
 }
 
 function applySurfaceDrag(context, dt, overRoughPatch) {
@@ -92,10 +100,13 @@ function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
 
 function physicsStep(context, dt, feedback) {
   updateVelocity(context, dt);
-  const overRoughPatch = isOverRoughPatch(context);
+  const overRoughPatch = isOverRoughPatch(context.marble, context.intro, roughPatchCandidates(context));
   applySurfaceDrag(context, dt, overRoughPatch);
   updatePosition(context.marble, dt);
+  const obstacles = context.obstacles;
+  context.obstacles = obstacleCandidates(context);
   handleWallCollisions(context, feedback.onImpact);
+  context.obstacles = obstacles;
   handleSurfaceFeedback(context, feedback.onSurface, overRoughPatch);
 }
 
