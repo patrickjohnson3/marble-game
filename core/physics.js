@@ -28,10 +28,15 @@ function updateTilt({ tilt, keyboard, camera, physics }, dt) {
   const sensorY = curveTilt(rawSensorY, physics.maxTilt, physics.tiltCurve);
   const targetX = keyboard.x ? keyboard.x * physics.keyboardTilt : sensorX;
   const targetY = keyboard.y ? keyboard.y * physics.keyboardTilt : sensorY;
-  const c = Math.cos(-camera.rotation);
-  const s = Math.sin(-camera.rotation);
-  const worldTargetX = targetX * c - targetY * s;
-  const worldTargetY = targetX * s + targetY * c;
+  let worldTargetX = targetX;
+  let worldTargetY = targetY;
+
+  if (camera.rotation !== 0) {
+    const c = Math.cos(-camera.rotation);
+    const s = Math.sin(-camera.rotation);
+    worldTargetX = targetX * c - targetY * s;
+    worldTargetY = targetX * s + targetY * c;
+  }
 
   tilt.smoothX += (worldTargetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
   tilt.smoothY += (worldTargetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
