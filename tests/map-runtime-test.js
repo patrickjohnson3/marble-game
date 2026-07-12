@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createMapRuntime } from "../core/map-runtime.js";
+import { createResolvedMapState } from "../core/map-state.js";
 
 const firstMap = {
   variantId: "first",
@@ -20,6 +21,12 @@ const secondMap = {
 };
 
 const runtime = createMapRuntime({ initialMap: firstMap });
+const resolvedFirstMap = createResolvedMapState(firstMap);
+
+assert.equal(resolvedFirstMap.activeMap, firstMap);
+assert.equal(resolvedFirstMap.goal, firstMap.goal);
+assert.equal(resolvedFirstMap.obstacles.length, 1);
+assert.equal(resolvedFirstMap.roughPatches.length, 1);
 
 assert.equal(runtime.state.activeMap, firstMap);
 assert.equal(runtime.state.goal, firstMap.goal);

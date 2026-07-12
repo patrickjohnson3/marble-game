@@ -1,18 +1,5 @@
-import {
-  mapObstacleElements,
-  mapRoughPatchElements,
-  normalizeJoinedObstacleRects
-} from "./map.js";
-
-function deriveMapElements(activeMap, normalizeObstacles) {
-  const elements = activeMap.elements;
-  return {
-    elements,
-    obstacles: normalizeObstacles(mapObstacleElements(elements)),
-    roughPatches: mapRoughPatchElements(elements),
-    goal: activeMap.goal
-  };
-}
+import { normalizeJoinedObstacleRects } from "./map.js";
+import { createResolvedMapState } from "./map-state.js";
 
 export function createMapRuntime({
   initialMap,
@@ -34,8 +21,8 @@ export function createMapRuntime({
   }
 
   function setActiveMap(nextMap) {
-    const derived = deriveMapElements(nextMap, normalizeObstacles);
-    state.activeMap = nextMap;
+    const derived = createResolvedMapState(nextMap, { normalizeObstacles });
+    state.activeMap = derived.activeMap;
     state.elements = derived.elements;
     state.obstacles = derived.obstacles;
     state.roughPatches = derived.roughPatches;
