@@ -23,6 +23,7 @@ function fakeButton() {
 function createPanelHarness() {
   const cameraModeSetting = fakeControl("follow");
   let applyCount = 0;
+  let fpsChangeCount = 0;
   let saveCount = 0;
   let renderCount = 0;
   const settings = {
@@ -75,6 +76,9 @@ function createPanelHarness() {
     onCloseSettings() {},
     onSetNeutral() {},
     onRotationDisabled() {},
+    onFpsChanged() {
+      fpsChangeCount++;
+    },
     requestRender() {
       renderCount++;
     }
@@ -82,7 +86,7 @@ function createPanelHarness() {
 
   return {
     cameraModeSetting,
-    counts: () => ({ applyCount, saveCount, renderCount }),
+    counts: () => ({ applyCount, fpsChangeCount, saveCount, renderCount }),
     fpsSetting,
     settings
   };
@@ -95,7 +99,7 @@ function testValidCameraModeChangePersists() {
   cameraModeSetting.listeners.change();
 
   assert.equal(settings.cameraMode, "lockedCenter");
-  assert.deepEqual(counts(), { applyCount: 1, saveCount: 1, renderCount: 1 });
+  assert.deepEqual(counts(), { applyCount: 1, fpsChangeCount: 0, saveCount: 1, renderCount: 1 });
 }
 
 function testInvalidCameraModeChangeFallsBack() {
@@ -106,7 +110,7 @@ function testInvalidCameraModeChangeFallsBack() {
 
   assert.equal(settings.cameraMode, "follow");
   assert.equal(cameraModeSetting.value, "follow");
-  assert.deepEqual(counts(), { applyCount: 1, saveCount: 1, renderCount: 1 });
+  assert.deepEqual(counts(), { applyCount: 1, fpsChangeCount: 0, saveCount: 1, renderCount: 1 });
 }
 
 testValidCameraModeChangePersists();
@@ -119,7 +123,7 @@ function testFpsTogglePersistsAndRenders() {
   fpsSetting.listeners.change();
 
   assert.equal(settings.fpsEnabled, true);
-  assert.deepEqual(counts(), { applyCount: 0, saveCount: 1, renderCount: 1 });
+  assert.deepEqual(counts(), { applyCount: 0, fpsChangeCount: 1, saveCount: 1, renderCount: 1 });
 }
 
 testFpsTogglePersistsAndRenders();

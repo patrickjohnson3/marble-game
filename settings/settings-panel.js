@@ -10,6 +10,7 @@ export function bindSettingsPanel({
   onCloseSettings,
   onSetNeutral,
   onRotationDisabled,
+  onFpsChanged,
   requestRender
 }) {
   const {
@@ -78,6 +79,7 @@ export function bindSettingsPanel({
   });
   fpsSetting.addEventListener("change", () => {
     settings.fpsEnabled = fpsSetting.checked;
+    onFpsChanged(settings.fpsEnabled);
     saveSettings();
     requestRender();
   });

@@ -74,6 +74,7 @@ function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
   assert.equal(fpsCounter.hidden, true);
 
   settings.fpsEnabled = true;
+  ui.setFpsEnabled(settings.fpsEnabled);
   ui.updateFps(1000);
   ui.updateFps(1500);
 

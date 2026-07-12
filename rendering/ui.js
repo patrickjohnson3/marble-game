@@ -25,12 +25,15 @@ export function createUi({ hint, fpsCounter, debug, settings, settingsOverlay, d
     fps.sampleFrames = 0;
   }
 
+  function setFpsEnabled(enabled) {
+    fpsCounter.hidden = !enabled;
+    if (!enabled) resetFpsSample();
+  }
+
+  setFpsEnabled(settings.fpsEnabled);
+
   function updateFps(now) {
-    fpsCounter.hidden = !settings.fpsEnabled;
-    if (!settings.fpsEnabled) {
-      resetFpsSample();
-      return;
-    }
+    if (!settings.fpsEnabled) return;
 
     if (fps.lastTime === null) {
       fps.lastTime = now;
@@ -65,6 +68,7 @@ export function createUi({ hint, fpsCounter, debug, settings, settingsOverlay, d
     closeSettingsModal,
     isSettingsOpen,
     openSettingsModal,
+    setFpsEnabled,
     setHint,
     updateDebugPanel,
     updateFps

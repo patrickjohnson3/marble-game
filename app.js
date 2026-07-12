@@ -378,6 +378,7 @@ bindSettingsPanel({
     camera.rotation = 0;
     cameraController.centerOnMarble();
   },
+  onFpsChanged: ui.setFpsEnabled,
   requestRender
 });
 
