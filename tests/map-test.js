@@ -15,6 +15,7 @@ import {
 } from "../core/map.js";
 import { createMapProgression } from "../core/map-progression.js";
 import { hasReachableGoal } from "../core/map-reachability.js";
+import { mapValidationMessages } from "../core/map-validation-messages.js";
 import { renderObstacleWalls } from "../rendering/rendering.js";
 import {
   blockedSpawnConfig,
@@ -123,7 +124,7 @@ function testResolveSeededMapConfigAllowsValidationOfMissingVariantElements() {
   const resolved = resolveSeededMapConfig(missingElementsVariantConfig);
 
   assert.equal(resolved.variantId, "bad-variant");
-  assert.ok(validateMapConfig(resolved).includes("elements must be an array"));
+  assert.ok(validateMapConfig(resolved).includes(mapValidationMessages.elementsArray));
 }
 
 testResolveSeededMapConfigAllowsValidationOfMissingVariantElements();
@@ -138,7 +139,7 @@ testResolveMapVariantConfigIgnoresMalformedVariants();
 
 function testMapValidationRejectsBlockedSpawn() {
   assert.ok(
-    validateMapConfig(blockedSpawnConfig, { spawn: { x: 50, y: 50, r: 8 } }).includes("spawn must not overlap obstacles")
+    validateMapConfig(blockedSpawnConfig, { spawn: { x: 50, y: 50, r: 8 } }).includes(mapValidationMessages.spawnObstacleOverlap)
   );
 }
 
@@ -148,12 +149,12 @@ function testMapValidationReportsMalformedConfig() {
   assert.deepEqual(
     validateMapConfig({}),
     [
-      "elements must be an array",
-      "world width must be positive",
-      "world height must be positive",
-      "goal is required",
-      "spawn has non-finite x",
-      "spawn has non-finite y"
+      mapValidationMessages.elementsArray,
+      mapValidationMessages.worldWidthPositive,
+      mapValidationMessages.worldHeightPositive,
+      mapValidationMessages.goalRequired,
+      mapValidationMessages.fieldNonFinite("spawn", "x"),
+      mapValidationMessages.fieldNonFinite("spawn", "y")
     ]
   );
 }
@@ -161,7 +162,7 @@ function testMapValidationReportsMalformedConfig() {
 testMapValidationReportsMalformedConfig();
 
 function testMapValidationReportsInvalidElementEntries() {
-  assert.ok(validateMapConfig(invalidElementConfig).includes("element 0 must be an object"));
+  assert.ok(validateMapConfig(invalidElementConfig).includes(mapValidationMessages.elementObject(0)));
 }
 
 testMapValidationReportsInvalidElementEntries();
@@ -174,31 +175,31 @@ function testMapValidationRejectsOffGridElementDimensions() {
       { type: "roughPatch", x: 10, y: 10, w: 15, h: 20 }
     ],
     goal: { x: 80, y: 80, r: 10, holdMs: 5000 }
-  }).includes("element 0 w must align to grid"));
+  }).includes(mapValidationMessages.elementGrid(0, "w")));
 }
 
 testMapValidationRejectsOffGridElementDimensions();
 
 function testMapValidationReportsInvalidNormalizedObstacles() {
   assert.ok(
-    validateMapConfig(emptyElementMapConfig, { normalizedObstacles: [null] }).includes("normalized obstacle 0 must be an object")
+    validateMapConfig(emptyElementMapConfig, { normalizedObstacles: [null] }).includes(mapValidationMessages.normalizedObstacleObject(0))
   );
   assert.ok(
-    validateMapConfig(emptyElementMapConfig, { normalizedObstacles: "bad" }).includes("normalized obstacles must be an array")
+    validateMapConfig(emptyElementMapConfig, { normalizedObstacles: "bad" }).includes(mapValidationMessages.normalizedObstaclesArray)
   );
 }
 
 testMapValidationReportsInvalidNormalizedObstacles();
 
 function testMapValidationRejectsVariantWorldMismatch() {
-  assert.ok(validateMapConfig(variantWorldMismatchConfig).includes("variant other-size world must match base world"));
+  assert.ok(validateMapConfig(variantWorldMismatchConfig).includes(mapValidationMessages.variantWorldMatch("other-size")));
 }
 
 testMapValidationRejectsVariantWorldMismatch();
 
 function testMapValidationRejectsUnreachableGoal() {
   assert.ok(
-    validateMapConfig(unreachableGoalConfig, { spawn: { x: 20, y: 50, r: 5 } }).includes("goal must be reachable from spawn")
+    validateMapConfig(unreachableGoalConfig, { spawn: { x: 20, y: 50, r: 5 } }).includes(mapValidationMessages.goalReachable)
   );
 }
 
