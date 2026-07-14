@@ -28,10 +28,15 @@ function updateTilt({ tilt, keyboard, camera, physics }, dt) {
   const sensorY = curveTilt(rawSensorY, physics.maxTilt, physics.tiltCurve);
   const targetX = keyboard.x ? keyboard.x * physics.keyboardTilt : sensorX;
   const targetY = keyboard.y ? keyboard.y * physics.keyboardTilt : sensorY;
-  const c = Math.cos(-camera.rotation);
-  const s = Math.sin(-camera.rotation);
-  const worldTargetX = targetX * c - targetY * s;
-  const worldTargetY = targetX * s + targetY * c;
+  let worldTargetX = targetX;
+  let worldTargetY = targetY;
+
+  if (camera.rotation !== 0) {
+    const c = Math.cos(-camera.rotation);
+    const s = Math.sin(-camera.rotation);
+    worldTargetX = targetX * c - targetY * s;
+    worldTargetY = targetX * s + targetY * c;
+  }
 
   tilt.smoothX += (worldTargetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
   tilt.smoothY += (worldTargetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
@@ -67,30 +72,42 @@ function updatePosition(marble, dt) {
   marble.y += marble.vy * dt;
 }
 
-function isOverRoughPatch({ marble, intro, roughPatches }) {
+function isOverRoughPatch(marble, intro, roughPatches) {
   return intro.released && roughPatches.some((rect) => marbleOverRect(marble, rect));
 }
 
-function applySurfaceDrag(context, dt) {
-  if (!isOverRoughPatch(context)) return;
+function roughPatchCandidates({ marble, roughPatches, roughPatchIndex }) {
+  return roughPatchIndex?.queryCircle(marble) ?? roughPatches;
+}
+
+function obstacleCandidates({ marble, obstacles, obstacleIndex }) {
+  return obstacleIndex?.queryCircle(marble) ?? obstacles;
+}
+
+function applySurfaceDrag(context, dt, overRoughPatch) {
+  if (!overRoughPatch) return;
 
   const drag = Math.pow(context.physics.roughPatchFriction, dt);
   context.marble.vx *= drag;
   context.marble.vy *= drag;
 }
 
-function handleSurfaceFeedback({ marble, intro, roughPatches }, onSurface) {
-  if (!isOverRoughPatch({ marble, intro, roughPatches })) return;
+function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
+  if (!overRoughPatch) return;
 
   onSurface(Math.hypot(marble.vx, marble.vy));
 }
 
 function physicsStep(context, dt, feedback) {
   updateVelocity(context, dt);
-  applySurfaceDrag(context, dt);
+  const overRoughPatch = isOverRoughPatch(context.marble, context.intro, roughPatchCandidates(context));
+  applySurfaceDrag(context, dt, overRoughPatch);
   updatePosition(context.marble, dt);
+  const obstacles = context.obstacles;
+  context.obstacles = obstacleCandidates(context);
   handleWallCollisions(context, feedback.onImpact);
-  handleSurfaceFeedback(context, feedback.onSurface);
+  context.obstacles = obstacles;
+  handleSurfaceFeedback(context, feedback.onSurface, overRoughPatch);
 }
 
 export function updatePhysics(context, dt, feedback) {

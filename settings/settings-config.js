@@ -9,6 +9,7 @@ export const settingsConfig = {
   trailEnabled: false,
   trailDefaultVersion: 2,
   fullscreenEnabled: appConfig.fullscreenOnStart,
+  fpsEnabled: false,
   cameraMode: "follow"
 };
 

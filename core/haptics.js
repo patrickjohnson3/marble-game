@@ -37,8 +37,25 @@ export function createHapticsController(state, tuning) {
     ));
   }
 
+  function pulseGoal(kind) {
+    if (!canVibrate()) return;
+
+    if (kind === "complete") {
+      navigator.vibrate(tuning.goalCompletePattern);
+    } else if (kind === "hold") {
+      const now = performance.now();
+      if (now - state.goal.lastHoldPulse < state.goal.holdCooldownMs) return;
+
+      state.goal.lastHoldPulse = now;
+      navigator.vibrate(tuning.goalHoldDurationMs);
+    } else {
+      navigator.vibrate(tuning.goalEnterDurationMs);
+    }
+  }
+
   return {
     pulseImpact,
+    pulseGoal,
     pulseSurface
   };
 }

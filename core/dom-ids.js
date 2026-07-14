@@ -5,6 +5,7 @@ export const domIds = {
   mapWalls: "mapWalls",
   roughPatches: "roughPatches",
   obstacles: "obstacles",
+  goal: "goal",
   trail: "trail",
   trailSegments: "trailSegments",
   effects: "effects",
@@ -24,8 +25,10 @@ export const domIds = {
   hapticsSetting: "hapticsSetting",
   trailSetting: "trailSetting",
   fullscreenSetting: "fullscreenSetting",
+  fpsSetting: "fpsSetting",
   cameraModeSetting: "cameraModeSetting",
   hint: "hint",
+  fpsCounter: "fpsCounter",
   debug: "debug"
 };
 

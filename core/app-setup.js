@@ -1,6 +1,6 @@
 import {
   hapticTuning,
-  mapConfig,
+  resolvedMapConfig,
   timing,
   tuning,
   visualConfig
@@ -17,8 +17,11 @@ import {
 } from "./map.js";
 import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
-import { marbleOverRect } from "./physics.js";
-import { renderMapElements, renderWalls } from "../rendering/rendering.js";
+import {
+  renderObstacleWalls,
+  renderRoughPatches,
+  renderWalls
+} from "../rendering/rendering.js";
 import { createSensorController } from "../input/sensor-controller.js";
 import { createSensorWatchdog } from "../input/sensor-watchdog.js";
 import { createTerrainView } from "../rendering/terrain-view.js";
@@ -32,7 +35,10 @@ export function setupRenderers({
   settings,
   clamp,
   obstacles,
-  roughPatches
+  obstacleBounds,
+  goal,
+  roughPatches,
+  roughPatchBounds
 }) {
   const {
     world: worldEl,
@@ -40,6 +46,7 @@ export function setupRenderers({
     mapWalls: mapWallsEl,
     roughPatches: roughPatchesEl,
     obstacles: obstaclesEl,
+    goal: goalEl,
     trail: trailEl,
     trailSegments: trailSegmentsEl,
     effects: effectsEl,
@@ -65,20 +72,29 @@ export function setupRenderers({
     marbleEl,
     marble,
     world,
-    mapConfig,
+    mapConfig: resolvedMapConfig,
     visualConfig,
     clamp
   });
-  const terrainView = createTerrainView({
-    roughPatchesEl,
-    obstaclesEl,
-    roughPatches,
-    obstacles,
-    intro,
-    marble,
-    marbleOverRect,
-    renderMapElements
-  });
+	  const terrainView = createTerrainView({
+	    roughPatchesEl,
+	    obstaclesEl,
+	    goalEl,
+	    goal,
+	    roughPatches,
+	    roughPatchBounds,
+	    obstacles,
+	    obstacleBounds,
+	    renderObstacleWalls: (container, renderedObstacles, renderedBounds) => renderObstacleWalls(container, renderedObstacles, {
+	      bounds: renderedBounds,
+	      padding: visualConfig.map.obstacleCanvasPadding
+	    }),
+	    renderRoughPatches: (container, renderedRoughPatches, renderedBounds) => renderRoughPatches(container, renderedRoughPatches, {
+	      bounds: renderedBounds,
+	      padding: visualConfig.map.roughPatchCanvasPadding
+	    }),
+	    goalFillEdgePercent: visualConfig.map.goalFillEdgePercent
+	  });
   const mapRenderer = createMapRenderer({
     worldEl,
     introWallsEl,

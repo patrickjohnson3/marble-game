@@ -1,6 +1,7 @@
 import { createCameraController } from "./core/camera.js";
 import {
-  mapConfig,
+  baseMapConfig,
+  resolvedMapConfig,
   timing,
   tuning,
   hapticTuning,
@@ -17,6 +18,8 @@ import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { clamp, distance, angle, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
+import { createMapProgression } from "./core/map-progression.js";
+import { createMapRuntime } from "./core/map-runtime.js";
 import { createKeyboardController } from "./input/keyboard-controller.js";
 import {
   exitFullscreenMode,
@@ -77,16 +80,22 @@ const {
   hapticsSetting,
   trailSetting,
   fullscreenSetting,
+  fpsCounter,
   hint,
   debug
 } = els;
 
-const world = mapConfig.world;
-const mapElements = mapConfig.elements;
-const obstacles = mapElements.filter((element) => element.type === "obstacle");
-const roughPatches = mapElements.filter((element) => element.type === "roughPatch");
+const mapRuntime = createMapRuntime({ initialMap: resolvedMapConfig });
+const mapState = mapRuntime.state;
+const world = mapState.activeMap.world;
 
-const state = createGameState({ world, mapConfig, timing, hapticTuning, physicsConfig });
+const state = createGameState({
+  world,
+  resolvedMapConfig,
+  timing,
+  hapticTuning,
+  physicsConfig
+});
 const {
   marble,
   bounds,
@@ -112,7 +121,15 @@ const persistedSettings = loadSettings({
   clamp
 });
 const settings = createRuntimeSettings(persistedSettings);
-const ui = createUi({ hint, debug, settingsOverlay, debugLines, state });
+const ui = createUi({
+  hint,
+  fpsCounter,
+  debug,
+  settings,
+  settingsOverlay,
+  debugLines,
+  state
+});
 const frameLoop = createFrameLoop();
 const viewport = createViewport(windowRef);
 
@@ -159,8 +176,11 @@ const {
   viewport,
   settings,
   clamp,
-  obstacles,
-  roughPatches
+  obstacles: mapState.obstacles,
+  obstacleBounds: mapState.obstacleBounds,
+  goal: mapState.goal,
+  roughPatches: mapState.roughPatches,
+  roughPatchBounds: mapState.roughPatchBounds
 });
 const {
   applyFullscreenSetting,
@@ -201,6 +221,77 @@ function releaseMap() {
   ui.setHint(copy.hints.mapOpen);
 }
 
+function setCurrentMap(nextMap) {
+  mapRuntime.setActiveMap(nextMap);
+  terrainView.setTerrain({
+    goal: mapState.goal,
+    obstacles: mapState.obstacles,
+    obstacleBounds: mapState.obstacleBounds,
+    roughPatches: mapState.roughPatches,
+    roughPatchBounds: mapState.roughPatchBounds
+  });
+}
+
+function resetForNextMap() {
+  marble.x = mapState.spawn.x;
+  marble.y = mapState.spawn.y;
+  marble.vx = 0;
+  marble.vy = 0;
+  marble.roll = 0;
+  trailRenderer.clear();
+  effectsRenderer.clear();
+  cameraController.centerOnMarble();
+}
+
+const mapProgression = createMapProgression({
+  baseMapConfig,
+  getCurrentMap: () => mapState.activeMap,
+  applyMap: setCurrentMap,
+  resetForNextMap,
+	  terrainView,
+	  ui,
+	  copy: copy.hints,
+	  requestRender
+	});
+let goalHapticActive = false;
+
+function marbleInsideGoal() {
+  return intro.released && distance(marble, mapState.goal) + marble.r <= mapState.goal.r;
+}
+
+function updateGoalHold(dt) {
+  if (mapState.goalCompleted) return;
+
+  if (!marbleInsideGoal()) {
+    if (mapState.goalHoldMs > 0) {
+      mapRuntime.resetGoalProgress();
+      terrainView.updateGoalProgress(0);
+      ui.setHint(copy.hints.mapOpen);
+    }
+    goalHapticActive = false;
+    return;
+  }
+
+  if (!goalHapticActive) {
+    goalHapticActive = true;
+    hapticFeedback.pulseGoal("enter");
+  }
+
+  const progress = mapRuntime.addGoalHold(dt * timing.targetFrameMs);
+  terrainView.updateGoalProgress(progress);
+  ui.setHint("hold goal " + Math.ceil((mapState.goal.holdMs - mapState.goalHoldMs) / 1000) + "s");
+  hapticFeedback.pulseGoal("hold");
+
+  if (mapState.goalHoldMs >= mapState.goal.holdMs) {
+    mapRuntime.completeGoal();
+    hapticFeedback.pulseGoal("complete");
+    goalHapticActive = false;
+    if (!mapProgression.advanceToNextMap()) {
+      mapRuntime.clearGoalCompleted();
+    }
+  }
+}
+
 const introSequence = createIntroSequence({
   intro,
   game,
@@ -237,6 +328,7 @@ const lifecycle = createLifecycleController({
   keyboard,
   mapRenderer,
   marble,
+  resetMap: () => setCurrentMap(resolvedMapConfig),
   resetCalibration: sensorController.resetCalibration,
   scheduleFrame,
   sensor,
@@ -247,7 +339,7 @@ const lifecycle = createLifecycleController({
   timing,
   trailRenderer,
   ui,
-  world,
+  spawn: mapState.spawn,
   enableMotion: () => inputManager.enableMotion(),
   requestFullscreen: (options) => requestFullscreenMode({ ...options, documentRef }),
   exitFullscreen: () => exitFullscreenMode({ documentRef }),
@@ -290,6 +382,7 @@ bindSettingsPanel({
     camera.rotation = 0;
     cameraController.centerOnMarble();
   },
+  onFpsChanged: ui.setFpsEnabled,
   requestRender
 });
 
@@ -302,8 +395,10 @@ function physicsContext() {
     keyboard,
     camera,
     physics,
-    obstacles,
-    roughPatches
+    obstacles: mapState.obstacles,
+    obstacleIndex: mapState.obstacleIndex,
+    roughPatches: mapState.roughPatches,
+    roughPatchIndex: mapState.roughPatchIndex
   };
 }
 
@@ -314,6 +409,9 @@ gameLoop = createGameLoop({
   frameLoop,
   game,
   hapticFeedback,
+  goalController: {
+    update: updateGoalHold
+  },
   lifecycle,
   marble,
   marbleView,

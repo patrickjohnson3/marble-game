@@ -19,7 +19,7 @@ export const visualConfig = {
     impactMin: 1.9,
     impactReference: 10,
     impactCooldownMs: 70,
-    maxParticles: 80,
+    maxParticles: 60,
     impactMinParticles: 2,
     impactExtraParticles: 5,
     impactEdgeRatio: 0.82,
@@ -34,7 +34,7 @@ export const visualConfig = {
     impactOpacity: 0.82,
     surfaceMinSpeed: 1.5,
     surfaceReferenceSpeed: 8,
-    surfaceCooldownMs: 110,
+    surfaceCooldownMs: 180,
     surfaceMinParticles: 1,
     surfaceExtraParticles: 2,
     surfaceBackRatio: 0.55,
@@ -49,5 +49,10 @@ export const visualConfig = {
     surfaceLifeMinMs: 260,
     surfaceLifeRangeMs: 260,
     surfaceOpacity: 0.38
+  },
+  map: {
+    roughPatchCanvasPadding: 18,
+    obstacleCanvasPadding: 32,
+    goalFillEdgePercent: 70.8
   }
 };

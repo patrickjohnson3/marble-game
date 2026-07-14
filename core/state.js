@@ -1,10 +1,11 @@
 import { resetIntroTimerState } from "./intro-timers.js";
 
-export function createGameState({ world, mapConfig, timing, hapticTuning, physicsConfig }) {
+export function createGameState({ world, resolvedMapConfig, timing, hapticTuning, physicsConfig }) {
+  const spawn = resolvedMapConfig.spawn;
   const state = {
     marble: {
-      x: world.width / 2,
-      y: world.height / 2,
+      x: spawn.x,
+      y: spawn.y,
       vx: 0,
       vy: 0,
       r: 0,
@@ -20,8 +21,8 @@ export function createGameState({ world, mapConfig, timing, hapticTuning, physic
     intro: {
       started: false,
       released: false,
-      wallThickness: mapConfig.intro.wallThickness,
-      viewportMargin: mapConfig.intro.viewportMargin,
+      wallThickness: resolvedMapConfig.intro.wallThickness,
+      viewportMargin: resolvedMapConfig.intro.viewportMargin,
       messageTimer: 0,
       countdownTimer: 0,
       countdownValue: timing.countdownStart
@@ -45,10 +46,10 @@ export function createGameState({ world, mapConfig, timing, hapticTuning, physic
       rotation: 0,
       mode: "follow",
       rotationEnabled: false,
-      minScale: mapConfig.camera.minScale,
-      maxScale: mapConfig.camera.maxScale,
-      followLag: mapConfig.camera.followLag,
-      predictiveLookAheadFrames: mapConfig.camera.predictiveLookAheadFrames,
+      minScale: resolvedMapConfig.camera.minScale,
+      maxScale: resolvedMapConfig.camera.maxScale,
+      followLag: resolvedMapConfig.camera.followLag,
+      predictiveLookAheadFrames: resolvedMapConfig.camera.predictiveLookAheadFrames,
       gestureCooldown: 0
     },
     haptics: {
@@ -62,6 +63,10 @@ export function createGameState({ world, mapConfig, timing, hapticTuning, physic
         cooldownMs: hapticTuning.surfaceCooldownMs,
         lastPulse: 0,
         minSpeed: hapticTuning.surfaceMinSpeed
+      },
+      goal: {
+        holdCooldownMs: hapticTuning.goalHoldCooldownMs,
+        lastHoldPulse: 0
       }
     },
     calibration: {

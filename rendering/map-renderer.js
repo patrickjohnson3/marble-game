@@ -36,8 +36,7 @@ export function createMapRenderer({
     trailEl.setAttribute("viewBox", "0 0 " + world.width + " " + world.height);
     setReleasedBounds();
     renderWalls(mapWallsEl, mapEdgeWalls(world, intro));
-    terrainView.renderRoughPatches();
-    terrainView.renderObstacles();
+    terrainView.renderTerrain();
     updateIntroBounds();
   }
 

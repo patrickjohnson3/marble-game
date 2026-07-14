@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import {
   hapticTuning,
-  mapConfig,
   physicsConfig,
+  resolvedMapConfig,
   timing
 } from "../core/config.js";
 import { createGameController } from "../core/game-controller.js";
@@ -12,8 +12,8 @@ import { createGameState } from "../core/state.js";
 
 function createLifecycleHarness() {
   const state = createGameState({
-    world: mapConfig.world,
-    mapConfig,
+    world: resolvedMapConfig.world,
+    resolvedMapConfig,
     timing,
     hapticTuning,
     physicsConfig
@@ -104,14 +104,15 @@ function testStartPauseResumeReleaseReset() {
 
 async function testStartRequestsFullscreenFromClickPath() {
   const state = createGameState({
-    world: mapConfig.world,
-    mapConfig,
+    world: resolvedMapConfig.world,
+    resolvedMapConfig,
     timing,
     hapticTuning,
     physicsConfig
   });
   let fullscreenRequests = 0;
   let motionEnabled = false;
+  let mapResets = 0;
 
   const lifecycle = createLifecycleController({
     cameraController: {
@@ -136,6 +137,9 @@ async function testStartRequestsFullscreenFromClickPath() {
     keyboard: state.keyboard,
     mapRenderer: { resetIntroPen() {} },
     marble: state.marble,
+    resetMap() {
+      mapResets++;
+    },
     resetCalibration() {},
     scheduleFrame() {},
     sensor: state.sensor,
@@ -152,10 +156,10 @@ async function testStartRequestsFullscreenFromClickPath() {
     },
     tilt: state.tilt,
     timing,
-    trailRenderer: { clear() {} },
-    ui: { isSettingsOpen: () => false, setHint() {} },
-    world: mapConfig.world,
-    enableMotion() {
+	    trailRenderer: { clear() {} },
+	    ui: { isSettingsOpen: () => false, setHint() {} },
+	    spawn: resolvedMapConfig.spawn,
+	    enableMotion() {
       motionEnabled = true;
     },
     requestFullscreen() {
@@ -172,6 +176,7 @@ async function testStartRequestsFullscreenFromClickPath() {
   await lifecycle.gameController.start();
   assert.equal(fullscreenRequests, 1);
   assert.equal(motionEnabled, true);
+  assert.equal(mapResets, 1);
   assert.equal(state.game.phase, "calibrating");
 }
 

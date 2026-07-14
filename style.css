@@ -25,53 +25,45 @@ html,body{
   background-size:42px 42px,42px 42px,100% 100%;
   will-change:transform;
 }
-.wall,.obstacle{
-  position:absolute;box-sizing:border-box;border-radius:6px;overflow:hidden;
-  background:
-    linear-gradient(135deg,#ffffff66 0 8%,#ffffff00 28%),
-    linear-gradient(315deg,#00000038 0 12%,#00000000 34%),
-    linear-gradient(135deg,#e8eef8,#a9b7cc);
-  box-shadow:
-    0 14px 28px #0009,
-    0 2px 3px #ffffff22 inset,
-    0 -5px 12px #0003 inset,
-    0 0 0 2px #ffffff38 inset;
+.wallCanvas,.obstacleCanvas{
+  position:absolute;overflow:visible;pointer-events:none;
 }
-.wall::after,.obstacle::after{
-  content:"";position:absolute;inset:2px;border-radius:4px;pointer-events:none;
-  background:linear-gradient(135deg,#ffffff42,#ffffff00 34%,#00000022 100%);
-  mix-blend-mode:screen;opacity:.65;
-}
-.obstacle{
+.obstacleCanvas{
   opacity:0;transition:opacity .45s ease;
+}
+.roughPatchCanvas{
+  position:absolute;overflow:visible;pointer-events:none;opacity:0;
+  transition:opacity .45s ease;
+}
+#world.map-open .obstacleCanvas,#world.map-open .roughPatchCanvas{opacity:1}
+#goal{
+  position:absolute;box-sizing:border-box;border-radius:50%;opacity:0;
+  border:3px solid #88f7c5cc;
   background:
-    linear-gradient(135deg,#ffffff5c 0 10%,#ffffff00 30%),
-    linear-gradient(315deg,#7d123044 0 18%,#00000000 38%),
-    linear-gradient(135deg,#ffd166 0%,#ff9f66 46%,#ef476f 100%);
-  box-shadow:
-    0 16px 30px #0009,
-    0 2px 4px #fff3 inset,
-    0 -7px 15px #7d123033 inset,
-    0 0 0 2px #fff4 inset;
+    radial-gradient(circle,#8fffd0dd 0 var(--goal-fill-radius,0%),transparent calc(var(--goal-fill-radius,0%) + .1%)),
+    radial-gradient(circle,#88f7c512 0 42%,#88f7c506 43% 66%,transparent 67%);
+  box-shadow:inset 0 0 0 2px #ffffff26;
+  pointer-events:none;
 }
-.roughPatch{
-  position:absolute;box-sizing:border-box;border-radius:10px;opacity:0;
-  transition:opacity .45s ease,filter .16s ease,box-shadow .16s ease,transform .16s ease;
-  background:
-    radial-gradient(circle,#f4f4f0 0 1px,transparent 1.5px),
-    radial-gradient(circle,#4c4c4c 0 1px,transparent 1.4px),
-    radial-gradient(circle,#9a9a94 0 1.5px,transparent 2px),
-    linear-gradient(135deg,#8b8b84,#5c5c58);
-  background-position:0 0,7px 5px,13px 17px,0 0;
-  background-size:12px 12px,15px 15px,22px 22px,100% 100%;
-  box-shadow:inset 0 0 0 2px #ffffff22,inset 0 10px 22px #0007,0 8px 18px #0005;
+#goal::after{
+  content:"";
+  position:absolute;
+  inset:-10px;
+  border:2px solid #88f7c599;
+  border-radius:50%;
+  box-shadow:0 0 18px #53d59a66;
+  opacity:0;
+  transform:scale(.86);
+  pointer-events:none;
 }
-.roughPatch.active{
-  filter:brightness(1.16) contrast(1.08);
-  transform:scale(1.005);
-  box-shadow:inset 0 0 0 2px #ffffff44,inset 0 12px 28px #0008,0 0 22px #cfcfcf33,0 8px 18px #0005;
+#goal.active{box-shadow:inset 0 0 0 2px #ffffff3d}
+#goal.active::after{animation:goalPulse 1.15s ease-out infinite}
+#world.map-open #goal{opacity:1}
+@keyframes goalPulse{
+  0%{opacity:.74;transform:scale(.86)}
+  70%{opacity:.2;transform:scale(1.22)}
+  100%{opacity:0;transform:scale(1.32)}
 }
-#world.map-open .obstacle,#world.map-open .roughPatch{opacity:1}
 #trail{
   position:absolute;left:0;top:0;width:100%;height:100%;
   overflow:visible;pointer-events:none;
@@ -162,8 +154,15 @@ html,body{
   top:var(--hud-top);
   display:grid;gap:8px;pointer-events:none;
 }
-#hint,#debug{border-radius:14px;background:#0005;padding:10px 12px;backdrop-filter:blur(8px)}
+#hint,#fpsCounter,#debug{border-radius:14px;background:#0005;padding:10px 12px;backdrop-filter:blur(8px)}
 #hint{font-size:15px;text-align:center}
+#fpsCounter{
+  justify-self:start;
+  font:12px/1 ui-monospace,Menlo,Consolas,monospace;
+  font-weight:800;
+  letter-spacing:0;
+  opacity:.82;
+}
 #debug{font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;opacity:.86;white-space:pre-wrap}
 #settingsToggle{
   position:fixed;right:calc(12px + var(--safe-right));top:var(--hud-top);width:44px;height:44px;

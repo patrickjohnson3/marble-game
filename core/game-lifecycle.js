@@ -24,6 +24,7 @@ export function createLifecycleController({
   keyboard,
   mapRenderer,
   marble,
+  resetMap = () => {},
   resetCalibration,
   scheduleFrame,
   sensor,
@@ -32,9 +33,9 @@ export function createLifecycleController({
   startBtn,
   tilt,
   timing,
-  trailRenderer,
-  ui,
-  world,
+	  trailRenderer,
+	  ui,
+	  spawn,
   enableMotion,
   requestFullscreen = requestFullscreenMode,
   exitFullscreen = exitFullscreenMode,
@@ -72,6 +73,7 @@ export function createLifecycleController({
     sensorWatchdog.reset();
     introSequence.clearTimers();
     resetCalibration();
+    resetMap();
 
     game.phase = "waiting";
     game.paused = false;
@@ -92,8 +94,8 @@ export function createLifecycleController({
     tilt.smoothX = 0;
     tilt.smoothY = 0;
 
-    marble.x = world.width / 2;
-    marble.y = world.height / 2;
+    marble.x = spawn.x;
+    marble.y = spawn.y;
     marble.vx = 0;
     marble.vy = 0;
     marble.roll = 0;
@@ -109,6 +111,7 @@ export function createLifecycleController({
 
     haptics.impact.lastPulse = 0;
     haptics.surface.lastPulse = 0;
+    haptics.goal.lastHoldPulse = 0;
     trailRenderer.clear();
     effectsRenderer.clear();
     frameLoop.requestRender();

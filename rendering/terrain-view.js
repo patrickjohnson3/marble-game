@@ -1,34 +1,75 @@
 export function createTerrainView({
   roughPatchesEl,
   obstaclesEl,
+  goalEl,
+  goal,
   roughPatches,
+  roughPatchBounds,
   obstacles,
-  intro,
-  marble,
-  marbleOverRect,
-  renderMapElements
+  obstacleBounds,
+  renderObstacleWalls,
+  renderRoughPatches: drawRoughPatches,
+  goalFillEdgePercent = 70.8
 }) {
+  let currentGoal = goal;
+  let currentObstacles = obstacles;
+  let currentObstacleBounds = obstacleBounds;
+  let currentRoughPatches = roughPatches;
+  let currentRoughPatchBounds = roughPatchBounds;
+
   function renderObstacles() {
-    renderMapElements(obstaclesEl, "obstacle", obstacles);
+    renderObstacleWalls(obstaclesEl, currentObstacles, currentObstacleBounds);
   }
 
   function renderRoughPatches() {
-    renderMapElements(roughPatchesEl, "roughPatch", roughPatches);
+    drawRoughPatches(roughPatchesEl, currentRoughPatches, currentRoughPatchBounds);
   }
 
-  function updateRoughPatchFeedback() {
-    const patchEls = roughPatchesEl.children;
-    roughPatches.forEach((patch, index) => {
-      patchEls[index]?.classList.toggle(
-        "active",
-        intro.released && marbleOverRect(marble, patch)
-      );
-    });
+  function renderGoal() {
+    goalEl.style.left = (currentGoal.x - currentGoal.r) + "px";
+    goalEl.style.top = (currentGoal.y - currentGoal.r) + "px";
+    goalEl.style.width = (currentGoal.r * 2) + "px";
+    goalEl.style.height = (currentGoal.r * 2) + "px";
+    updateGoalProgress(0);
+  }
+
+  function renderTerrain() {
+    renderGoal();
+    renderRoughPatches();
+    renderObstacles();
+  }
+
+  function terrainMatches({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds }) {
+    return currentGoal === goal &&
+      currentObstacles === obstacles &&
+      currentObstacleBounds === obstacleBounds &&
+      currentRoughPatches === roughPatches &&
+      currentRoughPatchBounds === roughPatchBounds;
+  }
+
+  function setTerrain({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds }) {
+    if (terrainMatches({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds })) return;
+
+    currentGoal = goal;
+    currentObstacles = obstacles;
+    currentObstacleBounds = obstacleBounds;
+    currentRoughPatches = roughPatches;
+    currentRoughPatchBounds = roughPatchBounds;
+    renderTerrain();
+  }
+
+  function updateGoalProgress(progress) {
+    const clampedProgress = Math.max(0, Math.min(progress, 1));
+    goalEl.classList.toggle("active", clampedProgress > 0);
+    goalEl.style.setProperty("--goal-fill-radius", (clampedProgress * goalFillEdgePercent).toFixed(1) + "%");
   }
 
   return {
+    renderGoal,
     renderObstacles,
+    renderTerrain,
     renderRoughPatches,
-    updateRoughPatchFeedback
+    setTerrain,
+    updateGoalProgress
   };
 }

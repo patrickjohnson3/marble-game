@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "fs";
 import { spawnSync } from "child_process";
-import { mapConfig } from "../core/config.js";
+import { resolvedMapConfig } from "../core/config.js";
 import { requiredDomIds } from "../core/dom-ids.js";
+import { MAP_ELEMENT_TYPES } from "../core/map.js";
 import { runtimeModuleScripts, runtimeScripts } from "../runtime-assets.js";
 
 const html = readFileSync("index.html", "utf8");
@@ -66,10 +67,10 @@ if (cssBraceBalance !== 0) {
   process.exit(1);
 }
 
-const allowedElementTypes = new Set(["obstacle", "roughPatch"]);
+const allowedElementTypes = new Set(Object.values(MAP_ELEMENT_TYPES));
 const mapErrors = [];
 
-for (const [index, element] of mapConfig.elements.entries()) {
+for (const [index, element] of resolvedMapConfig.elements.entries()) {
   if (!allowedElementTypes.has(element.type)) {
     mapErrors.push("element " + index + " has unknown type " + element.type);
   }
@@ -85,8 +86,8 @@ for (const [index, element] of mapConfig.elements.entries()) {
   }
 
   if (element.x < 0 || element.y < 0 ||
-      element.x + element.w > mapConfig.world.width ||
-      element.y + element.h > mapConfig.world.height) {
+      element.x + element.w > resolvedMapConfig.world.width ||
+      element.y + element.h > resolvedMapConfig.world.height) {
     mapErrors.push("element " + index + " is outside world bounds");
   }
 }
