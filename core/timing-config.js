@@ -1,7 +1,7 @@
 export const timing = {
-  introPromptDelayMs: 10000,
-  countdownDelayMs: 4500,
-  countdownStart: 5,
+  introPromptDelayMs: 4000,
+  countdownDelayMs: 2000,
+  countdownStart: 3,
   countdownTickMs: 1000,
   sensorFallbackMs: 1400,
   targetFrameMs: 16.67,
