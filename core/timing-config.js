@@ -1,5 +1,5 @@
 export const timing = {
-  introReleaseDelayMs: 6000,
+  introReleaseDelayMs: 10000,
   countdownTickMs: 1000,
   sensorFallbackMs: 1400,
   targetFrameMs: 16.67,
