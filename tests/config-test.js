@@ -96,8 +96,7 @@ function testNormalizedMapObstaclesStayValid() {
 
 function testTimingAndTuning() {
   [
-    "introPromptDelayMs",
-    "countdownDelayMs",
+    "introReleaseDelayMs",
     "countdownTickMs",
     "sensorFallbackMs",
     "targetFrameMs",

@@ -141,14 +141,17 @@ html,body{
   box-shadow:0 22px 70px #000b;
 }
 #messageOverlay.show{display:block}
-#messageOverlay.toast{
-  left:calc(12px + var(--safe-left));right:calc(64px + var(--safe-right));top:var(--hud-top);
-  transform:none;border-radius:14px;padding:10px 12px;
-  background:#0008;font-size:15px;font-weight:700;line-height:1.3;
-  box-shadow:0 10px 30px #0008;
+#messageOverlay.releaseCountdown{
+  left:calc(12px + var(--safe-left));right:auto;top:calc(var(--hud-top) + 54px);
+  transform:none;display:none;max-width:min(270px,calc(100vw - 24px - var(--safe-left) - var(--safe-right)));
+  border-radius:12px;padding:9px 11px;background:#0009;text-align:left;
+  font-size:12px;font-weight:800;line-height:1.25;box-shadow:0 10px 28px #0009;
 }
-#messageOverlay.countdownMode{top:50%;transform:translateY(-50%)}
-#messageOverlay .countdown{display:block;margin-top:12px;font-size:clamp(52px,18vw,120px)}
+#messageOverlay.releaseCountdown.show{display:flex;align-items:center;gap:8px}
+#messageOverlay.releaseCountdown .countdown{
+  order:-1;display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;margin:0;
+  border-radius:50%;background:#fff;color:#101114;font-size:16px;font-weight:900;
+}
 #panel{
   position:fixed;left:calc(12px + var(--safe-left));right:calc(64px + var(--safe-right));
   top:var(--hud-top);

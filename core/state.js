@@ -25,7 +25,7 @@ export function createGameState({ world, resolvedMapConfig, timing, hapticTuning
       viewportMargin: resolvedMapConfig.intro.viewportMargin,
       messageTimer: 0,
       countdownTimer: 0,
-      countdownValue: timing.countdownStart
+      countdownValue: Math.ceil(timing.introReleaseDelayMs / timing.countdownTickMs)
     },
     tilt: {
       rawX: 0,

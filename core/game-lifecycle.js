@@ -84,7 +84,7 @@ export function createLifecycleController({
 
     intro.started = false;
     intro.released = false;
-    intro.countdownValue = timing.countdownStart;
+    intro.countdownValue = Math.ceil(timing.introReleaseDelayMs / timing.countdownTickMs);
     resetIntroTimerState(intro);
 
     keyboard.x = 0;

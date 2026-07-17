@@ -18,26 +18,16 @@ function introState(overrides = {}) {
   };
 }
 
-function testPromptWaitPausesRemainingDelay() {
+function testReleaseCountdownPausesRemainingDelay() {
   const intro = introState();
 
-  trackIntroTimer(intro, "promptWait", 10000, 1000);
+  trackIntroTimer(intro, "releaseCountdown", 6000, 1000);
   const paused = pauseIntroTimerState(intro, 3500);
 
   assert.equal(paused, true);
-  assert.equal(intro.sequenceStage, "promptWait");
-  assert.equal(intro.timerDelayMs, 7500);
-  assert.equal(resumeIntroTimerAction(intro), "prompt");
-}
-
-function testCountdownWaitResumesCountdownStart() {
-  const intro = introState();
-
-  trackIntroTimer(intro, "countdownWait", 4500, 2000);
-  pauseIntroTimerState(intro, 3000);
-
+  assert.equal(intro.sequenceStage, "releaseCountdown");
   assert.equal(intro.timerDelayMs, 3500);
-  assert.equal(resumeIntroTimerAction(intro), "countdownStart");
+  assert.equal(resumeIntroTimerAction(intro), "releaseCountdown");
 }
 
 function testCountdownTickResumesNextTick() {
@@ -47,7 +37,7 @@ function testCountdownTickResumesNextTick() {
   pauseIntroTimerState(intro, 5750);
 
   assert.equal(intro.timerDelayMs, 250);
-  assert.equal(resumeIntroTimerAction(intro), "countdownTick");
+  assert.equal(resumeIntroTimerAction(intro), null);
 }
 
 function testReleasedIntroDoesNotResume() {
@@ -74,8 +64,7 @@ function testShouldPauseOnlyStartedUnpausedGame() {
   assert.equal(shouldPauseGame({ phase: "running", paused: false }), true);
 }
 
-testPromptWaitPausesRemainingDelay();
-testCountdownWaitResumesCountdownStart();
+testReleaseCountdownPausesRemainingDelay();
 testCountdownTickResumesNextTick();
 testReleasedIntroDoesNotResume();
 testIdleIntroDoesNotPause();

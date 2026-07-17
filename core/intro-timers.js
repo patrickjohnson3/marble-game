@@ -21,9 +21,7 @@ export function pauseIntroTimerState(intro, now) {
 export function resumeIntroTimerAction(intro) {
   if (!intro.started || intro.released) return null;
 
-  if (intro.sequenceStage === "promptWait") return "prompt";
-  if (intro.sequenceStage === "countdownWait") return "countdownStart";
-  if (intro.sequenceStage === "countdown") return "countdownTick";
+  if (intro.sequenceStage === "releaseCountdown") return "releaseCountdown";
   return null;
 }
 

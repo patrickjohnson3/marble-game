@@ -20,38 +20,25 @@ export function createIntroSequence({
     intro.countdownTimer = 0;
   }
 
-  function setTimer(stage, delay, callback) {
-    clearTimers();
-    trackIntroTimer(intro, stage, delay, performance.now());
-    intro.messageTimer = setTimeout(callback, delay);
-  }
-
-  function showMessage(message) {
-    messageOverlay.textContent = message;
-    messageOverlay.classList.remove("countdownMode");
-    messageOverlay.classList.add("show", "toast");
-  }
-
   function hideMessage() {
     messageOverlay.classList.remove("show");
   }
 
-  function showCountdown() {
+  function showReleaseCountdown() {
     const countdown = createElement("span");
     countdown.className = "countdown";
     countdown.textContent = intro.countdownValue;
-    messageOverlay.replaceChildren(copy.intro.ready, countdown);
-    messageOverlay.classList.remove("toast");
-    messageOverlay.classList.add("show", "countdownMode");
+    messageOverlay.replaceChildren(copy.intro.countdown, countdown, copy.intro.prompt);
+    messageOverlay.classList.add("show", "releaseCountdown");
   }
 
-  function scheduleCountdownTick(delay = timing.countdownTickMs) {
+  function scheduleReleaseTick(delay = timing.countdownTickMs) {
     clearTimers();
-    trackIntroTimer(intro, "countdown", delay, performance.now());
+    trackIntroTimer(intro, "releaseCountdown", delay, performance.now());
     intro.countdownTimer = setTimeout(() => {
       if (game.paused) {
         intro.countdownTimer = 0;
-        trackIntroTimer(intro, "countdown", timing.countdownTickMs, performance.now());
+        trackIntroTimer(intro, "releaseCountdown", timing.countdownTickMs, performance.now());
         return;
       }
 
@@ -63,29 +50,18 @@ export function createIntroSequence({
         return;
       }
 
-      showCountdown();
-      scheduleCountdownTick();
+      showReleaseCountdown();
+      scheduleReleaseTick();
     }, delay);
-  }
-
-  function startReleaseCountdown() {
-    clearTimers();
-    intro.sequenceStage = "countdown";
-    intro.countdownValue = timing.countdownStart;
-    showCountdown();
-    scheduleCountdownTick();
-  }
-
-  function showIntroPrompt() {
-    showMessage(copy.intro.prompt);
-    setTimer("countdownWait", timing.countdownDelayMs, startReleaseCountdown);
   }
 
   function schedule() {
     if (intro.started) return;
 
     intro.started = true;
-    setTimer("promptWait", timing.introPromptDelayMs, showIntroPrompt);
+    intro.countdownValue = Math.ceil(timing.introReleaseDelayMs / timing.countdownTickMs);
+    showReleaseCountdown();
+    scheduleReleaseTick();
   }
 
   function pause() {
@@ -96,12 +72,9 @@ export function createIntroSequence({
   function resume() {
     const delay = Math.max(0, intro.timerDelayMs);
     const action = resumeIntroTimerAction(intro);
-    if (action === "prompt") {
-      setTimer("promptWait", delay, showIntroPrompt);
-    } else if (action === "countdownStart") {
-      setTimer("countdownWait", delay, startReleaseCountdown);
-    } else if (action === "countdownTick") {
-      scheduleCountdownTick(delay);
+    if (action === "releaseCountdown") {
+      showReleaseCountdown();
+      scheduleReleaseTick(delay);
     }
   }
 
