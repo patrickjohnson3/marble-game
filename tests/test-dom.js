@@ -194,6 +194,7 @@ export function createFakeDocument() {
       "trailSetting",
       "fullscreenSetting",
       "fpsSetting",
+      "statsSetting",
       "cameraModeSetting"
     ].map((id) => [id, new FakeElement()])
   );

@@ -8,6 +8,7 @@ export function createRuntimeSettings(persistedSettings) {
     trailDefaultVersion: persistedSettings.trailDefaultVersion,
     fullscreenEnabled: persistedSettings.fullscreenEnabled,
     fpsEnabled: persistedSettings.fpsEnabled,
+    statsEnabled: persistedSettings.statsEnabled,
     cameraMode: persistedSettings.cameraMode
   };
 }
@@ -22,6 +23,7 @@ export function persistedSettingsFromRuntime(settings) {
     trailDefaultVersion: settings.trailDefaultVersion,
     fullscreenEnabled: settings.fullscreenEnabled,
     fpsEnabled: settings.fpsEnabled,
+    statsEnabled: settings.statsEnabled,
     cameraMode: settings.cameraMode
   };
 }

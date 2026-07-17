@@ -11,6 +11,7 @@ export function bindSettingsPanel({
   onSetNeutral,
   onRotationDisabled,
   onFpsChanged,
+  onStatsChanged,
   requestRender
 }) {
   const {
@@ -26,6 +27,7 @@ export function bindSettingsPanel({
     trailSetting,
     fullscreenSetting,
     fpsSetting,
+    statsSetting,
     cameraModeSetting
   } = els;
 
@@ -38,6 +40,7 @@ export function bindSettingsPanel({
   trailSetting.checked = settings.trailEnabled;
   fullscreenSetting.checked = settings.fullscreenEnabled;
   fpsSetting.checked = settings.fpsEnabled;
+  statsSetting.checked = settings.statsEnabled;
   cameraModeSetting.value = settings.cameraMode;
 
   settingsToggle.addEventListener("click", onOpenSettings);
@@ -80,6 +83,12 @@ export function bindSettingsPanel({
   fpsSetting.addEventListener("change", () => {
     settings.fpsEnabled = fpsSetting.checked;
     onFpsChanged(settings.fpsEnabled);
+    saveSettings();
+    requestRender();
+  });
+  statsSetting.addEventListener("change", () => {
+    settings.statsEnabled = statsSetting.checked;
+    onStatsChanged(settings.statsEnabled);
     saveSettings();
     requestRender();
   });

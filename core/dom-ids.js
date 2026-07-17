@@ -26,6 +26,7 @@ export const domIds = {
   trailSetting: "trailSetting",
   fullscreenSetting: "fullscreenSetting",
   fpsSetting: "fpsSetting",
+  statsSetting: "statsSetting",
   cameraModeSetting: "cameraModeSetting",
   hint: "hint",
   fpsCounter: "fpsCounter",

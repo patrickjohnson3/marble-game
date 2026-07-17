@@ -59,7 +59,7 @@ function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
   const fpsCounter = new FakeElement();
   const debug = new FakeElement();
   const settingsOverlay = new FakeElement();
-  const settings = { fpsEnabled: false };
+  const settings = { fpsEnabled: false, statsEnabled: false };
   const ui = createUi({
     hint,
     fpsCounter,
@@ -83,6 +83,36 @@ function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
 }
 
 testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled();
+
+function testStatsDefaultsHiddenAndUpdatesWhenEnabled() {
+  const hint = new FakeElement();
+  const fpsCounter = new FakeElement();
+  const debug = new FakeElement();
+  const settingsOverlay = new FakeElement();
+  const settings = { fpsEnabled: false, statsEnabled: false };
+  const ui = createUi({
+    hint,
+    fpsCounter,
+    debug,
+    settings,
+    settingsOverlay,
+    debugLines: () => ["phase: running"],
+    state: {}
+  });
+
+  ui.updateDebugPanel();
+  assert.equal(debug.hidden, true);
+  assert.equal(debug.textContent, "");
+
+  settings.statsEnabled = true;
+  ui.setStatsEnabled(settings.statsEnabled);
+  ui.updateDebugPanel();
+
+  assert.equal(debug.hidden, false);
+  assert.equal(debug.textContent, "phase: running");
+}
+
+testStatsDefaultsHiddenAndUpdatesWhenEnabled();
 
 function testGoalProgressUsesRadialFillRadius() {
   const goalEl = new FakeElement();

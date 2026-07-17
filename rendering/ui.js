@@ -14,7 +14,7 @@ export function createUi({ hint, fpsCounter, debug, settings, settingsOverlay, d
   }
 
   function updateDebugPanel() {
-    if (!isSettingsOpen()) return;
+    if (!settings.statsEnabled) return;
 
     debug.textContent = debugLines(state).join("\n");
   }
@@ -30,7 +30,13 @@ export function createUi({ hint, fpsCounter, debug, settings, settingsOverlay, d
     if (!enabled) resetFpsSample();
   }
 
+  function setStatsEnabled(enabled) {
+    debug.hidden = !enabled;
+    if (enabled) updateDebugPanel();
+  }
+
   setFpsEnabled(settings.fpsEnabled);
+  setStatsEnabled(settings.statsEnabled);
 
   function updateFps(now) {
     if (!settings.fpsEnabled) return;
@@ -69,6 +75,7 @@ export function createUi({ hint, fpsCounter, debug, settings, settingsOverlay, d
     isSettingsOpen,
     openSettingsModal,
     setFpsEnabled,
+    setStatsEnabled,
     setHint,
     updateDebugPanel,
     updateFps

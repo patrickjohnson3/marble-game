@@ -383,6 +383,7 @@ bindSettingsPanel({
     cameraController.centerOnMarble();
   },
   onFpsChanged: ui.setFpsEnabled,
+  onStatsChanged: ui.setStatsEnabled,
   requestRender
 });
 

@@ -34,6 +34,7 @@ export const copy = {
       trailSetting: "trail",
       fullscreenSetting: "fullscreen",
       fpsSetting: "fps",
+      statsSetting: "stats",
       cameraModeSetting: "camera"
     },
     cameraModes: {

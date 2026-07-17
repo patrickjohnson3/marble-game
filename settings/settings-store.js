@@ -40,6 +40,7 @@ export function loadSettings({ storage, storageKey, defaults, controls, clamp })
       trailDefaultVersion: defaults.trailDefaultVersion,
       fullscreenEnabled: typeof saved.fullscreenEnabled === "boolean" ? saved.fullscreenEnabled : defaults.fullscreenEnabled,
       fpsEnabled: typeof saved.fpsEnabled === "boolean" ? saved.fpsEnabled : defaults.fpsEnabled,
+      statsEnabled: typeof saved.statsEnabled === "boolean" ? saved.statsEnabled : defaults.statsEnabled,
       cameraMode: optionSetting(saved.cameraMode, defaults.cameraMode, controls.cameraModes)
     };
   } catch {
@@ -60,6 +61,7 @@ export function saveSettings({ storage, storageKey, settings }) {
       trailDefaultVersion: settings.trailDefaultVersion,
       fullscreenEnabled: settings.fullscreenEnabled,
       fpsEnabled: settings.fpsEnabled,
+      statsEnabled: settings.statsEnabled,
       cameraMode: settings.cameraMode
     }));
   } catch {
