@@ -1,7 +1,7 @@
 export const copy = {
   bootError: "game failed to load. refresh and try again.",
   title: "marble tilt",
-  initialHint: "hold phone normally, then tap start",
+  initialHint: "click or tap start. tilt or use arrows/WASD.",
   hints: {
     mapOpen: "map open. pinch to zoom and explore.",
     noMotionSensor: "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
