@@ -28,7 +28,7 @@ export function createIntroSequence({
     const countdown = createElement("span");
     countdown.className = "countdown";
     countdown.textContent = intro.countdownValue;
-    messageOverlay.replaceChildren(copy.intro.countdown, countdown, copy.intro.prompt);
+    messageOverlay.replaceChildren(copy.intro.countdown, countdown);
     messageOverlay.classList.add("show", "releaseCountdown");
   }
 

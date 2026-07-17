@@ -12,9 +12,8 @@ export const copy = {
 	    goalNoNextMap: "goal reached. no next map available.",
 	    goalNextMapInvalid: "goal reached. next map invalid.",
 	    goalNextMap: (variantId) => "goal reached. next map: " + variantId + "."
-	  },
+  },
   intro: {
-    prompt: "Pinch to zoom out. Reverse pinch to zoom in.",
     countdown: "map opens in"
   },
   buttons: {
