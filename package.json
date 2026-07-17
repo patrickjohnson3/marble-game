@@ -4,6 +4,13 @@
     "test": "node test-all.js",
     "bump-cache": "node bump-cache-version.js",
     "check-cache": "node check-cache-version.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
     "install-hooks": "git config core.hooksPath .githooks"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "prettier": "^3.9.5"
   }
 }
