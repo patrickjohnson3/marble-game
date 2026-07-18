@@ -3,11 +3,16 @@ import { createInputManager } from "../input/input-manager.js";
 
 function createTarget() {
   const listeners = [];
+  const removedListeners = [];
 
   return {
     listeners,
+    removedListeners,
     addEventListener(type, listener, options) {
       listeners.push({ type, listener, options });
+    },
+    removeEventListener(type, listener, options) {
+      removedListeners.push({ type, listener, options });
     },
   };
 }
@@ -55,6 +60,21 @@ inputManager.bindStartButton();
 inputManager.bindStartButton();
 assert.deepEqual(
   startBtn.listeners.map((listener) => listener.type),
+  ["click"],
+);
+
+inputManager.destroy();
+inputManager.destroy();
+assert.deepEqual(
+  target.removedListeners.map((listener) => listener.type),
+  ["deviceorientation", "devicemotion", "keydown", "keyup"],
+);
+assert.deepEqual(
+  gameEl.removedListeners.map((listener) => listener.type),
+  ["pointerdown", "pointermove", "pointerup", "pointercancel"],
+);
+assert.deepEqual(
+  startBtn.removedListeners.map((listener) => listener.type),
   ["click"],
 );
 
