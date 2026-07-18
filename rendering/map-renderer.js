@@ -9,7 +9,7 @@ export function createMapRenderer({
   world,
   viewport,
   terrainView,
-  renderWalls,
+  renderOuterWalls,
   introPenWalls,
   mapEdgeWalls,
   setReleasedMapBounds,
@@ -23,7 +23,7 @@ export function createMapRenderer({
       viewport: { width: viewport.width(), height: viewport.height() },
       world,
     });
-    renderWalls(introWallsEl, introPenWalls(bounds, intro));
+    renderOuterWalls(introWallsEl, introPenWalls(bounds, intro));
   }
 
   function setReleasedBounds() {
@@ -35,7 +35,7 @@ export function createMapRenderer({
     worldEl.style.height = world.height + "px";
     trailEl.setAttribute("viewBox", "0 0 " + world.width + " " + world.height);
     setReleasedBounds();
-    renderWalls(mapWallsEl, mapEdgeWalls(world, intro));
+    renderOuterWalls(mapWallsEl, mapEdgeWalls(world, intro));
     terrainView.renderTerrain();
     updateIntroBounds();
   }

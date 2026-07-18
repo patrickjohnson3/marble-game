@@ -3,7 +3,7 @@ import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import {
   canvasPixelRatio,
-  renderWalls,
+  renderOuterWalls,
   wallFrameGeometry,
 } from "../rendering/wall-rendering.js";
 import { createTerrainView } from "../rendering/terrain-view.js";
@@ -210,14 +210,14 @@ globalThis.document = {
 
 try {
   const wallsContainer = new FakeElement();
-  renderWalls(wallsContainer, [{ x: 0, y: 0, w: 100, h: 10 }]);
+  renderOuterWalls(wallsContainer, [{ x: 0, y: 0, w: 100, h: 10 }]);
   assert.deepEqual(
     wallsContainer.children,
     [],
     "invalid wall frame should clear container",
   );
 
-  renderWalls(wallsContainer, [
+  renderOuterWalls(wallsContainer, [
     { x: -10, y: -10, w: 120, h: 10 },
     { x: -10, y: 100, w: 120, h: 10 },
     { x: -10, y: 0, w: 10, h: 100 },

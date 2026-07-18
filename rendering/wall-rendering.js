@@ -139,7 +139,7 @@ function drawWallFrame(context, frame) {
   context.restore();
 }
 
-export function renderWalls(container, walls) {
+export function renderOuterWalls(container, walls) {
   if (!Array.isArray(walls) || walls.length === 0) {
     container.replaceChildren();
     return;

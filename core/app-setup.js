@@ -14,7 +14,7 @@ import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
-import { renderWalls } from "../rendering/wall-rendering.js";
+import { renderOuterWalls } from "../rendering/wall-rendering.js";
 import { createSensorController } from "../input/sensor-controller.js";
 import { createSensorWatchdog } from "../input/sensor-watchdog.js";
 import { createTerrainView } from "../rendering/terrain-view.js";
@@ -101,7 +101,7 @@ export function setupRenderers({
     world,
     viewport,
     terrainView,
-    renderWalls,
+    renderOuterWalls,
     introPenWalls,
     mapEdgeWalls,
     setReleasedMapBounds,
