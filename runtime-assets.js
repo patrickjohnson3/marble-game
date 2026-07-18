@@ -50,7 +50,6 @@ export const runtimeScripts = [
   "rendering/map-renderer.js",
   "rendering/marble-view.js",
   "rendering/obstacle-rendering.js",
-  "rendering/rendering.js",
   "rendering/rough-patch-rendering.js",
   "rendering/terrain-view.js",
   "rendering/trail.js",

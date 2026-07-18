@@ -22,7 +22,7 @@ import {
   resolveProceduralMapConfig,
 } from "../core/procedural-map.js";
 import { copy } from "../core/copy.js";
-import { renderObstacleWalls } from "../rendering/rendering.js";
+import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import {
   blockedSpawnConfig,
   emptyElementMapConfig,

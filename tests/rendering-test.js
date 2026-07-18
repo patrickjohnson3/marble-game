@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
+import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
+import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import {
   canvasPixelRatio,
-  renderObstacleWalls,
-  renderRoughPatches,
   renderWalls,
   wallFrameGeometry,
-} from "../rendering/rendering.js";
+} from "../rendering/wall-rendering.js";
 import { createTerrainView } from "../rendering/terrain-view.js";
 import { createUi } from "../rendering/ui.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
