@@ -1,4 +1,5 @@
 import { updatePhysicsInput, updatePhysics } from "./physics.js";
+import { elapsedMsToFrameDelta } from "./physics-time.js";
 
 export function createGameLoop({
   cameraController,
@@ -22,10 +23,10 @@ export function createGameLoop({
   function tick() {
     frameLoop.beginFrame();
     const currentTime = now();
-    const dt = clamp(
-      (currentTime - lifecycle.getLastFrame()) / timing.targetFrameMs,
-      timing.minFrameStep,
-      timing.maxFrameStep,
+    const frameDelta = elapsedMsToFrameDelta(
+      currentTime - lifecycle.getLastFrame(),
+      timing,
+      clamp,
     );
     lifecycle.setLastFrame(currentTime);
     const active = game.phase !== "waiting" && !game.paused;
@@ -37,8 +38,8 @@ export function createGameLoop({
 
     if (active) {
       const context = physicsContext();
-      updatePhysicsInput(context, dt);
-      updatePhysics(context, dt, {
+      updatePhysicsInput(context, frameDelta);
+      updatePhysics(context, frameDelta, {
         onImpact: (impact) => {
           marble.impactSquash = Math.max(
             marble.impactSquash,
@@ -52,13 +53,14 @@ export function createGameLoop({
         },
       });
       marble.roll +=
-        (Math.hypot(marble.vx, marble.vy) * dt) / Math.max(marble.r, 1);
+        (Math.hypot(marble.vx, marble.vy) * frameDelta) / Math.max(marble.r, 1);
       marble.impactSquash = Math.max(
         0,
-        marble.impactSquash - visualConfig.marble.impactSquashDecay * dt,
+        marble.impactSquash -
+          visualConfig.marble.impactSquashDecay * frameDelta,
       );
-      goalController?.update(dt, currentTime);
-      cameraController.updateFollow(dt);
+      goalController?.update(frameDelta, currentTime);
+      cameraController.updateFollow(frameDelta);
     }
 
     marbleView.render();

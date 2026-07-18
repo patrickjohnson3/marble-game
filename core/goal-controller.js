@@ -1,4 +1,5 @@
 import { distance } from "./geometry.js";
+import { frameDeltaToMs } from "./physics-time.js";
 
 export function createGoalController({
   copy,
@@ -21,7 +22,7 @@ export function createGoalController({
     );
   }
 
-  function update(dt) {
+  function update(frameDelta) {
     if (mapState.goalCompleted) return;
 
     if (!marbleInsideGoal()) {
@@ -39,7 +40,7 @@ export function createGoalController({
       hapticFeedback.pulseGoal("enter");
     }
 
-    const progress = mapRuntime.addGoalHold(dt * timing.targetFrameMs);
+    const progress = mapRuntime.addGoalHold(frameDeltaToMs(frameDelta, timing));
     terrainView.updateGoalProgress(progress);
     ui.setHint(
       "hold goal " +

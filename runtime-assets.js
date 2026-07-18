@@ -33,6 +33,7 @@ export const runtimeScripts = [
   "core/map.js",
   "core/physics-collisions.js",
   "core/physics.js",
+  "core/physics-time.js",
   "core/procedural-map.js",
   "core/rect-bounds.js",
   "core/spatial-index.js",
