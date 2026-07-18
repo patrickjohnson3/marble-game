@@ -505,6 +505,42 @@ function testPhysicsSubstepsAreCapped() {
   assert.equal(marble.x, 1050);
 }
 
+function testSubstepsPreventThinObstacleTunneling() {
+  const marble = { x: 50, y: 50, vx: 40, vy: 0, r: 10 };
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [{ x: 80, y: 40, w: 5, h: 20 }],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 1,
+        bounce: 0,
+        maxSpeed: 100,
+        maxSpeedEase: 0,
+        maxStepDistance: 5,
+        maxPhysicsSubsteps: 20,
+        settleSpeed: 0,
+        settleTilt: 0,
+        collisionResolvePasses: 1,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.equal(marble.x <= 70, true);
+  assert.equal(marble.vx, 0);
+}
+
 testCircleRectContact();
 testObstacleBounce();
 testGlancingImpactReportsScrapeFeedback();
@@ -523,5 +559,6 @@ testMaxSpeedEasesDown();
 testWallCollisionAppliesTangentialFriction();
 testWorldBoundCollisionBeforeAdjacentObstacle();
 testPhysicsSubstepsAreCapped();
+testSubstepsPreventThinObstacleTunneling();
 
 console.log("Physics tests passed.");
