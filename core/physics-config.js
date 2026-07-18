@@ -14,5 +14,5 @@ export const physicsConfig = {
   settleTilt: 0.8,
   tiltCurve: 1.25,
   maxSpeedEase: 0.35,
-  wallTangentialFriction: 0.92
+  wallTangentialFriction: 0.92,
 };

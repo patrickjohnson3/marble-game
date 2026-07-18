@@ -18,12 +18,15 @@ export const mapValidationMessages = Object.freeze({
   worldWidthGrid: "world width must align to grid",
   worldHeightGrid: "world height must align to grid",
   elementObject: (index) => "element " + index + " must be an object",
-  elementUnknownType: (index, type) => "element " + index + " has unknown type " + type,
+  elementUnknownType: (index, type) =>
+    "element " + index + " has unknown type " + type,
   fieldNonFinite: (label, key) => label + " has non-finite " + key,
   rectPositiveDimensions: (label) => label + " must have positive dimensions",
   rectInsideWorldStart: (label) => label + " must start inside world bounds",
   rectInsideWorld: (label) => label + " must fit inside world bounds",
-  elementGrid: (index, key) => "element " + index + " " + key + " must align to grid",
-  normalizedObstacleObject: (index) => "normalized obstacle " + index + " must be an object",
-  variantWorldMatch: (id) => "variant " + id + " world must match base world"
+  elementGrid: (index, key) =>
+    "element " + index + " " + key + " must align to grid",
+  normalizedObstacleObject: (index) =>
+    "normalized obstacle " + index + " must be an object",
+  variantWorldMatch: (id) => "variant " + id + " world must match base world",
 });

@@ -16,7 +16,7 @@ export function snapRectToGrid(rect, gridSize) {
     x: snapToGrid(rect.x, gridSize),
     y: snapToGrid(rect.y, gridSize),
     w: snapToGrid(rect.w, gridSize),
-    h: snapToGrid(rect.h, gridSize)
+    h: snapToGrid(rect.h, gridSize),
   };
 }
 
@@ -30,8 +30,20 @@ export function normalizeJoinedObstacleRects(rects) {
       const horizontalRight = horizontal.x + horizontal.w;
       const verticalRight = vertical.x + vertical.w;
 
-      if (!touchesOrOverlaps(horizontal.x, horizontalRight, vertical.x, verticalRight) ||
-          !touchesOrOverlaps(horizontal.y, horizontalBottom, vertical.y, verticalBottom)) {
+      if (
+        !touchesOrOverlaps(
+          horizontal.x,
+          horizontalRight,
+          vertical.x,
+          verticalRight,
+        ) ||
+        !touchesOrOverlaps(
+          horizontal.y,
+          horizontalBottom,
+          vertical.y,
+          verticalBottom,
+        )
+      ) {
         continue;
       }
 
@@ -41,7 +53,10 @@ export function normalizeJoinedObstacleRects(rects) {
       const horizontalLeftGap = Math.abs(vertical.x - horizontal.x);
       const threshold = Math.max(horizontal.h, vertical.w);
 
-      if (verticalBottomGap <= threshold && verticalBottomGap <= verticalTopGap) {
+      if (
+        verticalBottomGap <= threshold &&
+        verticalBottomGap <= verticalTopGap
+      ) {
         const height = horizontalBottom - vertical.y;
         if (height > 0) vertical.h = height;
       } else if (verticalTopGap <= threshold) {
@@ -52,7 +67,10 @@ export function normalizeJoinedObstacleRects(rects) {
           vertical.h = height;
         }
       }
-      if (horizontalRightGap <= threshold && horizontalRightGap <= horizontalLeftGap) {
+      if (
+        horizontalRightGap <= threshold &&
+        horizontalRightGap <= horizontalLeftGap
+      ) {
         const width = horizontalRight - vertical.x;
         if (width > 0) vertical.w = width;
       } else if (horizontalLeftGap <= threshold) {

@@ -14,7 +14,9 @@ class FakeParticle {
 
   remove() {
     if (!this.parent) return;
-    this.parent.childNodes = this.parent.childNodes.filter((child) => child !== this);
+    this.parent.childNodes = this.parent.childNodes.filter(
+      (child) => child !== this,
+    );
     this.parent = null;
   }
 }
@@ -52,7 +54,7 @@ async function testEffectsThrottleAndParticleCap() {
   globalThis.document = {
     createElement() {
       return new FakeParticle();
-    }
+    },
   };
   globalThis.setTimeout = () => nextTimer++;
   globalThis.clearTimeout = (timer) => {
@@ -60,7 +62,9 @@ async function testEffectsThrottleAndParticleCap() {
   };
 
   try {
-    const { createEffectsRenderer } = await import("../rendering/effects.js?test=" + Date.now());
+    const { createEffectsRenderer } = await import(
+      "../rendering/effects.js?test=" + Date.now()
+    );
     const effectsEl = new FakeElement();
     const effects = createEffectsRenderer({
       effectsEl,
@@ -98,11 +102,11 @@ async function testEffectsThrottleAndParticleCap() {
         surfaceSizeRange: 0,
         surfaceLifeMinMs: 100,
         surfaceLifeRangeMs: 0,
-        surfaceOpacity: 0.5
+        surfaceOpacity: 0.5,
       },
       clamp,
       random: () => 0.5,
-      now: () => currentTime
+      now: () => currentTime,
     });
 
     effects.spawnImpact(5);

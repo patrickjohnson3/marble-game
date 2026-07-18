@@ -1,7 +1,7 @@
 function cellRange(start, end, cellSize) {
   return {
     from: Math.floor(start / cellSize),
-    to: Math.floor(end / cellSize)
+    to: Math.floor(end / cellSize),
   };
 }
 
@@ -35,12 +35,15 @@ export function createSpatialIndex(rects, { cellSize = 256 } = {}) {
   });
 
   function queryCircle(circle) {
-    const keys = rectCells({
-      x: circle.x - circle.r,
-      y: circle.y - circle.r,
-      w: circle.r * 2,
-      h: circle.r * 2
-    }, cellSize);
+    const keys = rectCells(
+      {
+        x: circle.x - circle.r,
+        y: circle.y - circle.r,
+        w: circle.r * 2,
+        h: circle.r * 2,
+      },
+      cellSize,
+    );
     const seen = new Set();
     const matches = [];
 
@@ -58,6 +61,6 @@ export function createSpatialIndex(rects, { cellSize = 256 } = {}) {
   return {
     cellSize,
     queryCircle,
-    rects: source
+    rects: source,
   };
 }

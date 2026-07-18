@@ -1,7 +1,7 @@
 import {
   pauseIntroTimerState,
   resumeIntroTimerAction,
-  trackIntroTimer
+  trackIntroTimer,
 } from "./intro-timers.js";
 import { copy } from "./copy.js";
 
@@ -11,7 +11,7 @@ export function createIntroSequence({
   timing,
   messageOverlay,
   onRelease,
-  createElement = (tag) => document.createElement(tag)
+  createElement = (tag) => document.createElement(tag),
 }) {
   function clearTimers() {
     clearTimeout(intro.messageTimer);
@@ -38,7 +38,12 @@ export function createIntroSequence({
     intro.countdownTimer = setTimeout(() => {
       if (game.paused) {
         intro.countdownTimer = 0;
-        trackIntroTimer(intro, "releaseCountdown", timing.countdownTickMs, performance.now());
+        trackIntroTimer(
+          intro,
+          "releaseCountdown",
+          timing.countdownTickMs,
+          performance.now(),
+        );
         return;
       }
 
@@ -59,7 +64,9 @@ export function createIntroSequence({
     if (intro.started) return;
 
     intro.started = true;
-    intro.countdownValue = Math.ceil(timing.introReleaseDelayMs / timing.countdownTickMs);
+    intro.countdownValue = Math.ceil(
+      timing.introReleaseDelayMs / timing.countdownTickMs,
+    );
     showReleaseCountdown();
     scheduleReleaseTick();
   }
@@ -83,6 +90,6 @@ export function createIntroSequence({
     hideMessage,
     pause,
     resume,
-    schedule
+    schedule,
   };
 }

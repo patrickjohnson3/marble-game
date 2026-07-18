@@ -12,7 +12,7 @@ function fakeClassList() {
     },
     remove(...names) {
       names.forEach((name) => classes.delete(name));
-    }
+    },
   };
 }
 
@@ -22,7 +22,7 @@ function fakeMessageOverlay() {
     textContent: "",
     replaceChildren(...children) {
       this.children = children;
-    }
+    },
   };
 }
 
@@ -42,7 +42,7 @@ function testPausedCountdownTimeoutCanResume() {
   globalThis.performance = {
     now() {
       return now;
-    }
+    },
   };
 
   try {
@@ -54,7 +54,7 @@ function testPausedCountdownTimeoutCanResume() {
       countdownTimer: 0,
       countdownValue: 2,
       timerStartedAt: 0,
-      timerDelayMs: 0
+      timerDelayMs: 0,
     };
     const game = { paused: true };
     const sequence = createIntroSequence({
@@ -62,7 +62,7 @@ function testPausedCountdownTimeoutCanResume() {
       game,
       timing: {
         introReleaseDelayMs: 2000,
-        countdownTickMs: 1000
+        countdownTickMs: 1000,
       },
       messageOverlay: fakeMessageOverlay(),
       createElement() {
@@ -70,7 +70,7 @@ function testPausedCountdownTimeoutCanResume() {
       },
       onRelease() {
         released = true;
-      }
+      },
     });
 
     sequence.resume();

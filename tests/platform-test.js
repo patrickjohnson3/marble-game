@@ -13,11 +13,13 @@ async function testWakeLockRequestIsNotDuplicatedWhilePending() {
         return new Promise((resolve) => {
           resolveWakeLock = resolve;
         });
-      }
-    }
+      },
+    },
   };
 
-  const { requestWakeLock } = await import("../platform/platform.js?test=" + Date.now());
+  const { requestWakeLock } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
   const firstRequest = requestWakeLock({ documentRef, navigatorRef });
   const secondRequest = requestWakeLock({ documentRef, navigatorRef });
 
@@ -34,11 +36,13 @@ async function testFullscreenUsesInjectedDocument() {
     documentElement: {
       requestFullscreen() {
         requested = true;
-      }
-    }
+      },
+    },
   };
 
-  const { requestFullscreenMode } = await import("../platform/platform.js?test=" + Date.now());
+  const { requestFullscreenMode } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
   await requestFullscreenMode({ fullscreenOnStart: true, documentRef });
 
   assert.equal(requested, true);
@@ -52,17 +56,19 @@ async function testMotionPermissionUsesInjectedWindow() {
       requestPermission() {
         orientationRequested = true;
         return "granted";
-      }
+      },
     },
     DeviceMotionEvent: {
       requestPermission() {
         motionRequested = true;
         return "granted";
-      }
-    }
+      },
+    },
   };
 
-  const { requestMotionPermissionIfNeeded } = await import("../platform/platform.js?test=" + Date.now());
+  const { requestMotionPermissionIfNeeded } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
   const granted = await requestMotionPermissionIfNeeded({ windowRef });
 
   assert.equal(granted, true);
@@ -71,11 +77,16 @@ async function testMotionPermissionUsesInjectedWindow() {
 }
 
 async function testScreenAdjustedUsesInjectedScreen() {
-  const { screenAdjusted } = await import("../platform/platform.js?test=" + Date.now());
+  const { screenAdjusted } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
 
   assert.deepEqual(
-    screenAdjusted(3, 8, { screenRef: { orientation: { angle: 90 } }, windowRef: {} }),
-    [8, -3]
+    screenAdjusted(3, 8, {
+      screenRef: { orientation: { angle: 90 } },
+      windowRef: {},
+    }),
+    [8, -3],
   );
 }
 

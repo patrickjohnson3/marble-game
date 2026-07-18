@@ -3,22 +3,28 @@ import { createFakeDocument } from "./test-dom.js";
 import { createApp } from "../app.js";
 
 const originalGlobals = {
-  addEventListener: Object.getOwnPropertyDescriptor(globalThis, "addEventListener"),
+  addEventListener: Object.getOwnPropertyDescriptor(
+    globalThis,
+    "addEventListener",
+  ),
   document: Object.getOwnPropertyDescriptor(globalThis, "document"),
   innerHeight: Object.getOwnPropertyDescriptor(globalThis, "innerHeight"),
   innerWidth: Object.getOwnPropertyDescriptor(globalThis, "innerWidth"),
   localStorage: Object.getOwnPropertyDescriptor(globalThis, "localStorage"),
   navigator: Object.getOwnPropertyDescriptor(globalThis, "navigator"),
-  requestAnimationFrame: Object.getOwnPropertyDescriptor(globalThis, "requestAnimationFrame"),
+  requestAnimationFrame: Object.getOwnPropertyDescriptor(
+    globalThis,
+    "requestAnimationFrame",
+  ),
   screen: Object.getOwnPropertyDescriptor(globalThis, "screen"),
-  window: Object.getOwnPropertyDescriptor(globalThis, "window")
+  window: Object.getOwnPropertyDescriptor(globalThis, "window"),
 };
 
 function setTestGlobal(name, value) {
   Object.defineProperty(globalThis, name, {
     configurable: true,
     writable: true,
-    value
+    value,
   });
 }
 
@@ -31,7 +37,7 @@ setTestGlobal("localStorage", {
   getItem() {
     return null;
   },
-  setItem() {}
+  setItem() {},
 });
 setTestGlobal("navigator", {});
 setTestGlobal("requestAnimationFrame", () => 1);
@@ -42,22 +48,31 @@ try {
   createApp({
     document,
     window: globalThis,
-    storage: globalThis.localStorage
+    storage: globalThis.localStorage,
   });
   assert.equal(globalThis.__marbleAppBooted, true);
-  assert.equal(document.getElementById("settingsTitle").textContent, "Settings");
+  assert.equal(
+    document.getElementById("settingsTitle").textContent,
+    "Settings",
+  );
   assert.equal(document.getElementById("resumeGame").textContent, "resume");
   assert.equal(
-    document.getElementById("cameraModeSetting").querySelector('option[value="follow"]').textContent,
-    "follow"
+    document
+      .getElementById("cameraModeSetting")
+      .querySelector('option[value="follow"]').textContent,
+    "follow",
   );
   assert.equal(
-    document.getElementById("cameraModeSetting").querySelector('option[value="lockedCenter"]').textContent,
-    "locked center"
+    document
+      .getElementById("cameraModeSetting")
+      .querySelector('option[value="lockedCenter"]').textContent,
+    "locked center",
   );
   assert.equal(
-    document.getElementById("cameraModeSetting").querySelector('option[value="predictiveLookAhead"]').textContent,
-    "look-ahead"
+    document
+      .getElementById("cameraModeSetting")
+      .querySelector('option[value="predictiveLookAhead"]').textContent,
+    "look-ahead",
   );
 } finally {
   for (const [key, descriptor] of Object.entries(originalGlobals)) {

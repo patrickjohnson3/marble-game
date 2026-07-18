@@ -6,17 +6,27 @@ export function mapEdgeWalls(world, intro) {
     { x: -t, y: -t, w: world.width + t * 2, h: t },
     { x: -t, y: world.height, w: world.width + t * 2, h: t },
     { x: -t, y: 0, w: t, h: world.height },
-    { x: world.width, y: 0, w: t, h: world.height }
+    { x: world.width, y: 0, w: t, h: world.height },
   ];
 }
 
 export function introPenWalls(bounds, intro) {
   const t = intro.wallThickness;
   return [
-    { x: bounds.left - t, y: bounds.top - t, w: bounds.right - bounds.left + t * 2, h: t },
-    { x: bounds.left - t, y: bounds.bottom, w: bounds.right - bounds.left + t * 2, h: t },
+    {
+      x: bounds.left - t,
+      y: bounds.top - t,
+      w: bounds.right - bounds.left + t * 2,
+      h: t,
+    },
+    {
+      x: bounds.left - t,
+      y: bounds.bottom,
+      w: bounds.right - bounds.left + t * 2,
+      h: t,
+    },
     { x: bounds.left - t, y: bounds.top, w: t, h: bounds.bottom - bounds.top },
-    { x: bounds.right, y: bounds.top, w: t, h: bounds.bottom - bounds.top }
+    { x: bounds.right, y: bounds.top, w: t, h: bounds.bottom - bounds.top },
   ];
 }
 

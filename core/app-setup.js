@@ -3,7 +3,7 @@ import {
   resolvedMapConfig,
   timing,
   tuning,
-  visualConfig
+  visualConfig,
 } from "./config.js";
 import { copy } from "./copy.js";
 import { createEffectsRenderer } from "../rendering/effects.js";
@@ -13,14 +13,14 @@ import {
   introPenWalls,
   mapEdgeWalls,
   setReleasedBounds as setReleasedMapBounds,
-  updateIntroBounds as updateIntroMapBounds
+  updateIntroBounds as updateIntroMapBounds,
 } from "./map.js";
 import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
 import {
   renderObstacleWalls,
   renderRoughPatches,
-  renderWalls
+  renderWalls,
 } from "../rendering/rendering.js";
 import { createSensorController } from "../input/sensor-controller.js";
 import { createSensorWatchdog } from "../input/sensor-watchdog.js";
@@ -38,7 +38,7 @@ export function setupRenderers({
   obstacleBounds,
   goal,
   roughPatches,
-  roughPatchBounds
+  roughPatchBounds,
 }) {
   const {
     world: worldEl,
@@ -50,7 +50,7 @@ export function setupRenderers({
     trail: trailEl,
     trailSegments: trailSegmentsEl,
     effects: effectsEl,
-    marble: marbleEl
+    marble: marbleEl,
   } = els;
   const { bounds, game, intro, marble } = state;
   const trailRenderer = createTrailRenderer({
@@ -60,13 +60,13 @@ export function setupRenderers({
     game,
     settings,
     config: visualConfig.trail,
-    clamp
+    clamp,
   });
   const effectsRenderer = createEffectsRenderer({
     effectsEl,
     marble,
     config: visualConfig.effects,
-    clamp
+    clamp,
   });
   const marbleView = createMarbleView({
     marbleEl,
@@ -74,27 +74,29 @@ export function setupRenderers({
     world,
     mapConfig: resolvedMapConfig,
     visualConfig,
-    clamp
+    clamp,
   });
-	  const terrainView = createTerrainView({
-	    roughPatchesEl,
-	    obstaclesEl,
-	    goalEl,
-	    goal,
-	    roughPatches,
-	    roughPatchBounds,
-	    obstacles,
-	    obstacleBounds,
-	    renderObstacleWalls: (container, renderedObstacles, renderedBounds) => renderObstacleWalls(container, renderedObstacles, {
-	      bounds: renderedBounds,
-	      padding: visualConfig.map.obstacleCanvasPadding
-	    }),
-	    renderRoughPatches: (container, renderedRoughPatches, renderedBounds) => renderRoughPatches(container, renderedRoughPatches, {
-	      bounds: renderedBounds,
-	      padding: visualConfig.map.roughPatchCanvasPadding
-	    }),
-	    goalFillEdgePercent: visualConfig.map.goalFillEdgePercent
-	  });
+  const terrainView = createTerrainView({
+    roughPatchesEl,
+    obstaclesEl,
+    goalEl,
+    goal,
+    roughPatches,
+    roughPatchBounds,
+    obstacles,
+    obstacleBounds,
+    renderObstacleWalls: (container, renderedObstacles, renderedBounds) =>
+      renderObstacleWalls(container, renderedObstacles, {
+        bounds: renderedBounds,
+        padding: visualConfig.map.obstacleCanvasPadding,
+      }),
+    renderRoughPatches: (container, renderedRoughPatches, renderedBounds) =>
+      renderRoughPatches(container, renderedRoughPatches, {
+        bounds: renderedBounds,
+        padding: visualConfig.map.roughPatchCanvasPadding,
+      }),
+    goalFillEdgePercent: visualConfig.map.goalFillEdgePercent,
+  });
   const mapRenderer = createMapRenderer({
     worldEl,
     introWallsEl,
@@ -110,7 +112,7 @@ export function setupRenderers({
     introPenWalls,
     mapEdgeWalls,
     setReleasedMapBounds,
-    updateIntroMapBounds
+    updateIntroMapBounds,
   });
 
   return {
@@ -118,7 +120,7 @@ export function setupRenderers({
     mapRenderer,
     marbleView,
     terrainView,
-    trailRenderer
+    trailRenderer,
   };
 }
 
@@ -127,15 +129,9 @@ export function setupSensors({
   introSequence,
   scheduleFrame,
   ui,
-  adjustScreen
+  adjustScreen,
 }) {
-  const {
-    calibration,
-    game,
-    marble,
-    sensor,
-    tilt
-  } = state;
+  const { calibration, game, marble, sensor, tilt } = state;
   const sensorWatchdog = createSensorWatchdog({
     delayMs: timing.sensorFallbackMs,
     game,
@@ -149,7 +145,7 @@ export function setupSensors({
       calibration.autoNeutralDone = true;
       introSequence.schedule();
       scheduleFrame();
-    }
+    },
   });
   const sensorController = createSensorController({
     calibration,
@@ -161,12 +157,12 @@ export function setupSensors({
     tilt,
     tuning,
     ui,
-    adjustScreen
+    adjustScreen,
   });
 
   return {
     sensorController,
-    sensorWatchdog
+    sensorWatchdog,
   };
 }
 
@@ -175,7 +171,7 @@ export function setupInput({
   sensorController,
   keyboardController,
   cameraController,
-  gameController
+  gameController,
 }) {
   return createInputManager({
     gameEl: els.game,
@@ -187,7 +183,7 @@ export function setupInput({
     onPointerDown: cameraController.onPointerDown,
     onPointerMove: cameraController.onPointerMove,
     onPointerEnd: cameraController.onPointerEnd,
-    onStartClick: gameController.start
+    onStartClick: gameController.start,
   });
 }
 

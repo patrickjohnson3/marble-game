@@ -1,6 +1,6 @@
 import {
   exitFullscreenMode,
-  requestFullscreenMode
+  requestFullscreenMode,
 } from "../platform/platform.js";
 
 export function createSettingsApplier({
@@ -12,7 +12,7 @@ export function createSettingsApplier({
   settings,
   trailRenderer,
   requestFullscreen = requestFullscreenMode,
-  exitFullscreen = exitFullscreenMode
+  exitFullscreen = exitFullscreenMode,
 }) {
   function applySettings() {
     physics.maxSpeed = settings.maxSpeed;
@@ -33,6 +33,6 @@ export function createSettingsApplier({
 
   return {
     applyFullscreenSetting,
-    applySettings
+    applySettings,
   };
 }

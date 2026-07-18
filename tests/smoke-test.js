@@ -12,7 +12,7 @@ const scripts = runtimeScripts;
 
 for (const script of scripts) {
   const syntax = spawnSync(process.execPath, ["--check", script], {
-    encoding: "utf8"
+    encoding: "utf8",
   });
 
   if (syntax.status !== 0) {
@@ -22,7 +22,7 @@ for (const script of scripts) {
 }
 
 const htmlIds = new Set(
-  [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1])
+  [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]),
 );
 const missingIds = requiredDomIds.filter((id) => !htmlIds.has(id));
 
@@ -32,22 +32,27 @@ if (missingIds.length > 0) {
   process.exit(1);
 }
 
-const moduleScriptListMatch = html.match(/const runtimeModuleScripts = \[([\s\S]*?)\];/);
+const moduleScriptListMatch = html.match(
+  /const runtimeModuleScripts = \[([\s\S]*?)\];/,
+);
 if (!moduleScriptListMatch) {
-  console.error("index.html is missing runtimeModuleScripts for import map cache busting.");
+  console.error(
+    "index.html is missing runtimeModuleScripts for import map cache busting.",
+  );
   process.exit(1);
 }
 
-const htmlRuntimeModuleScripts = [...moduleScriptListMatch[1].matchAll(/"([^"]+\.js)"/g)]
-  .map((match) => match[1]);
+const htmlRuntimeModuleScripts = [
+  ...moduleScriptListMatch[1].matchAll(/"([^"]+\.js)"/g),
+].map((match) => match[1]);
 
 assert.deepEqual(
   htmlRuntimeModuleScripts,
   runtimeModuleScripts,
-  "index.html runtimeModuleScripts must match runtime-assets.js"
+  "index.html runtimeModuleScripts must match runtime-assets.js",
 );
 
-if (!html.includes("./\" + script + \"?v=\" + assetVersion")) {
+if (!html.includes('./" + script + "?v=" + assetVersion')) {
   console.error("index.html import map must version runtime module imports.");
   process.exit(1);
 }
@@ -84,9 +89,12 @@ for (const [index, element] of resolvedMapConfig.elements.entries()) {
     mapErrors.push("element " + index + " must have positive dimensions");
   }
 
-  if (element.x < 0 || element.y < 0 ||
-      element.x + element.w > resolvedMapConfig.world.width ||
-      element.y + element.h > resolvedMapConfig.world.height) {
+  if (
+    element.x < 0 ||
+    element.y < 0 ||
+    element.x + element.w > resolvedMapConfig.world.width ||
+    element.y + element.h > resolvedMapConfig.world.height
+  ) {
     mapErrors.push("element " + index + " is outside world bounds");
   }
 }

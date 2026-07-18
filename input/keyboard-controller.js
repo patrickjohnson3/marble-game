@@ -6,7 +6,7 @@ const movementKeys = new Set([
   "a",
   "d",
   "w",
-  "s"
+  "s",
 ]);
 
 export function createKeyboardController({
@@ -17,7 +17,7 @@ export function createKeyboardController({
   scheduleFrame,
   sensor,
   tilt,
-  closeSettings
+  closeSettings,
 }) {
   function activateKeyboardFallback() {
     sensor.using = sensor.using === "none" ? "keyboard" : sensor.using;
@@ -58,6 +58,6 @@ export function createKeyboardController({
 
   return {
     onKeyDown,
-    onKeyUp
+    onKeyUp,
   };
 }

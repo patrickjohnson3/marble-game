@@ -3,7 +3,7 @@ import { runtimeFiles } from "./runtime-assets.js";
 
 function git(args) {
   return spawnSync("git", args, {
-    encoding: "utf8"
+    encoding: "utf8",
   });
 }
 
@@ -23,8 +23,14 @@ if (git(["rev-parse", "--is-inside-work-tree"]).status !== 0) {
 const latestRuntimeCommit = latestCommitTime(runtimeFiles);
 const latestIndexCommit = latestCommitTime(["index.html"]);
 
-if (latestRuntimeCommit && latestIndexCommit && latestRuntimeCommit > latestIndexCommit) {
-  console.error("index.html assetVersion is older than the latest runtime asset change.");
+if (
+  latestRuntimeCommit &&
+  latestIndexCommit &&
+  latestRuntimeCommit > latestIndexCommit
+) {
+  console.error(
+    "index.html assetVersion is older than the latest runtime asset change.",
+  );
   console.error("Run: node bump-cache-version.js");
   process.exit(1);
 }

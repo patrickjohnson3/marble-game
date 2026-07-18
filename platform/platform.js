@@ -4,21 +4,25 @@ let wakeLockRequest = null;
 function fullscreenElement(documentRef = globalThis.document) {
   if (!documentRef) return null;
 
-  return documentRef.fullscreenElement ||
+  return (
+    documentRef.fullscreenElement ||
     documentRef.webkitFullscreenElement ||
     documentRef.msFullscreenElement ||
-    null;
+    null
+  );
 }
 
 export async function requestFullscreenMode({
   fullscreenOnStart,
-  documentRef = globalThis.document
+  documentRef = globalThis.document,
 } = {}) {
-  if (!fullscreenOnStart || !documentRef || fullscreenElement(documentRef)) return;
+  if (!fullscreenOnStart || !documentRef || fullscreenElement(documentRef))
+    return;
 
   const target = documentRef.documentElement;
   if (!target) return;
-  const requestFullscreen = target.requestFullscreen ||
+  const requestFullscreen =
+    target.requestFullscreen ||
     target.webkitRequestFullscreen ||
     target.msRequestFullscreen;
 
@@ -32,11 +36,12 @@ export async function requestFullscreenMode({
 }
 
 export async function exitFullscreenMode({
-  documentRef = globalThis.document
+  documentRef = globalThis.document,
 } = {}) {
   if (!documentRef || !fullscreenElement(documentRef)) return;
 
-  const exitFullscreen = documentRef.exitFullscreen ||
+  const exitFullscreen =
+    documentRef.exitFullscreen ||
     documentRef.webkitExitFullscreen ||
     documentRef.msExitFullscreen;
 
@@ -51,10 +56,11 @@ export async function exitFullscreenMode({
 
 export async function requestWakeLock({
   documentRef = globalThis.document,
-  navigatorRef = globalThis.navigator
+  navigatorRef = globalThis.navigator,
 } = {}) {
   if (!navigatorRef || !("wakeLock" in navigatorRef)) return;
-  if (wakeLock || wakeLockRequest || documentRef?.visibilityState !== "visible") return;
+  if (wakeLock || wakeLockRequest || documentRef?.visibilityState !== "visible")
+    return;
 
   wakeLockRequest = navigatorRef.wakeLock.request("screen");
   try {
@@ -71,19 +77,25 @@ export async function requestWakeLock({
 }
 
 export async function requestMotionPermissionIfNeeded({
-  windowRef = globalThis.window
+  windowRef = globalThis.window,
 } = {}) {
   try {
-    const OrientationEvent = windowRef?.DeviceOrientationEvent || globalThis.DeviceOrientationEvent;
-    const MotionEvent = windowRef?.DeviceMotionEvent || globalThis.DeviceMotionEvent;
+    const OrientationEvent =
+      windowRef?.DeviceOrientationEvent || globalThis.DeviceOrientationEvent;
+    const MotionEvent =
+      windowRef?.DeviceMotionEvent || globalThis.DeviceMotionEvent;
 
-    if (typeof OrientationEvent !== "undefined" &&
-        typeof OrientationEvent.requestPermission === "function") {
+    if (
+      typeof OrientationEvent !== "undefined" &&
+      typeof OrientationEvent.requestPermission === "function"
+    ) {
       const p = await OrientationEvent.requestPermission();
       if (p !== "granted") return false;
     }
-    if (typeof MotionEvent !== "undefined" &&
-        typeof MotionEvent.requestPermission === "function") {
+    if (
+      typeof MotionEvent !== "undefined" &&
+      typeof MotionEvent.requestPermission === "function"
+    ) {
       const p = await MotionEvent.requestPermission();
       if (p !== "granted") return false;
     }
@@ -93,13 +105,15 @@ export async function requestMotionPermissionIfNeeded({
   return true;
 }
 
-export function screenAdjusted(gamma, beta, {
-  screenRef = globalThis.screen,
-  windowRef = globalThis.window
-} = {}) {
-  const angle = screenRef?.orientation && typeof screenRef.orientation.angle === "number"
-    ? screenRef.orientation.angle
-    : (windowRef?.orientation || 0);
+export function screenAdjusted(
+  gamma,
+  beta,
+  { screenRef = globalThis.screen, windowRef = globalThis.window } = {},
+) {
+  const angle =
+    screenRef?.orientation && typeof screenRef.orientation.angle === "number"
+      ? screenRef.orientation.angle
+      : windowRef?.orientation || 0;
 
   let tx = gamma || 0;
   let ty = beta || 0;

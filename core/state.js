@@ -1,6 +1,12 @@
 import { resetIntroTimerState } from "./intro-timers.js";
 
-export function createGameState({ world, resolvedMapConfig, timing, hapticTuning, physicsConfig }) {
+export function createGameState({
+  world,
+  resolvedMapConfig,
+  timing,
+  hapticTuning,
+  physicsConfig,
+}) {
   const spawn = resolvedMapConfig.spawn;
   const state = {
     marble: {
@@ -10,13 +16,13 @@ export function createGameState({ world, resolvedMapConfig, timing, hapticTuning
       vy: 0,
       r: 0,
       roll: 0,
-      impactSquash: 0
+      impactSquash: 0,
     },
     bounds: {
       left: 0,
       right: world.width,
       top: 0,
-      bottom: world.height
+      bottom: world.height,
     },
     intro: {
       started: false,
@@ -25,7 +31,9 @@ export function createGameState({ world, resolvedMapConfig, timing, hapticTuning
       viewportMargin: resolvedMapConfig.intro.viewportMargin,
       messageTimer: 0,
       countdownTimer: 0,
-      countdownValue: Math.ceil(timing.introReleaseDelayMs / timing.countdownTickMs)
+      countdownValue: Math.ceil(
+        timing.introReleaseDelayMs / timing.countdownTickMs,
+      ),
     },
     tilt: {
       rawX: 0,
@@ -33,11 +41,11 @@ export function createGameState({ world, resolvedMapConfig, timing, hapticTuning
       smoothX: 0,
       smoothY: 0,
       neutralX: null,
-      neutralY: null
+      neutralY: null,
     },
     keyboard: {
       x: 0,
-      y: 0
+      y: 0,
     },
     camera: {
       x: 0,
@@ -47,42 +55,43 @@ export function createGameState({ world, resolvedMapConfig, timing, hapticTuning
       minScale: resolvedMapConfig.camera.minScale,
       maxScale: resolvedMapConfig.camera.maxScale,
       followLag: resolvedMapConfig.camera.followLag,
-      predictiveLookAheadFrames: resolvedMapConfig.camera.predictiveLookAheadFrames,
-      gestureCooldown: 0
+      predictiveLookAheadFrames:
+        resolvedMapConfig.camera.predictiveLookAheadFrames,
+      gestureCooldown: 0,
     },
     haptics: {
       enabled: true,
       impact: {
         cooldownMs: hapticTuning.impactCooldownMs,
         lastPulse: 0,
-        minImpact: hapticTuning.impactMin
+        minImpact: hapticTuning.impactMin,
       },
       surface: {
         cooldownMs: hapticTuning.surfaceCooldownMs,
         lastPulse: 0,
-        minSpeed: hapticTuning.surfaceMinSpeed
+        minSpeed: hapticTuning.surfaceMinSpeed,
       },
       goal: {
         holdCooldownMs: hapticTuning.goalHoldCooldownMs,
-        lastHoldPulse: 0
-      }
+        lastHoldPulse: 0,
+      },
     },
     calibration: {
       sampleCount: 0,
       sampleX: 0,
       sampleY: 0,
-      autoNeutralDone: false
+      autoNeutralDone: false,
     },
     sensor: {
       gotOrientation: false,
       gotMotion: false,
-      using: "none"
+      using: "none",
     },
     game: {
       phase: "waiting",
-      paused: false
+      paused: false,
     },
-    physics: { ...physicsConfig }
+    physics: { ...physicsConfig },
   };
 
   resetIntroTimerState(state.intro);

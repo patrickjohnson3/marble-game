@@ -1,20 +1,17 @@
 import { copy } from "./copy.js";
 import { createGameController } from "./game-controller.js";
-import {
-  resetIntroTimerState,
-  shouldPauseGame
-} from "./intro-timers.js";
+import { resetIntroTimerState, shouldPauseGame } from "./intro-timers.js";
 import {
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
-  requestWakeLock
+  requestWakeLock,
 } from "../platform/platform.js";
 
 function requestMotionPermissionWithTimeout({
   requestMotionPermission,
   timeoutMs,
   setTimeoutFn = setTimeout,
-  clearTimeoutFn = clearTimeout
+  clearTimeoutFn = clearTimeout,
 }) {
   return new Promise((resolve) => {
     let settled = false;
@@ -55,9 +52,9 @@ export function createLifecycleController({
   startBtn,
   tilt,
   timing,
-	  trailRenderer,
-	  ui,
-	  spawn,
+  trailRenderer,
+  ui,
+  spawn,
   enableMotion,
   requestFullscreen = requestFullscreenMode,
   requestMotionPermission = requestMotionPermissionIfNeeded,
@@ -65,7 +62,7 @@ export function createLifecycleController({
   setTimeoutFn = setTimeout,
   clearTimeoutFn = clearTimeout,
   now = () => performance.now(),
-  tick
+  tick,
 }) {
   let settingsPausedGame = false;
   let lastFrame = now();
@@ -87,7 +84,9 @@ export function createLifecycleController({
 
     game.paused = false;
     lastFrame = now();
-    sensorWatchdog.resume(() => game.phase === "calibrating" && sensor.using === "none");
+    sensorWatchdog.resume(
+      () => game.phase === "calibrating" && sensor.using === "none",
+    );
     introSequence.resume();
     scheduleFrame();
   }
@@ -107,7 +106,9 @@ export function createLifecycleController({
 
     intro.started = false;
     intro.released = false;
-    intro.countdownValue = Math.ceil(timing.introReleaseDelayMs / timing.countdownTickMs);
+    intro.countdownValue = Math.ceil(
+      timing.introReleaseDelayMs / timing.countdownTickMs,
+    );
     resetIntroTimerState(intro);
 
     keyboard.x = 0;
@@ -154,7 +155,7 @@ export function createLifecycleController({
       requestMotionPermission,
       timeoutMs: timing.motionPermissionTimeoutMs,
       setTimeoutFn,
-      clearTimeoutFn
+      clearTimeoutFn,
     });
     if (permission === false) {
       controlsEl.hidden = false;
@@ -172,7 +173,11 @@ export function createLifecycleController({
     game.phase = "calibrating";
     scheduleFrame();
 
-    ui.setHint(permission === "timeout" ? copy.hints.noMotionSensor : copy.hints.calibrating);
+    ui.setHint(
+      permission === "timeout"
+        ? copy.hints.noMotionSensor
+        : copy.hints.calibrating,
+    );
 
     sensorWatchdog.schedule();
   }
@@ -199,7 +204,7 @@ export function createLifecycleController({
     resume: resumeGame,
     openSettings,
     closeSettings: closeSettingsModal,
-    tick
+    tick,
   });
 
   return {
@@ -207,6 +212,6 @@ export function createLifecycleController({
     getLastFrame: () => lastFrame,
     setLastFrame: (value) => {
       lastFrame = value;
-    }
+    },
   };
 }

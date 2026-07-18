@@ -11,19 +11,22 @@ function sameWorldSize(a, b) {
 }
 
 function reachabilityCellSize({ gridSize, spawn, tuning = {} }) {
-  const minCellSize = Number.isFinite(tuning.minCellSize) && tuning.minCellSize > 0 ?
-    tuning.minCellSize :
-    5;
-  const gridDivisor = Number.isFinite(tuning.gridDivisor) && tuning.gridDivisor > 0 ?
-    tuning.gridDivisor :
-    2;
-  const spawnRadiusDivisor = Number.isFinite(tuning.spawnRadiusDivisor) && tuning.spawnRadiusDivisor > 0 ?
-    tuning.spawnRadiusDivisor :
-    2;
+  const minCellSize =
+    Number.isFinite(tuning.minCellSize) && tuning.minCellSize > 0
+      ? tuning.minCellSize
+      : 5;
+  const gridDivisor =
+    Number.isFinite(tuning.gridDivisor) && tuning.gridDivisor > 0
+      ? tuning.gridDivisor
+      : 2;
+  const spawnRadiusDivisor =
+    Number.isFinite(tuning.spawnRadiusDivisor) && tuning.spawnRadiusDivisor > 0
+      ? tuning.spawnRadiusDivisor
+      : 2;
 
-  return Number.isFinite(gridSize) && gridSize > 0 ?
-    Math.max(minCellSize, gridSize / gridDivisor) :
-    Math.max(minCellSize, spawn.r / spawnRadiusDivisor);
+  return Number.isFinite(gridSize) && gridSize > 0
+    ? Math.max(minCellSize, gridSize / gridDivisor)
+    : Math.max(minCellSize, spawn.r / spawnRadiusDivisor);
 }
 
 function validateGoal(goal, { world, obstacles, errors }) {
@@ -43,13 +46,21 @@ function validateGoal(goal, { world, obstacles, errors }) {
   if (goal.holdMs <= 0) {
     errors.push(mapValidationMessages.goalHoldPositive);
   }
-  if (goal.x - goal.r < 0 ||
-      goal.y - goal.r < 0 ||
-      goal.x + goal.r > world.width ||
-      goal.y + goal.r > world.height) {
+  if (
+    goal.x - goal.r < 0 ||
+    goal.y - goal.r < 0 ||
+    goal.x + goal.r > world.width ||
+    goal.y + goal.r > world.height
+  ) {
     errors.push(mapValidationMessages.goalInsideWorld);
   }
-  if (obstacles.some((obstacle) => circleRectContact({ x: goal.x, y: goal.y, r: goal.r }, obstacle).intersects)) {
+  if (
+    obstacles.some(
+      (obstacle) =>
+        circleRectContact({ x: goal.x, y: goal.y, r: goal.r }, obstacle)
+          .intersects,
+    )
+  ) {
     errors.push(mapValidationMessages.goalObstacleOverlap);
   }
 }
@@ -68,13 +79,17 @@ function validateSpawn(spawn, { world, obstacles, errors }) {
   if (spawn.r <= 0) {
     errors.push(mapValidationMessages.spawnRadiusPositive);
   }
-  if (spawn.x - spawn.r < 0 ||
-      spawn.y - spawn.r < 0 ||
-      spawn.x + spawn.r > world.width ||
-      spawn.y + spawn.r > world.height) {
+  if (
+    spawn.x - spawn.r < 0 ||
+    spawn.y - spawn.r < 0 ||
+    spawn.x + spawn.r > world.width ||
+    spawn.y + spawn.r > world.height
+  ) {
     errors.push(mapValidationMessages.spawnInsideWorld);
   }
-  if (obstacles.some((obstacle) => circleRectContact(spawn, obstacle).intersects)) {
+  if (
+    obstacles.some((obstacle) => circleRectContact(spawn, obstacle).intersects)
+  ) {
     errors.push(mapValidationMessages.spawnObstacleOverlap);
   }
 }
@@ -97,25 +112,31 @@ function validateRect(rect, { world, label, errors }) {
   }
 }
 
-export function validateMapConfig(config, {
-  normalizedObstacles,
-  spawn
-} = {}, {
-  elementTypes,
-  mapObstacleElements,
-  normalizeJoinedObstacleRects,
-  validMapVariants
-}) {
+export function validateMapConfig(
+  config,
+  { normalizedObstacles, spawn } = {},
+  {
+    elementTypes,
+    mapObstacleElements,
+    normalizeJoinedObstacleRects,
+    validMapVariants,
+  },
+) {
   const errors = [];
   const allowedTypes = new Set(Object.values(elementTypes));
   const world = config?.world ?? {};
   const elements = Array.isArray(config?.elements) ? config.elements : [];
-  const objectElements = elements.filter((element) => element && typeof element === "object");
-  const checkedObstaclesSource = normalizedObstacles ??
+  const objectElements = elements.filter(
+    (element) => element && typeof element === "object",
+  );
+  const checkedObstaclesSource =
+    normalizedObstacles ??
     normalizeJoinedObstacleRects(mapObstacleElements(objectElements));
-  const checkedObstacles = Array.isArray(checkedObstaclesSource) ?
-    checkedObstaclesSource.filter((obstacle) => obstacle && typeof obstacle === "object") :
-    [];
+  const checkedObstacles = Array.isArray(checkedObstaclesSource)
+    ? checkedObstaclesSource.filter(
+        (obstacle) => obstacle && typeof obstacle === "object",
+      )
+    : [];
   const gridSize = config?.grid?.size;
 
   if (!config || typeof config !== "object") {
@@ -155,12 +176,14 @@ export function validateMapConfig(config, {
       return;
     }
     if (!allowedTypes.has(element.type)) {
-      errors.push(mapValidationMessages.elementUnknownType(index, element.type));
+      errors.push(
+        mapValidationMessages.elementUnknownType(index, element.type),
+      );
     }
     validateRect(element, {
       world,
       label: "element " + index,
-      errors
+      errors,
     });
     if (Number.isFinite(gridSize) && gridSize > 0) {
       for (const key of ["x", "y", "w", "h"]) {
@@ -171,7 +194,10 @@ export function validateMapConfig(config, {
     }
   });
 
-  if (normalizedObstacles !== undefined && !Array.isArray(normalizedObstacles)) {
+  if (
+    normalizedObstacles !== undefined &&
+    !Array.isArray(normalizedObstacles)
+  ) {
     errors.push(mapValidationMessages.normalizedObstaclesArray);
   }
   const checkedSpawn = spawn ?? config?.spawn;
@@ -185,7 +211,7 @@ export function validateMapConfig(config, {
       validateRect(obstacle, {
         world,
         label: "normalized obstacle " + index,
-        errors
+        errors,
       });
     });
   }
@@ -193,36 +219,40 @@ export function validateMapConfig(config, {
   validateGoal(config?.goal, {
     world,
     obstacles: checkedObstacles,
-    errors
+    errors,
   });
   validateSpawn(checkedSpawn, {
     world,
     obstacles: checkedObstacles,
-    errors
+    errors,
   });
-  if (Number.isFinite(world.width) &&
-      Number.isFinite(world.height) &&
-      checkedSpawn &&
-      Number.isFinite(checkedSpawn.x) &&
-      Number.isFinite(checkedSpawn.y) &&
-      Number.isFinite(checkedSpawn.r) &&
-      Number.isFinite(config?.goal?.x) &&
-      Number.isFinite(config?.goal?.y) &&
-      Number.isFinite(config?.goal?.r) &&
-      checkedObstacles.every((obstacle) =>
-        ["x", "y", "w", "h"].every((key) => Number.isFinite(obstacle[key]))
-      )) {
-    if (!hasReachableGoal({
-      world,
-      obstacles: checkedObstacles,
-      spawn: checkedSpawn,
-      goal: config.goal,
-      cellSize: reachabilityCellSize({
-        gridSize,
+  if (
+    Number.isFinite(world.width) &&
+    Number.isFinite(world.height) &&
+    checkedSpawn &&
+    Number.isFinite(checkedSpawn.x) &&
+    Number.isFinite(checkedSpawn.y) &&
+    Number.isFinite(checkedSpawn.r) &&
+    Number.isFinite(config?.goal?.x) &&
+    Number.isFinite(config?.goal?.y) &&
+    Number.isFinite(config?.goal?.r) &&
+    checkedObstacles.every((obstacle) =>
+      ["x", "y", "w", "h"].every((key) => Number.isFinite(obstacle[key])),
+    )
+  ) {
+    if (
+      !hasReachableGoal({
+        world,
+        obstacles: checkedObstacles,
         spawn: checkedSpawn,
-        tuning: config?.reachability
+        goal: config.goal,
+        cellSize: reachabilityCellSize({
+          gridSize,
+          spawn: checkedSpawn,
+          tuning: config?.reachability,
+        }),
       })
-    })) {
+    ) {
       errors.push(mapValidationMessages.goalReachable);
     }
   }

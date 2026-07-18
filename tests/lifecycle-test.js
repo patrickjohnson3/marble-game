@@ -3,7 +3,7 @@ import {
   hapticTuning,
   physicsConfig,
   resolvedMapConfig,
-  timing
+  timing,
 } from "../core/config.js";
 import { createGameController } from "../core/game-controller.js";
 import { createLifecycleController } from "../core/game-lifecycle.js";
@@ -16,7 +16,7 @@ function createLifecycleHarness() {
     resolvedMapConfig,
     timing,
     hapticTuning,
-    physicsConfig
+    physicsConfig,
   });
   let resets = 0;
   let pausedBySettings = false;
@@ -55,7 +55,7 @@ function createLifecycleHarness() {
       pausedBySettings = false;
       controller.resume();
     },
-    tick() {}
+    tick() {},
   });
 
   function releaseMap() {
@@ -69,7 +69,7 @@ function createLifecycleHarness() {
     get resets() {
       return resets;
     },
-    state
+    state,
   };
 }
 
@@ -108,7 +108,7 @@ async function testStartRequestsFullscreenFromClickPath() {
     resolvedMapConfig,
     timing,
     hapticTuning,
-    physicsConfig
+    physicsConfig,
   });
   let fullscreenRequests = 0;
   let motionEnabled = false;
@@ -119,7 +119,7 @@ async function testStartRequestsFullscreenFromClickPath() {
     cameraController: {
       camera: state.camera,
       centerOnMarble() {},
-      resetGesture() {}
+      resetGesture() {},
     },
     calibration: state.calibration,
     controlsEl: { hidden: false },
@@ -133,7 +133,7 @@ async function testStartRequestsFullscreenFromClickPath() {
       hideMessage() {},
       pause() {},
       resume() {},
-      schedule() {}
+      schedule() {},
     },
     keyboard: state.keyboard,
     mapRenderer: { resetIntroPen() {} },
@@ -148,18 +148,18 @@ async function testStartRequestsFullscreenFromClickPath() {
       pause() {},
       reset() {},
       resume() {},
-      schedule() {}
+      schedule() {},
     },
     settings: { fullscreenEnabled: true },
     startBtn: {
       disabled: false,
-      textContent: ""
+      textContent: "",
     },
     tilt: state.tilt,
     timing,
-	    trailRenderer: { clear() {} },
-	    ui: { isSettingsOpen: () => false, setHint() {} },
-	    spawn: resolvedMapConfig.spawn,
+    trailRenderer: { clear() {} },
+    ui: { isSettingsOpen: () => false, setHint() {} },
+    spawn: resolvedMapConfig.spawn,
     enableMotion() {
       motionEnabled = true;
     },
@@ -173,7 +173,7 @@ async function testStartRequestsFullscreenFromClickPath() {
       return Promise.resolve(true);
     },
     keepDisplayAwake() {},
-    tick() {}
+    tick() {},
   });
 
   await lifecycle.gameController.start();
@@ -190,7 +190,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
     resolvedMapConfig,
     timing,
     hapticTuning,
-    physicsConfig
+    physicsConfig,
   });
   let motionEnabled = false;
   let hint = "";
@@ -200,7 +200,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
     cameraController: {
       camera: state.camera,
       centerOnMarble() {},
-      resetGesture() {}
+      resetGesture() {},
     },
     calibration: state.calibration,
     controlsEl: { hidden: false },
@@ -214,7 +214,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       hideMessage() {},
       pause() {},
       resume() {},
-      schedule() {}
+      schedule() {},
     },
     keyboard: state.keyboard,
     mapRenderer: { resetIntroPen() {} },
@@ -227,12 +227,12 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       pause() {},
       reset() {},
       resume() {},
-      schedule() {}
+      schedule() {},
     },
     settings: { fullscreenEnabled: true },
     startBtn: {
       disabled: false,
-      textContent: ""
+      textContent: "",
     },
     tilt: state.tilt,
     timing,
@@ -241,7 +241,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       isSettingsOpen: () => false,
       setHint(message) {
         hint = message;
-      }
+      },
     },
     spawn: resolvedMapConfig.spawn,
     enableMotion() {
@@ -259,7 +259,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       return 1;
     },
     clearTimeoutFn() {},
-    tick() {}
+    tick() {},
   });
 
   const startPromise = lifecycle.gameController.start();
@@ -271,7 +271,10 @@ async function testStartContinuesWhenMotionPermissionStalls() {
 
   assert.equal(motionEnabled, true);
   assert.equal(state.game.phase, "calibrating");
-  assert.equal(hint, "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
+  assert.equal(
+    hint,
+    "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
+  );
 }
 
 async function testStartRestoresControlsWhenMotionPermissionDenied() {
@@ -280,21 +283,21 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
     resolvedMapConfig,
     timing,
     hapticTuning,
-    physicsConfig
+    physicsConfig,
   });
   let motionEnabled = false;
   let hint = "";
   const controlsEl = { hidden: false };
   const startBtn = {
     disabled: false,
-    textContent: ""
+    textContent: "",
   };
 
   const lifecycle = createLifecycleController({
     cameraController: {
       camera: state.camera,
       centerOnMarble() {},
-      resetGesture() {}
+      resetGesture() {},
     },
     calibration: state.calibration,
     controlsEl,
@@ -308,7 +311,7 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       hideMessage() {},
       pause() {},
       resume() {},
-      schedule() {}
+      schedule() {},
     },
     keyboard: state.keyboard,
     mapRenderer: { resetIntroPen() {} },
@@ -321,7 +324,7 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       pause() {},
       reset() {},
       resume() {},
-      schedule() {}
+      schedule() {},
     },
     settings: { fullscreenEnabled: true },
     startBtn,
@@ -332,20 +335,22 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       isSettingsOpen: () => false,
       setHint(message) {
         hint = message;
-      }
+      },
     },
     spawn: resolvedMapConfig.spawn,
     enableMotion() {
       motionEnabled = true;
     },
     requestFullscreen() {
-      throw new Error("fullscreen should not be requested after denied motion permission");
+      throw new Error(
+        "fullscreen should not be requested after denied motion permission",
+      );
     },
     requestMotionPermission() {
       return Promise.resolve(false);
     },
     keepDisplayAwake() {},
-    tick() {}
+    tick() {},
   });
 
   await lifecycle.gameController.start();

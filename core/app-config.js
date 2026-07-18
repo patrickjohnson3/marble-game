@@ -1,3 +1,3 @@
 export const appConfig = {
-  fullscreenOnStart: true
+  fullscreenOnStart: true,
 };

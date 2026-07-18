@@ -14,7 +14,7 @@ const defaultElements = [
   { type: "roughPatch", x: 360, y: 650, w: 290, h: 220 },
   { type: "roughPatch", x: 1040, y: 520, w: 360, h: 240 },
   { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
-  { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 }
+  { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 },
 ];
 
 const generatedOneElements = [
@@ -31,20 +31,20 @@ const generatedOneElements = [
   { type: "roughPatch", x: 460, y: 660, w: 310, h: 240 },
   { type: "roughPatch", x: 1450, y: 440, w: 280, h: 210 },
   { type: "roughPatch", x: 720, y: 1320, w: 350, h: 230 },
-  { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 }
+  { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 },
 ];
 
 export const mapVariants = [
   {
     id: "default",
     goal: { x: 1920, y: 1900, r: 95, holdMs: 5000 },
-    elements: defaultElements
+    elements: defaultElements,
   },
   {
     id: "generated-1",
     goal: { x: 1840, y: 1850, r: 95, holdMs: 5000 },
-    elements: generatedOneElements
-  }
+    elements: generatedOneElements,
+  },
 ];
 
 export const baseMapConfig = {
@@ -52,30 +52,30 @@ export const baseMapConfig = {
   variants: mapVariants,
   world: {
     width: 2200,
-    height: 2200
+    height: 2200,
   },
   spawn: {
     x: 1100,
     y: 1100,
-    r: 29
+    r: 29,
   },
   grid: {
-    size: 10
+    size: 10,
   },
   reachability: {
     minCellSize: 5,
     gridDivisor: 2,
-    spawnRadiusDivisor: 2
+    spawnRadiusDivisor: 2,
   },
   intro: {
     wallThickness: 34,
-    viewportMargin: 18
+    viewportMargin: 18,
   },
   camera: {
     minScale: 0.2,
     maxScale: 2.5,
     followLag: 0.08,
-    predictiveLookAheadFrames: 18
+    predictiveLookAheadFrames: 18,
   },
   light: {
     x: 420,
@@ -85,8 +85,8 @@ export const baseMapConfig = {
     shadowMinBlur: 8,
     shadowMaxBlur: 15,
     contactShadowY: 3,
-    contactShadowBlur: 5
-  }
+    contactShadowBlur: 5,
+  },
 };
 
 export const resolvedMapConfig = resolveInitialMapConfig(baseMapConfig);

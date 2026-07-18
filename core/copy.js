@@ -4,23 +4,24 @@ export const copy = {
   initialHint: "click or tap start. tilt or use arrows/WASD.",
   hints: {
     mapOpen: "map open. pinch to zoom and explore.",
-    noMotionSensor: "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
+    noMotionSensor:
+      "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
     neutralSet: "neutral set. tilt from your normal holding angle.",
     motionDenied: "motion permission denied. check chrome site settings.",
-	    calibrating: "keep holding normally for half a sec...",
-	    neutralReset: "neutral reset to current hand position.",
-	    goalNoNextMap: "goal reached. no next map available.",
-	    goalNextMapInvalid: "goal reached. next map invalid.",
-	    goalNextMap: (variantId) => "goal reached. next map: " + variantId + "."
+    calibrating: "keep holding normally for half a sec...",
+    neutralReset: "neutral reset to current hand position.",
+    goalNoNextMap: "goal reached. no next map available.",
+    goalNextMapInvalid: "goal reached. next map invalid.",
+    goalNextMap: (variantId) => "goal reached. next map: " + variantId + ".",
   },
   intro: {
-    countdown: "map opens in"
+    countdown: "map opens in",
   },
   buttons: {
     start: "start",
     closeSettings: "×",
     neutral: "set neutral",
-    resume: "resume"
+    resume: "resume",
   },
   settings: {
     toggleLabel: "settings",
@@ -34,21 +35,18 @@ export const copy = {
       fullscreenSetting: "fullscreen",
       fpsSetting: "fps",
       statsSetting: "stats",
-      cameraModeSetting: "camera"
+      cameraModeSetting: "camera",
     },
     cameraModes: {
       follow: "follow",
       lockedCenter: "locked center",
-      predictiveLookAhead: "look-ahead"
-    }
+      predictiveLookAhead: "look-ahead",
+    },
   },
-  debugFallback: "waiting for sensors..."
+  debugFallback: "waiting for sensors...",
 };
 
-export function applyDocumentCopy({
-  document,
-  els
-}) {
+export function applyDocumentCopy({ document, els }) {
   document.title = copy.title;
 
   els.hint.textContent = copy.initialHint;
@@ -63,12 +61,16 @@ export function applyDocumentCopy({
   els.debug.textContent = copy.debugFallback;
 
   for (const [controlId, label] of Object.entries(copy.settings.labels)) {
-    const labelEl = document.querySelector('label[for="' + controlId + '"] span');
+    const labelEl = document.querySelector(
+      'label[for="' + controlId + '"] span',
+    );
     if (labelEl) labelEl.textContent = label;
   }
 
   for (const [mode, label] of Object.entries(copy.settings.cameraModes)) {
-    const optionEl = els.cameraModeSetting.querySelector('option[value="' + mode + '"]');
+    const optionEl = els.cameraModeSetting.querySelector(
+      'option[value="' + mode + '"]',
+    );
     if (optionEl) optionEl.textContent = label;
   }
 }

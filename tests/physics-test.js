@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { circleRectContact } from "../core/geometry.js";
-import { marbleOverRect, resolveObstacleCollision, updatePhysics, updatePhysicsInput } from "../core/physics.js";
+import {
+  marbleOverRect,
+  resolveObstacleCollision,
+  updatePhysics,
+  updatePhysicsInput,
+} from "../core/physics.js";
 import { createSpatialIndex } from "../core/spatial-index.js";
 
 function testCircleRectContact() {
@@ -17,7 +22,9 @@ function testObstacleBounce() {
   const obstacle = { x: 100, y: 30, w: 40, h: 40 };
   const impacts = [];
 
-  resolveObstacleCollision(marble, obstacle, { bounce: 0.5 }, (impact) => impacts.push(impact));
+  resolveObstacleCollision(marble, obstacle, { bounce: 0.5 }, (impact) =>
+    impacts.push(impact),
+  );
 
   assert.equal(marble.x, 88);
   assert.equal(marble.y, 50);
@@ -31,10 +38,15 @@ function testGlancingImpactReportsScrapeFeedback() {
   const obstacle = { x: 100, y: 30, w: 40, h: 40 };
   const impacts = [];
 
-  resolveObstacleCollision(marble, obstacle, {
-    bounce: 0.5,
-    scrapeHapticScale: 0.25
-  }, (impact) => impacts.push(impact));
+  resolveObstacleCollision(
+    marble,
+    obstacle,
+    {
+      bounce: 0.5,
+      scrapeHapticScale: 0.25,
+    },
+    (impact) => impacts.push(impact),
+  );
 
   assert.equal(impacts[0], 9);
 }
@@ -46,31 +58,38 @@ function testDeepOverlapPushesToNearestEdge() {
   resolveObstacleCollision(marble, obstacle, { bounce: 0.5 });
 
   assert.equal(marble.y, 40);
-  assert.equal(circleRectContact(marble, obstacle).distanceSq, marble.r * marble.r);
+  assert.equal(
+    circleRectContact(marble, obstacle).distanceSq,
+    marble.r * marble.r,
+  );
 }
 
 function testRoughPatchAddsDrag() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
 
-  updatePhysics({
-    marble,
-    bounds: { left: 0, right: 200, top: 0, bottom: 200 },
-    intro: { released: true },
-    tilt: { smoothX: 0, smoothY: 0 },
-    obstacles: [],
-    roughPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
-    physics: {
-      accel: 0,
-      friction: 1,
-      roughPatchFriction: 0.5,
-      bounce: 0.5,
-      maxSpeed: 100,
-      maxStepDistance: 100
-    }
-  }, 1, {
-    onImpact: () => {},
-    onSurface: () => {}
-  });
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 0.5,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
 
   assert.equal(marble.vx, 5);
 }
@@ -79,29 +98,33 @@ function testRoughPatchDragUsesSpatialIndex() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
   const roughPatches = [
     { x: 500, y: 500, w: 40, h: 40 },
-    { x: 40, y: 40, w: 40, h: 40 }
+    { x: 40, y: 40, w: 40, h: 40 },
   ];
 
-  updatePhysics({
-    marble,
-    bounds: { left: 0, right: 800, top: 0, bottom: 800 },
-    intro: { released: true },
-    tilt: { smoothX: 0, smoothY: 0 },
-    obstacles: [],
-    roughPatches,
-    roughPatchIndex: createSpatialIndex(roughPatches, { cellSize: 100 }),
-    physics: {
-      accel: 0,
-      friction: 1,
-      roughPatchFriction: 0.5,
-      bounce: 0.5,
-      maxSpeed: 100,
-      maxStepDistance: 100
-    }
-  }, 1, {
-    onImpact: () => {},
-    onSurface: () => {}
-  });
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 800, top: 0, bottom: 800 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches,
+      roughPatchIndex: createSpatialIndex(roughPatches, { cellSize: 100 }),
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 0.5,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
 
   assert.equal(marble.vx, 5);
 }
@@ -109,27 +132,31 @@ function testRoughPatchDragUsesSpatialIndex() {
 function testLowSpeedDriftSettles() {
   const marble = { x: 50, y: 50, vx: 0.02, vy: 0.01, r: 10 };
 
-  updatePhysics({
-    marble,
-    bounds: { left: 0, right: 200, top: 0, bottom: 200 },
-    intro: { released: true },
-    tilt: { smoothX: 0.1, smoothY: 0.1 },
-    obstacles: [],
-    roughPatches: [],
-    physics: {
-      accel: 0,
-      friction: 1,
-      roughPatchFriction: 0.5,
-      bounce: 0.5,
-      maxSpeed: 100,
-      maxStepDistance: 100,
-      settleSpeed: 0.04,
-      settleTilt: 0.5
-    }
-  }, 1, {
-    onImpact: () => {},
-    onSurface: () => {}
-  });
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0.1, smoothY: 0.1 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 0.5,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0.04,
+        settleTilt: 0.5,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
 
   assert.equal(marble.vx, 0);
   assert.equal(marble.vy, 0);
@@ -137,15 +164,22 @@ function testLowSpeedDriftSettles() {
 
 function testTiltCurveSoftensSmallSensorInput() {
   const context = {
-    tilt: { rawX: 5, rawY: 10, neutralX: 0, neutralY: 0, smoothX: 0, smoothY: 0 },
+    tilt: {
+      rawX: 5,
+      rawY: 10,
+      neutralX: 0,
+      neutralY: 0,
+      smoothX: 0,
+      smoothY: 0,
+    },
     keyboard: { x: 0, y: 0 },
     physics: {
       deadZone: 0,
       maxTilt: 10,
       keyboardTilt: 18,
       smoothing: 1,
-      tiltCurve: 2
-    }
+      tiltCurve: 2,
+    },
   };
 
   updatePhysicsInput(context, 1);
@@ -157,28 +191,32 @@ function testTiltCurveSoftensSmallSensorInput() {
 function testMaxSpeedEasesDown() {
   const marble = { x: 50, y: 50, vx: 20, vy: 0, r: 10 };
 
-  updatePhysics({
-    marble,
-    bounds: { left: 0, right: 200, top: 0, bottom: 200 },
-    intro: { released: true },
-    tilt: { smoothX: 0, smoothY: 0 },
-    obstacles: [],
-    roughPatches: [],
-    physics: {
-      accel: 0,
-      friction: 1,
-      roughPatchFriction: 0.5,
-      bounce: 0.5,
-      maxSpeed: 10,
-      maxSpeedEase: 0.5,
-      maxStepDistance: 100,
-      settleSpeed: 0,
-      settleTilt: 0
-    }
-  }, 1, {
-    onImpact: () => {},
-    onSurface: () => {}
-  });
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 0.5,
+        bounce: 0.5,
+        maxSpeed: 10,
+        maxSpeedEase: 0.5,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
 
   assert.equal(marble.vx, 15);
 }
@@ -186,29 +224,33 @@ function testMaxSpeedEasesDown() {
 function testWallCollisionAppliesTangentialFriction() {
   const marble = { x: 5, y: 50, vx: -4, vy: 10, r: 10 };
 
-  updatePhysics({
-    marble,
-    bounds: { left: 0, right: 200, top: 0, bottom: 200 },
-    intro: { released: true },
-    tilt: { smoothX: 0, smoothY: 0 },
-    obstacles: [],
-    roughPatches: [],
-    physics: {
-      accel: 0,
-      friction: 1,
-      roughPatchFriction: 0.5,
-      bounce: 0.5,
-      maxSpeed: 100,
-      maxSpeedEase: 0,
-      maxStepDistance: 100,
-      settleSpeed: 0,
-      settleTilt: 0,
-      wallTangentialFriction: 0.5
-    }
-  }, 1, {
-    onImpact: () => {},
-    onSurface: () => {}
-  });
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 0.5,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxSpeedEase: 0,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+        wallTangentialFriction: 0.5,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
 
   assert.equal(marble.x, 10);
   assert.equal(marble.vx, 2);

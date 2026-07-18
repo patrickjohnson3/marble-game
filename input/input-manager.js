@@ -9,7 +9,7 @@ export function createInputManager({
   onPointerDown,
   onPointerMove,
   onPointerEnd,
-  onStartClick
+  onStartClick,
 }) {
   let motionEnabled = false;
   let keyboardEnabled = false;
@@ -28,7 +28,7 @@ export function createInputManager({
     if (keyboardEnabled) return;
 
     keyboardEnabled = true;
-    target.addEventListener("keydown", onKeyDown, { passive:false });
+    target.addEventListener("keydown", onKeyDown, { passive: false });
     target.addEventListener("keyup", onKeyUp);
   }
 
@@ -53,6 +53,6 @@ export function createInputManager({
     bindStartButton,
     enableGestures,
     enableKeyboard,
-    enableMotion
+    enableMotion,
   };
 }

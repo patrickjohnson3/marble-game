@@ -4,7 +4,7 @@ import {
   renderObstacleWalls,
   renderRoughPatches,
   renderWalls,
-  wallFrameGeometry
+  wallFrameGeometry,
 } from "../rendering/rendering.js";
 import { createTerrainView } from "../rendering/terrain-view.js";
 import { createUi } from "../rendering/ui.js";
@@ -15,7 +15,7 @@ function testWallFrameGeometryKeepsPositiveInterior() {
     { x: -34, y: -34, w: 2268, h: 34 },
     { x: -34, y: 2200, w: 2268, h: 34 },
     { x: -34, y: 0, w: 34, h: 2200 },
-    { x: 2200, y: 0, w: 34, h: 2200 }
+    { x: 2200, y: 0, w: 34, h: 2200 },
   ]);
 
   assert.equal(frame.innerLeft, 0);
@@ -67,7 +67,7 @@ function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
     settings,
     settingsOverlay,
     debugLines: () => [],
-    state: {}
+    state: {},
   });
 
   ui.updateFps(1000);
@@ -97,7 +97,7 @@ function testStatsDefaultsHiddenAndUpdatesWhenEnabled() {
     settings,
     settingsOverlay,
     debugLines: () => ["phase: running"],
-    state: {}
+    state: {},
   });
 
   ui.updateDebugPanel();
@@ -124,10 +124,10 @@ function testGoalProgressUsesRadialFillRadius() {
     roughPatches: [],
     obstacles: [],
     renderObstacleWalls() {},
-    renderRoughPatches() {}
+    renderRoughPatches() {},
   });
 
-  terrainView.updateGoalProgress(.5);
+  terrainView.updateGoalProgress(0.5);
 
   assert.equal(goalEl.classList.contains("active"), true);
   assert.equal(goalEl.style.properties["--goal-fill-radius"], "35.4%");
@@ -148,9 +148,23 @@ function testTerrainViewSkipsUnchangedTerrainRedraw() {
   let roughPatchRenderCount = 0;
   const goal = { x: 100, y: 120, r: 50 };
   const obstacles = [{ x: 10, y: 10, w: 20, h: 20 }];
-  const obstacleBounds = { left: 10, top: 10, right: 30, bottom: 30, width: 20, height: 20 };
+  const obstacleBounds = {
+    left: 10,
+    top: 10,
+    right: 30,
+    bottom: 30,
+    width: 20,
+    height: 20,
+  };
   const roughPatches = [{ x: 40, y: 40, w: 20, h: 20 }];
-  const roughPatchBounds = { left: 40, top: 40, right: 60, bottom: 60, width: 20, height: 20 };
+  const roughPatchBounds = {
+    left: 40,
+    top: 40,
+    right: 60,
+    bottom: 60,
+    width: 20,
+    height: 20,
+  };
   const terrainView = createTerrainView({
     roughPatchesEl: new FakeElement(),
     obstaclesEl: new FakeElement(),
@@ -165,11 +179,17 @@ function testTerrainViewSkipsUnchangedTerrainRedraw() {
     },
     renderRoughPatches() {
       roughPatchRenderCount++;
-    }
+    },
   });
 
   terrainView.renderTerrain();
-  terrainView.setTerrain({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds });
+  terrainView.setTerrain({
+    goal,
+    obstacles,
+    obstacleBounds,
+    roughPatches,
+    roughPatchBounds,
+  });
 
   assert.equal(obstacleRenderCount, 1);
   assert.equal(roughPatchRenderCount, 1);
@@ -185,31 +205,53 @@ globalThis.document = {
   },
   createElementNS() {
     return new FakeElement();
-  }
+  },
 };
 
 try {
   const wallsContainer = new FakeElement();
   renderWalls(wallsContainer, [{ x: 0, y: 0, w: 100, h: 10 }]);
-  assert.deepEqual(wallsContainer.children, [], "invalid wall frame should clear container");
+  assert.deepEqual(
+    wallsContainer.children,
+    [],
+    "invalid wall frame should clear container",
+  );
 
   renderWalls(wallsContainer, [
     { x: -10, y: -10, w: 120, h: 10 },
     { x: -10, y: 100, w: 120, h: 10 },
     { x: -10, y: 0, w: 10, h: 100 },
-    { x: 100, y: 0, w: 10, h: 100 }
+    { x: 100, y: 0, w: 10, h: 100 },
   ]);
   const wallCanvas = wallsContainer.children[0];
-  assert.equal(wallCanvas.classList.contains("wallCanvas"), true, "wall frame should render to canvas");
-  assert.equal(wallCanvas.context.calls.some((call) => call[0] === "fillRect"), true, "wall canvas should draw fill");
-  assert.equal(wallCanvas.context.calls.some((call) => call[0] === "clearRect"), true, "wall canvas should clear interior");
+  assert.equal(
+    wallCanvas.classList.contains("wallCanvas"),
+    true,
+    "wall frame should render to canvas",
+  );
+  assert.equal(
+    wallCanvas.context.calls.some((call) => call[0] === "fillRect"),
+    true,
+    "wall canvas should draw fill",
+  );
+  assert.equal(
+    wallCanvas.context.calls.some((call) => call[0] === "clearRect"),
+    true,
+    "wall canvas should clear interior",
+  );
 
   const container = new FakeElement();
   const roughPatchContainer = new FakeElement();
 
-  renderRoughPatches(roughPatchContainer, [{ x: 20, y: 30, w: 80, h: 60 }], { padding: 18 });
+  renderRoughPatches(roughPatchContainer, [{ x: 20, y: 30, w: 80, h: 60 }], {
+    padding: 18,
+  });
   const roughPatchCanvas = roughPatchContainer.children[0];
-  assert.equal(roughPatchCanvas.classList.contains("roughPatchCanvas"), true, "rough patches should render to canvas");
+  assert.equal(
+    roughPatchCanvas.classList.contains("roughPatchCanvas"),
+    true,
+    "rough patches should render to canvas",
+  );
   assert.equal(roughPatchCanvas.attributes["data-rough-patches"], "1");
   assert.equal(roughPatchCanvas.style.left, "2px");
   assert.equal(roughPatchCanvas.style.top, "12px");
@@ -218,29 +260,46 @@ try {
   assert.equal(
     roughPatchCanvas.context.calls.some((call) => call[0] === "fillRect"),
     true,
-    "rough patch canvas should draw grit"
+    "rough patch canvas should draw grit",
   );
   assert.equal(
-    roughPatchCanvas.context.calls.filter((call) => call[0] === "fillRect").length >= 40,
+    roughPatchCanvas.context.calls.filter((call) => call[0] === "fillRect")
+      .length >= 40,
     true,
-    "rough patch canvas should draw layered grit"
+    "rough patch canvas should draw layered grit",
   );
 
-  renderObstacleWalls(container, [
-    { x: 0, y: 0, w: 10, h: 20 },
-    { x: 10, y: 0, w: 10, h: 10 }
-  ], { padding: 32 });
+  renderObstacleWalls(
+    container,
+    [
+      { x: 0, y: 0, w: 10, h: 20 },
+      { x: 10, y: 0, w: 10, h: 10 },
+    ],
+    { padding: 32 },
+  );
 
   const canvas = container.children[0];
 
-  assert.equal(canvas.classList.contains("obstacleCanvas"), true, "obstacle walls should render to canvas");
+  assert.equal(
+    canvas.classList.contains("obstacleCanvas"),
+    true,
+    "obstacle walls should render to canvas",
+  );
   assert.equal(canvas.style.left, "-32px");
   assert.equal(canvas.style.top, "-32px");
   assert.equal(canvas.style.width, "84px");
   assert.equal(canvas.style.height, "84px");
   assert.equal(canvas.attributes["data-wall-groups"], "1");
-  assert.equal(canvas.context.calls.some((call) => call[0] === "fill"), true, "obstacle canvas should draw fills");
-  assert.equal(canvas.context.calls.some((call) => call[0] === "stroke"), true, "obstacle canvas should draw outline");
+  assert.equal(
+    canvas.context.calls.some((call) => call[0] === "fill"),
+    true,
+    "obstacle canvas should draw fills",
+  );
+  assert.equal(
+    canvas.context.calls.some((call) => call[0] === "stroke"),
+    true,
+    "obstacle canvas should draw outline",
+  );
 } finally {
   if (originalDocument === undefined) {
     delete globalThis.document;

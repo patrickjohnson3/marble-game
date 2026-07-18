@@ -10,13 +10,13 @@ function fakeControl(initialValue = "") {
     value: initialValue,
     addEventListener(type, listener) {
       listeners[type] = listener;
-    }
+    },
   };
 }
 
 function fakeButton() {
   return {
-    addEventListener() {}
+    addEventListener() {},
   };
 }
 
@@ -35,7 +35,7 @@ function createPanelHarness() {
     fullscreenEnabled: true,
     fpsEnabled: false,
     statsEnabled: false,
-    cameraMode: "follow"
+    cameraMode: "follow",
   };
   const fpsSetting = fakeControl();
   const statsSetting = fakeControl();
@@ -54,13 +54,13 @@ function createPanelHarness() {
       fullscreenSetting: fakeControl(),
       fpsSetting,
       statsSetting,
-      cameraModeSetting
+      cameraModeSetting,
     },
     settings,
     controls: {
       maxSpeed: { min: 8, max: 24, step: 1 },
       acceleration: { min: 0.06, max: 0.18, step: 0.005 },
-      cameraModes: ["follow", "lockedCenter", "predictiveLookAhead"]
+      cameraModes: ["follow", "lockedCenter", "predictiveLookAhead"],
     },
     applyRangeConfig(input, range) {
       input.min = range.min;
@@ -85,15 +85,21 @@ function createPanelHarness() {
     },
     requestRender() {
       renderCount++;
-    }
+    },
   });
 
   return {
     cameraModeSetting,
-    counts: () => ({ applyCount, fpsChangeCount, statsChangeCount, saveCount, renderCount }),
+    counts: () => ({
+      applyCount,
+      fpsChangeCount,
+      statsChangeCount,
+      saveCount,
+      renderCount,
+    }),
     fpsSetting,
     statsSetting,
-    settings
+    settings,
   };
 }
 
@@ -104,7 +110,13 @@ function testValidCameraModeChangePersists() {
   cameraModeSetting.listeners.change();
 
   assert.equal(settings.cameraMode, "lockedCenter");
-  assert.deepEqual(counts(), { applyCount: 1, fpsChangeCount: 0, statsChangeCount: 0, saveCount: 1, renderCount: 1 });
+  assert.deepEqual(counts(), {
+    applyCount: 1,
+    fpsChangeCount: 0,
+    statsChangeCount: 0,
+    saveCount: 1,
+    renderCount: 1,
+  });
 }
 
 function testInvalidCameraModeChangeFallsBack() {
@@ -115,7 +127,13 @@ function testInvalidCameraModeChangeFallsBack() {
 
   assert.equal(settings.cameraMode, "follow");
   assert.equal(cameraModeSetting.value, "follow");
-  assert.deepEqual(counts(), { applyCount: 1, fpsChangeCount: 0, statsChangeCount: 0, saveCount: 1, renderCount: 1 });
+  assert.deepEqual(counts(), {
+    applyCount: 1,
+    fpsChangeCount: 0,
+    statsChangeCount: 0,
+    saveCount: 1,
+    renderCount: 1,
+  });
 }
 
 testValidCameraModeChangePersists();
@@ -128,7 +146,13 @@ function testFpsTogglePersistsAndRenders() {
   fpsSetting.listeners.change();
 
   assert.equal(settings.fpsEnabled, true);
-  assert.deepEqual(counts(), { applyCount: 0, fpsChangeCount: 1, statsChangeCount: 0, saveCount: 1, renderCount: 1 });
+  assert.deepEqual(counts(), {
+    applyCount: 0,
+    fpsChangeCount: 1,
+    statsChangeCount: 0,
+    saveCount: 1,
+    renderCount: 1,
+  });
 }
 
 testFpsTogglePersistsAndRenders();
@@ -140,7 +164,13 @@ function testStatsTogglePersistsAndRenders() {
   statsSetting.listeners.change();
 
   assert.equal(settings.statsEnabled, true);
-  assert.deepEqual(counts(), { applyCount: 0, fpsChangeCount: 0, statsChangeCount: 1, saveCount: 1, renderCount: 1 });
+  assert.deepEqual(counts(), {
+    applyCount: 0,
+    fpsChangeCount: 0,
+    statsChangeCount: 1,
+    saveCount: 1,
+    renderCount: 1,
+  });
 }
 
 testStatsTogglePersistsAndRenders();

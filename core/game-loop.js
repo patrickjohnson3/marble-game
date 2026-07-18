@@ -17,7 +17,7 @@ export function createGameLoop({
   trailRenderer,
   ui,
   visualConfig,
-  now = () => performance.now()
+  now = () => performance.now(),
 }) {
   function tick() {
     frameLoop.beginFrame();
@@ -25,7 +25,7 @@ export function createGameLoop({
     const dt = clamp(
       (currentTime - lifecycle.getLastFrame()) / timing.targetFrameMs,
       timing.minFrameStep,
-      timing.maxFrameStep
+      timing.maxFrameStep,
     );
     lifecycle.setLastFrame(currentTime);
     const active = game.phase !== "waiting" && !game.paused;
@@ -42,17 +42,21 @@ export function createGameLoop({
         onImpact: (impact) => {
           marble.impactSquash = Math.max(
             marble.impactSquash,
-            clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1)
+            clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1),
           );
           effectsRenderer.spawnImpact(impact);
           hapticFeedback.pulseImpact(impact);
         },
         onSurface: (speed) => {
           hapticFeedback.pulseSurface(speed);
-        }
+        },
       });
-      marble.roll += Math.hypot(marble.vx, marble.vy) * dt / Math.max(marble.r, 1);
-      marble.impactSquash = Math.max(0, marble.impactSquash - visualConfig.marble.impactSquashDecay * dt);
+      marble.roll +=
+        (Math.hypot(marble.vx, marble.vy) * dt) / Math.max(marble.r, 1);
+      marble.impactSquash = Math.max(
+        0,
+        marble.impactSquash - visualConfig.marble.impactSquashDecay * dt,
+      );
       goalController?.update(dt, currentTime);
       cameraController.updateFollow(dt);
     }

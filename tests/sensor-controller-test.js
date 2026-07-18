@@ -9,7 +9,7 @@ function createHarness() {
     autoNeutralDone: false,
     sampleCount: 0,
     sampleX: 0,
-    sampleY: 0
+    sampleY: 0,
   };
   const game = { paused: false, phase: "calibrating" };
   const marble = { vx: 4, vy: -2 };
@@ -19,7 +19,7 @@ function createHarness() {
     rawX: 3,
     rawY: -5,
     smoothX: 1,
-    smoothY: -1
+    smoothY: -1,
   };
   const controller = createSensorController({
     calibration,
@@ -27,7 +27,7 @@ function createHarness() {
     introSequence: {
       schedule() {
         introSchedules++;
-      }
+      },
     },
     marble,
     scheduleFrame() {
@@ -37,14 +37,14 @@ function createHarness() {
     tilt,
     tuning: {
       motionGravityScale: 3,
-      neutralSampleCount: 2
+      neutralSampleCount: 2,
     },
     ui: {
       setHint(message) {
         hint = message;
-      }
+      },
     },
-    adjustScreen: (gamma, beta) => [gamma, beta]
+    adjustScreen: (gamma, beta) => [gamma, beta],
   });
 
   return {
@@ -54,7 +54,7 @@ function createHarness() {
     game,
     hint: () => hint,
     marble,
-    tilt
+    tilt,
   };
 }
 

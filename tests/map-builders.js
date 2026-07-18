@@ -5,7 +5,7 @@ export function obstacle(overrides = {}) {
     y: 10,
     w: 10,
     h: 10,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -16,7 +16,7 @@ export function roughPatch(overrides = {}) {
     y: 10,
     w: 20,
     h: 20,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -26,7 +26,7 @@ export function goal(overrides = {}) {
     y: 80,
     r: 10,
     holdMs: 5000,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -35,7 +35,7 @@ export function spawn(overrides = {}) {
     x: 20,
     y: 20,
     r: 5,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -45,6 +45,6 @@ export function mapConfig(overrides = {}) {
     elements: [],
     spawn: spawn(),
     goal: goal(),
-    ...overrides
+    ...overrides,
   };
 }

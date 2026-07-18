@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import {
   createRuntimeSettings,
-  persistedSettingsFromRuntime
+  persistedSettingsFromRuntime,
 } from "../settings/settings-runtime.js";
-import { availableStorage, loadSettings, saveSettings } from "../settings/settings-store.js";
+import {
+  availableStorage,
+  loadSettings,
+  saveSettings,
+} from "../settings/settings-store.js";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -17,7 +21,7 @@ function storageWith(value) {
     },
     setItem(_key, nextValue) {
       this.value = nextValue;
-    }
+    },
   };
 }
 
@@ -30,25 +34,27 @@ const defaults = {
   fullscreenEnabled: true,
   fpsEnabled: false,
   statsEnabled: false,
-  cameraMode: "follow"
+  cameraMode: "follow",
 };
 const controls = {
   maxSpeed: { min: 8, max: 24 },
   acceleration: { min: 0.06, max: 0.18 },
-  cameraModes: ["follow", "lockedCenter", "predictiveLookAhead"]
+  cameraModes: ["follow", "lockedCenter", "predictiveLookAhead"],
 };
 
 function testTrailMigrationDefaultsOldSavedTrailOff() {
   const settings = loadSettings({
-    storage: storageWith(JSON.stringify({
-      maxSpeed: 12,
-      acceleration: 0.1,
-      trailEnabled: true
-    })),
+    storage: storageWith(
+      JSON.stringify({
+        maxSpeed: 12,
+        acceleration: 0.1,
+        trailEnabled: true,
+      }),
+    ),
     storageKey: "settings",
     defaults,
     controls,
-    clamp
+    clamp,
   });
 
   assert.equal(settings.trailEnabled, false);
@@ -57,16 +63,18 @@ function testTrailMigrationDefaultsOldSavedTrailOff() {
 
 function testTrailMigrationPreservesCurrentSavedTrailChoice() {
   const settings = loadSettings({
-    storage: storageWith(JSON.stringify({
-      maxSpeed: 12,
-      acceleration: 0.1,
-      trailEnabled: true,
-      trailDefaultVersion: 2
-    })),
+    storage: storageWith(
+      JSON.stringify({
+        maxSpeed: 12,
+        acceleration: 0.1,
+        trailEnabled: true,
+        trailDefaultVersion: 2,
+      }),
+    ),
     storageKey: "settings",
     defaults,
     controls,
-    clamp
+    clamp,
   });
 
   assert.equal(settings.trailEnabled, true);
@@ -81,7 +89,7 @@ function testRuntimeSettingsAreIndependentFromPersistedSettings() {
   assert.equal(persisted.maxSpeed, 14);
   assert.deepEqual(persistedSettingsFromRuntime(runtime), {
     ...persisted,
-    maxSpeed: 20
+    maxSpeed: 20,
   });
 }
 
@@ -91,30 +99,37 @@ function testUnavailableStorageFallsBackToDefaults() {
   });
 
   assert.equal(storage, null);
-  assert.deepEqual(loadSettings({
-    storage,
-    storageKey: "settings",
+  assert.deepEqual(
+    loadSettings({
+      storage,
+      storageKey: "settings",
+      defaults,
+      controls,
+      clamp,
+    }),
     defaults,
-    controls,
-    clamp
-  }), defaults);
-  assert.doesNotThrow(() => saveSettings({
-    storage,
-    storageKey: "settings",
-    settings: defaults
-  }));
+  );
+  assert.doesNotThrow(() =>
+    saveSettings({
+      storage,
+      storageKey: "settings",
+      settings: defaults,
+    }),
+  );
 }
 
 function testCameraModePersistsValidChoice() {
   const settings = loadSettings({
-    storage: storageWith(JSON.stringify({
-      ...defaults,
-      cameraMode: "predictiveLookAhead"
-    })),
+    storage: storageWith(
+      JSON.stringify({
+        ...defaults,
+        cameraMode: "predictiveLookAhead",
+      }),
+    ),
     storageKey: "settings",
     defaults,
     controls,
-    clamp
+    clamp,
   });
 
   assert.equal(settings.cameraMode, "predictiveLookAhead");
@@ -122,14 +137,16 @@ function testCameraModePersistsValidChoice() {
 
 function testCameraModeFallsBackForInvalidChoice() {
   const settings = loadSettings({
-    storage: storageWith(JSON.stringify({
-      ...defaults,
-      cameraMode: "orbit"
-    })),
+    storage: storageWith(
+      JSON.stringify({
+        ...defaults,
+        cameraMode: "orbit",
+      }),
+    ),
     storageKey: "settings",
     defaults,
     controls,
-    clamp
+    clamp,
   });
 
   assert.equal(settings.cameraMode, "follow");
@@ -137,14 +154,16 @@ function testCameraModeFallsBackForInvalidChoice() {
 
 function testFpsSettingPersistsValidChoice() {
   const settings = loadSettings({
-    storage: storageWith(JSON.stringify({
-      ...defaults,
-      fpsEnabled: true
-    })),
+    storage: storageWith(
+      JSON.stringify({
+        ...defaults,
+        fpsEnabled: true,
+      }),
+    ),
     storageKey: "settings",
     defaults,
     controls,
-    clamp
+    clamp,
   });
 
   assert.equal(settings.fpsEnabled, true);
@@ -152,14 +171,16 @@ function testFpsSettingPersistsValidChoice() {
 
 function testStatsSettingPersistsValidChoice() {
   const settings = loadSettings({
-    storage: storageWith(JSON.stringify({
-      ...defaults,
-      statsEnabled: true
-    })),
+    storage: storageWith(
+      JSON.stringify({
+        ...defaults,
+        statsEnabled: true,
+      }),
+    ),
     storageKey: "settings",
     defaults,
     controls,
-    clamp
+    clamp,
   });
 
   assert.equal(settings.statsEnabled, true);

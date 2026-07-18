@@ -5,7 +5,7 @@ export function createGameController({
   resume,
   openSettings,
   closeSettings,
-  tick
+  tick,
 }) {
   return {
     start,
@@ -14,6 +14,6 @@ export function createGameController({
     resume,
     openSettings,
     closeSettings,
-    tick
+    tick,
   };
 }

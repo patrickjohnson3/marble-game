@@ -36,6 +36,6 @@ export function createFrameLoop({ requestFrame = requestAnimationFrame } = {}) {
     requestRender,
     schedule,
     setTick,
-    shouldSkipIdle
+    shouldSkipIdle,
   };
 }

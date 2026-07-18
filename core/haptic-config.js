@@ -12,5 +12,5 @@ export const hapticTuning = {
   goalEnterDurationMs: 12,
   goalHoldDurationMs: 6,
   goalHoldCooldownMs: 900,
-  goalCompletePattern: [18, 40, 28]
+  goalCompletePattern: [18, 40, 28],
 };

@@ -14,6 +14,6 @@ export function rectBounds(rects) {
     right,
     top,
     height: bottom - top,
-    width: right - left
+    width: right - left,
   };
 }

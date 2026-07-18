@@ -11,9 +11,9 @@ export function hashMapSeed(seed) {
 }
 
 export function validMapVariants(variants) {
-  return Array.isArray(variants) ?
-    variants.filter((variant) => variant && typeof variant === "object") :
-    [];
+  return Array.isArray(variants)
+    ? variants.filter((variant) => variant && typeof variant === "object")
+    : [];
 }
 
 export function selectSeededMapVariant(variants, seed) {
@@ -30,16 +30,18 @@ export function selectNextMapVariant(variants, currentVariantId) {
   const validVariants = validMapVariants(variants);
   if (validVariants.length === 0) return null;
 
-  const currentIndex = validVariants.findIndex((variant) => variant.id === currentVariantId);
+  const currentIndex = validVariants.findIndex(
+    (variant) => variant.id === currentVariantId,
+  );
   if (currentIndex < 0) return validVariants[0];
   return validVariants[(currentIndex + 1) % validVariants.length];
 }
 
 function resolveMapConfig(config, { seed, variant }) {
   if (!variant) return { ...config, seed };
-  const elements = Array.isArray(variant.elements) ?
-    variant.elements.map((element) => ({ ...element })) :
-    variant.elements;
+  const elements = Array.isArray(variant.elements)
+    ? variant.elements.map((element) => ({ ...element }))
+    : variant.elements;
 
   return {
     ...config,
@@ -47,20 +49,22 @@ function resolveMapConfig(config, { seed, variant }) {
     variantId: variant.id,
     goal: { ...variant.goal },
     spawn: { ...(variant.spawn ?? config.spawn) },
-    elements
+    elements,
   };
 }
 
 export function resolveSeededMapConfig(config, seed = config.seed) {
   return resolveMapConfig(config, {
     seed,
-    variant: selectSeededMapVariant(config.variants, seed)
+    variant: selectSeededMapVariant(config.variants, seed),
   });
 }
 
 export function resolveMapVariantConfig(config, variantId, seed = config.seed) {
   return resolveMapConfig(config, {
     seed,
-    variant: validMapVariants(config.variants).find((variant) => variant.id === variantId)
+    variant: validMapVariants(config.variants).find(
+      (variant) => variant.id === variantId,
+    ),
   });
 }

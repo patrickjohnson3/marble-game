@@ -8,7 +8,7 @@ export function createRuntimeSettings(persistedSettings) {
     fullscreenEnabled: persistedSettings.fullscreenEnabled,
     fpsEnabled: persistedSettings.fpsEnabled,
     statsEnabled: persistedSettings.statsEnabled,
-    cameraMode: persistedSettings.cameraMode
+    cameraMode: persistedSettings.cameraMode,
   };
 }
 
@@ -22,6 +22,6 @@ export function persistedSettingsFromRuntime(settings) {
     fullscreenEnabled: settings.fullscreenEnabled,
     fpsEnabled: settings.fpsEnabled,
     statsEnabled: settings.statsEnabled,
-    cameraMode: settings.cameraMode
+    cameraMode: settings.cameraMode,
   };
 }

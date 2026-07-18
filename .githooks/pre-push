@@ -1,3 +1,4 @@
 #!/bin/sh
 node test-all.js
 node node_modules/eslint/bin/eslint.js .
+node node_modules/prettier/bin/prettier.cjs --check .

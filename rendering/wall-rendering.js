@@ -1,6 +1,11 @@
 import { rectBounds } from "../core/rect-bounds.js";
 
-function createCanvas(className, rects, padding = 0, bounds = rectBounds(rects)) {
+function createCanvas(
+  className,
+  rects,
+  padding = 0,
+  bounds = rectBounds(rects),
+) {
   const left = bounds.left - padding;
   const top = bounds.top - padding;
   const width = bounds.width + padding * 2;
@@ -19,7 +24,14 @@ function createCanvas(className, rects, padding = 0, bounds = rectBounds(rects))
 
   const context = canvas.getContext?.("2d");
   if (context) {
-    context.setTransform(pixelRatio, 0, 0, pixelRatio, -left * pixelRatio, -top * pixelRatio);
+    context.setTransform(
+      pixelRatio,
+      0,
+      0,
+      pixelRatio,
+      -left * pixelRatio,
+      -top * pixelRatio,
+    );
   }
 
   return { canvas, context };
@@ -44,11 +56,34 @@ export function wallFrameGeometry(walls) {
   const innerRight = Math.max(...verticalWalls.map((wall) => wall.x));
   const innerTop = Math.min(...horizontalWalls.map((wall) => wall.y + wall.h));
   const innerBottom = Math.max(...horizontalWalls.map((wall) => wall.y));
-  const thickness = Math.max(innerLeft - left, innerTop - top, right - innerRight, bottom - innerBottom);
-  if (![left, top, right, bottom, innerLeft, innerRight, innerTop, innerBottom, thickness].every(Number.isFinite)) {
+  const thickness = Math.max(
+    innerLeft - left,
+    innerTop - top,
+    right - innerRight,
+    bottom - innerBottom,
+  );
+  if (
+    ![
+      left,
+      top,
+      right,
+      bottom,
+      innerLeft,
+      innerRight,
+      innerTop,
+      innerBottom,
+      thickness,
+    ].every(Number.isFinite)
+  ) {
     return null;
   }
-  if (right <= left || bottom <= top || innerRight <= innerLeft || innerBottom <= innerTop) return null;
+  if (
+    right <= left ||
+    bottom <= top ||
+    innerRight <= innerLeft ||
+    innerBottom <= innerTop
+  )
+    return null;
 
   return {
     bottom,
@@ -59,14 +94,19 @@ export function wallFrameGeometry(walls) {
     left,
     right,
     thickness,
-    top
+    top,
   };
 }
 
 function drawWallFrame(context, frame) {
   const width = frame.right - frame.left;
   const height = frame.bottom - frame.top;
-  const fill = context.createLinearGradient(frame.left, frame.top, frame.right, frame.bottom);
+  const fill = context.createLinearGradient(
+    frame.left,
+    frame.top,
+    frame.right,
+    frame.bottom,
+  );
 
   fill.addColorStop(0, "#f2f6fd");
   fill.addColorStop(0.48, "#d8e2f0");
@@ -82,7 +122,7 @@ function drawWallFrame(context, frame) {
     frame.innerLeft,
     frame.innerTop,
     frame.innerRight - frame.innerLeft,
-    frame.innerBottom - frame.innerTop
+    frame.innerBottom - frame.innerTop,
   );
   context.restore();
 
@@ -94,7 +134,7 @@ function drawWallFrame(context, frame) {
     frame.innerLeft,
     frame.innerTop,
     frame.innerRight - frame.innerLeft,
-    frame.innerBottom - frame.innerTop
+    frame.innerBottom - frame.innerTop,
   );
   context.restore();
 }

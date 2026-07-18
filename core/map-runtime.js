@@ -3,7 +3,7 @@ import { createResolvedMapState } from "./map-state.js";
 
 export function createMapRuntime({
   initialMap,
-  normalizeObstacles = normalizeJoinedObstacleRects
+  normalizeObstacles = normalizeJoinedObstacleRects,
 }) {
   const state = {
     activeMap: null,
@@ -17,7 +17,7 @@ export function createMapRuntime({
     goal: null,
     spawn: null,
     goalHoldMs: 0,
-    goalCompleted: false
+    goalCompleted: false,
   };
 
   function resetGoalProgress() {
@@ -62,6 +62,6 @@ export function createMapRuntime({
     clearGoalCompleted,
     completeGoal,
     resetGoalProgress,
-    setActiveMap
+    setActiveMap,
   };
 }

@@ -166,7 +166,7 @@ class FakeSelectElement extends FakeElement {
   constructor(id, optionValues) {
     super(id);
     this.options = Object.fromEntries(
-      optionValues.map((value) => [value, new FakeElement()])
+      optionValues.map((value) => [value, new FakeElement()]),
     );
   }
 
@@ -178,12 +178,12 @@ class FakeSelectElement extends FakeElement {
 
 export function createFakeDocument() {
   const elements = Object.fromEntries(
-    Object.values(domIds).map((id) => [id, new FakeElement(id)])
+    Object.values(domIds).map((id) => [id, new FakeElement(id)]),
   );
   elements.cameraModeSetting = new FakeSelectElement("cameraModeSetting", [
     "follow",
     "lockedCenter",
-    "predictiveLookAhead"
+    "predictiveLookAhead",
   ]);
   const labelSpans = new Map(
     [
@@ -194,8 +194,8 @@ export function createFakeDocument() {
       "fullscreenSetting",
       "fpsSetting",
       "statsSetting",
-      "cameraModeSetting"
-    ].map((id) => [id, new FakeElement()])
+      "cameraModeSetting",
+    ].map((id) => [id, new FakeElement()]),
   );
 
   return {
@@ -217,6 +217,6 @@ export function createFakeDocument() {
     querySelector(selector) {
       const match = selector.match(/^label\[for="([^"]+)"\] span$/);
       return match ? labelSpans.get(match[1]) || null : null;
-    }
+    },
   };
 }

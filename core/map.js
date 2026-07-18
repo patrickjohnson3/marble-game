@@ -1,32 +1,25 @@
 import { validateMapConfig as validateMapConfigWithDeps } from "./map-validation.js";
-import {
-  MAP_ELEMENT_TYPES,
-  mapObstacleElements
-} from "./map-elements.js";
-import {
-  normalizeJoinedObstacleRects
-} from "./map-obstacles.js";
-import {
-  validMapVariants
-} from "./map-variants.js";
+import { MAP_ELEMENT_TYPES, mapObstacleElements } from "./map-elements.js";
+import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
+import { validMapVariants } from "./map-variants.js";
 
 export {
   introPenWalls,
   mapEdgeWalls,
   setReleasedBounds,
-  updateIntroBounds
+  updateIntroBounds,
 } from "./map-bounds.js";
 export {
   isObstacleElement,
   isRoughPatchElement,
   mapObstacleElements,
   mapRoughPatchElements,
-  MAP_ELEMENT_TYPES
+  MAP_ELEMENT_TYPES,
 } from "./map-elements.js";
 export {
   normalizeJoinedObstacleRects,
   snapRectToGrid,
-  snapToGrid
+  snapToGrid,
 } from "./map-obstacles.js";
 export {
   hashMapSeed,
@@ -34,7 +27,7 @@ export {
   resolveSeededMapConfig,
   selectNextMapVariant,
   selectSeededMapVariant,
-  validMapVariants
+  validMapVariants,
 } from "./map-variants.js";
 
 export function validateMapConfig(config, options = {}) {
@@ -42,6 +35,6 @@ export function validateMapConfig(config, options = {}) {
     elementTypes: MAP_ELEMENT_TYPES,
     normalizeJoinedObstacleRects,
     mapObstacleElements,
-    validMapVariants
+    validMapVariants,
   });
 }

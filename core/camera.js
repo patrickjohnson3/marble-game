@@ -9,21 +9,27 @@ export function createCameraController({
   distance,
   angle,
   midpoint,
-  viewport
+  viewport,
 }) {
   const pointers = new Map();
   let gesture = null;
 
   function applyTransform() {
     cameraEl.style.transform =
-      "translate(" + camera.x + "px, " + camera.y + "px) " +
-      "scale(" + camera.scale + ")";
+      "translate(" +
+      camera.x +
+      "px, " +
+      camera.y +
+      "px) " +
+      "scale(" +
+      camera.scale +
+      ")";
   }
 
   function transformedWorldPoint(x, y) {
     return {
       x: x * camera.scale,
-      y: y * camera.scale
+      y: y * camera.scale,
     };
   }
 
@@ -41,7 +47,7 @@ export function createCameraController({
 
     return {
       x: marble.x + marble.vx * camera.predictiveLookAheadFrames,
-      y: marble.y + marble.vy * camera.predictiveLookAheadFrames
+      y: marble.y + marble.vy * camera.predictiveLookAheadFrames,
     };
   }
 
@@ -55,9 +61,10 @@ export function createCameraController({
     const transformed = transformedWorldPoint(target.x, target.y);
     const targetX = viewport.width() / 2 - transformed.x;
     const targetY = viewport.height() / 2 - transformed.y;
-    const followStep = camera.mode === "lockedCenter"
-      ? 1
-      : 1 - Math.pow(1 - camera.followLag, dt);
+    const followStep =
+      camera.mode === "lockedCenter"
+        ? 1
+        : 1 - Math.pow(1 - camera.followLag, dt);
 
     camera.x += (targetX - camera.x) * followStep;
     camera.y += (targetY - camera.y) * followStep;
@@ -92,7 +99,7 @@ export function createCameraController({
       midpoint: midpoint(a, b),
       x: camera.x,
       y: camera.y,
-      scale: camera.scale
+      scale: camera.scale,
     };
   }
 
@@ -104,7 +111,7 @@ export function createCameraController({
     camera.scale = clamp(
       gesture.scale * (distance(a, b) / gesture.distance),
       camera.minScale,
-      camera.maxScale
+      camera.maxScale,
     );
     if (!intro.released) {
       centerOnMarble();
@@ -165,6 +172,6 @@ export function createCameraController({
     onPointerEnd,
     onPointerMove,
     resetGesture,
-    updateFollow
+    updateFollow,
   };
 }

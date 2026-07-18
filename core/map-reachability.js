@@ -12,7 +12,7 @@ export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
     { x: goal.x - holdRadius, y: goal.y },
     { x: goal.x + holdRadius, y: goal.y },
     { x: goal.x, y: goal.y - holdRadius },
-    { x: goal.x, y: goal.y + holdRadius }
+    { x: goal.x, y: goal.y + holdRadius },
   ];
   let queueIndex = 0;
 
@@ -23,14 +23,14 @@ export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
   function cellCenter(x, y) {
     return {
       x: clamp(x * cellSize + cellSize / 2, radius, world.width - radius),
-      y: clamp(y * cellSize + cellSize / 2, radius, world.height - radius)
+      y: clamp(y * cellSize + cellSize / 2, radius, world.height - radius),
     };
   }
 
   function pointCell(point) {
     return {
       x: clamp(Math.floor(point.x / cellSize), 0, columns - 1),
-      y: clamp(Math.floor(point.y / cellSize), 0, rows - 1)
+      y: clamp(Math.floor(point.y / cellSize), 0, rows - 1),
     };
   }
 
@@ -43,18 +43,24 @@ export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
     return [
       cellCenter(cell.x, cell.y),
       ...(sameCell(spawn, cell) ? [spawn] : []),
-      ...goalHoldSamples.filter((point) => sameCell(point, cell))
+      ...goalHoldSamples.filter((point) => sameCell(point, cell)),
     ];
   }
 
   function passable(point) {
-    if (point.x - radius < 0 ||
-        point.y - radius < 0 ||
-        point.x + radius > world.width ||
-        point.y + radius > world.height) {
+    if (
+      point.x - radius < 0 ||
+      point.y - radius < 0 ||
+      point.x + radius > world.width ||
+      point.y + radius > world.height
+    ) {
       return false;
     }
-    return !obstacles.some((obstacle) => circleRectContact({ x: point.x, y: point.y, r: radius }, obstacle).intersects);
+    return !obstacles.some(
+      (obstacle) =>
+        circleRectContact({ x: point.x, y: point.y, r: radius }, obstacle)
+          .intersects,
+    );
   }
 
   function reachesGoal(point) {
@@ -69,15 +75,17 @@ export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
     const cell = queue[queueIndex++];
     const samples = cellSamples(cell);
     if (!samples.some(passable)) continue;
-    if (samples.some((point) => passable(point) && reachesGoal(point))) return true;
+    if (samples.some((point) => passable(point) && reachesGoal(point)))
+      return true;
 
     [
       { x: cell.x + 1, y: cell.y },
       { x: cell.x - 1, y: cell.y },
       { x: cell.x, y: cell.y + 1 },
-      { x: cell.x, y: cell.y - 1 }
+      { x: cell.x, y: cell.y - 1 },
     ].forEach((next) => {
-      if (next.x < 0 || next.y < 0 || next.x >= columns || next.y >= rows) return;
+      if (next.x < 0 || next.y < 0 || next.x >= columns || next.y >= rows)
+        return;
       const key = cellKey(next.x, next.y);
       if (visited.has(key)) return;
       visited.add(key);

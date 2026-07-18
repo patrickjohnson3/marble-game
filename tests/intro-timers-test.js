@@ -4,7 +4,7 @@ import {
   resetIntroTimerState,
   resumeIntroTimerAction,
   shouldPauseGame,
-  trackIntroTimer
+  trackIntroTimer,
 } from "../core/intro-timers.js";
 
 function introState(overrides = {}) {
@@ -14,7 +14,7 @@ function introState(overrides = {}) {
     sequenceStage: "idle",
     timerStartedAt: 0,
     timerDelayMs: 0,
-    ...overrides
+    ...overrides,
   };
 }
 

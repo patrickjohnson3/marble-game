@@ -1,10 +1,19 @@
-export function createTrailRenderer({ trailEl, trailSegmentsEl, marble, game, settings, config, clamp }) {
+export function createTrailRenderer({
+  trailEl,
+  trailSegmentsEl,
+  marble,
+  game,
+  settings,
+  config,
+  clamp,
+}) {
   const points = [];
   const svgNamespace = "http://www.w3.org/2000/svg";
 
   function clear() {
     points.length = 0;
-    if (trailSegmentsEl.childNodes.length > 0) trailSegmentsEl.replaceChildren();
+    if (trailSegmentsEl.childNodes.length > 0)
+      trailSegmentsEl.replaceChildren();
   }
 
   function update(now) {
@@ -14,7 +23,9 @@ export function createTrailRenderer({ trailEl, trailSegmentsEl, marble, game, se
     }
 
     const last = points[points.length - 1];
-    const movedEnough = !last || Math.hypot(marble.x - last.x, marble.y - last.y) >= config.minDistance;
+    const movedEnough =
+      !last ||
+      Math.hypot(marble.x - last.x, marble.y - last.y) >= config.minDistance;
     const waitedEnough = !last || now - last.t >= config.minIntervalMs;
 
     if (movedEnough && waitedEnough) {
@@ -35,7 +46,8 @@ export function createTrailRenderer({ trailEl, trailSegmentsEl, marble, game, se
     for (let i = 1; i < points.length; i++) {
       const a = points[i - 1];
       const b = points[i];
-      const opacity = clamp(1 - (now - b.t) / config.durationMs, 0, 1) * config.maxOpacity;
+      const opacity =
+        clamp(1 - (now - b.t) / config.durationMs, 0, 1) * config.maxOpacity;
       const segment = document.createElementNS(svgNamespace, "line");
       segment.setAttribute("x1", a.x.toFixed(1));
       segment.setAttribute("y1", a.y.toFixed(1));

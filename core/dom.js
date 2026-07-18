@@ -10,6 +10,9 @@ function requiredElement(documentRef, id) {
 
 export function createDomElements(documentRef = document) {
   return Object.fromEntries(
-    Object.entries(domIds).map(([key, id]) => [key, requiredElement(documentRef, id)])
+    Object.entries(domIds).map(([key, id]) => [
+      key,
+      requiredElement(documentRef, id),
+    ]),
   );
 }

@@ -3,7 +3,7 @@ export const visualConfig = {
     durationMs: 2500,
     minDistance: 3,
     minIntervalMs: 50,
-    maxOpacity: 0.5
+    maxOpacity: 0.5,
   },
   marble: {
     impactSquashDivisor: 12,
@@ -13,7 +13,7 @@ export const visualConfig = {
     glintCenter: 29,
     glintLightOffset: 11,
     glintVelocityScale: 0.08,
-    glintVelocityLimit: 1.5
+    glintVelocityLimit: 1.5,
   },
   effects: {
     impactMin: 1.9,
@@ -48,11 +48,11 @@ export const visualConfig = {
     surfaceSizeRange: 7,
     surfaceLifeMinMs: 260,
     surfaceLifeRangeMs: 260,
-    surfaceOpacity: 0.38
+    surfaceOpacity: 0.38,
   },
   map: {
     roughPatchCanvasPadding: 18,
     obstacleCanvasPadding: 32,
-    goalFillEdgePercent: 70.8
-  }
+    goalFillEdgePercent: 70.8,
+  },
 };

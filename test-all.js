@@ -20,13 +20,13 @@ const tests = [
   "tests/rendering-test.js",
   "tests/effects-test.js",
   "tests/lifecycle-test.js",
-  "check-cache-version.js"
+  "check-cache-version.js",
 ];
 
 for (const test of tests) {
   const result = spawnSync(process.execPath, [test], {
     encoding: "utf8",
-    stdio: "inherit"
+    stdio: "inherit",
   });
 
   if (result.status !== 0) {

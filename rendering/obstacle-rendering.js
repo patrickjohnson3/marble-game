@@ -5,19 +5,19 @@ function rectPath(x, y, w, h) {
 }
 
 function coveredByAny(rects, left, top, right, bottom) {
-  return rects.some((rect) =>
-    left >= rect.x &&
-    right <= rect.x + rect.w &&
-    top >= rect.y &&
-    bottom <= rect.y + rect.h
+  return rects.some(
+    (rect) =>
+      left >= rect.x &&
+      right <= rect.x + rect.w &&
+      top >= rect.y &&
+      bottom <= rect.y + rect.h,
   );
 }
 
 function rectsTouchOrOverlap(a, b) {
-  return a.x <= b.x + b.w &&
-    b.x <= a.x + a.w &&
-    a.y <= b.y + b.h &&
-    b.y <= a.y + a.h;
+  return (
+    a.x <= b.x + b.w && b.x <= a.x + a.w && a.y <= b.y + b.h && b.y <= a.y + a.h
+  );
 }
 
 function connectedRectGroups(rects) {
@@ -39,8 +39,12 @@ function connectedRectGroups(rects) {
 }
 
 function mergedRectGeometry(rects) {
-  const xs = [...new Set(rects.flatMap((rect) => [rect.x, rect.x + rect.w]))].sort((a, b) => a - b);
-  const ys = [...new Set(rects.flatMap((rect) => [rect.y, rect.y + rect.h]))].sort((a, b) => a - b);
+  const xs = [
+    ...new Set(rects.flatMap((rect) => [rect.x, rect.x + rect.w])),
+  ].sort((a, b) => a - b);
+  const ys = [
+    ...new Set(rects.flatMap((rect) => [rect.y, rect.y + rect.h])),
+  ].sort((a, b) => a - b);
   const covered = [];
   const fillRects = [];
   const outlineSegments = [];
@@ -56,7 +60,7 @@ function mergedRectGeometry(rects) {
           x: xs[x],
           y: ys[y],
           w: xs[x + 1] - xs[x],
-          h: ys[y + 1] - ys[y]
+          h: ys[y + 1] - ys[y],
         };
         fillRects.push(rect);
         fill += rectPath(rect.x, rect.y, rect.w, rect.h);
@@ -134,13 +138,22 @@ function drawObstacleOutline(context, obstacles) {
   context.restore();
 }
 
-export function renderObstacleWalls(container, obstacles, { bounds, padding = 0 } = {}) {
+export function renderObstacleWalls(
+  container,
+  obstacles,
+  { bounds, padding = 0 } = {},
+) {
   if (obstacles.length === 0) {
     container.replaceChildren();
     return;
   }
 
-  const { canvas, context } = createCanvas("obstacleCanvas", obstacles, padding, bounds);
+  const { canvas, context } = createCanvas(
+    "obstacleCanvas",
+    obstacles,
+    padding,
+    bounds,
+  );
   const obstacleGroups = connectedRectGroups(obstacles);
 
   canvas.setAttribute("data-wall-groups", String(obstacleGroups.length));

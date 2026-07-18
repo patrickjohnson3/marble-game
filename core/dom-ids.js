@@ -29,7 +29,7 @@ export const domIds = {
   cameraModeSetting: "cameraModeSetting",
   hint: "hint",
   fpsCounter: "fpsCounter",
-  debug: "debug"
+  debug: "debug",
 };
 
 export const requiredDomIds = Object.values(domIds);

@@ -13,7 +13,7 @@ export function angle(a, b) {
 export function midpoint(a, b) {
   return {
     x: (a.x + b.x) / 2,
-    y: (a.y + b.y) / 2
+    y: (a.y + b.y) / 2,
   };
 }
 
@@ -28,6 +28,6 @@ export function circleRectContact(circle, rect) {
     intersects: distanceSq <= circle.r * circle.r,
     dx,
     dy,
-    distanceSq
+    distanceSq,
   };
 }

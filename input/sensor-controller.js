@@ -11,7 +11,7 @@ export function createSensorController({
   tilt,
   tuning,
   ui,
-  adjustScreen = screenAdjusted
+  adjustScreen = screenAdjusted,
 }) {
   function maybeAutoNeutral() {
     if (game.paused) return;
@@ -82,6 +82,6 @@ export function createSensorController({
     onMotion,
     onOrientation,
     resetCalibration,
-    setNeutralNow
+    setNeutralNow,
   };
 }

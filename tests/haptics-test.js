@@ -11,35 +11,38 @@ Object.defineProperty(globalThis, "navigator", {
   value: {
     vibrate(pattern) {
       vibrations.push(pattern);
-    }
-  }
+    },
+  },
 });
 Object.defineProperty(globalThis, "performance", {
   configurable: true,
   value: {
     now() {
       return currentTime;
-    }
-  }
+    },
+  },
 });
 
 try {
-  const haptics = createHapticsController({
-    enabled: true,
-    impact: { cooldownMs: 90, lastPulse: 0, minImpact: 1 },
-    surface: { cooldownMs: 130, lastPulse: 0, minSpeed: 1 },
-    goal: { holdCooldownMs: 900, lastHoldPulse: 0 }
-  }, {
-    impactScale: 3,
-    impactMinDurationMs: 8,
-    impactMaxDurationMs: 35,
-    surfaceScale: 1.4,
-    surfaceMinDurationMs: 5,
-    surfaceMaxDurationMs: 16,
-    goalEnterDurationMs: 12,
-    goalHoldDurationMs: 6,
-    goalCompletePattern: [18, 40, 28]
-  });
+  const haptics = createHapticsController(
+    {
+      enabled: true,
+      impact: { cooldownMs: 90, lastPulse: 0, minImpact: 1 },
+      surface: { cooldownMs: 130, lastPulse: 0, minSpeed: 1 },
+      goal: { holdCooldownMs: 900, lastHoldPulse: 0 },
+    },
+    {
+      impactScale: 3,
+      impactMinDurationMs: 8,
+      impactMaxDurationMs: 35,
+      surfaceScale: 1.4,
+      surfaceMinDurationMs: 5,
+      surfaceMaxDurationMs: 16,
+      goalEnterDurationMs: 12,
+      goalHoldDurationMs: 6,
+      goalCompletePattern: [18, 40, 28],
+    },
+  );
 
   haptics.pulseGoal("enter");
   haptics.pulseGoal("hold");
@@ -52,11 +55,11 @@ try {
 } finally {
   Object.defineProperty(globalThis, "navigator", {
     configurable: true,
-    value: originalNavigator
+    value: originalNavigator,
   });
   Object.defineProperty(globalThis, "performance", {
     configurable: true,
-    value: originalPerformance
+    value: originalPerformance,
   });
 }
 

@@ -1,8 +1,16 @@
-export function createUi({ hint, fpsCounter, debug, settings, settingsOverlay, debugLines, state }) {
+export function createUi({
+  hint,
+  fpsCounter,
+  debug,
+  settings,
+  settingsOverlay,
+  debugLines,
+  state,
+}) {
   const fps = {
     lastTime: null,
     sampleElapsed: 0,
-    sampleFrames: 0
+    sampleFrames: 0,
   };
 
   function setHint(message) {
@@ -53,7 +61,9 @@ export function createUi({ hint, fpsCounter, debug, settings, settingsOverlay, d
 
     if (fps.sampleElapsed < 500) return;
 
-    const framesPerSecond = Math.round(fps.sampleFrames * 1000 / fps.sampleElapsed);
+    const framesPerSecond = Math.round(
+      (fps.sampleFrames * 1000) / fps.sampleElapsed,
+    );
     fpsCounter.textContent = "fps " + framesPerSecond;
     fps.sampleElapsed = 0;
     fps.sampleFrames = 0;
@@ -78,6 +88,6 @@ export function createUi({ hint, fpsCounter, debug, settings, settingsOverlay, d
     setStatsEnabled,
     setHint,
     updateDebugPanel,
-    updateFps
+    updateFps,
   };
 }

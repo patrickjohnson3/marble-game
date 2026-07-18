@@ -10,25 +10,21 @@ export const settingsConfig = {
   fullscreenEnabled: appConfig.fullscreenOnStart,
   fpsEnabled: false,
   statsEnabled: false,
-  cameraMode: "follow"
+  cameraMode: "follow",
 };
 
-export const cameraModes = [
-  "follow",
-  "lockedCenter",
-  "predictiveLookAhead"
-];
+export const cameraModes = ["follow", "lockedCenter", "predictiveLookAhead"];
 
 export const settingsControls = {
   maxSpeed: {
     min: 8,
     max: 24,
-    step: 1
+    step: 1,
   },
   acceleration: {
     min: 0.06,
     max: 0.18,
-    step: 0.005
+    step: 0.005,
   },
-  cameraModes
+  cameraModes,
 };

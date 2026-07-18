@@ -6,6 +6,7 @@
     "check-cache": "node check-cache-version.js",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "install-hooks": "git config core.hooksPath .githooks"
   },
   "devDependencies": {

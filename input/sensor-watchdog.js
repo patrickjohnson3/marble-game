@@ -8,13 +8,13 @@ export function createSensorWatchdog({ delayMs, game, sensor, onFallback }) {
       if (sensor.using !== "none") return;
 
       onFallback();
-    }
+    },
   });
 
   return {
     pause: timer.pause,
     reset: timer.reset,
     resume: timer.resume,
-    schedule: timer.schedule
+    schedule: timer.schedule,
   };
 }

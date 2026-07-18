@@ -1,6 +1,6 @@
 export function createTimeoutRegistry({
   setTimeoutFn = setTimeout,
-  clearTimeoutFn = clearTimeout
+  clearTimeoutFn = clearTimeout,
 } = {}) {
   const timers = new Set();
 
@@ -20,7 +20,7 @@ export function createTimeoutRegistry({
 
   return {
     clearAll,
-    schedule
+    schedule,
   };
 }
 
@@ -29,7 +29,7 @@ export function createPausableTimeout({
   onRun,
   now = () => performance.now(),
   setTimeoutFn = setTimeout,
-  clearTimeoutFn = clearTimeout
+  clearTimeoutFn = clearTimeout,
 }) {
   let timer = 0;
   let startedAt = 0;
@@ -75,6 +75,6 @@ export function createPausableTimeout({
     pause,
     reset,
     resume,
-    schedule
+    schedule,
   };
 }

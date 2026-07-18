@@ -15,11 +15,13 @@ export function createHapticsController(state, tuning) {
     if (now - state.impact.lastPulse < state.impact.cooldownMs) return;
 
     state.impact.lastPulse = now;
-    navigator.vibrate(clamp(
-      Math.round(impact * tuning.impactScale),
-      tuning.impactMinDurationMs,
-      tuning.impactMaxDurationMs
-    ));
+    navigator.vibrate(
+      clamp(
+        Math.round(impact * tuning.impactScale),
+        tuning.impactMinDurationMs,
+        tuning.impactMaxDurationMs,
+      ),
+    );
   }
 
   function pulseSurface(speed) {
@@ -30,11 +32,13 @@ export function createHapticsController(state, tuning) {
     if (now - state.surface.lastPulse < state.surface.cooldownMs) return;
 
     state.surface.lastPulse = now;
-    navigator.vibrate(clamp(
-      Math.round(speed * tuning.surfaceScale),
-      tuning.surfaceMinDurationMs,
-      tuning.surfaceMaxDurationMs
-    ));
+    navigator.vibrate(
+      clamp(
+        Math.round(speed * tuning.surfaceScale),
+        tuning.surfaceMinDurationMs,
+        tuning.surfaceMaxDurationMs,
+      ),
+    );
   }
 
   function pulseGoal(kind) {
@@ -56,6 +60,6 @@ export function createHapticsController(state, tuning) {
   return {
     pulseImpact,
     pulseGoal,
-    pulseSurface
+    pulseSurface,
   };
 }

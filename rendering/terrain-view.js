@@ -9,7 +9,7 @@ export function createTerrainView({
   obstacleBounds,
   renderObstacleWalls,
   renderRoughPatches: drawRoughPatches,
-  goalFillEdgePercent = 70.8
+  goalFillEdgePercent = 70.8,
 }) {
   let currentGoal = goal;
   let currentObstacles = obstacles;
@@ -22,14 +22,18 @@ export function createTerrainView({
   }
 
   function renderRoughPatches() {
-    drawRoughPatches(roughPatchesEl, currentRoughPatches, currentRoughPatchBounds);
+    drawRoughPatches(
+      roughPatchesEl,
+      currentRoughPatches,
+      currentRoughPatchBounds,
+    );
   }
 
   function renderGoal() {
-    goalEl.style.left = (currentGoal.x - currentGoal.r) + "px";
-    goalEl.style.top = (currentGoal.y - currentGoal.r) + "px";
-    goalEl.style.width = (currentGoal.r * 2) + "px";
-    goalEl.style.height = (currentGoal.r * 2) + "px";
+    goalEl.style.left = currentGoal.x - currentGoal.r + "px";
+    goalEl.style.top = currentGoal.y - currentGoal.r + "px";
+    goalEl.style.width = currentGoal.r * 2 + "px";
+    goalEl.style.height = currentGoal.r * 2 + "px";
     updateGoalProgress(0);
   }
 
@@ -39,16 +43,39 @@ export function createTerrainView({
     renderObstacles();
   }
 
-  function terrainMatches({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds }) {
-    return currentGoal === goal &&
+  function terrainMatches({
+    goal,
+    obstacles,
+    obstacleBounds,
+    roughPatches,
+    roughPatchBounds,
+  }) {
+    return (
+      currentGoal === goal &&
       currentObstacles === obstacles &&
       currentObstacleBounds === obstacleBounds &&
       currentRoughPatches === roughPatches &&
-      currentRoughPatchBounds === roughPatchBounds;
+      currentRoughPatchBounds === roughPatchBounds
+    );
   }
 
-  function setTerrain({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds }) {
-    if (terrainMatches({ goal, obstacles, obstacleBounds, roughPatches, roughPatchBounds })) return;
+  function setTerrain({
+    goal,
+    obstacles,
+    obstacleBounds,
+    roughPatches,
+    roughPatchBounds,
+  }) {
+    if (
+      terrainMatches({
+        goal,
+        obstacles,
+        obstacleBounds,
+        roughPatches,
+        roughPatchBounds,
+      })
+    )
+      return;
 
     currentGoal = goal;
     currentObstacles = obstacles;
@@ -61,7 +88,10 @@ export function createTerrainView({
   function updateGoalProgress(progress) {
     const clampedProgress = Math.max(0, Math.min(progress, 1));
     goalEl.classList.toggle("active", clampedProgress > 0);
-    goalEl.style.setProperty("--goal-fill-radius", (clampedProgress * goalFillEdgePercent).toFixed(1) + "%");
+    goalEl.style.setProperty(
+      "--goal-fill-radius",
+      (clampedProgress * goalFillEdgePercent).toFixed(1) + "%",
+    );
   }
 
   return {
@@ -70,6 +100,6 @@ export function createTerrainView({
     renderTerrain,
     renderRoughPatches,
     setTerrain,
-    updateGoalProgress
+    updateGoalProgress,
   };
 }

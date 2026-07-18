@@ -1,6 +1,6 @@
 export const MAP_ELEMENT_TYPES = Object.freeze({
   obstacle: "obstacle",
-  roughPatch: "roughPatch"
+  roughPatch: "roughPatch",
 });
 
 export function isObstacleElement(element) {

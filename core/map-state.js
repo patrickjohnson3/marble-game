@@ -1,14 +1,15 @@
 import {
   mapObstacleElements,
   mapRoughPatchElements,
-  normalizeJoinedObstacleRects
+  normalizeJoinedObstacleRects,
 } from "./map.js";
 import { rectBounds } from "./rect-bounds.js";
 import { createSpatialIndex } from "./spatial-index.js";
 
-export function createResolvedMapState(activeMap, {
-  normalizeObstacles = normalizeJoinedObstacleRects
-} = {}) {
+export function createResolvedMapState(
+  activeMap,
+  { normalizeObstacles = normalizeJoinedObstacleRects } = {},
+) {
   const elements = activeMap.elements;
   const obstacles = normalizeObstacles(mapObstacleElements(elements));
   const roughPatches = mapRoughPatchElements(elements);
@@ -23,6 +24,6 @@ export function createResolvedMapState(activeMap, {
     roughPatchIndex: createSpatialIndex(roughPatches),
     goal: activeMap.goal,
     spawn: activeMap.spawn,
-    world: activeMap.world
+    world: activeMap.world,
   };
 }

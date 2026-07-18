@@ -8,7 +8,7 @@ function createTarget() {
     listeners,
     addEventListener(type, listener, options) {
       listeners.push({ type, listener, options });
-    }
+    },
   };
 }
 
@@ -27,38 +27,35 @@ const inputManager = createInputManager({
   onPointerDown() {},
   onPointerMove() {},
   onPointerEnd() {},
-  onStartClick() {}
+  onStartClick() {},
 });
 
 inputManager.enableMotion();
 inputManager.enableMotion();
-assert.deepEqual(target.listeners.map((listener) => listener.type), [
-  "deviceorientation",
-  "devicemotion"
-]);
+assert.deepEqual(
+  target.listeners.map((listener) => listener.type),
+  ["deviceorientation", "devicemotion"],
+);
 
 inputManager.enableKeyboard();
 inputManager.enableKeyboard();
-assert.deepEqual(target.listeners.map((listener) => listener.type), [
-  "deviceorientation",
-  "devicemotion",
-  "keydown",
-  "keyup"
-]);
+assert.deepEqual(
+  target.listeners.map((listener) => listener.type),
+  ["deviceorientation", "devicemotion", "keydown", "keyup"],
+);
 
 inputManager.enableGestures();
 inputManager.enableGestures();
-assert.deepEqual(gameEl.listeners.map((listener) => listener.type), [
-  "pointerdown",
-  "pointermove",
-  "pointerup",
-  "pointercancel"
-]);
+assert.deepEqual(
+  gameEl.listeners.map((listener) => listener.type),
+  ["pointerdown", "pointermove", "pointerup", "pointercancel"],
+);
 
 inputManager.bindStartButton();
 inputManager.bindStartButton();
-assert.deepEqual(startBtn.listeners.map((listener) => listener.type), [
-  "click"
-]);
+assert.deepEqual(
+  startBtn.listeners.map((listener) => listener.type),
+  ["click"],
+);
 
 console.log("Input manager tests passed.");

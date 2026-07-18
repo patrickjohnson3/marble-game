@@ -1,197 +1,225 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title></title>
-<style>
-  html,body{margin:0;height:100%;overflow:hidden;background:#101114;color:white}
-  #game{position:fixed;inset:0;overflow:hidden;background:#101114}
-  #settingsOverlay,#messageOverlay{display:none}
-</style>
-<script>
-  const assetVersion = "20260718.105722";
-  const runtimeModuleScripts = [
-    "boot.js",
-    "core/app-config.js",
-    "core/app-setup.js",
-    "core/camera.js",
-    "core/config.js",
-    "core/copy.js",
-    "core/debug.js",
-    "core/dom-ids.js",
-    "core/dom.js",
-    "core/frame-loop.js",
-    "core/game-controller.js",
-    "core/game-lifecycle.js",
-    "core/game-loop.js",
-    "core/geometry.js",
-    "core/haptic-config.js",
-    "core/haptics.js",
-    "core/intro-sequence.js",
-    "core/intro-timers.js",
-    "core/map-bounds.js",
-    "core/map-config.js",
-    "core/map-elements.js",
-    "core/map-obstacles.js",
-    "core/map-progression.js",
-    "core/map-reachability.js",
-    "core/map-runtime.js",
-    "core/map-state.js",
-    "core/map-validation-messages.js",
-    "core/map-validation.js",
-    "core/map-variants.js",
-    "core/map.js",
-    "core/physics-collisions.js",
-    "core/physics-config.js",
-    "core/physics.js",
-    "core/procedural-map.js",
-    "core/rect-bounds.js",
-    "core/spatial-index.js",
-    "core/state.js",
-    "core/timer-utils.js",
-    "core/timing-config.js",
-    "core/visual-config.js",
-    "input/input-manager.js",
-    "input/keyboard-controller.js",
-    "input/sensor-controller.js",
-    "input/sensor-watchdog.js",
-    "platform/platform.js",
-    "platform/viewport.js",
-    "rendering/effects.js",
-    "rendering/map-renderer.js",
-    "rendering/marble-view.js",
-    "rendering/obstacle-rendering.js",
-    "rendering/rendering.js",
-    "rendering/rough-patch-rendering.js",
-    "rendering/terrain-view.js",
-    "rendering/trail.js",
-    "rendering/wall-rendering.js",
-    "rendering/ui.js",
-    "settings/settings-applier.js",
-    "settings/settings-config.js",
-    "settings/settings-panel.js",
-    "settings/settings-runtime.js",
-    "settings/settings-store.js"
-  ];
-  const importMapScript = document.createElement("script");
-  importMapScript.type = "importmap";
-  importMapScript.textContent = JSON.stringify({
-    imports: Object.fromEntries(runtimeModuleScripts.map((script) => [
-      "./" + script,
-      "./" + script + "?v=" + assetVersion
-    ]))
-  });
-  document.head.appendChild(importMapScript);
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"
+    />
+    <title></title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #101114;
+        color: white;
+      }
+      #game {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        background: #101114;
+      }
+      #settingsOverlay,
+      #messageOverlay {
+        display: none;
+      }
+    </style>
+    <script>
+      const assetVersion = "20260718.105722";
+      const runtimeModuleScripts = [
+        "boot.js",
+        "core/app-config.js",
+        "core/app-setup.js",
+        "core/camera.js",
+        "core/config.js",
+        "core/copy.js",
+        "core/debug.js",
+        "core/dom-ids.js",
+        "core/dom.js",
+        "core/frame-loop.js",
+        "core/game-controller.js",
+        "core/game-lifecycle.js",
+        "core/game-loop.js",
+        "core/geometry.js",
+        "core/haptic-config.js",
+        "core/haptics.js",
+        "core/intro-sequence.js",
+        "core/intro-timers.js",
+        "core/map-bounds.js",
+        "core/map-config.js",
+        "core/map-elements.js",
+        "core/map-obstacles.js",
+        "core/map-progression.js",
+        "core/map-reachability.js",
+        "core/map-runtime.js",
+        "core/map-state.js",
+        "core/map-validation-messages.js",
+        "core/map-validation.js",
+        "core/map-variants.js",
+        "core/map.js",
+        "core/physics-collisions.js",
+        "core/physics-config.js",
+        "core/physics.js",
+        "core/procedural-map.js",
+        "core/rect-bounds.js",
+        "core/spatial-index.js",
+        "core/state.js",
+        "core/timer-utils.js",
+        "core/timing-config.js",
+        "core/visual-config.js",
+        "input/input-manager.js",
+        "input/keyboard-controller.js",
+        "input/sensor-controller.js",
+        "input/sensor-watchdog.js",
+        "platform/platform.js",
+        "platform/viewport.js",
+        "rendering/effects.js",
+        "rendering/map-renderer.js",
+        "rendering/marble-view.js",
+        "rendering/obstacle-rendering.js",
+        "rendering/rendering.js",
+        "rendering/rough-patch-rendering.js",
+        "rendering/terrain-view.js",
+        "rendering/trail.js",
+        "rendering/wall-rendering.js",
+        "rendering/ui.js",
+        "settings/settings-applier.js",
+        "settings/settings-config.js",
+        "settings/settings-panel.js",
+        "settings/settings-runtime.js",
+        "settings/settings-store.js",
+      ];
+      const importMapScript = document.createElement("script");
+      importMapScript.type = "importmap";
+      importMapScript.textContent = JSON.stringify({
+        imports: Object.fromEntries(
+          runtimeModuleScripts.map((script) => [
+            "./" + script,
+            "./" + script + "?v=" + assetVersion,
+          ]),
+        ),
+      });
+      document.head.appendChild(importMapScript);
 
-  window.__marbleAppBooted = false;
-  window.__showMarbleBootError = function(error) {
-    if (window.__marbleAppBooted) return;
-    const hintEl = document.getElementById("hint");
-    if (hintEl) hintEl.textContent = "game failed to load. refresh and try again.";
-    if (error) console.error(error);
-  };
-  window.addEventListener("error", function(event) {
-    window.__showMarbleBootError(event.error || event.message);
-  });
-  window.addEventListener("unhandledrejection", function(event) {
-    window.__showMarbleBootError(event.reason);
-  });
+      window.__marbleAppBooted = false;
+      window.__showMarbleBootError = function (error) {
+        if (window.__marbleAppBooted) return;
+        const hintEl = document.getElementById("hint");
+        if (hintEl)
+          hintEl.textContent = "game failed to load. refresh and try again.";
+        if (error) console.error(error);
+      };
+      window.addEventListener("error", function (event) {
+        window.__showMarbleBootError(event.error || event.message);
+      });
+      window.addEventListener("unhandledrejection", function (event) {
+        window.__showMarbleBootError(event.reason);
+      });
 
-  const appStylesheet = document.createElement("link");
-  appStylesheet.rel = "stylesheet";
-  appStylesheet.href = "style.css?v=" + assetVersion;
-  document.head.appendChild(appStylesheet);
-</script>
-</head>
-<body>
-<div id="game">
-  <div id="world">
-    <div id="introWalls" class="walls"></div>
-    <div id="mapWalls" class="walls"></div>
-    <div id="roughPatches"></div>
-    <div id="obstacles"></div>
-    <div id="goal" aria-hidden="true"></div>
-    <svg id="trail" aria-hidden="true"><g id="trailSegments"></g></svg>
-    <div id="effects" aria-hidden="true"></div>
-    <div id="marble"></div>
-  </div>
-</div>
-
-<div id="messageOverlay" aria-live="polite"></div>
-
-<div id="panel">
-  <div id="hint"></div>
-  <div id="fpsCounter" hidden></div>
-  <div id="debug" hidden></div>
-</div>
-
-<button id="settingsToggle" aria-label="" title="">
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M19.4 13.5c.1-.5.1-1 .1-1.5s0-1-.1-1.5l2-1.5-2-3.5-2.4 1a8 8 0 0 0-2.6-1.5L14 2h-4l-.4 3a8 8 0 0 0-2.6 1.5l-2.4-1-2 3.5 2 1.5a9.7 9.7 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 2.6 1.5l.4 3h4l.4-3a8 8 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5Z"/>
-    <circle cx="12" cy="12" r="3.2"/>
-  </svg>
-</button>
-
-<div id="controls">
-  <button id="start"></button>
-</div>
-
-<div id="settingsOverlay" aria-hidden="true">
-  <div id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <div id="settingsHeader">
-      <h2 id="settingsTitle"></h2>
-      <button id="closeSettings" aria-label=""></button>
+      const appStylesheet = document.createElement("link");
+      appStylesheet.rel = "stylesheet";
+      appStylesheet.href = "style.css?v=" + assetVersion;
+      document.head.appendChild(appStylesheet);
+    </script>
+  </head>
+  <body>
+    <div id="game">
+      <div id="world">
+        <div id="introWalls" class="walls"></div>
+        <div id="mapWalls" class="walls"></div>
+        <div id="roughPatches"></div>
+        <div id="obstacles"></div>
+        <div id="goal" aria-hidden="true"></div>
+        <svg id="trail" aria-hidden="true"><g id="trailSegments"></g></svg>
+        <div id="effects" aria-hidden="true"></div>
+        <div id="marble"></div>
+      </div>
     </div>
-    <button id="neutral" class="secondary"></button>
-    <label class="settingRow" for="speedSetting">
-      <span></span>
-      <input id="speedSetting" type="range">
-    </label>
-    <label class="settingRow" for="sensitivitySetting">
-      <span></span>
-      <input id="sensitivitySetting" type="range">
-    </label>
-    <label class="settingRow checkboxRow" for="hapticsSetting">
-      <span></span>
-      <input id="hapticsSetting" type="checkbox">
-    </label>
-    <label class="settingRow checkboxRow" for="trailSetting">
-      <span></span>
-      <input id="trailSetting" type="checkbox">
-    </label>
-    <label class="settingRow checkboxRow" for="fullscreenSetting">
-      <span></span>
-      <input id="fullscreenSetting" type="checkbox">
-    </label>
-    <label class="settingRow checkboxRow" for="fpsSetting">
-      <span></span>
-      <input id="fpsSetting" type="checkbox">
-    </label>
-    <label class="settingRow checkboxRow" for="statsSetting">
-      <span></span>
-      <input id="statsSetting" type="checkbox">
-    </label>
-    <label class="settingRow" for="cameraModeSetting">
-      <span></span>
-      <select id="cameraModeSetting">
-        <option value="follow"></option>
-        <option value="lockedCenter"></option>
-        <option value="predictiveLookAhead"></option>
-      </select>
-    </label>
-    <button id="resumeGame" class="primaryAction"></button>
-  </div>
-</div>
 
-<script>
-  const appScript = document.createElement("script");
-  appScript.type = "module";
-  appScript.src = "boot.js?v=" + assetVersion;
-  appScript.addEventListener("error", function(event) {
-    window.__showMarbleBootError(event);
-  });
-  document.body.appendChild(appScript);
-</script>
-</body>
+    <div id="messageOverlay" aria-live="polite"></div>
+
+    <div id="panel">
+      <div id="hint"></div>
+      <div id="fpsCounter" hidden></div>
+      <div id="debug" hidden></div>
+    </div>
+
+    <button id="settingsToggle" aria-label="" title="">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M19.4 13.5c.1-.5.1-1 .1-1.5s0-1-.1-1.5l2-1.5-2-3.5-2.4 1a8 8 0 0 0-2.6-1.5L14 2h-4l-.4 3a8 8 0 0 0-2.6 1.5l-2.4-1-2 3.5 2 1.5a9.7 9.7 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 2.6 1.5l.4 3h4l.4-3a8 8 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5Z"
+        />
+        <circle cx="12" cy="12" r="3.2" />
+      </svg>
+    </button>
+
+    <div id="controls">
+      <button id="start"></button>
+    </div>
+
+    <div id="settingsOverlay" aria-hidden="true">
+      <div
+        id="settingsModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settingsTitle"
+      >
+        <div id="settingsHeader">
+          <h2 id="settingsTitle"></h2>
+          <button id="closeSettings" aria-label=""></button>
+        </div>
+        <button id="neutral" class="secondary"></button>
+        <label class="settingRow" for="speedSetting">
+          <span></span>
+          <input id="speedSetting" type="range" />
+        </label>
+        <label class="settingRow" for="sensitivitySetting">
+          <span></span>
+          <input id="sensitivitySetting" type="range" />
+        </label>
+        <label class="settingRow checkboxRow" for="hapticsSetting">
+          <span></span>
+          <input id="hapticsSetting" type="checkbox" />
+        </label>
+        <label class="settingRow checkboxRow" for="trailSetting">
+          <span></span>
+          <input id="trailSetting" type="checkbox" />
+        </label>
+        <label class="settingRow checkboxRow" for="fullscreenSetting">
+          <span></span>
+          <input id="fullscreenSetting" type="checkbox" />
+        </label>
+        <label class="settingRow checkboxRow" for="fpsSetting">
+          <span></span>
+          <input id="fpsSetting" type="checkbox" />
+        </label>
+        <label class="settingRow checkboxRow" for="statsSetting">
+          <span></span>
+          <input id="statsSetting" type="checkbox" />
+        </label>
+        <label class="settingRow" for="cameraModeSetting">
+          <span></span>
+          <select id="cameraModeSetting">
+            <option value="follow"></option>
+            <option value="lockedCenter"></option>
+            <option value="predictiveLookAhead"></option>
+          </select>
+        </label>
+        <button id="resumeGame" class="primaryAction"></button>
+      </div>
+    </div>
+
+    <script>
+      const appScript = document.createElement("script");
+      appScript.type = "module";
+      appScript.src = "boot.js?v=" + assetVersion;
+      appScript.addEventListener("error", function (event) {
+        window.__showMarbleBootError(event);
+      });
+      document.body.appendChild(appScript);
+    </script>
+  </body>
 </html>

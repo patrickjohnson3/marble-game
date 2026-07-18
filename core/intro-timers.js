@@ -11,7 +11,8 @@ export function trackIntroTimer(intro, stage, delay, now) {
 }
 
 export function pauseIntroTimerState(intro, now) {
-  if (!intro.started || intro.released || intro.sequenceStage === "idle") return false;
+  if (!intro.started || intro.released || intro.sequenceStage === "idle")
+    return false;
 
   const elapsed = now - intro.timerStartedAt;
   intro.timerDelayMs = Math.max(0, intro.timerDelayMs - elapsed);

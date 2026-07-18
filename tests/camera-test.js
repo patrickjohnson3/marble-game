@@ -12,7 +12,7 @@ function createController(mode) {
     predictiveLookAheadFrames: 10,
     gestureCooldown: 0,
     minScale: 0.35,
-    maxScale: 3
+    maxScale: 3,
   };
   const marble = { x: 100, y: 100, vx: 5, vy: -2 };
   const cameraEl = { style: {} };
@@ -29,8 +29,8 @@ function createController(mode) {
     midpoint,
     viewport: {
       width: () => 300,
-      height: () => 300
-    }
+      height: () => 300,
+    },
   });
 
   return { camera, controller };

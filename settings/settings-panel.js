@@ -11,7 +11,7 @@ export function bindSettingsPanel({
   onSetNeutral,
   onFpsChanged,
   onStatsChanged,
-  requestRender
+  requestRender,
 }) {
   const {
     neutralBtn,
@@ -26,7 +26,7 @@ export function bindSettingsPanel({
     fullscreenSetting,
     fpsSetting,
     statsSetting,
-    cameraModeSetting
+    cameraModeSetting,
   } = els;
 
   applyRangeConfig(speedSetting, controls.maxSpeed);

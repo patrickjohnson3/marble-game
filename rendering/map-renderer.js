@@ -13,7 +13,7 @@ export function createMapRenderer({
   introPenWalls,
   mapEdgeWalls,
   setReleasedMapBounds,
-  updateIntroMapBounds
+  updateIntroMapBounds,
 }) {
   function updateIntroBounds() {
     updateIntroMapBounds({
@@ -21,7 +21,7 @@ export function createMapRenderer({
       intro,
       marble,
       viewport: { width: viewport.width(), height: viewport.height() },
-      world
+      world,
     });
     renderWalls(introWallsEl, introPenWalls(bounds, intro));
   }
@@ -57,6 +57,6 @@ export function createMapRenderer({
     resetIntroPen,
     setReleasedBounds,
     setup,
-    updateIntroBounds
+    updateIntroBounds,
   };
 }

@@ -60,16 +60,13 @@ export const runtimeScripts = [
   "settings/settings-config.js",
   "settings/settings-panel.js",
   "settings/settings-runtime.js",
-  "settings/settings-store.js"
+  "settings/settings-store.js",
 ];
 
-export const runtimeModuleScripts = runtimeScripts.filter((script) => script !== "app.js");
+export const runtimeModuleScripts = runtimeScripts.filter(
+  (script) => script !== "app.js",
+);
 
-export const runtimeStyles = [
-  "style.css"
-];
+export const runtimeStyles = ["style.css"];
 
-export const runtimeFiles = [
-  ...runtimeScripts,
-  ...runtimeStyles
-];
+export const runtimeFiles = [...runtimeScripts, ...runtimeStyles];
