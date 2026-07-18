@@ -4,6 +4,7 @@ export const runtimeScripts = [
   "core/app-map-controller.js",
   "core/app-setup.js",
   "core/camera.js",
+  "core/camera-gestures.js",
   "core/copy.js",
   "core/debug.js",
   "core/dom-ids.js",

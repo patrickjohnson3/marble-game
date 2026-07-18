@@ -15,7 +15,7 @@ import { createAppMapController } from "./core/app-map-controller.js";
 import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { createGoalController } from "./core/goal-controller.js";
-import { clamp, distance, angle, midpoint } from "./core/geometry.js";
+import { clamp, distance, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
 import { createMapProgression } from "./core/map-progression.js";
 import { createMapRuntime } from "./core/map-runtime.js";
@@ -152,7 +152,6 @@ export function createApp({
     tuning,
     clamp,
     distance,
-    angle,
     midpoint,
     viewport,
   });
