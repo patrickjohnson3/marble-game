@@ -369,6 +369,46 @@ function testVelocityDragIsFrameRateIndependent() {
   assertNear(split.marble.vx, once.marble.vx);
 }
 
+function testRoughPatchDragIsFrameRateIndependent() {
+  function context() {
+    return {
+      marble: { x: 50, y: 50, vx: 10, vy: 0, r: 10 },
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [{ x: 0, y: 0, w: 200, h: 200 }],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 0.9,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    };
+  }
+  const once = context();
+  const split = context();
+
+  updatePhysics(once, 1, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+  updatePhysics(split, 0.5, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+  updatePhysics(split, 0.5, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+
+  assertNear(split.marble.vx, once.marble.vx);
+}
+
 function testMaxSpeedEasesDown() {
   const marble = { x: 50, y: 50, vx: 20, vy: 0, r: 10 };
 
@@ -555,6 +595,7 @@ testLowSpeedDriftDoesNotSettleAboveTiltThreshold();
 testTiltCurveSoftensSmallSensorInput();
 testTiltSmoothingIsFrameRateIndependent();
 testVelocityDragIsFrameRateIndependent();
+testRoughPatchDragIsFrameRateIndependent();
 testMaxSpeedEasesDown();
 testWallCollisionAppliesTangentialFriction();
 testWorldBoundCollisionBeforeAdjacentObstacle();
