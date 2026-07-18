@@ -8,6 +8,14 @@ import {
 } from "../core/physics.js";
 import { createSpatialIndex } from "../core/spatial-index.js";
 
+function assertNear(actual, expected, tolerance = 1e-9) {
+  assert.equal(
+    Math.abs(actual - expected) <= tolerance,
+    true,
+    `expected ${actual} to be within ${tolerance} of ${expected}`,
+  );
+}
+
 function testCircleRectContact() {
   const circle = { x: 15, y: 15, r: 10 };
   const rect = { x: 25, y: 10, w: 20, h: 20 };
@@ -198,6 +206,74 @@ function testTiltCurveSoftensSmallSensorInput() {
   assert.equal(context.tilt.smoothY, 10);
 }
 
+function testTiltSmoothingIsFrameRateIndependent() {
+  const once = {
+    tilt: {
+      rawX: 10,
+      rawY: 0,
+      neutralX: 0,
+      neutralY: 0,
+      smoothX: 0,
+      smoothY: 0,
+    },
+    keyboard: { x: 0, y: 0 },
+    physics: {
+      deadZone: 0,
+      maxTilt: 10,
+      keyboardTilt: 18,
+      smoothing: 0.2,
+      tiltCurve: 1,
+    },
+  };
+  const split = JSON.parse(JSON.stringify(once));
+
+  updatePhysicsInput(once, 1);
+  updatePhysicsInput(split, 0.5);
+  updatePhysicsInput(split, 0.5);
+
+  assertNear(split.tilt.smoothX, once.tilt.smoothX);
+}
+
+function testVelocityDragIsFrameRateIndependent() {
+  function context() {
+    return {
+      marble: { x: 50, y: 50, vx: 10, vy: 0, r: 10 },
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 0.94,
+        roughPatchFriction: 1,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    };
+  }
+  const once = context();
+  const split = context();
+
+  updatePhysics(once, 1, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+  updatePhysics(split, 0.5, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+  updatePhysics(split, 0.5, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+
+  assertNear(split.marble.vx, once.marble.vx);
+}
+
 function testMaxSpeedEasesDown() {
   const marble = { x: 50, y: 50, vx: 20, vy: 0, r: 10 };
 
@@ -310,6 +386,8 @@ testRoughPatchAddsDrag();
 testRoughPatchDragUsesSpatialIndex();
 testLowSpeedDriftSettles();
 testTiltCurveSoftensSmallSensorInput();
+testTiltSmoothingIsFrameRateIndependent();
+testVelocityDragIsFrameRateIndependent();
 testMaxSpeedEasesDown();
 testWallCollisionAppliesTangentialFriction();
 testPhysicsSubstepsAreCapped();
