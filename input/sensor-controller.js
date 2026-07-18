@@ -74,6 +74,7 @@ export function createSensorController({
     tilt.smoothX = 0;
     tilt.smoothY = 0;
     ui.setHint(copy.hints.neutralReset);
+    introSequence.schedule();
     scheduleFrame();
   }
 
