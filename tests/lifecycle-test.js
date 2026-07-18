@@ -180,7 +180,91 @@ async function testStartRequestsFullscreenFromClickPath() {
   assert.equal(state.game.phase, "calibrating");
 }
 
+async function testStartContinuesWhenMotionPermissionStalls() {
+  const state = createGameState({
+    world: resolvedMapConfig.world,
+    resolvedMapConfig,
+    timing,
+    hapticTuning,
+    physicsConfig
+  });
+  let motionEnabled = false;
+  let timeoutCallback = null;
+
+  const lifecycle = createLifecycleController({
+    cameraController: {
+      camera: state.camera,
+      centerOnMarble() {},
+      resetGesture() {}
+    },
+    calibration: state.calibration,
+    controlsEl: { hidden: false },
+    effectsRenderer: { clear() {} },
+    frameLoop: { requestRender() {} },
+    game: state.game,
+    haptics: state.haptics,
+    intro: state.intro,
+    introSequence: {
+      clearTimers() {},
+      hideMessage() {},
+      pause() {},
+      resume() {},
+      schedule() {}
+    },
+    keyboard: state.keyboard,
+    mapRenderer: { resetIntroPen() {} },
+    marble: state.marble,
+    resetMap() {},
+    resetCalibration() {},
+    scheduleFrame() {},
+    sensor: state.sensor,
+    sensorWatchdog: {
+      pause() {},
+      reset() {},
+      resume() {},
+      schedule() {}
+    },
+    settings: { fullscreenEnabled: true },
+    startBtn: {
+      disabled: false,
+      textContent: ""
+    },
+    tilt: state.tilt,
+    timing,
+    trailRenderer: { clear() {} },
+    ui: { isSettingsOpen: () => false, setHint() {} },
+    spawn: resolvedMapConfig.spawn,
+    enableMotion() {
+      motionEnabled = true;
+    },
+    requestFullscreen() {
+      return Promise.resolve();
+    },
+    requestMotionPermission() {
+      return new Promise(() => {});
+    },
+    keepDisplayAwake() {},
+    setTimeoutFn(callback) {
+      timeoutCallback = callback;
+      return 1;
+    },
+    clearTimeoutFn() {},
+    tick() {}
+  });
+
+  const startPromise = lifecycle.gameController.start();
+  await Promise.resolve();
+  assert.equal(motionEnabled, false);
+
+  timeoutCallback();
+  await startPromise;
+
+  assert.equal(motionEnabled, true);
+  assert.equal(state.game.phase, "calibrating");
+}
+
 testStartPauseResumeReleaseReset();
 await testStartRequestsFullscreenFromClickPath();
+await testStartContinuesWhenMotionPermissionStalls();
 
 console.log("Lifecycle tests passed.");

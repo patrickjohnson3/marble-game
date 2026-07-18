@@ -98,6 +98,7 @@ function testTimingAndTuning() {
   [
     "introReleaseDelayMs",
     "countdownTickMs",
+    "motionPermissionTimeoutMs",
     "sensorFallbackMs",
     "targetFrameMs",
     "minFrameStep",

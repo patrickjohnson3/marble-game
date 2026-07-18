@@ -11,6 +11,30 @@ import {
   requestWakeLock
 } from "../platform/platform.js";
 
+function requestMotionPermissionWithTimeout({
+  requestMotionPermission,
+  timeoutMs,
+  setTimeoutFn = setTimeout,
+  clearTimeoutFn = clearTimeout
+}) {
+  return new Promise((resolve) => {
+    let settled = false;
+    let timer = 0;
+    const finish = (allowed) => {
+      if (settled) return;
+
+      settled = true;
+      clearTimeoutFn(timer);
+      resolve(allowed);
+    };
+    timer = setTimeoutFn(() => finish(true), timeoutMs);
+
+    Promise.resolve()
+      .then(requestMotionPermission)
+      .then(finish, () => finish(false));
+  });
+}
+
 export function createLifecycleController({
   cameraController,
   calibration,
@@ -41,6 +65,8 @@ export function createLifecycleController({
   exitFullscreen = exitFullscreenMode,
   requestMotionPermission = requestMotionPermissionIfNeeded,
   keepDisplayAwake = requestWakeLock,
+  setTimeoutFn = setTimeout,
+  clearTimeoutFn = clearTimeout,
   now = () => performance.now(),
   tick
 }) {
@@ -129,7 +155,12 @@ export function createLifecycleController({
 
     const fullscreenRequest = requestFullscreen({ fullscreenOnStart: settings.fullscreenEnabled });
 
-    const ok = await requestMotionPermission();
+    const ok = await requestMotionPermissionWithTimeout({
+      requestMotionPermission,
+      timeoutMs: timing.motionPermissionTimeoutMs,
+      setTimeoutFn,
+      clearTimeoutFn
+    });
     if (!ok) {
       await fullscreenRequest;
       if (settings.fullscreenEnabled) exitFullscreen();
