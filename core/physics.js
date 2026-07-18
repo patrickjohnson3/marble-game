@@ -115,14 +115,21 @@ function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
 
 function physicsStep(context, dt, feedback) {
   updateVelocity(context, dt);
-  const overRoughPatch = isOverRoughPatch(
+  const overRoughPatchBeforeMove = isOverRoughPatch(
     context.marble,
     context.intro,
     roughPatchCandidates(context),
     context.physics,
   );
-  applySurfaceDrag(context, dt, overRoughPatch);
   updatePosition(context.marble, dt);
+  const overRoughPatchAfterMove = isOverRoughPatch(
+    context.marble,
+    context.intro,
+    roughPatchCandidates(context),
+    context.physics,
+  );
+  const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
+  applySurfaceDrag(context, dt, overRoughPatch);
   const obstacles = context.obstacles;
   context.obstacles = obstacleCandidates(context);
   handleWallCollisions(context, feedback.onImpact);
