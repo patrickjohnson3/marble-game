@@ -210,6 +210,71 @@ function testLowSpeedDriftSettles() {
   assert.equal(marble.vy, 0);
 }
 
+function testLowSpeedDriftDoesNotSettleAboveSpeedThreshold() {
+  const marble = { x: 50, y: 50, vx: 0.05, vy: 0, r: 10 };
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0.1, smoothY: 0.1 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 1,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0.04,
+        settleTilt: 0.5,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.equal(marble.vx, 0.05);
+}
+
+function testLowSpeedDriftDoesNotSettleAboveTiltThreshold() {
+  const marble = { x: 50, y: 50, vx: 0.02, vy: 0.01, r: 10 };
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0.5, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 1,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0.04,
+        settleTilt: 0.5,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.equal(marble.vx, 0.02);
+  assert.equal(marble.vy, 0.01);
+}
+
 function testTiltCurveSoftensSmallSensorInput() {
   const context = {
     tilt: {
@@ -449,6 +514,8 @@ testRoughPatchAddsDrag();
 testRoughPatchDragUsesSpatialIndex();
 testRoughPatchDragAppliesWhenEnteringPatch();
 testLowSpeedDriftSettles();
+testLowSpeedDriftDoesNotSettleAboveSpeedThreshold();
+testLowSpeedDriftDoesNotSettleAboveTiltThreshold();
 testTiltCurveSoftensSmallSensorInput();
 testTiltSmoothingIsFrameRateIndependent();
 testVelocityDragIsFrameRateIndependent();
