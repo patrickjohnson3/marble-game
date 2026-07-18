@@ -55,7 +55,7 @@ function testWorldAndMapElements() {
 
   for (const [index, element] of resolvedMapConfig.elements.entries()) {
     assert.ok(
-      ["obstacle", "roughPatch"].includes(element.type),
+      ["obstacle", "roughPatch", "slope"].includes(element.type),
       "element " + index + " type",
     );
     assertPositiveNumber(element.w, "element " + index + " width");
@@ -163,6 +163,7 @@ function testPhysicsAndSettingsRanges() {
     physicsConfig.collisionIndexCellSize,
     "collision index cell size",
   );
+  assertPositiveNumber(physicsConfig.slopeAccel, "slope acceleration");
   assertPositiveNumber(
     physicsConfig.collisionResolvePasses,
     "collision resolve passes",

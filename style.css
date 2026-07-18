@@ -62,8 +62,16 @@ body {
   opacity: 0;
   transition: opacity 0.45s ease;
 }
+.slopeZoneCanvas {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
 #world.map-open .obstacleCanvas,
-#world.map-open .roughPatchCanvas {
+#world.map-open .roughPatchCanvas,
+#world.map-open .slopeZoneCanvas {
   opacity: 1;
 }
 #goal {

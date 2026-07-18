@@ -1,14 +1,18 @@
 export function createTerrainView({
   roughPatchesEl,
+  slopeZonesEl,
   obstaclesEl,
   goalEl,
   goal,
   roughPatches,
   roughPatchBounds,
+  slopeZones,
+  slopeZoneBounds,
   obstacles,
   obstacleBounds,
   renderObstacleWalls,
   renderRoughPatches: drawRoughPatches,
+  renderSlopeZones: drawSlopeZones = () => {},
   goalFillEdgePercent = 70.8,
 }) {
   let currentGoal = goal;
@@ -16,6 +20,8 @@ export function createTerrainView({
   let currentObstacleBounds = obstacleBounds;
   let currentRoughPatches = roughPatches;
   let currentRoughPatchBounds = roughPatchBounds;
+  let currentSlopeZones = slopeZones;
+  let currentSlopeZoneBounds = slopeZoneBounds;
 
   function renderObstacles() {
     renderObstacleWalls(obstaclesEl, currentObstacles, currentObstacleBounds);
@@ -29,6 +35,10 @@ export function createTerrainView({
     );
   }
 
+  function renderSlopeZones() {
+    drawSlopeZones(slopeZonesEl, currentSlopeZones, currentSlopeZoneBounds);
+  }
+
   function renderGoal() {
     goalEl.style.left = currentGoal.x - currentGoal.r + "px";
     goalEl.style.top = currentGoal.y - currentGoal.r + "px";
@@ -39,6 +49,7 @@ export function createTerrainView({
 
   function renderTerrain() {
     renderGoal();
+    renderSlopeZones();
     renderRoughPatches();
     renderObstacles();
   }
@@ -49,13 +60,17 @@ export function createTerrainView({
     obstacleBounds,
     roughPatches,
     roughPatchBounds,
+    slopeZones,
+    slopeZoneBounds,
   }) {
     return (
       currentGoal === goal &&
       currentObstacles === obstacles &&
       currentObstacleBounds === obstacleBounds &&
       currentRoughPatches === roughPatches &&
-      currentRoughPatchBounds === roughPatchBounds
+      currentRoughPatchBounds === roughPatchBounds &&
+      currentSlopeZones === slopeZones &&
+      currentSlopeZoneBounds === slopeZoneBounds
     );
   }
 
@@ -65,6 +80,8 @@ export function createTerrainView({
     obstacleBounds,
     roughPatches,
     roughPatchBounds,
+    slopeZones,
+    slopeZoneBounds,
   }) {
     if (
       terrainMatches({
@@ -73,6 +90,8 @@ export function createTerrainView({
         obstacleBounds,
         roughPatches,
         roughPatchBounds,
+        slopeZones,
+        slopeZoneBounds,
       })
     )
       return;
@@ -82,6 +101,8 @@ export function createTerrainView({
     currentObstacleBounds = obstacleBounds;
     currentRoughPatches = roughPatches;
     currentRoughPatchBounds = roughPatchBounds;
+    currentSlopeZones = slopeZones;
+    currentSlopeZoneBounds = slopeZoneBounds;
     renderTerrain();
   }
 
@@ -99,6 +120,7 @@ export function createTerrainView({
     renderObstacles,
     renderTerrain,
     renderRoughPatches,
+    renderSlopeZones,
     setTerrain,
     updateGoalProgress,
   };

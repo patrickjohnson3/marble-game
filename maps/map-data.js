@@ -13,6 +13,8 @@ const defaultElements = [
   { type: "roughPatch", x: 1040, y: 520, w: 360, h: 240 },
   { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
   { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 },
+  { type: "slope", x: 820, y: 1180, w: 220, h: 160, dx: 1, dy: 0 },
+  { type: "slope", x: 1500, y: 1700, w: 180, h: 220, dx: 0, dy: -1 },
 ];
 
 const generatedOneElements = [
@@ -30,6 +32,8 @@ const generatedOneElements = [
   { type: "roughPatch", x: 1450, y: 440, w: 280, h: 210 },
   { type: "roughPatch", x: 720, y: 1320, w: 350, h: 230 },
   { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 },
+  { type: "slope", x: 980, y: 820, w: 220, h: 170, dx: 1, dy: 0.35 },
+  { type: "slope", x: 420, y: 1540, w: 180, h: 240, dx: 0, dy: -1 },
 ];
 
 export const mapVariants = [

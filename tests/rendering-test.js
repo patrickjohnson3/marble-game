@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
+import { renderSlopeZones } from "../rendering/slope-rendering.js";
 import {
   canvasPixelRatio,
   renderOuterWalls,
@@ -118,6 +119,7 @@ function testGoalProgressUsesRadialFillRadius() {
   const goalEl = new FakeElement();
   const terrainView = createTerrainView({
     roughPatchesEl: new FakeElement(),
+    slopeZonesEl: new FakeElement(),
     obstaclesEl: new FakeElement(),
     goalEl,
     goal: { x: 100, y: 120, r: 50 },
@@ -146,6 +148,7 @@ testGoalProgressUsesRadialFillRadius();
 function testTerrainViewSkipsUnchangedTerrainRedraw() {
   let obstacleRenderCount = 0;
   let roughPatchRenderCount = 0;
+  let slopeZoneRenderCount = 0;
   const goal = { x: 100, y: 120, r: 50 };
   const obstacles = [{ x: 10, y: 10, w: 20, h: 20 }];
   const obstacleBounds = {
@@ -165,13 +168,25 @@ function testTerrainViewSkipsUnchangedTerrainRedraw() {
     width: 20,
     height: 20,
   };
+  const slopeZones = [{ x: 70, y: 70, w: 30, h: 20, dx: 1, dy: 0 }];
+  const slopeZoneBounds = {
+    left: 70,
+    top: 70,
+    right: 100,
+    bottom: 90,
+    width: 30,
+    height: 20,
+  };
   const terrainView = createTerrainView({
     roughPatchesEl: new FakeElement(),
+    slopeZonesEl: new FakeElement(),
     obstaclesEl: new FakeElement(),
     goalEl: new FakeElement(),
     goal,
     roughPatches,
     roughPatchBounds,
+    slopeZones,
+    slopeZoneBounds,
     obstacles,
     obstacleBounds,
     renderObstacleWalls() {
@@ -179,6 +194,9 @@ function testTerrainViewSkipsUnchangedTerrainRedraw() {
     },
     renderRoughPatches() {
       roughPatchRenderCount++;
+    },
+    renderSlopeZones() {
+      slopeZoneRenderCount++;
     },
   });
 
@@ -189,10 +207,13 @@ function testTerrainViewSkipsUnchangedTerrainRedraw() {
     obstacleBounds,
     roughPatches,
     roughPatchBounds,
+    slopeZones,
+    slopeZoneBounds,
   });
 
   assert.equal(obstacleRenderCount, 1);
   assert.equal(roughPatchRenderCount, 1);
+  assert.equal(slopeZoneRenderCount, 1);
 }
 
 testTerrainViewSkipsUnchangedTerrainRedraw();
@@ -242,6 +263,7 @@ try {
 
   const container = new FakeElement();
   const roughPatchContainer = new FakeElement();
+  const slopeZoneContainer = new FakeElement();
 
   renderRoughPatches(roughPatchContainer, [{ x: 20, y: 30, w: 80, h: 60 }], {
     padding: 18,
@@ -267,6 +289,26 @@ try {
       .length >= 40,
     true,
     "rough patch canvas should draw layered grit",
+  );
+
+  renderSlopeZones(
+    slopeZoneContainer,
+    [{ x: 30, y: 40, w: 100, h: 70, dx: 1, dy: 0 }],
+    {
+      padding: 18,
+    },
+  );
+  const slopeZoneCanvas = slopeZoneContainer.children[0];
+  assert.equal(
+    slopeZoneCanvas.classList.contains("slopeZoneCanvas"),
+    true,
+    "slope zones should render to canvas",
+  );
+  assert.equal(slopeZoneCanvas.attributes["data-slope-zones"], "1");
+  assert.equal(
+    slopeZoneCanvas.context.calls.some((call) => call[0] === "lineTo"),
+    true,
+    "slope zone canvas should draw arrows",
   );
 
   renderObstacleWalls(

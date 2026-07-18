@@ -112,6 +112,19 @@ function validateRect(rect, { world, label, errors }) {
   }
 }
 
+function validateSlopeDirection(element, index, errors) {
+  if (element.type !== "slope") return;
+  if (!Number.isFinite(element.dx)) {
+    errors.push(mapValidationMessages.fieldNonFinite("element " + index, "dx"));
+  }
+  if (!Number.isFinite(element.dy)) {
+    errors.push(mapValidationMessages.fieldNonFinite("element " + index, "dy"));
+  }
+  if (element.dx === 0 && element.dy === 0) {
+    errors.push(mapValidationMessages.slopeDirection(index));
+  }
+}
+
 export function validateMapConfig(
   config,
   { normalizedObstacles, spawn } = {},
@@ -185,6 +198,7 @@ export function validateMapConfig(
       label: "element " + index,
       errors,
     });
+    validateSlopeDirection(element, index, errors);
     if (Number.isFinite(gridSize) && gridSize > 0) {
       for (const key of ["x", "y", "w", "h"]) {
         if (!isMultipleOf(element[key], gridSize)) {

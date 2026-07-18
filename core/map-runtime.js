@@ -15,6 +15,9 @@ export function createMapRuntime({
     roughPatches: [],
     roughPatchBounds: null,
     roughPatchIndex: null,
+    slopeZones: [],
+    slopeZoneBounds: null,
+    slopeZoneIndex: null,
     goal: null,
     spawn: null,
     goalHoldMs: 0,
@@ -39,6 +42,9 @@ export function createMapRuntime({
     state.roughPatches = derived.roughPatches;
     state.roughPatchBounds = derived.roughPatchBounds;
     state.roughPatchIndex = derived.roughPatchIndex;
+    state.slopeZones = derived.slopeZones;
+    state.slopeZoneBounds = derived.slopeZoneBounds;
+    state.slopeZoneIndex = derived.slopeZoneIndex;
     state.goal = derived.goal;
     state.spawn = derived.spawn;
     resetGoalProgress();

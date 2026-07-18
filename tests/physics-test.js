@@ -147,6 +147,41 @@ function testRoughPatchDragUsesSpatialIndex() {
   assert.equal(marble.vx, 5);
 }
 
+function testSlopeZoneAddsDirectionalAcceleration() {
+  const marble = { x: 50, y: 50, vx: 0, vy: 0, r: 10 };
+  const slopeZones = [{ x: 40, y: 40, w: 40, h: 40, dx: 0, dy: -1 }];
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      slopeZones,
+      slopeZoneIndex: createSpatialIndex(slopeZones, { cellSize: 100 }),
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 1,
+        slopeAccel: 0.25,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.equal(marble.vx, 0);
+  assert.equal(marble.vy, -0.25);
+}
+
 function testRoughPatchDragAppliesWhenEnteringPatch() {
   const marble = { x: 20, y: 50, vx: 10, vy: 0, r: 10 };
 
@@ -588,6 +623,7 @@ testDeepOverlapPushesToNearestEdge();
 testDeepOverlapTieBreaksTowardFirstNearestEdge();
 testRoughPatchAddsDrag();
 testRoughPatchDragUsesSpatialIndex();
+testSlopeZoneAddsDirectionalAcceleration();
 testRoughPatchDragAppliesWhenEnteringPatch();
 testLowSpeedDriftSettles();
 testLowSpeedDriftDoesNotSettleAboveSpeedThreshold();

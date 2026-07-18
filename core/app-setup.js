@@ -14,6 +14,7 @@ import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
+import { renderSlopeZones } from "../rendering/slope-rendering.js";
 import { renderOuterWalls } from "../rendering/wall-rendering.js";
 import { createSensorController } from "../input/sensor-controller.js";
 import { createSensorWatchdog } from "../input/sensor-watchdog.js";
@@ -32,12 +33,15 @@ export function setupRenderers({
   goal,
   roughPatches,
   roughPatchBounds,
+  slopeZones,
+  slopeZoneBounds,
 }) {
   const {
     world: worldEl,
     introWalls: introWallsEl,
     mapWalls: mapWallsEl,
     roughPatches: roughPatchesEl,
+    slopeZones: slopeZonesEl,
     obstacles: obstaclesEl,
     goal: goalEl,
     trail: trailEl,
@@ -71,11 +75,14 @@ export function setupRenderers({
   });
   const terrainView = createTerrainView({
     roughPatchesEl,
+    slopeZonesEl,
     obstaclesEl,
     goalEl,
     goal,
     roughPatches,
     roughPatchBounds,
+    slopeZones,
+    slopeZoneBounds,
     obstacles,
     obstacleBounds,
     renderObstacleWalls: (container, renderedObstacles, renderedBounds) =>
@@ -87,6 +94,11 @@ export function setupRenderers({
       renderRoughPatches(container, renderedRoughPatches, {
         bounds: renderedBounds,
         padding: visualConfig.map.roughPatchCanvasPadding,
+      }),
+    renderSlopeZones: (container, renderedSlopeZones, renderedBounds) =>
+      renderSlopeZones(container, renderedSlopeZones, {
+        bounds: renderedBounds,
+        padding: visualConfig.map.slopeZoneCanvasPadding,
       }),
     goalFillEdgePercent: visualConfig.map.goalFillEdgePercent,
   });
