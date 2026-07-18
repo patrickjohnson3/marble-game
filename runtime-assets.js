@@ -52,7 +52,6 @@ export const runtimeScripts = [
   "rendering/marble-view.js",
   "rendering/obstacle-rendering.js",
   "rendering/rough-patch-rendering.js",
-  "rendering/slope-rendering.js",
   "rendering/terrain-view.js",
   "rendering/trail.js",
   "rendering/wall-rendering.js",

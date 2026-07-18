@@ -12,10 +12,8 @@ export {
 export {
   isObstacleElement,
   isRoughPatchElement,
-  isSlopeElement,
   mapObstacleElements,
   mapRoughPatchElements,
-  mapSlopeElements,
   MAP_ELEMENT_TYPES,
 } from "./map-elements.js";
 export {

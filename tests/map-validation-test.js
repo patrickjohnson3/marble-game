@@ -58,18 +58,6 @@ function testMapValidationRejectsOffGridElementDimensions() {
   );
 }
 
-function testMapValidationRejectsSlopeWithoutDirection() {
-  assert.ok(
-    validateMapConfig({
-      world: { width: 100, height: 100 },
-      grid: { size: 10 },
-      elements: [{ type: "slope", x: 10, y: 10, w: 20, h: 20, dx: 0, dy: 0 }],
-      spawn: { x: 20, y: 20, r: 5 },
-      goal: { x: 80, y: 80, r: 10, holdMs: 5000 },
-    }).includes(mapValidationMessages.slopeDirection(0)),
-  );
-}
-
 function testMapValidationReportsInvalidNormalizedObstacles() {
   assert.ok(
     validateMapConfig(emptyElementMapConfig, {
@@ -117,7 +105,6 @@ testMapValidationRejectsBlockedSpawn();
 testMapValidationReportsMalformedConfig();
 testMapValidationReportsInvalidElementEntries();
 testMapValidationRejectsOffGridElementDimensions();
-testMapValidationRejectsSlopeWithoutDirection();
 testMapValidationReportsInvalidNormalizedObstacles();
 testMapValidationRejectsVariantWorldMismatch();
 testMapValidationRejectsUnreachableGoal();

@@ -95,24 +95,8 @@ function roughPatchCandidates({ marble, roughPatches, roughPatchIndex }) {
   return roughPatchIndex?.queryCircle(marble) ?? roughPatches;
 }
 
-function slopeZoneCandidates({ marble, slopeZones, slopeZoneIndex }) {
-  return slopeZoneIndex?.queryCircle(marble) ?? slopeZones ?? [];
-}
-
 function obstacleCandidates({ marble, obstacles, obstacleIndex }) {
   return obstacleIndex?.queryCircle(marble) ?? obstacles;
-}
-
-function applySlopeForces(context, dt) {
-  const zones = slopeZoneCandidates(context).filter((zone) =>
-    marbleOverRect(context.marble, zone, context.physics.collisionEpsilon ?? 0),
-  );
-  zones.forEach((zone) => {
-    const length = Math.hypot(zone.dx, zone.dy);
-    if (length <= 0) return;
-    context.marble.vx += (zone.dx / length) * context.physics.slopeAccel * dt;
-    context.marble.vy += (zone.dy / length) * context.physics.slopeAccel * dt;
-  });
 }
 
 function applySurfaceDrag(context, dt, overRoughPatch) {
@@ -131,7 +115,6 @@ function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
 
 function physicsStep(context, dt, feedback) {
   updateVelocity(context, dt);
-  applySlopeForces(context, dt);
   const overRoughPatchBeforeMove = isOverRoughPatch(
     context.marble,
     context.intro,

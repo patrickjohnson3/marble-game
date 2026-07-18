@@ -26,8 +26,6 @@ export const mapValidationMessages = Object.freeze({
   rectInsideWorld: (label) => label + " must fit inside world bounds",
   elementGrid: (index, key) =>
     "element " + index + " " + key + " must align to grid",
-  slopeDirection: (index) =>
-    "element " + index + " slope direction is required",
   normalizedObstacleObject: (index) =>
     "normalized obstacle " + index + " must be an object",
   variantWorldMatch: (id) => "variant " + id + " world must match base world",

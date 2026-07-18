@@ -33,7 +33,6 @@ export const physicsConfig = {
   collisionResolvePasses: 1,
   collisionIndexCellSize: 256,
   roughPatchFriction: 0.96,
-  slopeAccel: 0.16,
   scrapeHapticScale: 0.08,
   settleSpeed: 0.035,
   settleTilt: 0.8,
@@ -113,7 +112,6 @@ export const visualConfig = {
   },
   map: {
     roughPatchCanvasPadding: 18,
-    slopeZoneCanvasPadding: 18,
     obstacleCanvasPadding: 32,
     goalFillEdgePercent: 70.8,
   },

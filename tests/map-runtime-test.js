@@ -9,7 +9,6 @@ const firstMap = {
   elements: [
     { type: "obstacle", x: 10, y: 20, w: 30, h: 40 },
     { type: "roughPatch", x: 50, y: 60, w: 70, h: 80 },
-    { type: "slope", x: 80, y: 90, w: 50, h: 60, dx: 1, dy: 0 },
   ],
 };
 
@@ -47,22 +46,12 @@ assert.deepEqual(resolvedFirstMap.roughPatchBounds, {
   top: 60,
   width: 70,
 });
-assert.equal(resolvedFirstMap.slopeZones.length, 1);
-assert.deepEqual(resolvedFirstMap.slopeZoneBounds, {
-  bottom: 150,
-  height: 60,
-  left: 80,
-  right: 130,
-  top: 90,
-  width: 50,
-});
 
 assert.equal(runtime.state.activeMap, firstMap);
 assert.equal(runtime.state.goal, firstMap.goal);
 assert.equal(runtime.state.spawn, firstMap.spawn);
 assert.equal(runtime.state.obstacles.length, 1);
 assert.equal(runtime.state.roughPatches.length, 1);
-assert.equal(runtime.state.slopeZones.length, 1);
 
 assert.equal(runtime.addGoalHold(1000), 0.2);
 runtime.completeGoal();
@@ -83,8 +72,6 @@ assert.deepEqual(runtime.state.obstacleBounds, {
 });
 assert.deepEqual(runtime.state.roughPatches, []);
 assert.equal(runtime.state.roughPatchBounds, null);
-assert.deepEqual(runtime.state.slopeZones, []);
-assert.equal(runtime.state.slopeZoneBounds, null);
 assert.equal(runtime.state.goalHoldMs, 0);
 assert.equal(runtime.state.goalCompleted, false);
 

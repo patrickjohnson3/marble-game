@@ -29,8 +29,6 @@ export function createAppMapController({
       obstacleBounds: mapState.obstacleBounds,
       roughPatches: mapState.roughPatches,
       roughPatchBounds: mapState.roughPatchBounds,
-      slopeZones: mapState.slopeZones,
-      slopeZoneBounds: mapState.slopeZoneBounds,
     });
   }
 

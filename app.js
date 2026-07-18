@@ -178,8 +178,6 @@ export function createApp({
     goal: mapState.goal,
     roughPatches: mapState.roughPatches,
     roughPatchBounds: mapState.roughPatchBounds,
-    slopeZones: mapState.slopeZones,
-    slopeZoneBounds: mapState.slopeZoneBounds,
   });
   const { applyFullscreenSetting, applySettings } = createSettingsApplier({
     camera,
@@ -350,8 +348,6 @@ export function createApp({
       obstacleIndex: mapState.obstacleIndex,
       roughPatches: mapState.roughPatches,
       roughPatchIndex: mapState.roughPatchIndex,
-      slopeZones: mapState.slopeZones,
-      slopeZoneIndex: mapState.slopeZoneIndex,
     };
   }
 
