@@ -9,7 +9,6 @@ import { runtimeModuleScripts, runtimeScripts } from "../runtime-assets.js";
 const html = readFileSync("index.html", "utf8");
 const css = readFileSync("style.css", "utf8");
 const scripts = runtimeScripts;
-const app = scripts.map((file) => readFileSync(file, "utf8")).join("\n");
 
 for (const script of scripts) {
   const syntax = spawnSync(process.execPath, ["--check", script], {

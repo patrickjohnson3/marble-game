@@ -25,8 +25,5 @@ export default [
         window: "readonly",
       },
     },
-    rules: {
-      "no-unused-vars": "off",
-    },
   },
 ];

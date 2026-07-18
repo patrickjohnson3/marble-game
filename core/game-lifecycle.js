@@ -37,7 +37,6 @@ function requestMotionPermissionWithTimeout({
 
 export function createLifecycleController({
   cameraController,
-  calibration,
   controlsEl,
   effectsRenderer,
   frameLoop,

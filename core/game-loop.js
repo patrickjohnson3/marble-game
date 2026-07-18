@@ -13,7 +13,6 @@ export function createGameLoop({
   marbleView,
   physicsContext,
   scheduleFrame,
-  terrainView,
   timing,
   trailRenderer,
   ui,
