@@ -158,6 +158,11 @@ function testPhysicsAndSettingsRanges() {
   assertPositiveNumber(physicsConfig.accel, "physics accel");
   assertPositiveNumber(physicsConfig.maxTilt, "physics maxTilt");
   assertPositiveNumber(physicsConfig.maxSpeed, "physics maxSpeed");
+  assertPositiveNumber(physicsConfig.maxPhysicsSubsteps, "physics substeps");
+  assertPositiveNumber(
+    physicsConfig.collisionResolvePasses,
+    "collision resolve passes",
+  );
   assert.equal(
     physicsConfig.friction > 0 && physicsConfig.friction <= 1,
     true,

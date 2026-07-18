@@ -2,6 +2,7 @@ import { circleRectContact } from "./geometry.js";
 
 const defaultScrapeHapticScale = 0;
 const defaultWallTangentialFriction = 1;
+const defaultCollisionResolvePasses = 1;
 
 export function marbleOverRect(marble, rect, epsilon = 0) {
   return circleRectContact(marble, rect, epsilon).intersects;
@@ -84,46 +85,51 @@ export function handleWallCollisions(
   { marble, bounds, intro, obstacles, physics },
   onImpact,
 ) {
-  if (marble.x < bounds.left + marble.r) {
-    onImpact(
-      collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics),
-    );
-    marble.x = bounds.left + marble.r;
-    marble.vx = -marble.vx * physics.bounce;
-    marble.vy *=
-      physics.wallTangentialFriction ?? defaultWallTangentialFriction;
-  }
-  if (marble.x > bounds.right - marble.r) {
-    onImpact(
-      collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics),
-    );
-    marble.x = bounds.right - marble.r;
-    marble.vx = -marble.vx * physics.bounce;
-    marble.vy *=
-      physics.wallTangentialFriction ?? defaultWallTangentialFriction;
-  }
-  if (marble.y < bounds.top + marble.r) {
-    onImpact(
-      collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics),
-    );
-    marble.y = bounds.top + marble.r;
-    marble.vy = -marble.vy * physics.bounce;
-    marble.vx *=
-      physics.wallTangentialFriction ?? defaultWallTangentialFriction;
-  }
-  if (marble.y > bounds.bottom - marble.r) {
-    onImpact(
-      collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics),
-    );
-    marble.y = bounds.bottom - marble.r;
-    marble.vy = -marble.vy * physics.bounce;
-    marble.vx *=
-      physics.wallTangentialFriction ?? defaultWallTangentialFriction;
-  }
+  const passes =
+    physics.collisionResolvePasses ?? defaultCollisionResolvePasses;
 
-  if (intro.released) {
-    obstacles.forEach((obstacle) => {
-      resolveObstacleCollision(marble, obstacle, physics, onImpact);
-    });
+  for (let pass = 0; pass < passes; pass++) {
+    if (marble.x < bounds.left + marble.r) {
+      onImpact(
+        collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics),
+      );
+      marble.x = bounds.left + marble.r;
+      marble.vx = -marble.vx * physics.bounce;
+      marble.vy *=
+        physics.wallTangentialFriction ?? defaultWallTangentialFriction;
+    }
+    if (marble.x > bounds.right - marble.r) {
+      onImpact(
+        collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics),
+      );
+      marble.x = bounds.right - marble.r;
+      marble.vx = -marble.vx * physics.bounce;
+      marble.vy *=
+        physics.wallTangentialFriction ?? defaultWallTangentialFriction;
+    }
+    if (marble.y < bounds.top + marble.r) {
+      onImpact(
+        collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics),
+      );
+      marble.y = bounds.top + marble.r;
+      marble.vy = -marble.vy * physics.bounce;
+      marble.vx *=
+        physics.wallTangentialFriction ?? defaultWallTangentialFriction;
+    }
+    if (marble.y > bounds.bottom - marble.r) {
+      onImpact(
+        collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics),
+      );
+      marble.y = bounds.bottom - marble.r;
+      marble.vy = -marble.vy * physics.bounce;
+      marble.vx *=
+        physics.wallTangentialFriction ?? defaultWallTangentialFriction;
+    }
+
+    if (intro.released) {
+      obstacles.forEach((obstacle) => {
+        resolveObstacleCollision(marble, obstacle, physics, onImpact);
+      });
+    }
   }
 }
