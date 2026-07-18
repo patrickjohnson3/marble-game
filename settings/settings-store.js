@@ -1,3 +1,5 @@
+import { persistedSettingsKeys } from "./settings-config.js";
+
 export function applyRangeConfig(input, range) {
   input.min = range.min;
   input.max = range.max;
@@ -99,4 +101,3 @@ export function saveSettings({ storage, storageKey, settings }) {
     // Persistence is optional; gameplay should still work without storage.
   }
 }
-import { persistedSettingsKeys } from "./settings-config.js";
