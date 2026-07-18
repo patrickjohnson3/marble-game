@@ -13,6 +13,7 @@ import { createDomElements } from "./core/dom.js";
 import { createFrameLoop } from "./core/frame-loop.js";
 import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
+import { createGoalController } from "./core/goal-controller.js";
 import { clamp, distance, angle, midpoint } from "./core/geometry.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
 import { createMapProgression } from "./core/map-progression.js";
@@ -241,51 +242,17 @@ export function createApp({
     copy: copy.hints,
     requestRender,
   });
-  let goalHapticActive = false;
-
-  function marbleInsideGoal() {
-    return (
-      intro.released &&
-      distance(marble, mapState.goal) + marble.r <= mapState.goal.r
-    );
-  }
-
-  function updateGoalHold(dt) {
-    if (mapState.goalCompleted) return;
-
-    if (!marbleInsideGoal()) {
-      if (mapState.goalHoldMs > 0) {
-        mapRuntime.resetGoalProgress();
-        terrainView.updateGoalProgress(0);
-        ui.setHint(copy.hints.mapOpen);
-      }
-      goalHapticActive = false;
-      return;
-    }
-
-    if (!goalHapticActive) {
-      goalHapticActive = true;
-      hapticFeedback.pulseGoal("enter");
-    }
-
-    const progress = mapRuntime.addGoalHold(dt * timing.targetFrameMs);
-    terrainView.updateGoalProgress(progress);
-    ui.setHint(
-      "hold goal " +
-        Math.ceil((mapState.goal.holdMs - mapState.goalHoldMs) / 1000) +
-        "s",
-    );
-    hapticFeedback.pulseGoal("hold");
-
-    if (mapState.goalHoldMs >= mapState.goal.holdMs) {
-      mapRuntime.completeGoal();
-      hapticFeedback.pulseGoal("complete");
-      goalHapticActive = false;
-      if (!mapProgression.advanceToNextMap()) {
-        mapRuntime.clearGoalCompleted();
-      }
-    }
-  }
+  const goalController = createGoalController({
+    copy: copy.hints,
+    hapticFeedback,
+    intro,
+    mapProgression,
+    mapRuntime,
+    marble,
+    terrainView,
+    timing,
+    ui,
+  });
 
   const introSequence = createIntroSequence({
     intro,
@@ -402,9 +369,7 @@ export function createApp({
     frameLoop,
     game,
     hapticFeedback,
-    goalController: {
-      update: updateGoalHold,
-    },
+    goalController,
     lifecycle,
     marble,
     marbleView,
