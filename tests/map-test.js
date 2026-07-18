@@ -11,11 +11,8 @@ import {
   selectSeededMapVariant,
   snapRectToGrid,
   snapToGrid,
-  validateMapConfig,
 } from "../core/map.js";
 import { createMapProgression } from "../core/map-progression.js";
-import { hasReachableGoal } from "../core/map-reachability.js";
-import { mapValidationMessages } from "../core/map-validation-messages.js";
 import {
   nextProceduralMapVariant,
   resolveInitialMapConfig,
@@ -24,17 +21,11 @@ import {
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import {
-  blockedSpawnConfig,
-  emptyElementMapConfig,
-  invalidElementConfig,
   malformedVariantConfig,
-  missingElementsVariantConfig,
   simpleSeededMapConfig,
   smallJoinOverhangRects,
   touchingJoinOverhangRects,
-  unreachableGoalConfig,
   variantSelectionFixtures,
-  variantWorldMismatchConfig,
 } from "./map-fixtures.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
@@ -145,17 +136,6 @@ function testResolveSeededMapConfigCopiesSelectedElements() {
 
 testResolveSeededMapConfigCopiesSelectedElements();
 
-function testResolveSeededMapConfigAllowsValidationOfMissingVariantElements() {
-  const resolved = resolveSeededMapConfig(missingElementsVariantConfig);
-
-  assert.equal(resolved.variantId, "bad-variant");
-  assert.ok(
-    validateMapConfig(resolved).includes(mapValidationMessages.elementsArray),
-  );
-}
-
-testResolveSeededMapConfigAllowsValidationOfMissingVariantElements();
-
 function testResolveMapVariantConfigIgnoresMalformedVariants() {
   const resolved = resolveMapVariantConfig(malformedVariantConfig, "safe");
 
@@ -163,102 +143,6 @@ function testResolveMapVariantConfigIgnoresMalformedVariants() {
 }
 
 testResolveMapVariantConfigIgnoresMalformedVariants();
-
-function testMapValidationRejectsBlockedSpawn() {
-  assert.ok(
-    validateMapConfig(blockedSpawnConfig).includes(
-      mapValidationMessages.spawnObstacleOverlap,
-    ),
-  );
-}
-
-testMapValidationRejectsBlockedSpawn();
-
-function testMapValidationReportsMalformedConfig() {
-  assert.deepEqual(validateMapConfig({}), [
-    mapValidationMessages.elementsArray,
-    mapValidationMessages.worldWidthPositive,
-    mapValidationMessages.worldHeightPositive,
-    mapValidationMessages.goalRequired,
-    mapValidationMessages.spawnRequired,
-  ]);
-}
-
-testMapValidationReportsMalformedConfig();
-
-function testMapValidationReportsInvalidElementEntries() {
-  assert.ok(
-    validateMapConfig(invalidElementConfig).includes(
-      mapValidationMessages.elementObject(0),
-    ),
-  );
-}
-
-testMapValidationReportsInvalidElementEntries();
-
-function testMapValidationRejectsOffGridElementDimensions() {
-  assert.ok(
-    validateMapConfig({
-      world: { width: 100, height: 100 },
-      grid: { size: 10 },
-      elements: [{ type: "roughPatch", x: 10, y: 10, w: 15, h: 20 }],
-      spawn: { x: 20, y: 20, r: 5 },
-      goal: { x: 80, y: 80, r: 10, holdMs: 5000 },
-    }).includes(mapValidationMessages.elementGrid(0, "w")),
-  );
-}
-
-testMapValidationRejectsOffGridElementDimensions();
-
-function testMapValidationReportsInvalidNormalizedObstacles() {
-  assert.ok(
-    validateMapConfig(emptyElementMapConfig, {
-      normalizedObstacles: [null],
-    }).includes(mapValidationMessages.normalizedObstacleObject(0)),
-  );
-  assert.ok(
-    validateMapConfig(emptyElementMapConfig, {
-      normalizedObstacles: "bad",
-    }).includes(mapValidationMessages.normalizedObstaclesArray),
-  );
-}
-
-testMapValidationReportsInvalidNormalizedObstacles();
-
-function testMapValidationRejectsVariantWorldMismatch() {
-  assert.ok(
-    validateMapConfig(variantWorldMismatchConfig).includes(
-      mapValidationMessages.variantWorldMatch("other-size"),
-    ),
-  );
-}
-
-testMapValidationRejectsVariantWorldMismatch();
-
-function testMapValidationRejectsUnreachableGoal() {
-  assert.ok(
-    validateMapConfig(unreachableGoalConfig).includes(
-      mapValidationMessages.goalReachable,
-    ),
-  );
-}
-
-testMapValidationRejectsUnreachableGoal();
-
-function testReachabilityUsesExactSpawnAndGoalSamples() {
-  assert.equal(
-    hasReachableGoal({
-      world: { width: 100, height: 40 },
-      obstacles: [{ x: 14, y: 8, w: 2, h: 4 }],
-      spawn: { x: 6, y: 10, r: 5 },
-      goal: { x: 86, y: 10, r: 8 },
-      cellSize: 20,
-    }),
-    true,
-  );
-}
-
-testReachabilityUsesExactSpawnAndGoalSamples();
 
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizeJoinedObstacleRects(
