@@ -1,3 +1,59 @@
+export const appConfig = {
+  fullscreenOnStart: true,
+};
+
+export const hapticTuning = {
+  impactCooldownMs: 90,
+  impactMin: 1.7,
+  impactScale: 3,
+  impactMinDurationMs: 8,
+  impactMaxDurationMs: 35,
+  surfaceCooldownMs: 130,
+  surfaceMinSpeed: 1.2,
+  surfaceScale: 1.4,
+  surfaceMinDurationMs: 5,
+  surfaceMaxDurationMs: 16,
+  goalEnterDurationMs: 12,
+  goalHoldDurationMs: 6,
+  goalHoldCooldownMs: 900,
+  goalCompletePattern: [18, 40, 28],
+};
+
+export const physicsConfig = {
+  accel: 0.115,
+  maxTilt: 26,
+  smoothing: 0.2,
+  friction: 0.94,
+  bounce: 0.38,
+  deadZone: 0.65,
+  maxSpeed: 14,
+  keyboardTilt: 18,
+  maxStepDistance: 10,
+  roughPatchFriction: 0.9,
+  scrapeHapticScale: 0.08,
+  settleSpeed: 0.035,
+  settleTilt: 0.8,
+  tiltCurve: 1.25,
+  maxSpeedEase: 0.35,
+  wallTangentialFriction: 0.92,
+};
+
+export const timing = {
+  introReleaseDelayMs: 10000,
+  countdownTickMs: 1000,
+  motionPermissionTimeoutMs: 1200,
+  sensorFallbackMs: 1400,
+  targetFrameMs: 16.67,
+  minFrameStep: 0.25,
+  maxFrameStep: 2,
+};
+
+export const tuning = {
+  neutralSampleCount: 18,
+  gestureCooldownFrames: 90,
+  motionGravityScale: 3,
+};
+
 export const visualConfig = {
   trail: {
     durationMs: 2500,

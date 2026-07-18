@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
-import { hapticTuning } from "../core/haptic-config.js";
+import {
+  hapticTuning,
+  physicsConfig,
+  timing,
+  tuning,
+  visualConfig,
+} from "../core/game-config.js";
 import { baseMapConfig, resolvedMapConfig } from "../core/map-config.js";
-import { physicsConfig } from "../core/physics-config.js";
-import { timing, tuning } from "../core/timing-config.js";
-import { visualConfig } from "../core/visual-config.js";
 import {
   settingsConfig,
   settingsControls,
