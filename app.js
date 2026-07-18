@@ -78,7 +78,10 @@ export function createApp({
     debug,
   } = els;
 
-  const mapRuntime = createMapRuntime({ initialMap: resolvedMapConfig });
+  const mapRuntime = createMapRuntime({
+    initialMap: resolvedMapConfig,
+    collisionIndexCellSize: physicsConfig.collisionIndexCellSize,
+  });
   const mapState = mapRuntime.state;
   const world = mapState.activeMap.world;
 

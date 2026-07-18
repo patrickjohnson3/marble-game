@@ -160,6 +160,10 @@ function testPhysicsAndSettingsRanges() {
   assertPositiveNumber(physicsConfig.maxSpeed, "physics maxSpeed");
   assertPositiveNumber(physicsConfig.maxPhysicsSubsteps, "physics substeps");
   assertPositiveNumber(
+    physicsConfig.collisionIndexCellSize,
+    "collision index cell size",
+  );
+  assertPositiveNumber(
     physicsConfig.collisionResolvePasses,
     "collision resolve passes",
   );

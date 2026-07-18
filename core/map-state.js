@@ -8,7 +8,10 @@ import { createSpatialIndex } from "./spatial-index.js";
 
 export function createResolvedMapState(
   activeMap,
-  { normalizeObstacles = normalizeJoinedObstacleRects } = {},
+  {
+    collisionIndexCellSize = 256,
+    normalizeObstacles = normalizeJoinedObstacleRects,
+  } = {},
 ) {
   const elements = activeMap.elements;
   const obstacles = normalizeObstacles(mapObstacleElements(elements));
@@ -18,10 +21,14 @@ export function createResolvedMapState(
     elements,
     obstacles,
     obstacleBounds: rectBounds(obstacles),
-    obstacleIndex: createSpatialIndex(obstacles),
+    obstacleIndex: createSpatialIndex(obstacles, {
+      cellSize: collisionIndexCellSize,
+    }),
     roughPatches,
     roughPatchBounds: rectBounds(roughPatches),
-    roughPatchIndex: createSpatialIndex(roughPatches),
+    roughPatchIndex: createSpatialIndex(roughPatches, {
+      cellSize: collisionIndexCellSize,
+    }),
     goal: activeMap.goal,
     spawn: activeMap.spawn,
     world: activeMap.world,

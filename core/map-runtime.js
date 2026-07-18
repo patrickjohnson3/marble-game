@@ -3,6 +3,7 @@ import { createResolvedMapState } from "./map-state.js";
 
 export function createMapRuntime({
   initialMap,
+  collisionIndexCellSize,
   normalizeObstacles = normalizeJoinedObstacleRects,
 }) {
   const state = {
@@ -26,7 +27,10 @@ export function createMapRuntime({
   }
 
   function setActiveMap(nextMap) {
-    const derived = createResolvedMapState(nextMap, { normalizeObstacles });
+    const derived = createResolvedMapState(nextMap, {
+      collisionIndexCellSize,
+      normalizeObstacles,
+    });
     state.activeMap = derived.activeMap;
     state.elements = derived.elements;
     state.obstacles = derived.obstacles;
