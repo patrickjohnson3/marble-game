@@ -7,6 +7,11 @@ import {
 
 export { marbleOverRect, resolveObstacleCollision };
 
+const defaultMaxSpeedEase = 0;
+const defaultSettleSpeed = 0;
+const defaultSettleTilt = 0;
+const defaultMaxPhysicsSubsteps = Number.POSITIVE_INFINITY;
+
 function deadZone(value, threshold) {
   return Math.abs(value) < threshold ? 0 : value;
 }
@@ -54,7 +59,8 @@ function updateVelocity({ marble, tilt, physics }, dt) {
   if (speed > physics.maxSpeed) {
     const easedSpeed =
       physics.maxSpeed +
-      (speed - physics.maxSpeed) * Math.pow(physics.maxSpeedEase ?? 0, dt);
+      (speed - physics.maxSpeed) *
+        Math.pow(physics.maxSpeedEase ?? defaultMaxSpeedEase, dt);
     const scale = easedSpeed / speed;
     marble.vx *= scale;
     marble.vy *= scale;
@@ -63,8 +69,8 @@ function updateVelocity({ marble, tilt, physics }, dt) {
 
   const tiltMagnitude = Math.hypot(tilt.smoothX, tilt.smoothY);
   if (
-    speed < (physics.settleSpeed ?? 0) &&
-    tiltMagnitude < (physics.settleTilt ?? 0)
+    speed < (physics.settleSpeed ?? defaultSettleSpeed) &&
+    tiltMagnitude < (physics.settleTilt ?? defaultSettleTilt)
   ) {
     marble.vx = 0;
     marble.vy = 0;
@@ -132,7 +138,7 @@ export function updatePhysics(context, dt, feedback) {
   );
   const steps = Math.min(
     uncappedSteps,
-    context.physics.maxPhysicsSubsteps ?? Number.POSITIVE_INFINITY,
+    context.physics.maxPhysicsSubsteps ?? defaultMaxPhysicsSubsteps,
   );
   const stepDt = dt / steps;
 

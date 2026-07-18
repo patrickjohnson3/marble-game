@@ -1,11 +1,17 @@
 import { circleRectContact } from "./geometry.js";
 
+const defaultScrapeHapticScale = 0;
+const defaultWallTangentialFriction = 1;
+
 export function marbleOverRect(marble, rect, epsilon = 0) {
   return circleRectContact(marble, rect, epsilon).intersects;
 }
 
 function collisionFeedback(normalSpeed, tangentSpeed, physics) {
-  return normalSpeed + tangentSpeed * (physics.scrapeHapticScale ?? 0);
+  return (
+    normalSpeed +
+    tangentSpeed * (physics.scrapeHapticScale ?? defaultScrapeHapticScale)
+  );
 }
 
 function deepOverlapNormal(marble, obstacle) {
@@ -84,7 +90,8 @@ export function handleWallCollisions(
     );
     marble.x = bounds.left + marble.r;
     marble.vx = -marble.vx * physics.bounce;
-    marble.vy *= physics.wallTangentialFriction ?? 1;
+    marble.vy *=
+      physics.wallTangentialFriction ?? defaultWallTangentialFriction;
   }
   if (marble.x > bounds.right - marble.r) {
     onImpact(
@@ -92,7 +99,8 @@ export function handleWallCollisions(
     );
     marble.x = bounds.right - marble.r;
     marble.vx = -marble.vx * physics.bounce;
-    marble.vy *= physics.wallTangentialFriction ?? 1;
+    marble.vy *=
+      physics.wallTangentialFriction ?? defaultWallTangentialFriction;
   }
   if (marble.y < bounds.top + marble.r) {
     onImpact(
@@ -100,7 +108,8 @@ export function handleWallCollisions(
     );
     marble.y = bounds.top + marble.r;
     marble.vy = -marble.vy * physics.bounce;
-    marble.vx *= physics.wallTangentialFriction ?? 1;
+    marble.vx *=
+      physics.wallTangentialFriction ?? defaultWallTangentialFriction;
   }
   if (marble.y > bounds.bottom - marble.r) {
     onImpact(
@@ -108,7 +117,8 @@ export function handleWallCollisions(
     );
     marble.y = bounds.bottom - marble.r;
     marble.vy = -marble.vy * physics.bounce;
-    marble.vx *= physics.wallTangentialFriction ?? 1;
+    marble.vx *=
+      physics.wallTangentialFriction ?? defaultWallTangentialFriction;
   }
 
   if (intro.released) {
