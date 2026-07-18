@@ -115,11 +115,13 @@ export function createApp({
   });
   const settings = createRuntimeSettings(persistedSettings);
   const ui = createUi({
+    controls: controlsEl,
     hint,
     fpsCounter,
     debug,
     settings,
     settingsOverlay,
+    startBtn,
     debugLines,
     state,
   });

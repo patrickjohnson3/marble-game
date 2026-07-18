@@ -1,9 +1,11 @@
 export function createUi({
+  controls,
   hint,
   fpsCounter,
   debug,
   settings,
   settingsOverlay,
+  startBtn,
   debugLines,
   state,
 }) {
@@ -15,6 +17,12 @@ export function createUi({
 
   function setHint(message) {
     hint.textContent = message;
+  }
+
+  function setStartControls({ visible, disabled, label }) {
+    if (visible !== undefined) controls.hidden = !visible;
+    if (disabled !== undefined) startBtn.disabled = disabled;
+    if (label !== undefined) startBtn.textContent = label;
   }
 
   function isSettingsOpen() {
@@ -87,6 +95,7 @@ export function createUi({
     setFpsEnabled,
     setStatsEnabled,
     setHint,
+    setStartControls,
     updateDebugPanel,
     updateFps,
   };

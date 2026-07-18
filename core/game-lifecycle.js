@@ -5,7 +5,6 @@ import { startGameWithPermissions } from "./startup-flow.js";
 
 export function createLifecycleController({
   cameraController,
-  controlsEl,
   effectsRenderer,
   frameLoop,
   game,
@@ -21,7 +20,6 @@ export function createLifecycleController({
   sensor,
   sensorWatchdog,
   settings,
-  startBtn,
   tilt,
   timing,
   trailRenderer,
@@ -111,9 +109,11 @@ export function createLifecycleController({
     effectsRenderer.clear();
     frameLoop.requestRender();
 
-    controlsEl.hidden = false;
-    startBtn.textContent = copy.buttons.start;
-    startBtn.disabled = false;
+    ui.setStartControls({
+      visible: true,
+      disabled: false,
+      label: copy.buttons.start,
+    });
     introSequence.hideMessage();
     mapRenderer.resetIntroPen();
     cameraController.centerOnMarble();
@@ -121,7 +121,6 @@ export function createLifecycleController({
 
   async function start() {
     await startGameWithPermissions({
-      controlsEl,
       enableMotion,
       game,
       keepDisplayAwake,
@@ -131,7 +130,6 @@ export function createLifecycleController({
       scheduleFrame,
       sensorWatchdog,
       settings,
-      startBtn,
       timing,
       ui,
       setTimeoutFn,
