@@ -13,9 +13,9 @@ export function createMapProgression({
   ui,
   requestRender,
   copy = {
+    mapOpen: "map open.",
     goalNoNextMap: "goal reached. no next map available.",
     goalNextMapInvalid: "goal reached. next map invalid.",
-    goalNextMap: (variantId) => "goal reached. next map: " + variantId + ".",
   },
   logger = console,
 }) {
@@ -52,7 +52,7 @@ export function createMapProgression({
 
     applyMap(nextMap);
     resetForNextMap();
-    ui.setHint(copy.goalNextMap(getCurrentMap().variantId));
+    ui.setHint(copy.mapOpen);
     requestRender();
     return true;
   }

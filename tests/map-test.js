@@ -124,6 +124,28 @@ function testMapProgressionHandlesMissingCurrentMap() {
 
 testMapProgressionHandlesMissingCurrentMap();
 
+function testMapProgressionUsesQuietSuccessHint() {
+  const hints = [];
+  let activeMap = resolveSeededMapConfig(simpleSeededMapConfig);
+  const progression = createMapProgression({
+    baseMapConfig: simpleSeededMapConfig,
+    getCurrentMap: () => activeMap,
+    applyMap(nextMap) {
+      activeMap = nextMap;
+    },
+    resetForNextMap() {},
+    terrainView: { updateGoalProgress() {} },
+    ui: { setHint: (hint) => hints.push(hint) },
+    requestRender() {},
+    copy: copy.hints,
+  });
+
+  assert.equal(progression.advanceToNextMap(), true);
+  assert.deepEqual(hints, [copy.hints.mapOpen]);
+}
+
+testMapProgressionUsesQuietSuccessHint();
+
 function testResolveSeededMapConfigCopiesSelectedElements() {
   const config = simpleSeededMapConfig;
   const resolved = resolveSeededMapConfig(config);

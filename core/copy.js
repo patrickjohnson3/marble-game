@@ -12,7 +12,6 @@ export const copy = {
     neutralReset: "neutral reset to current hand position.",
     goalNoNextMap: "goal reached. no next map available.",
     goalNextMapInvalid: "goal reached. next map invalid.",
-    goalNextMap: (variantId) => "goal reached. next map: " + variantId + ".",
   },
   intro: {
     countdown: "map opens in",
