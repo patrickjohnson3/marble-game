@@ -21,7 +21,6 @@ export const domIds = {
   resumeGame: "resumeGame",
   speedSetting: "speedSetting",
   sensitivitySetting: "sensitivitySetting",
-  rotationSetting: "rotationSetting",
   hapticsSetting: "hapticsSetting",
   trailSetting: "trailSetting",
   fullscreenSetting: "fullscreenSetting",

@@ -9,7 +9,6 @@ export function bindSettingsPanel({
   onOpenSettings,
   onCloseSettings,
   onSetNeutral,
-  onRotationDisabled,
   onFpsChanged,
   onStatsChanged,
   requestRender
@@ -22,7 +21,6 @@ export function bindSettingsPanel({
     resumeGame,
     speedSetting,
     sensitivitySetting,
-    rotationSetting,
     hapticsSetting,
     trailSetting,
     fullscreenSetting,
@@ -35,7 +33,6 @@ export function bindSettingsPanel({
   applyRangeConfig(sensitivitySetting, controls.acceleration);
   speedSetting.value = settings.maxSpeed;
   sensitivitySetting.value = settings.acceleration;
-  rotationSetting.checked = settings.rotationEnabled;
   hapticsSetting.checked = settings.hapticsEnabled;
   trailSetting.checked = settings.trailEnabled;
   fullscreenSetting.checked = settings.fullscreenEnabled;
@@ -57,13 +54,6 @@ export function bindSettingsPanel({
     settings.acceleration = Number(sensitivitySetting.value);
     applySettings();
     saveSettings();
-  });
-  rotationSetting.addEventListener("change", () => {
-    settings.rotationEnabled = rotationSetting.checked;
-    applySettings();
-    saveSettings();
-    if (!settings.rotationEnabled) onRotationDisabled();
-    requestRender();
   });
   hapticsSetting.addEventListener("change", () => {
     settings.hapticsEnabled = hapticsSetting.checked;

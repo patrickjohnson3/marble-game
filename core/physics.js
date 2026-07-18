@@ -18,7 +18,7 @@ function curveTilt(value, maxTilt, curve = 1) {
   return Math.sign(value) * maxTilt * Math.pow(normalized, curve);
 }
 
-function updateTilt({ tilt, keyboard, camera, physics }, dt) {
+function updateTilt({ tilt, keyboard, physics }, dt) {
   const nx = tilt.neutralX ?? tilt.rawX;
   const ny = tilt.neutralY ?? tilt.rawY;
 
@@ -28,18 +28,8 @@ function updateTilt({ tilt, keyboard, camera, physics }, dt) {
   const sensorY = curveTilt(rawSensorY, physics.maxTilt, physics.tiltCurve);
   const targetX = keyboard.x ? keyboard.x * physics.keyboardTilt : sensorX;
   const targetY = keyboard.y ? keyboard.y * physics.keyboardTilt : sensorY;
-  let worldTargetX = targetX;
-  let worldTargetY = targetY;
-
-  if (camera.rotation !== 0) {
-    const c = Math.cos(-camera.rotation);
-    const s = Math.sin(-camera.rotation);
-    worldTargetX = targetX * c - targetY * s;
-    worldTargetY = targetX * s + targetY * c;
-  }
-
-  tilt.smoothX += (worldTargetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
-  tilt.smoothY += (worldTargetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
+  tilt.smoothX += (targetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
+  tilt.smoothY += (targetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
 }
 
 function updateVelocity({ marble, tilt, physics }, dt) {

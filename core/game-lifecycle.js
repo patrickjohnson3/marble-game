@@ -105,7 +105,6 @@ export function createLifecycleController({
     camera.x = 0;
     camera.y = 0;
     camera.scale = 1;
-    camera.rotation = 0;
     camera.gestureCooldown = 0;
     cameraController.resetGesture();
 

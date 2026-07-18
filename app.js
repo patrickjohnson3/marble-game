@@ -76,7 +76,6 @@ const {
   resumeGame: resumeBtn,
   speedSetting,
   sensitivitySetting,
-  rotationSetting,
   hapticsSetting,
   trailSetting,
   fullscreenSetting,
@@ -378,10 +377,6 @@ bindSettingsPanel({
   onOpenSettings: gameController.openSettings,
   onCloseSettings: gameController.closeSettings,
   onSetNeutral: sensorController.setNeutralNow,
-  onRotationDisabled() {
-    camera.rotation = 0;
-    cameraController.centerOnMarble();
-  },
   onFpsChanged: ui.setFpsEnabled,
   onStatsChanged: ui.setStatsEnabled,
   requestRender

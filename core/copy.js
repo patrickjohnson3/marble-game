@@ -29,7 +29,6 @@ export const copy = {
     labels: {
       speedSetting: "speed",
       sensitivitySetting: "sensitivity",
-      rotationSetting: "rotation",
       hapticsSetting: "haptics",
       trailSetting: "trail",
       fullscreenSetting: "fullscreen",

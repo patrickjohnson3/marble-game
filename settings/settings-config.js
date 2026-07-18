@@ -4,7 +4,6 @@ import { physicsConfig } from "../core/physics-config.js";
 export const settingsConfig = {
   maxSpeed: physicsConfig.maxSpeed,
   acceleration: physicsConfig.accel,
-  rotationEnabled: false,
   hapticsEnabled: true,
   trailEnabled: false,
   trailDefaultVersion: 2,

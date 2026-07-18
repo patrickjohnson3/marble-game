@@ -189,7 +189,6 @@ export function createFakeDocument() {
     [
       "speedSetting",
       "sensitivitySetting",
-      "rotationSetting",
       "hapticsSetting",
       "trailSetting",
       "fullscreenSetting",

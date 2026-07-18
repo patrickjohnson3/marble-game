@@ -18,7 +18,6 @@ export function createSettingsApplier({
     physics.maxSpeed = settings.maxSpeed;
     physics.accel = settings.acceleration;
     camera.mode = settings.cameraMode;
-    camera.rotationEnabled = settings.rotationEnabled;
     cameraController.applyMode();
     haptics.enabled = settings.hapticsEnabled;
     trailRenderer.setEnabled(settings.trailEnabled);

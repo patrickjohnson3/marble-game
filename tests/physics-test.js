@@ -139,7 +139,6 @@ function testTiltCurveSoftensSmallSensorInput() {
   const context = {
     tilt: { rawX: 5, rawY: 10, neutralX: 0, neutralY: 0, smoothX: 0, smoothY: 0 },
     keyboard: { x: 0, y: 0 },
-    camera: { rotation: 0 },
     physics: {
       deadZone: 0,
       maxTilt: 10,

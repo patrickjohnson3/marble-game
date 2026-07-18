@@ -17,17 +17,13 @@ export function createCameraController({
   function applyTransform() {
     cameraEl.style.transform =
       "translate(" + camera.x + "px, " + camera.y + "px) " +
-      "scale(" + camera.scale + ") " +
-      "rotate(" + camera.rotation + "rad)";
+      "scale(" + camera.scale + ")";
   }
 
   function transformedWorldPoint(x, y) {
-    const c = Math.cos(camera.rotation);
-    const s = Math.sin(camera.rotation);
-
     return {
-      x: (x * c - y * s) * camera.scale,
-      y: (x * s + y * c) * camera.scale
+      x: x * camera.scale,
+      y: y * camera.scale
     };
   }
 
@@ -96,8 +92,7 @@ export function createCameraController({
       midpoint: midpoint(a, b),
       x: camera.x,
       y: camera.y,
-      scale: camera.scale,
-      rotation: camera.rotation
+      scale: camera.scale
     };
   }
 
@@ -111,9 +106,6 @@ export function createCameraController({
       camera.minScale,
       camera.maxScale
     );
-    camera.rotation = camera.rotationEnabled
-      ? gesture.rotation + angle(a, b) - gesture.angle
-      : 0;
     if (!intro.released) {
       centerOnMarble();
       return;

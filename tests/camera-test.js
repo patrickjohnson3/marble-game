@@ -7,14 +7,12 @@ function createController(mode) {
     x: 0,
     y: 0,
     scale: 1,
-    rotation: 0,
     mode,
     followLag: 0.5,
     predictiveLookAheadFrames: 10,
     gestureCooldown: 0,
     minScale: 0.35,
-    maxScale: 3,
-    rotationEnabled: false
+    maxScale: 3
   };
   const marble = { x: 100, y: 100, vx: 5, vy: -2 };
   const cameraEl = { style: {} };

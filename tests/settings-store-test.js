@@ -24,7 +24,6 @@ function storageWith(value) {
 const defaults = {
   maxSpeed: 14,
   acceleration: 0.115,
-  rotationEnabled: false,
   hapticsEnabled: true,
   trailEnabled: false,
   trailDefaultVersion: 2,

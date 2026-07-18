@@ -30,7 +30,6 @@ function createPanelHarness() {
   const settings = {
     maxSpeed: 14,
     acceleration: 0.115,
-    rotationEnabled: false,
     hapticsEnabled: true,
     trailEnabled: false,
     fullscreenEnabled: true,
@@ -50,7 +49,6 @@ function createPanelHarness() {
       resumeGame: fakeButton(),
       speedSetting: fakeControl(),
       sensitivitySetting: fakeControl(),
-      rotationSetting: fakeControl(),
       hapticsSetting: fakeControl(),
       trailSetting: fakeControl(),
       fullscreenSetting: fakeControl(),
@@ -79,7 +77,6 @@ function createPanelHarness() {
     onOpenSettings() {},
     onCloseSettings() {},
     onSetNeutral() {},
-    onRotationDisabled() {},
     onFpsChanged() {
       fpsChangeCount++;
     },
