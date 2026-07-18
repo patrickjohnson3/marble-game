@@ -1,7 +1,7 @@
 import { circleRectContact } from "./geometry.js";
 
-export function marbleOverRect(marble, rect) {
-  return circleRectContact(marble, rect).intersects;
+export function marbleOverRect(marble, rect, epsilon = 0) {
+  return circleRectContact(marble, rect, epsilon).intersects;
 }
 
 function collisionFeedback(normalSpeed, tangentSpeed, physics) {
@@ -14,7 +14,11 @@ export function resolveObstacleCollision(
   physics,
   onImpact = () => {},
 ) {
-  const contact = circleRectContact(marble, obstacle);
+  const contact = circleRectContact(
+    marble,
+    obstacle,
+    physics.collisionEpsilon ?? 0,
+  );
 
   if (!contact.intersects) return;
 

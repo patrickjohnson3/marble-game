@@ -36,6 +36,7 @@ export const physicsConfig = {
   tiltCurve: 1.25,
   maxSpeedEase: 0.35,
   wallTangentialFriction: 0.92,
+  collisionEpsilon: 0,
 };
 
 export const timing = {

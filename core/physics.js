@@ -76,9 +76,12 @@ function updatePosition(marble, dt) {
   marble.y += marble.vy * dt;
 }
 
-function isOverRoughPatch(marble, intro, roughPatches) {
+function isOverRoughPatch(marble, intro, roughPatches, physics) {
   return (
-    intro.released && roughPatches.some((rect) => marbleOverRect(marble, rect))
+    intro.released &&
+    roughPatches.some((rect) =>
+      marbleOverRect(marble, rect, physics.collisionEpsilon ?? 0),
+    )
   );
 }
 
@@ -110,6 +113,7 @@ function physicsStep(context, dt, feedback) {
     context.marble,
     context.intro,
     roughPatchCandidates(context),
+    context.physics,
   );
   applySurfaceDrag(context, dt, overRoughPatch);
   updatePosition(context.marble, dt);

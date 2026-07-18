@@ -17,7 +17,7 @@ export function midpoint(a, b) {
   };
 }
 
-export function circleRectContact(circle, rect) {
+export function circleRectContact(circle, rect, epsilon = 0) {
   const closestX = clamp(circle.x, rect.x, rect.x + rect.w);
   const closestY = clamp(circle.y, rect.y, rect.y + rect.h);
   const dx = circle.x - closestX;
@@ -25,7 +25,7 @@ export function circleRectContact(circle, rect) {
   const distanceSq = dx * dx + dy * dy;
 
   return {
-    intersects: distanceSq <= circle.r * circle.r,
+    intersects: distanceSq <= circle.r * circle.r + epsilon,
     dx,
     dy,
     distanceSq,
