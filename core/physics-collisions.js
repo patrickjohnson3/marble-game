@@ -8,6 +8,34 @@ function collisionFeedback(normalSpeed, tangentSpeed, physics) {
   return normalSpeed + tangentSpeed * (physics.scrapeHapticScale ?? 0);
 }
 
+function deepOverlapNormal(marble, obstacle) {
+  const distances = [
+    { edge: "left", value: Math.abs(marble.x - obstacle.x), nx: -1, ny: 0 },
+    {
+      edge: "right",
+      value: Math.abs(obstacle.x + obstacle.w - marble.x),
+      nx: 1,
+      ny: 0,
+    },
+    { edge: "top", value: Math.abs(marble.y - obstacle.y), nx: 0, ny: -1 },
+    {
+      edge: "bottom",
+      value: Math.abs(obstacle.y + obstacle.h - marble.y),
+      nx: 0,
+      ny: 1,
+    },
+  ];
+  const nearest = distances.reduce((best, edge) =>
+    edge.value < best.value ? edge : best,
+  );
+
+  return {
+    nx: nearest.nx,
+    ny: nearest.ny,
+    overlap: marble.r + nearest.value,
+  };
+}
+
 export function resolveObstacleCollision(
   marble,
   obstacle,
@@ -28,14 +56,10 @@ export function resolveObstacleCollision(
   let overlap = marble.r - distance;
 
   if (distance === 0) {
-    const left = Math.abs(marble.x - obstacle.x);
-    const right = Math.abs(obstacle.x + obstacle.w - marble.x);
-    const top = Math.abs(marble.y - obstacle.y);
-    const bottom = Math.abs(obstacle.y + obstacle.h - marble.y);
-    const min = Math.min(left, right, top, bottom);
-    nx = min === left ? -1 : min === right ? 1 : 0;
-    ny = min === top ? -1 : min === bottom ? 1 : 0;
-    overlap = marble.r + min;
+    const deepOverlap = deepOverlapNormal(marble, obstacle);
+    nx = deepOverlap.nx;
+    ny = deepOverlap.ny;
+    overlap = deepOverlap.overlap;
   }
 
   marble.x += nx * overlap;

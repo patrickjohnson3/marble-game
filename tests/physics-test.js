@@ -64,6 +64,16 @@ function testDeepOverlapPushesToNearestEdge() {
   );
 }
 
+function testDeepOverlapTieBreaksTowardFirstNearestEdge() {
+  const marble = { x: 50, y: 50, vx: 0, vy: 0, r: 10 };
+  const obstacle = { x: 40, y: 40, w: 20, h: 20 };
+
+  resolveObstacleCollision(marble, obstacle, { bounce: 0.5 });
+
+  assert.equal(marble.x, 30);
+  assert.equal(marble.y, 50);
+}
+
 function testRoughPatchAddsDrag() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
 
@@ -261,6 +271,7 @@ testCircleRectContact();
 testObstacleBounce();
 testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
+testDeepOverlapTieBreaksTowardFirstNearestEdge();
 testRoughPatchAddsDrag();
 testRoughPatchDragUsesSpatialIndex();
 testLowSpeedDriftSettles();
