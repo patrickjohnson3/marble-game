@@ -43,7 +43,7 @@ export const physicsConfig = {
 };
 
 export const timing = {
-  introReleaseDelayMs: 10000,
+  introReleaseDelayMs: 5000,
   countdownTickMs: 1000,
   motionPermissionTimeoutMs: 1200,
   sensorFallbackMs: 1400,
