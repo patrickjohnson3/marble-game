@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
-import {
-  hapticTuning,
-  physicsConfig,
-  resolvedMapConfig,
-  timing,
-} from "../core/config.js";
+import { hapticTuning } from "../core/haptic-config.js";
+import { resolvedMapConfig } from "../core/map-config.js";
+import { physicsConfig } from "../core/physics-config.js";
+import { timing } from "../core/timing-config.js";
 import { createGameController } from "../core/game-controller.js";
 import { createLifecycleController } from "../core/game-lifecycle.js";
 import { resetIntroTimerState } from "../core/intro-timers.js";

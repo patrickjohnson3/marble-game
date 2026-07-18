@@ -1,15 +1,13 @@
 import assert from "node:assert/strict";
+import { hapticTuning } from "../core/haptic-config.js";
+import { baseMapConfig, resolvedMapConfig } from "../core/map-config.js";
+import { physicsConfig } from "../core/physics-config.js";
+import { timing, tuning } from "../core/timing-config.js";
+import { visualConfig } from "../core/visual-config.js";
 import {
-  baseMapConfig,
-  hapticTuning,
-  resolvedMapConfig,
-  physicsConfig,
   settingsConfig,
   settingsControls,
-  timing,
-  tuning,
-  visualConfig,
-} from "../core/config.js";
+} from "../settings/settings-config.js";
 import {
   mapObstacleElements,
   normalizeJoinedObstacleRects,

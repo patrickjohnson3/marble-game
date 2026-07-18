@@ -1,15 +1,9 @@
 import { createCameraController } from "./core/camera.js";
-import {
-  baseMapConfig,
-  resolvedMapConfig,
-  timing,
-  tuning,
-  hapticTuning,
-  visualConfig,
-  physicsConfig,
-  settingsConfig,
-  settingsControls,
-} from "./core/config.js";
+import { hapticTuning } from "./core/haptic-config.js";
+import { baseMapConfig, resolvedMapConfig } from "./core/map-config.js";
+import { physicsConfig } from "./core/physics-config.js";
+import { timing, tuning } from "./core/timing-config.js";
+import { visualConfig } from "./core/visual-config.js";
 import { applyDocumentCopy, copy } from "./core/copy.js";
 import { debugLines } from "./core/debug.js";
 import { createDomElements } from "./core/dom.js";
@@ -46,6 +40,10 @@ import {
   loadSettings,
   saveSettings as persistSettings,
 } from "./settings/settings-store.js";
+import {
+  settingsConfig,
+  settingsControls,
+} from "./settings/settings-config.js";
 import { createGameState } from "./core/state.js";
 import { createUi } from "./rendering/ui.js";
 import { createViewport } from "./platform/viewport.js";

@@ -1,10 +1,7 @@
-import {
-  hapticTuning,
-  resolvedMapConfig,
-  timing,
-  tuning,
-  visualConfig,
-} from "./config.js";
+import { hapticTuning } from "./haptic-config.js";
+import { resolvedMapConfig } from "./map-config.js";
+import { timing, tuning } from "./timing-config.js";
+import { visualConfig } from "./visual-config.js";
 import { copy } from "./copy.js";
 import { createEffectsRenderer } from "../rendering/effects.js";
 import { createHapticsController } from "./haptics.js";

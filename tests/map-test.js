@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { resolvedMapConfig } from "../core/config.js";
+import { resolvedMapConfig } from "../core/map-config.js";
 import {
   hashMapSeed,
   mapObstacleElements,
