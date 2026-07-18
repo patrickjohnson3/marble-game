@@ -43,6 +43,7 @@ export const runtimeScripts = [
   "input/keyboard-controller.js",
   "input/sensor-controller.js",
   "input/sensor-watchdog.js",
+  "maps/map-data.js",
   "platform/platform.js",
   "platform/viewport.js",
   "rendering/effects.js",
