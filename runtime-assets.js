@@ -36,6 +36,7 @@ export const runtimeScripts = [
   "core/rect-bounds.js",
   "core/spatial-index.js",
   "core/state.js",
+  "core/startup-flow.js",
   "core/timer-utils.js",
   "input/input-manager.js",
   "input/keyboard-controller.js",

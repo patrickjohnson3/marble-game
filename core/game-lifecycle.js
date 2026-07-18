@@ -1,35 +1,7 @@
 import { copy } from "./copy.js";
 import { createGameController } from "./game-controller.js";
 import { resetIntroTimerState, shouldPauseGame } from "./intro-timers.js";
-import {
-  requestFullscreenMode,
-  requestMotionPermissionIfNeeded,
-  requestWakeLock,
-} from "../platform/platform.js";
-
-function requestMotionPermissionWithTimeout({
-  requestMotionPermission,
-  timeoutMs,
-  setTimeoutFn = setTimeout,
-  clearTimeoutFn = clearTimeout,
-}) {
-  return new Promise((resolve) => {
-    let settled = false;
-    let timer = 0;
-    const finish = (allowed) => {
-      if (settled) return;
-
-      settled = true;
-      clearTimeoutFn(timer);
-      resolve(allowed);
-    };
-    timer = setTimeoutFn(() => finish("timeout"), timeoutMs);
-
-    Promise.resolve()
-      .then(requestMotionPermission)
-      .then(finish, () => finish(false));
-  });
-}
+import { startGameWithPermissions } from "./startup-flow.js";
 
 export function createLifecycleController({
   cameraController,
@@ -56,9 +28,9 @@ export function createLifecycleController({
   ui,
   spawn,
   enableMotion,
-  requestFullscreen = requestFullscreenMode,
-  requestMotionPermission = requestMotionPermissionIfNeeded,
-  keepDisplayAwake = requestWakeLock,
+  requestFullscreen,
+  requestMotionPermission,
+  keepDisplayAwake,
   setTimeoutFn = setTimeout,
   clearTimeoutFn = clearTimeout,
   now = () => performance.now(),
@@ -148,38 +120,23 @@ export function createLifecycleController({
   }
 
   async function start() {
-    startBtn.disabled = true;
-    controlsEl.hidden = true;
-
-    const permission = await requestMotionPermissionWithTimeout({
+    await startGameWithPermissions({
+      controlsEl,
+      enableMotion,
+      game,
+      keepDisplayAwake,
+      requestFullscreen,
       requestMotionPermission,
-      timeoutMs: timing.motionPermissionTimeoutMs,
+      resetGame: gameController.reset,
+      scheduleFrame,
+      sensorWatchdog,
+      settings,
+      startBtn,
+      timing,
+      ui,
       setTimeoutFn,
       clearTimeoutFn,
     });
-    if (permission === false) {
-      controlsEl.hidden = false;
-      startBtn.disabled = false;
-      ui.setHint(copy.hints.motionDenied);
-      return;
-    }
-
-    requestFullscreen({ fullscreenOnStart: settings.fullscreenEnabled });
-    keepDisplayAwake();
-    gameController.reset();
-    controlsEl.hidden = true;
-    startBtn.disabled = true;
-    enableMotion();
-    game.phase = "calibrating";
-    scheduleFrame();
-
-    ui.setHint(
-      permission === "timeout"
-        ? copy.hints.noMotionSensor
-        : copy.hints.calibrating,
-    );
-
-    sensorWatchdog.schedule();
   }
 
   function openSettings() {
