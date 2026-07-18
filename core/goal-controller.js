@@ -1,6 +1,14 @@
 import { distance } from "./geometry.js";
 import { frameDeltaToMs } from "./physics-time.js";
 
+const maxGoalCenterHoldBonus = 1;
+
+export function goalHoldMultiplier(marble, goal) {
+  const holdRadius = Math.max(goal.r - marble.r, 1);
+  const centerCloseness = 1 - Math.min(distance(marble, goal) / holdRadius, 1);
+  return 1 + centerCloseness * maxGoalCenterHoldBonus;
+}
+
 export function createGoalController({
   copy,
   hapticFeedback,
@@ -40,7 +48,10 @@ export function createGoalController({
       hapticFeedback.pulseGoal("enter");
     }
 
-    const progress = mapRuntime.addGoalHold(frameDeltaToMs(frameDelta, timing));
+    const progress = mapRuntime.addGoalHold(
+      frameDeltaToMs(frameDelta, timing) *
+        goalHoldMultiplier(marble, mapState.goal),
+    );
     terrainView.updateGoalProgress(progress);
     ui.setHint(
       "hold goal " +

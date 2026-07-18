@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import { goalHoldMultiplier } from "../core/goal-controller.js";
+
+const goal = { x: 100, y: 100, r: 50 };
+const marble = { x: 100, y: 100, r: 10 };
+
+assert.equal(goalHoldMultiplier(marble, goal), 2);
+
+assert.equal(goalHoldMultiplier({ ...marble, x: 140 }, goal), 1);
+
+const halfway = goalHoldMultiplier({ ...marble, x: 120 }, goal);
+assert.equal(halfway, 1.5);
+
+console.log("Goal controller tests passed.");
