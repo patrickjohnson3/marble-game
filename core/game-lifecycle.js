@@ -5,7 +5,6 @@ import {
   shouldPauseGame
 } from "./intro-timers.js";
 import {
-  exitFullscreenMode,
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
   requestWakeLock
@@ -61,7 +60,6 @@ export function createLifecycleController({
 	  spawn,
   enableMotion,
   requestFullscreen = requestFullscreenMode,
-  exitFullscreen = exitFullscreenMode,
   requestMotionPermission = requestMotionPermissionIfNeeded,
   keepDisplayAwake = requestWakeLock,
   setTimeoutFn = setTimeout,
@@ -152,8 +150,6 @@ export function createLifecycleController({
     startBtn.disabled = true;
     controlsEl.hidden = true;
 
-    const fullscreenRequest = requestFullscreen({ fullscreenOnStart: settings.fullscreenEnabled });
-
     const ok = await requestMotionPermissionWithTimeout({
       requestMotionPermission,
       timeoutMs: timing.motionPermissionTimeoutMs,
@@ -161,14 +157,13 @@ export function createLifecycleController({
       clearTimeoutFn
     });
     if (!ok) {
-      await fullscreenRequest;
-      if (settings.fullscreenEnabled) exitFullscreen();
       controlsEl.hidden = false;
       startBtn.disabled = false;
       ui.setHint(copy.hints.motionDenied);
       return;
     }
 
+    requestFullscreen({ fullscreenOnStart: settings.fullscreenEnabled });
     keepDisplayAwake();
     gameController.reset();
     controlsEl.hidden = true;

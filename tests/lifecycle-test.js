@@ -113,6 +113,7 @@ async function testStartRequestsFullscreenFromClickPath() {
   let fullscreenRequests = 0;
   let motionEnabled = false;
   let mapResets = 0;
+  const startCalls = [];
 
   const lifecycle = createLifecycleController({
     cameraController: {
@@ -159,14 +160,16 @@ async function testStartRequestsFullscreenFromClickPath() {
 	    trailRenderer: { clear() {} },
 	    ui: { isSettingsOpen: () => false, setHint() {} },
 	    spawn: resolvedMapConfig.spawn,
-	    enableMotion() {
+    enableMotion() {
       motionEnabled = true;
     },
     requestFullscreen() {
+      startCalls.push("fullscreen");
       fullscreenRequests++;
       return Promise.resolve();
     },
     requestMotionPermission() {
+      startCalls.push("motionPermission");
       return Promise.resolve(true);
     },
     keepDisplayAwake() {},
@@ -178,6 +181,7 @@ async function testStartRequestsFullscreenFromClickPath() {
   assert.equal(motionEnabled, true);
   assert.equal(mapResets, 1);
   assert.equal(state.game.phase, "calibrating");
+  assert.deepEqual(startCalls, ["motionPermission", "fullscreen"]);
 }
 
 async function testStartContinuesWhenMotionPermissionStalls() {
