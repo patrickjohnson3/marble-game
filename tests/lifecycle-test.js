@@ -193,6 +193,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
     physicsConfig
   });
   let motionEnabled = false;
+  let hint = "";
   let timeoutCallback = null;
 
   const lifecycle = createLifecycleController({
@@ -236,7 +237,12 @@ async function testStartContinuesWhenMotionPermissionStalls() {
     tilt: state.tilt,
     timing,
     trailRenderer: { clear() {} },
-    ui: { isSettingsOpen: () => false, setHint() {} },
+    ui: {
+      isSettingsOpen: () => false,
+      setHint(message) {
+        hint = message;
+      }
+    },
     spawn: resolvedMapConfig.spawn,
     enableMotion() {
       motionEnabled = true;
@@ -265,10 +271,94 @@ async function testStartContinuesWhenMotionPermissionStalls() {
 
   assert.equal(motionEnabled, true);
   assert.equal(state.game.phase, "calibrating");
+  assert.equal(hint, "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.");
+}
+
+async function testStartRestoresControlsWhenMotionPermissionDenied() {
+  const state = createGameState({
+    world: resolvedMapConfig.world,
+    resolvedMapConfig,
+    timing,
+    hapticTuning,
+    physicsConfig
+  });
+  let motionEnabled = false;
+  let hint = "";
+  const controlsEl = { hidden: false };
+  const startBtn = {
+    disabled: false,
+    textContent: ""
+  };
+
+  const lifecycle = createLifecycleController({
+    cameraController: {
+      camera: state.camera,
+      centerOnMarble() {},
+      resetGesture() {}
+    },
+    calibration: state.calibration,
+    controlsEl,
+    effectsRenderer: { clear() {} },
+    frameLoop: { requestRender() {} },
+    game: state.game,
+    haptics: state.haptics,
+    intro: state.intro,
+    introSequence: {
+      clearTimers() {},
+      hideMessage() {},
+      pause() {},
+      resume() {},
+      schedule() {}
+    },
+    keyboard: state.keyboard,
+    mapRenderer: { resetIntroPen() {} },
+    marble: state.marble,
+    resetMap() {},
+    resetCalibration() {},
+    scheduleFrame() {},
+    sensor: state.sensor,
+    sensorWatchdog: {
+      pause() {},
+      reset() {},
+      resume() {},
+      schedule() {}
+    },
+    settings: { fullscreenEnabled: true },
+    startBtn,
+    tilt: state.tilt,
+    timing,
+    trailRenderer: { clear() {} },
+    ui: {
+      isSettingsOpen: () => false,
+      setHint(message) {
+        hint = message;
+      }
+    },
+    spawn: resolvedMapConfig.spawn,
+    enableMotion() {
+      motionEnabled = true;
+    },
+    requestFullscreen() {
+      throw new Error("fullscreen should not be requested after denied motion permission");
+    },
+    requestMotionPermission() {
+      return Promise.resolve(false);
+    },
+    keepDisplayAwake() {},
+    tick() {}
+  });
+
+  await lifecycle.gameController.start();
+
+  assert.equal(motionEnabled, false);
+  assert.equal(controlsEl.hidden, false);
+  assert.equal(startBtn.disabled, false);
+  assert.equal(hint, "motion permission denied. check chrome site settings.");
 }
 
 testStartPauseResumeReleaseReset();
 await testStartRequestsFullscreenFromClickPath();
 await testStartContinuesWhenMotionPermissionStalls();
+await testStartRestoresControlsWhenMotionPermissionDenied();
 
 console.log("Lifecycle tests passed.");

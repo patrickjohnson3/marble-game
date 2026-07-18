@@ -26,7 +26,7 @@ function requestMotionPermissionWithTimeout({
       clearTimeoutFn(timer);
       resolve(allowed);
     };
-    timer = setTimeoutFn(() => finish(true), timeoutMs);
+    timer = setTimeoutFn(() => finish("timeout"), timeoutMs);
 
     Promise.resolve()
       .then(requestMotionPermission)
@@ -150,13 +150,13 @@ export function createLifecycleController({
     startBtn.disabled = true;
     controlsEl.hidden = true;
 
-    const ok = await requestMotionPermissionWithTimeout({
+    const permission = await requestMotionPermissionWithTimeout({
       requestMotionPermission,
       timeoutMs: timing.motionPermissionTimeoutMs,
       setTimeoutFn,
       clearTimeoutFn
     });
-    if (!ok) {
+    if (permission === false) {
       controlsEl.hidden = false;
       startBtn.disabled = false;
       ui.setHint(copy.hints.motionDenied);
@@ -172,7 +172,7 @@ export function createLifecycleController({
     game.phase = "calibrating";
     scheduleFrame();
 
-    ui.setHint(copy.hints.calibrating);
+    ui.setHint(permission === "timeout" ? copy.hints.noMotionSensor : copy.hints.calibrating);
 
     sensorWatchdog.schedule();
   }
