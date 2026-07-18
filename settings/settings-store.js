@@ -89,19 +89,14 @@ export function saveSettings({ storage, storageKey, settings }) {
 
     storage.setItem(
       storageKey,
-      JSON.stringify({
-        maxSpeed: settings.maxSpeed,
-        acceleration: settings.acceleration,
-        hapticsEnabled: settings.hapticsEnabled,
-        trailEnabled: settings.trailEnabled,
-        trailDefaultVersion: settings.trailDefaultVersion,
-        fullscreenEnabled: settings.fullscreenEnabled,
-        fpsEnabled: settings.fpsEnabled,
-        statsEnabled: settings.statsEnabled,
-        cameraMode: settings.cameraMode,
-      }),
+      JSON.stringify(
+        Object.fromEntries(
+          persistedSettingsKeys.map((key) => [key, settings[key]]),
+        ),
+      ),
     );
   } catch {
     // Persistence is optional; gameplay should still work without storage.
   }
 }
+import { persistedSettingsKeys } from "./settings-config.js";

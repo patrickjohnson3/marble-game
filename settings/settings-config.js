@@ -12,6 +12,8 @@ export const settingsConfig = {
   cameraMode: "follow",
 };
 
+export const persistedSettingsKeys = Object.keys(settingsConfig);
+
 export const cameraModes = ["follow", "lockedCenter", "predictiveLookAhead"];
 
 export const settingsControls = {
