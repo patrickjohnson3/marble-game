@@ -126,9 +126,13 @@ function physicsStep(context, dt, feedback) {
 
 export function updatePhysics(context, dt, feedback) {
   const speed = Math.hypot(context.marble.vx, context.marble.vy);
-  const steps = Math.max(
+  const uncappedSteps = Math.max(
     1,
     Math.ceil((speed * dt) / context.physics.maxStepDistance),
+  );
+  const steps = Math.min(
+    uncappedSteps,
+    context.physics.maxPhysicsSubsteps ?? Number.POSITIVE_INFINITY,
   );
   const stepDt = dt / steps;
 

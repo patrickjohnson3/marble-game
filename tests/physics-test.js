@@ -267,6 +267,40 @@ function testWallCollisionAppliesTangentialFriction() {
   assert.equal(marble.vy, 5);
 }
 
+function testPhysicsSubstepsAreCapped() {
+  const marble = { x: 50, y: 50, vx: 1000, vy: 0, r: 10 };
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 10000, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 1,
+        bounce: 0,
+        maxSpeed: 1000,
+        maxSpeedEase: 0,
+        maxStepDistance: 1,
+        maxPhysicsSubsteps: 10,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.equal(marble.x, 1050);
+}
+
 testCircleRectContact();
 testObstacleBounce();
 testGlancingImpactReportsScrapeFeedback();
@@ -278,5 +312,6 @@ testLowSpeedDriftSettles();
 testTiltCurveSoftensSmallSensorInput();
 testMaxSpeedEasesDown();
 testWallCollisionAppliesTangentialFriction();
+testPhysicsSubstepsAreCapped();
 
 console.log("Physics tests passed.");
