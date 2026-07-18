@@ -360,12 +360,19 @@ body {
   opacity: 0.82;
 }
 #debug {
+  position: fixed;
+  left: calc(12px + var(--safe-left));
+  bottom: var(--bottom-ui);
+  width: min(340px, calc(100vw - 24px - var(--safe-left) - var(--safe-right)));
+  max-height: min(34vh, 240px);
+  overflow: hidden;
   font:
-    12px/1.35 ui-monospace,
+    11px/1.35 ui-monospace,
     Menlo,
     Consolas,
     monospace;
-  opacity: 0.86;
+  opacity: 0.68;
+  pointer-events: none;
   white-space: pre-wrap;
 }
 #settingsToggle {

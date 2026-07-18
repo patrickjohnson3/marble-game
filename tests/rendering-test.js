@@ -73,6 +73,7 @@ function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
 
   ui.updateFps(1000);
   assert.equal(fpsCounter.hidden, true);
+  assert.equal(fpsCounter.attributes["aria-hidden"], "true");
 
   settings.fpsEnabled = true;
   ui.setFpsEnabled(settings.fpsEnabled);
@@ -80,6 +81,7 @@ function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
   ui.updateFps(1500);
 
   assert.equal(fpsCounter.hidden, false);
+  assert.equal(fpsCounter.attributes["aria-hidden"], "false");
   assert.equal(fpsCounter.textContent, "fps 2");
 }
 
@@ -103,6 +105,7 @@ function testStatsDefaultsHiddenAndUpdatesWhenEnabled() {
 
   ui.updateDebugPanel();
   assert.equal(debug.hidden, true);
+  assert.equal(debug.attributes["aria-hidden"], "true");
   assert.equal(debug.textContent, "");
 
   settings.statsEnabled = true;
@@ -110,6 +113,7 @@ function testStatsDefaultsHiddenAndUpdatesWhenEnabled() {
   ui.updateDebugPanel();
 
   assert.equal(debug.hidden, false);
+  assert.equal(debug.attributes["aria-hidden"], "false");
   assert.equal(debug.textContent, "phase: running");
 }
 

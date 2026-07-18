@@ -43,11 +43,13 @@ export function createUi({
 
   function setFpsEnabled(enabled) {
     fpsCounter.hidden = !enabled;
+    fpsCounter.setAttribute("aria-hidden", String(!enabled));
     if (!enabled) resetFpsSample();
   }
 
   function setStatsEnabled(enabled) {
     debug.hidden = !enabled;
+    debug.setAttribute("aria-hidden", String(!enabled));
     if (enabled) updateDebugPanel();
   }
 
