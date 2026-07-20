@@ -114,6 +114,17 @@ function testTemplateMapGenerationIsDeterministicAndGridAligned() {
     ),
     true,
   );
+
+  assert.notDeepEqual(
+    generated,
+    generateTemplateMapVariant({
+      baseMapConfig: resolvedMapConfig,
+      seed: "other-seed",
+      index: 2,
+      difficulty: 3,
+      template: proceduralMapTemplates[0],
+    }),
+  );
 }
 
 testTemplateMapGenerationIsDeterministicAndGridAligned();

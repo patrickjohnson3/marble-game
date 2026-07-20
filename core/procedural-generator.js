@@ -83,6 +83,46 @@ export function pickRandom(random, values) {
   return values[Math.floor(random() * values.length)];
 }
 
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function jitterRect(rect, random) {
+  const isHorizontal = rect.w >= rect.h;
+  const longAxis = isHorizontal ? "w" : "h";
+  const shortAxis = isHorizontal ? "h" : "w";
+  const nextRect = {
+    ...rect,
+    x: clamp(rect.x + randomBetween(random, -0.018, 0.018), 0.06, 0.9),
+    y: clamp(rect.y + randomBetween(random, -0.018, 0.018), 0.06, 0.9),
+  };
+
+  nextRect[longAxis] = clamp(
+    rect[longAxis] * randomBetween(random, 0.9, 1.12),
+    0.08,
+    0.55,
+  );
+  nextRect[shortAxis] = rect[shortAxis];
+  return nextRect;
+}
+
+function jitterPatch(rect, random) {
+  return {
+    ...rect,
+    x: clamp(rect.x + randomBetween(random, -0.025, 0.025), 0.06, 0.86),
+    y: clamp(rect.y + randomBetween(random, -0.025, 0.025), 0.06, 0.86),
+    w: clamp(rect.w * randomBetween(random, 0.9, 1.16), 0.08, 0.24),
+    h: clamp(rect.h * randomBetween(random, 0.9, 1.16), 0.08, 0.18),
+  };
+}
+
+function jitterPoint(point, random) {
+  return {
+    x: clamp(point.x + randomBetween(random, -0.025, 0.025), 0.1, 0.9),
+    y: clamp(point.y + randomBetween(random, -0.025, 0.025), 0.1, 0.9),
+  };
+}
+
 function gridAlignedSize(value, gridSize) {
   return Math.max(gridSize, snapToGrid(value, gridSize));
 }
@@ -125,16 +165,16 @@ export function generateTemplateMapVariant({
   const gridSize = baseMapConfig.grid.size;
   const spawn = {
     ...baseMapConfig.spawn,
-    ...templatePointToWorld(selectedTemplate.spawn, world, gridSize),
+    ...templatePointToWorld(jitterPoint(selectedTemplate.spawn, random), world, gridSize),
   };
   const goal = {
-    ...templatePointToWorld(selectedTemplate.goal, world, gridSize),
+    ...templatePointToWorld(jitterPoint(selectedTemplate.goal, random), world, gridSize),
     r: 95,
     holdMs: 5000,
   };
   const wallElements = selectedTemplate.walls.map((rect) =>
     templateRectToElement({
-      rect,
+      rect: jitterRect(rect, random),
       type: MAP_ELEMENT_TYPES.obstacle,
       world,
       gridSize,
@@ -142,7 +182,7 @@ export function generateTemplateMapVariant({
   );
   const roughPatchElements = selectedTemplate.roughPatches.map((rect) =>
     templateRectToElement({
-      rect,
+      rect: jitterPatch(rect, random),
       type: MAP_ELEMENT_TYPES.roughPatch,
       world,
       gridSize,
@@ -150,7 +190,7 @@ export function generateTemplateMapVariant({
   );
   const icePatchElements = selectedTemplate.icePatches.map((rect) =>
     templateRectToElement({
-      rect,
+      rect: jitterPatch(rect, random),
       type: MAP_ELEMENT_TYPES.icePatch,
       world,
       gridSize,
