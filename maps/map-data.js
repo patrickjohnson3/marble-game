@@ -91,6 +91,10 @@ const defaultElements = [
   { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
   { type: "icePatch", x: 1220, y: 1280, w: 260, h: 210 },
   { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 },
+  { type: "roughPatch", x: 1540, y: 300, w: 260, h: 200 },
+  { type: "icePatch", x: 760, y: 1040, w: 230, h: 190 },
+  { type: "roughPatch", x: 1680, y: 1600, w: 300, h: 230 },
+  { type: "icePatch", x: 280, y: 1320, w: 220, h: 180 },
 ];
 
 const generatedOneElements = [
@@ -115,6 +119,10 @@ const generatedOneElements = [
   { type: "roughPatch", x: 720, y: 1320, w: 350, h: 230 },
   { type: "icePatch", x: 1260, y: 1320, w: 260, h: 200 },
   { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 },
+  { type: "roughPatch", x: 1080, y: 620, w: 280, h: 220 },
+  { type: "icePatch", x: 260, y: 1460, w: 220, h: 180 },
+  { type: "roughPatch", x: 1640, y: 940, w: 260, h: 210 },
+  { type: "icePatch", x: 920, y: 1840, w: 240, h: 180 },
 ];
 
 export const mapVariants = [
