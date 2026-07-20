@@ -104,6 +104,19 @@ export class FakeCanvasContext {
     this.calls.push(["clip"]);
   }
 
+  ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle) {
+    this.calls.push([
+      "ellipse",
+      x,
+      y,
+      radiusX,
+      radiusY,
+      rotation,
+      startAngle,
+      endAngle,
+    ]);
+  }
+
   fill() {
     this.calls.push(["fill"]);
   }

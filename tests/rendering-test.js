@@ -262,7 +262,12 @@ try {
   assert.equal(
     icePatchCanvas.context.calls.some((call) => call[0] === "lineTo"),
     true,
-    "ice patch canvas should draw slick streaks",
+    "ice patch canvas should draw cracks",
+  );
+  assert.equal(
+    icePatchCanvas.context.calls.some((call) => call[0] === "ellipse"),
+    true,
+    "ice patch canvas should draw cloudy frost",
   );
 
   renderRoughPatches(roughPatchContainer, [{ x: 20, y: 30, w: 80, h: 60 }], {
