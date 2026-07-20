@@ -129,3 +129,10 @@ export function screenAdjusted(
 
   return [tx, ty];
 }
+
+export function createViewport(target = globalThis) {
+  return {
+    width: () => target.innerWidth,
+    height: () => target.innerHeight,
+  };
+}

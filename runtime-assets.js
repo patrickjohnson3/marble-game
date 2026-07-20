@@ -45,7 +45,6 @@ export const runtimeScripts = [
   "input/sensor-watchdog.js",
   "maps/map-data.js",
   "platform/platform.js",
-  "platform/viewport.js",
   "rendering/effects.js",
   "rendering/map-renderer.js",
   "rendering/marble-view.js",

@@ -26,6 +26,7 @@ import {
   requestMotionPermissionIfNeeded,
   requestWakeLock,
   screenAdjusted,
+  createViewport,
 } from "./platform/platform.js";
 import {
   setupFeedback,
@@ -49,7 +50,6 @@ import {
 } from "./settings/settings-config.js";
 import { createGameState } from "./core/state.js";
 import { createUi } from "./rendering/ui.js";
-import { createViewport } from "./platform/viewport.js";
 
 function showBootError(documentRef, error) {
   const hintEl = documentRef.getElementById("hint");
