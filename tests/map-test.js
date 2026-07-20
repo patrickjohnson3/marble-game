@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { circleRectContact } from "../core/geometry.js";
 import { resolvedMapConfig } from "../core/map-config.js";
 import {
   hashMapSeed,
@@ -180,6 +181,31 @@ function testProceduralMapScoringSummarizesDifficultySignals() {
 }
 
 testProceduralMapScoringSummarizesDifficultySignals();
+
+function testProceduralMapGenerationKeepsSpawnAndGoalClear() {
+  const variant = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    seed: "clear-zone-seed",
+    index: 1,
+    difficulty: 2,
+    template: proceduralMapTemplates[1],
+  });
+
+  variant.elements.forEach((element) => {
+    assert.equal(
+      circleRectContact({ ...variant.spawn, r: variant.spawn.r * 4 }, element)
+        .intersects,
+      false,
+    );
+    assert.equal(
+      circleRectContact({ ...variant.goal, r: variant.goal.r * 1.45 }, element)
+        .intersects,
+      false,
+    );
+  });
+}
+
+testProceduralMapGenerationKeepsSpawnAndGoalClear();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;

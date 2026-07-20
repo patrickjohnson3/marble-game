@@ -1,4 +1,5 @@
 import { hashMapSeed } from "./map-variants.js";
+import { circleRectContact } from "./geometry.js";
 import { MAP_ELEMENT_TYPES } from "./map-elements.js";
 import { snapToGrid } from "./map-obstacles.js";
 
@@ -151,6 +152,16 @@ function templatePointToWorld(point, world, gridSize) {
   };
 }
 
+function outsideClearZones(element, spawn, goal) {
+  const spawnClearZone = { ...spawn, r: spawn.r * 4 };
+  const goalClearZone = { ...goal, r: goal.r * 1.45 };
+
+  return (
+    !circleRectContact(spawnClearZone, element).intersects &&
+    !circleRectContact(goalClearZone, element).intersects
+  );
+}
+
 function rectArea(rect) {
   return rect.w * rect.h;
 }
@@ -253,6 +264,11 @@ export function generateTemplateMapVariant({
       gridSize,
     }),
   );
+  const elements = [
+    ...wallElements,
+    ...roughPatchElements,
+    ...icePatchElements,
+  ].filter((element) => outsideClearZones(element, spawn, goal));
 
   return {
     id: "generated-" + difficulty + "-" + index,
@@ -260,7 +276,7 @@ export function generateTemplateMapVariant({
     templateId: selectedTemplate.id,
     spawn,
     goal,
-    elements: [...wallElements, ...roughPatchElements, ...icePatchElements],
+    elements,
   };
 }
 
