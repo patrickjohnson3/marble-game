@@ -21,6 +21,10 @@ export const proceduralMapTemplates = [
       { x: 0.58, y: 0.74, w: 0.18, h: 0.1 },
     ],
     icePatches: [{ x: 0.66, y: 0.3, w: 0.12, h: 0.1 }],
+    clusters: [
+      { x: 0.18, y: 0.48 },
+      { x: 0.76, y: 0.62 },
+    ],
   },
   {
     id: "switchbacks",
@@ -39,6 +43,10 @@ export const proceduralMapTemplates = [
       { x: 0.58, y: 0.2, w: 0.14, h: 0.12 },
     ],
     icePatches: [{ x: 0.42, y: 0.66, w: 0.16, h: 0.1 }],
+    clusters: [
+      { x: 0.78, y: 0.36 },
+      { x: 0.24, y: 0.28 },
+    ],
   },
   {
     id: "islands",
@@ -59,6 +67,11 @@ export const proceduralMapTemplates = [
     icePatches: [
       { x: 0.2, y: 0.3, w: 0.14, h: 0.1 },
       { x: 0.5, y: 0.62, w: 0.14, h: 0.1 },
+    ],
+    clusters: [
+      { x: 0.42, y: 0.22 },
+      { x: 0.76, y: 0.46 },
+      { x: 0.22, y: 0.68 },
     ],
   },
 ];
@@ -115,6 +128,24 @@ function jitterPatch(rect, random) {
     w: clamp(rect.w * randomBetween(random, 0.9, 1.16), 0.08, 0.24),
     h: clamp(rect.h * randomBetween(random, 0.9, 1.16), 0.08, 0.18),
   };
+}
+
+function clusterRects(cluster, random) {
+  const size = randomBetween(random, 0.045, 0.07);
+  const horizontal = {
+    x: cluster.x + randomBetween(random, -0.025, 0.025),
+    y: cluster.y + randomBetween(random, -0.018, 0.018),
+    w: size * randomBetween(random, 1.8, 2.4),
+    h: 0.012,
+  };
+  const vertical = {
+    x: cluster.x + randomBetween(random, -0.012, 0.02),
+    y: cluster.y + randomBetween(random, -0.03, 0.02),
+    w: 0.012,
+    h: size * randomBetween(random, 1.5, 2.1),
+  };
+
+  return [jitterRect(horizontal, random), jitterRect(vertical, random)];
 }
 
 function jitterPoint(point, random) {
@@ -288,6 +319,16 @@ export function generateTemplateMapVariant({
       gridSize,
     }),
   );
+  const clusterWallElements = (selectedTemplate.clusters ?? [])
+    .flatMap((cluster) => clusterRects(cluster, random))
+    .map((rect) =>
+      templateRectToElement({
+        rect,
+        type: MAP_ELEMENT_TYPES.obstacle,
+        world,
+        gridSize,
+      }),
+    );
   const roughPatchElements = selectedTemplate.roughPatches.map((rect) =>
     templateRectToElement({
       rect: jitterPatch(rect, random),
@@ -306,6 +347,7 @@ export function generateTemplateMapVariant({
   );
   const elements = [
     ...wallElements,
+    ...clusterWallElements,
     ...roughPatchElements,
     ...icePatchElements,
   ].filter((element) => outsideClearZones(element, spawn, goal));

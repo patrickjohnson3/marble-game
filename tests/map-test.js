@@ -251,6 +251,34 @@ function testProceduralMapGenerationRespectsElementBudgets() {
 
 testProceduralMapGenerationRespectsElementBudgets();
 
+function testProceduralMapTemplatesAddObstacleClusters() {
+  const sparseTemplate = { ...proceduralMapTemplates[0], clusters: [] };
+  const clustered = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    seed: "cluster-seed",
+    index: 1,
+    difficulty: 3,
+    template: proceduralMapTemplates[0],
+  });
+  const sparse = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    seed: "cluster-seed",
+    index: 1,
+    difficulty: 3,
+    template: sparseTemplate,
+  });
+  const clusteredObstacleCount = clustered.elements.filter(
+    (element) => element.type === "obstacle",
+  ).length;
+  const sparseObstacleCount = sparse.elements.filter(
+    (element) => element.type === "obstacle",
+  ).length;
+
+  assert.equal(clusteredObstacleCount > sparseObstacleCount, true);
+}
+
+testProceduralMapTemplatesAddObstacleClusters();
+
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;
 
