@@ -1,4 +1,6 @@
 import { hashMapSeed } from "./map-variants.js";
+import { MAP_ELEMENT_TYPES } from "./map-elements.js";
+import { snapToGrid } from "./map-obstacles.js";
 
 export const proceduralMapTemplates = [
   {
@@ -79,4 +81,88 @@ export function randomBetween(random, min, max) {
 export function pickRandom(random, values) {
   if (!Array.isArray(values) || values.length === 0) return null;
   return values[Math.floor(random() * values.length)];
+}
+
+function gridAlignedSize(value, gridSize) {
+  return Math.max(gridSize, snapToGrid(value, gridSize));
+}
+
+function gridAlignedPosition(value, size, max, gridSize) {
+  return snapToGrid(Math.min(Math.max(0, value), max - size), gridSize);
+}
+
+function templateRectToElement({ rect, type, world, gridSize }) {
+  const w = gridAlignedSize(rect.w * world.width, gridSize);
+  const h = gridAlignedSize(rect.h * world.height, gridSize);
+
+  return {
+    type,
+    x: gridAlignedPosition(rect.x * world.width, w, world.width, gridSize),
+    y: gridAlignedPosition(rect.y * world.height, h, world.height, gridSize),
+    w,
+    h,
+  };
+}
+
+function templatePointToWorld(point, world, gridSize) {
+  return {
+    x: snapToGrid(point.x * world.width, gridSize),
+    y: snapToGrid(point.y * world.height, gridSize),
+  };
+}
+
+export function generateTemplateMapVariant({
+  baseMapConfig,
+  difficulty = 1,
+  index = 0,
+  seed = baseMapConfig?.seed,
+  template = null,
+}) {
+  const random = createSeededRandom(seed + ":" + index + ":" + difficulty);
+  const selectedTemplate =
+    template ?? pickRandom(random, proceduralMapTemplates) ?? proceduralMapTemplates[0];
+  const world = baseMapConfig.world;
+  const gridSize = baseMapConfig.grid.size;
+  const spawn = {
+    ...baseMapConfig.spawn,
+    ...templatePointToWorld(selectedTemplate.spawn, world, gridSize),
+  };
+  const goal = {
+    ...templatePointToWorld(selectedTemplate.goal, world, gridSize),
+    r: 95,
+    holdMs: 5000,
+  };
+  const wallElements = selectedTemplate.walls.map((rect) =>
+    templateRectToElement({
+      rect,
+      type: MAP_ELEMENT_TYPES.obstacle,
+      world,
+      gridSize,
+    }),
+  );
+  const roughPatchElements = selectedTemplate.roughPatches.map((rect) =>
+    templateRectToElement({
+      rect,
+      type: MAP_ELEMENT_TYPES.roughPatch,
+      world,
+      gridSize,
+    }),
+  );
+  const icePatchElements = selectedTemplate.icePatches.map((rect) =>
+    templateRectToElement({
+      rect,
+      type: MAP_ELEMENT_TYPES.icePatch,
+      world,
+      gridSize,
+    }),
+  );
+
+  return {
+    id: "generated-" + difficulty + "-" + index,
+    difficulty,
+    templateId: selectedTemplate.id,
+    spawn,
+    goal,
+    elements: [...wallElements, ...roughPatchElements, ...icePatchElements],
+  };
 }

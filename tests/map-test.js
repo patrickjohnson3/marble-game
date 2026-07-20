@@ -14,6 +14,10 @@ import {
 } from "../core/map.js";
 import { createMapProgression } from "../core/map-progression.js";
 import {
+  generateTemplateMapVariant,
+  proceduralMapTemplates,
+} from "../core/procedural-generator.js";
+import {
   nextProceduralMapVariant,
   resolveInitialMapConfig,
   resolveProceduralMapConfig,
@@ -78,6 +82,41 @@ function testProceduralMapBoundaryWrapsVariantSelection() {
 }
 
 testProceduralMapBoundaryWrapsVariantSelection();
+
+function testTemplateMapGenerationIsDeterministicAndGridAligned() {
+  const generated = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    seed: "same-seed",
+    index: 2,
+    difficulty: 3,
+    template: proceduralMapTemplates[0],
+  });
+  const repeated = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    seed: "same-seed",
+    index: 2,
+    difficulty: 3,
+    template: proceduralMapTemplates[0],
+  });
+
+  assert.deepEqual(generated, repeated);
+  assert.equal(generated.id, "generated-3-2");
+  assert.equal(generated.templateId, proceduralMapTemplates[0].id);
+  assert.equal(generated.spawn.x % resolvedMapConfig.grid.size, 0);
+  assert.equal(generated.goal.y % resolvedMapConfig.grid.size, 0);
+  assert.equal(
+    generated.elements.every(
+      (element) =>
+        element.x % resolvedMapConfig.grid.size === 0 &&
+        element.y % resolvedMapConfig.grid.size === 0 &&
+        element.w % resolvedMapConfig.grid.size === 0 &&
+        element.h % resolvedMapConfig.grid.size === 0,
+    ),
+    true,
+  );
+}
+
+testTemplateMapGenerationIsDeterministicAndGridAligned();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;
