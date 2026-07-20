@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { hapticTuning, physicsConfig, timing } from "../core/game-config.js";
 import { resolvedMapConfig } from "../core/map-config.js";
-import { createGameController } from "../core/game-controller.js";
 import { createLifecycleController } from "../core/game-lifecycle.js";
 import { resetIntroTimerState } from "../core/intro-timers.js";
 import { createGameState } from "../core/state.js";
@@ -17,7 +16,7 @@ function createLifecycleHarness() {
   let resets = 0;
   let pausedBySettings = false;
 
-  const controller = createGameController({
+  const controller = {
     start() {
       controller.reset();
       state.game.phase = "calibrating";
@@ -52,7 +51,7 @@ function createLifecycleHarness() {
       controller.resume();
     },
     tick() {},
-  });
+  };
 
   function releaseMap() {
     state.intro.released = true;

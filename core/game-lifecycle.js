@@ -1,5 +1,4 @@
 import { copy } from "./copy.js";
-import { createGameController } from "./game-controller.js";
 import { resetIntroTimerState, shouldPauseGame } from "./intro-timers.js";
 import { startGameWithPermissions } from "./startup-flow.js";
 
@@ -152,7 +151,7 @@ export function createLifecycleController({
     }
   }
 
-  const gameController = createGameController({
+  const gameController = {
     start,
     reset: resetGameState,
     pause: pauseGame,
@@ -160,7 +159,7 @@ export function createLifecycleController({
     openSettings,
     closeSettings: closeSettingsModal,
     tick,
-  });
+  };
 
   return {
     gameController,
