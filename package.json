@@ -2,7 +2,8 @@
   "type": "module",
   "scripts": {
     "test": "node test-all.js",
-    "bump-cache": "node bump-cache-version.js",
+    "sync-cache": "node bump-cache-version.js",
+    "bump-cache": "npm run sync-cache",
     "check-cache": "node check-cache-version.js",
     "lint": "eslint .",
     "format": "prettier --write .",
