@@ -28,7 +28,6 @@ export const runtimeScripts = [
   "core/map-validation-messages.js",
   "core/map-validation.js",
   "core/map-variants.js",
-  "core/map.js",
   "core/physics-collisions.js",
   "core/physics.js",
   "core/rect-bounds.js",

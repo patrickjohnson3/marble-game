@@ -6,18 +6,22 @@ import {
   resolvedMapConfig,
 } from "../core/map-config.js";
 import {
-  hashMapSeed,
   mapObstacleElements,
   mapRoughPatchElements,
+} from "../core/map-elements.js";
+import {
   normalizeJoinedObstacleRects,
+  snapRectToGrid,
+  snapToGrid,
+} from "../core/map-obstacles.js";
+import {
+  hashMapSeed,
   resolveMapVariantConfig,
   resolveSeededMapConfig,
   selectNextMapVariant,
   selectSeededMapVariant,
-  snapRectToGrid,
-  snapToGrid,
-  validateMapConfig,
-} from "../core/map.js";
+} from "../core/map-variants.js";
+import { validateMapConfig } from "../core/map-validation.js";
 import { createMapProgression } from "../core/map-progression.js";
 import {
   generateValidProceduralMapVariants,

@@ -1,6 +1,9 @@
 import { circleRectContact } from "./geometry.js";
+import { MAP_ELEMENT_TYPES, mapObstacleElements } from "./map-elements.js";
+import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { hasReachableGoal } from "./map-reachability.js";
 import { mapValidationMessages } from "./map-validation-messages.js";
+import { validMapVariants } from "./map-variants.js";
 
 function isMultipleOf(value, size) {
   return Math.abs(value / size - Math.round(value / size)) < 0.000001;
@@ -115,15 +118,9 @@ function validateRect(rect, { world, label, errors }) {
 export function validateMapConfig(
   config,
   { normalizedObstacles, spawn } = {},
-  {
-    elementTypes,
-    mapObstacleElements,
-    normalizeJoinedObstacleRects,
-    validMapVariants,
-  },
 ) {
   const errors = [];
-  const allowedTypes = new Set(Object.values(elementTypes));
+  const allowedTypes = new Set(Object.values(MAP_ELEMENT_TYPES));
   const world = config?.world ?? {};
   const elements = Array.isArray(config?.elements) ? config.elements : [];
   const objectElements = elements.filter(

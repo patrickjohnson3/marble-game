@@ -2,8 +2,8 @@ import {
   mapIcePatchElements,
   mapObstacleElements,
   mapRoughPatchElements,
-  normalizeJoinedObstacleRects,
-} from "./map.js";
+} from "./map-elements.js";
+import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { rectBounds } from "./rect-bounds.js";
 import { createSpatialIndex } from "./spatial-index.js";
 

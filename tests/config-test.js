@@ -11,12 +11,10 @@ import {
   settingsConfig,
   settingsControls,
 } from "../settings/settings-config.js";
-import {
-  mapObstacleElements,
-  normalizeJoinedObstacleRects,
-  resolveMapVariantConfig,
-  validateMapConfig,
-} from "../core/map.js";
+import { mapObstacleElements } from "../core/map-elements.js";
+import { normalizeJoinedObstacleRects } from "../core/map-obstacles.js";
+import { resolveMapVariantConfig } from "../core/map-variants.js";
+import { validateMapConfig } from "../core/map-validation.js";
 
 function assertPositiveNumber(value, label) {
   assert.equal(Number.isFinite(value), true, label + " must be finite");

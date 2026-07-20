@@ -9,7 +9,7 @@ import {
   mapEdgeWalls,
   setReleasedBounds as setReleasedMapBounds,
   updateIntroBounds as updateIntroMapBounds,
-} from "./map.js";
+} from "./map-bounds.js";
 import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";

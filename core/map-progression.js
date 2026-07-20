@@ -1,4 +1,4 @@
-import { validateMapConfig } from "./map.js";
+import { validateMapConfig } from "./map-validation.js";
 import {
   resolveMapVariantConfig,
   selectNextMapVariant,

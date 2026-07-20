@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { resolveSeededMapConfig, validateMapConfig } from "../core/map.js";
+import { validateMapConfig } from "../core/map-validation.js";
+import { resolveSeededMapConfig } from "../core/map-variants.js";
 import { hasReachableGoal } from "../core/map-reachability.js";
 import { mapValidationMessages } from "../core/map-validation-messages.js";
 import {
