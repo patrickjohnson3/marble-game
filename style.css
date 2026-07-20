@@ -29,21 +29,33 @@ body {
   inset: 0;
   overflow: hidden;
   background: #101114;
+  --camera-x: 0px;
+  --camera-y: 0px;
+  --camera-scale: 1;
+}
+#game::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(#ffffff08 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff08 1px, transparent 1px),
+    radial-gradient(circle at center, #2a2d35, #101114 72%);
+  background-position:
+    var(--camera-x) var(--camera-y),
+    var(--camera-x) var(--camera-y),
+    center;
+  background-size:
+    calc(42px * var(--camera-scale)) calc(42px * var(--camera-scale)),
+    calc(42px * var(--camera-scale)) calc(42px * var(--camera-scale)),
+    100% 100%;
 }
 #world {
   position: absolute;
   left: 0;
   top: 0;
   transform-origin: 0 0;
-  background:
-    linear-gradient(#ffffff08 1px, transparent 1px),
-    linear-gradient(90deg, #ffffff08 1px, transparent 1px),
-    radial-gradient(circle at center, #2a2d35, #101114 72%);
-  background-size:
-    42px 42px,
-    42px 42px,
-    100% 100%;
-  will-change: transform;
 }
 .wallCanvas,
 .obstacleCanvas {
