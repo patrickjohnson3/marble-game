@@ -27,11 +27,6 @@ import {
   proceduralMapTemplates,
   scoreProceduralMapVariant,
 } from "../core/procedural-generator.js";
-import {
-  nextProceduralMapVariant,
-  resolveInitialMapConfig,
-  resolveProceduralMapConfig,
-} from "../core/procedural-map.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import {
@@ -78,15 +73,15 @@ testSeededMapVariantSelection();
 
 function testProceduralMapBoundaryWrapsVariantSelection() {
   assert.equal(
-    resolveInitialMapConfig(simpleSeededMapConfig).variantId,
+    resolveSeededMapConfig(simpleSeededMapConfig).variantId,
     "only",
   );
   assert.equal(
-    resolveProceduralMapConfig(simpleSeededMapConfig, "only").variantId,
+    resolveMapVariantConfig(simpleSeededMapConfig, "only").variantId,
     "only",
   );
   assert.equal(
-    nextProceduralMapVariant(simpleSeededMapConfig, "missing").id,
+    selectNextMapVariant(simpleSeededMapConfig.variants, "missing").id,
     "only",
   );
 }

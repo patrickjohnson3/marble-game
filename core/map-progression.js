@@ -1,8 +1,8 @@
 import { validateMapConfig } from "./map.js";
 import {
-  nextProceduralMapVariant,
-  resolveProceduralMapConfig,
-} from "./procedural-map.js";
+  resolveMapVariantConfig,
+  selectNextMapVariant,
+} from "./map-variants.js";
 
 export function createMapProgression({
   baseMapConfig,
@@ -23,7 +23,7 @@ export function createMapProgression({
     const currentMap = getCurrentMap();
     if (!currentMap || typeof currentMap !== "object") return null;
 
-    return nextProceduralMapVariant(baseMapConfig, currentMap.variantId);
+    return selectNextMapVariant(baseMapConfig.variants, currentMap.variantId);
   }
 
   function blockAdvance(message) {
@@ -39,11 +39,7 @@ export function createMapProgression({
       return blockAdvance(copy.goalNoNextMap);
     }
 
-    const nextMap = resolveProceduralMapConfig(
-      baseMapConfig,
-      variant.id,
-      variant.id,
-    );
+    const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id, variant.id);
     const validationErrors = validateMapConfig(nextMap);
     if (validationErrors.length > 0) {
       logger.error("Invalid next map:", validationErrors);
