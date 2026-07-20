@@ -166,9 +166,9 @@ export function proceduralElementBudget(difficulty) {
   const level = Math.min(Math.max(Math.round(difficulty), 1), 3);
 
   return {
-    icePatch: level === 1 ? 1 : 2,
-    obstacle: 4 + level,
-    roughPatch: level === 1 ? 2 : 3,
+    icePatch: level === 1 ? 2 : 3,
+    obstacle: 6 + level,
+    roughPatch: level === 1 ? 3 : 4,
   };
 }
 
