@@ -46,7 +46,6 @@ export const runtimeScripts = [
   "rendering/ice-patch-rendering.js",
   "rendering/obstacle-rendering.js",
   "rendering/rough-patch-rendering.js",
-  "rendering/terrain-view.js",
   "rendering/trail.js",
   "rendering/wall-rendering.js",
   "rendering/ui.js",

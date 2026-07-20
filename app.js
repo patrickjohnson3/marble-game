@@ -28,11 +28,13 @@ import { createMapProgression } from "./core/map-progression.js";
 import { createMapRuntime } from "./core/map-runtime.js";
 import { createEffectsRenderer } from "./rendering/effects.js";
 import { renderIcePatches } from "./rendering/ice-patch-rendering.js";
-import { createMapRenderer } from "./rendering/map-renderer.js";
+import {
+  createMapRenderer,
+  createTerrainView,
+} from "./rendering/map-renderer.js";
 import { createMarbleView } from "./rendering/marble-view.js";
 import { renderObstacleWalls } from "./rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "./rendering/rough-patch-rendering.js";
-import { createTerrainView } from "./rendering/terrain-view.js";
 import { createTrailRenderer } from "./rendering/trail.js";
 import { renderOuterWalls } from "./rendering/wall-rendering.js";
 import { createInputManager } from "./input/input-manager.js";

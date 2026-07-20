@@ -7,7 +7,7 @@ import {
   renderOuterWalls,
   wallFrameGeometry,
 } from "../rendering/wall-rendering.js";
-import { createTerrainView } from "../rendering/terrain-view.js";
+import { createTerrainView } from "../rendering/map-renderer.js";
 import { createUi } from "../rendering/ui.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
