@@ -43,7 +43,7 @@ body {
     radial-gradient(circle at 72% 64%, #00000012 0 1px, transparent 2px),
     linear-gradient(#ffffff08 1px, transparent 1px),
     linear-gradient(90deg, #ffffff08 1px, transparent 1px),
-    radial-gradient(circle at center, #2a2d35, #101114 72%);
+    radial-gradient(circle at center, #191b20, #101114 86%);
   background-position:
     calc(var(--camera-x) * 0.72) calc(var(--camera-y) * 0.72),
     calc(var(--camera-x) * 0.55) calc(var(--camera-y) * 0.55),
