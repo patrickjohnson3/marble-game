@@ -17,6 +17,7 @@ import { createMapProgression } from "../core/map-progression.js";
 import {
   generateValidProceduralMapVariants,
   generateTemplateMapVariant,
+  proceduralScoreFitsDifficulty,
   proceduralMapTemplates,
   scoreProceduralMapVariant,
 } from "../core/procedural-generator.js";
@@ -147,6 +148,7 @@ function testValidProceduralMapGenerationRetriesInvalidCandidates() {
   assert.equal(variants.length, 2);
   assert.equal(calls > variants.length, true);
   variants.forEach((variant) => {
+    assert.equal(Number.isFinite(variant.score.score), true);
     assert.deepEqual(
       validateMapConfig({
         ...resolvedMapConfig,
@@ -174,6 +176,7 @@ function testProceduralMapScoringSummarizesDifficultySignals() {
   assert.equal(score.terrainCount > 0, true);
   assert.equal(score.spawnGoalDistance > 0, true);
   assert.equal(score.obstacleDensity > 0, true);
+  assert.equal(proceduralScoreFitsDifficulty(score, variant.difficulty), true);
 }
 
 testProceduralMapScoringSummarizesDifficultySignals();

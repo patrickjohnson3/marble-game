@@ -194,6 +194,20 @@ export function scoreProceduralMapVariant(variant, world) {
   };
 }
 
+export function proceduralDifficultyRange(difficulty) {
+  const level = Math.min(Math.max(Math.round(difficulty), 1), 3);
+
+  return {
+    min: 40 + (level - 1) * 8,
+    max: 90 + (level - 1) * 14,
+  };
+}
+
+export function proceduralScoreFitsDifficulty(score, difficulty) {
+  const range = proceduralDifficultyRange(difficulty);
+  return score.score >= range.min && score.score <= range.max;
+}
+
 export function generateTemplateMapVariant({
   baseMapConfig,
   difficulty = 1,
@@ -271,9 +285,16 @@ export function generateValidProceduralMapVariants({
       ...baseMapConfig,
       ...candidate,
     };
+    const score = scoreProceduralMapVariant(candidate, baseMapConfig.world);
 
-    if (validateMapConfig(validationConfig).length === 0) {
-      variants.push(candidate);
+    if (
+      validateMapConfig(validationConfig).length === 0 &&
+      proceduralScoreFitsDifficulty(score, difficulty)
+    ) {
+      variants.push({
+        ...candidate,
+        score,
+      });
     }
   }
 
