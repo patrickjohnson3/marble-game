@@ -1,6 +1,26 @@
 const mapScale = 2;
 
+function rangesTouchOrOverlap(aStart, aEnd, bStart, bEnd) {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
+function isHorizontalObstacle(element) {
+  return element.type === "obstacle" && element.w >= element.h;
+}
+
 function scaleMapElement(element) {
+  if (element.type === "obstacle") {
+    const isHorizontal = isHorizontalObstacle(element);
+
+    return {
+      ...element,
+      x: element.x * mapScale,
+      y: element.y * mapScale,
+      w: isHorizontal ? element.w * mapScale : element.w,
+      h: isHorizontal ? element.h : element.h * mapScale,
+    };
+  }
+
   return {
     ...element,
     x: element.x * mapScale,
@@ -8,6 +28,37 @@ function scaleMapElement(element) {
     w: element.w * mapScale,
     h: element.h * mapScale,
   };
+}
+
+function trimScaledObstacleJoinOverhangs(elements) {
+  const scaledElements = elements.map(scaleMapElement);
+  const horizontalObstacles = scaledElements.filter(isHorizontalObstacle);
+  const verticalObstacles = scaledElements.filter(
+    (element) => element.type === "obstacle" && !isHorizontalObstacle(element),
+  );
+
+  for (const horizontal of horizontalObstacles) {
+    for (const vertical of verticalObstacles) {
+      const horizontalRight = horizontal.x + horizontal.w;
+      const verticalRight = vertical.x + vertical.w;
+      const threshold = Math.max(horizontal.h, vertical.w);
+
+      if (
+        rangesTouchOrOverlap(
+          horizontal.y,
+          horizontal.y + horizontal.h,
+          vertical.y,
+          vertical.y + vertical.h,
+        ) &&
+        horizontalRight > verticalRight &&
+        Math.abs(horizontalRight - verticalRight) <= threshold
+      ) {
+        horizontal.w = verticalRight - horizontal.x;
+      }
+    }
+  }
+
+  return scaledElements;
 }
 
 function scaleMapPoint(point) {
@@ -35,7 +86,7 @@ const defaultElements = [
   { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
   { type: "icePatch", x: 1220, y: 1280, w: 260, h: 210 },
   { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 },
-].map(scaleMapElement);
+];
 
 const generatedOneElements = [
   { type: "obstacle", x: 360, y: 420, w: 560, h: 50 },
@@ -54,17 +105,17 @@ const generatedOneElements = [
   { type: "roughPatch", x: 720, y: 1320, w: 350, h: 230 },
   { type: "icePatch", x: 1260, y: 1320, w: 260, h: 200 },
   { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 },
-].map(scaleMapElement);
+];
 
 export const mapVariants = [
   {
     id: "default",
     goal: scaleMapPoint({ x: 1920, y: 1900, r: 95, holdMs: 5000 }),
-    elements: defaultElements,
+    elements: trimScaledObstacleJoinOverhangs(defaultElements),
   },
   {
     id: "generated-1",
     goal: scaleMapPoint({ x: 1840, y: 1850, r: 95, holdMs: 5000 }),
-    elements: generatedOneElements,
+    elements: trimScaledObstacleJoinOverhangs(generatedOneElements),
   },
 ];
