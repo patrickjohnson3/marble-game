@@ -1,3 +1,23 @@
+const mapScale = 2;
+
+function scaleMapElement(element) {
+  return {
+    ...element,
+    x: element.x * mapScale,
+    y: element.y * mapScale,
+    w: element.w * mapScale,
+    h: element.h * mapScale,
+  };
+}
+
+function scaleMapPoint(point) {
+  return {
+    ...point,
+    x: point.x * mapScale,
+    y: point.y * mapScale,
+  };
+}
+
 const defaultElements = [
   { type: "obstacle", x: 260, y: 330, w: 510, h: 40 },
   { type: "obstacle", x: 720, y: 250, w: 50, h: 360 },
@@ -15,7 +35,7 @@ const defaultElements = [
   { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
   { type: "icePatch", x: 1220, y: 1280, w: 260, h: 210 },
   { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 },
-];
+].map(scaleMapElement);
 
 const generatedOneElements = [
   { type: "obstacle", x: 360, y: 420, w: 560, h: 50 },
@@ -34,17 +54,17 @@ const generatedOneElements = [
   { type: "roughPatch", x: 720, y: 1320, w: 350, h: 230 },
   { type: "icePatch", x: 1260, y: 1320, w: 260, h: 200 },
   { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 },
-];
+].map(scaleMapElement);
 
 export const mapVariants = [
   {
     id: "default",
-    goal: { x: 1920, y: 1900, r: 95, holdMs: 5000 },
+    goal: scaleMapPoint({ x: 1920, y: 1900, r: 95, holdMs: 5000 }),
     elements: defaultElements,
   },
   {
     id: "generated-1",
-    goal: { x: 1840, y: 1850, r: 95, holdMs: 5000 },
+    goal: scaleMapPoint({ x: 1840, y: 1850, r: 95, holdMs: 5000 }),
     elements: generatedOneElements,
   },
 ];

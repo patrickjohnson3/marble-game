@@ -192,24 +192,24 @@ function testCurrentMapJoinedWallsSurviveNormalization() {
   assert.deepEqual(
     obstacles.slice(0, 2),
     [
-      { type: "obstacle", x: 260, y: 330, w: 510, h: 40 },
-      { type: "obstacle", x: 720, y: 250, w: 50, h: 360 },
+      { type: "obstacle", x: 520, y: 660, w: 1020, h: 80 },
+      { type: "obstacle", x: 1440, y: 500, w: 100, h: 720 },
     ],
     "top joined wall group should survive normalization",
   );
   assert.deepEqual(
     obstacles.slice(4, 6),
     [
-      { type: "obstacle", x: 250, y: 900, w: 720, h: 50 },
-      { type: "obstacle", x: 910, y: 760, w: 60, h: 380 },
+      { type: "obstacle", x: 500, y: 1800, w: 1440, h: 100 },
+      { type: "obstacle", x: 1820, y: 1520, w: 120, h: 760 },
     ],
     "middle joined wall group should survive normalization",
   );
   assert.deepEqual(
     obstacles.slice(7, 9),
     [
-      { type: "obstacle", x: 520, y: 1380, w: 50, h: 440 },
-      { type: "obstacle", x: 520, y: 1570, w: 930, h: 50 },
+      { type: "obstacle", x: 1040, y: 2760, w: 100, h: 880 },
+      { type: "obstacle", x: 1040, y: 3140, w: 1860, h: 100 },
     ],
     "lower joined wall group should survive normalization",
   );
