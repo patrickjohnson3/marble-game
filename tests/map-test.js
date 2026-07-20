@@ -18,6 +18,7 @@ import {
   generateValidProceduralMapVariants,
   generateTemplateMapVariant,
   proceduralMapTemplates,
+  scoreProceduralMapVariant,
 } from "../core/procedural-generator.js";
 import {
   nextProceduralMapVariant,
@@ -157,6 +158,25 @@ function testValidProceduralMapGenerationRetriesInvalidCandidates() {
 }
 
 testValidProceduralMapGenerationRetriesInvalidCandidates();
+
+function testProceduralMapScoringSummarizesDifficultySignals() {
+  const variant = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    seed: "score-seed",
+    index: 0,
+    difficulty: 1,
+    template: proceduralMapTemplates[0],
+  });
+  const score = scoreProceduralMapVariant(variant, resolvedMapConfig.world);
+
+  assert.equal(Number.isFinite(score.score), true);
+  assert.equal(score.obstacleCount > 0, true);
+  assert.equal(score.terrainCount > 0, true);
+  assert.equal(score.spawnGoalDistance > 0, true);
+  assert.equal(score.obstacleDensity > 0, true);
+}
+
+testProceduralMapScoringSummarizesDifficultySignals();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;

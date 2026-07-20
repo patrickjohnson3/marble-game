@@ -151,6 +151,49 @@ function templatePointToWorld(point, world, gridSize) {
   };
 }
 
+function rectArea(rect) {
+  return rect.w * rect.h;
+}
+
+export function scoreProceduralMapVariant(variant, world) {
+  const elements = Array.isArray(variant?.elements) ? variant.elements : [];
+  const obstacles = elements.filter(
+    (element) => element.type === MAP_ELEMENT_TYPES.obstacle,
+  );
+  const terrain = elements.filter(
+    (element) =>
+      element.type === MAP_ELEMENT_TYPES.roughPatch ||
+      element.type === MAP_ELEMENT_TYPES.icePatch,
+  );
+  const worldArea = world.width * world.height;
+  const obstacleArea = obstacles.reduce((total, obstacle) => total + rectArea(obstacle), 0);
+  const spawnGoalDistance = Math.hypot(
+    variant.goal.x - variant.spawn.x,
+    variant.goal.y - variant.spawn.y,
+  );
+  const normalizedDistance =
+    spawnGoalDistance / Math.max(Math.hypot(world.width, world.height), 1);
+  const obstacleDensity = obstacleArea / Math.max(worldArea, 1);
+  const terrainDensity =
+    terrain.reduce((total, patch) => total + rectArea(patch), 0) /
+    Math.max(worldArea, 1);
+  const score =
+    normalizedDistance * 45 +
+    obstacles.length * 4 +
+    terrain.length * 3 +
+    obstacleDensity * 140 +
+    terrainDensity * 90;
+
+  return {
+    obstacleDensity,
+    obstacleCount: obstacles.length,
+    score,
+    spawnGoalDistance,
+    terrainCount: terrain.length,
+    terrainDensity,
+  };
+}
+
 export function generateTemplateMapVariant({
   baseMapConfig,
   difficulty = 1,
