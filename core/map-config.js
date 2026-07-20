@@ -1,13 +1,16 @@
 import { resolveInitialMapConfig } from "./procedural-map.js";
-import { mapVariants } from "../maps/map-data.js";
+import { generateValidProceduralMapVariants } from "./procedural-generator.js";
+import { validateMapConfig } from "./map.js";
+import { mapVariants as authoredMapVariants } from "../maps/map-data.js";
 
-export { mapVariants };
+export { authoredMapVariants };
 
 const mapScale = 2;
+const generatedVariantCount = 6;
 
-export const baseMapConfig = {
+const baseMapDefaults = {
   seed: "default",
-  variants: mapVariants,
+  variants: authoredMapVariants,
   world: {
     width: 2200 * mapScale,
     height: 2200 * mapScale,
@@ -45,6 +48,21 @@ export const baseMapConfig = {
     contactShadowY: 3,
     contactShadowBlur: 5,
   },
+};
+
+export const mapVariants = [
+  ...authoredMapVariants,
+  ...generateValidProceduralMapVariants({
+    baseMapConfig: baseMapDefaults,
+    count: generatedVariantCount,
+    seed: "procedural",
+    validateMapConfig,
+  }),
+];
+
+export const baseMapConfig = {
+  ...baseMapDefaults,
+  variants: mapVariants,
 };
 
 export const resolvedMapConfig = resolveInitialMapConfig(baseMapConfig);
