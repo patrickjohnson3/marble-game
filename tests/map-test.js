@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { circleRectContact } from "../core/geometry.js";
-import { resolvedMapConfig } from "../core/map-config.js";
+import {
+  authoredMapVariants,
+  baseMapConfig,
+  resolvedMapConfig,
+} from "../core/map-config.js";
 import {
   hashMapSeed,
   mapObstacleElements,
@@ -162,6 +166,24 @@ function testValidProceduralMapGenerationRetriesInvalidCandidates() {
 }
 
 testValidProceduralMapGenerationRetriesInvalidCandidates();
+
+function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
+  assert.equal(baseMapConfig.variants.length > authoredMapVariants.length, true);
+  assert.deepEqual(
+    baseMapConfig.variants
+      .slice(0, authoredMapVariants.length)
+      .map((variant) => variant.id),
+    authoredMapVariants.map((variant) => variant.id),
+  );
+  assert.equal(
+    baseMapConfig.variants
+      .slice(authoredMapVariants.length)
+      .every((variant) => variant.id.startsWith("generated-")),
+    true,
+  );
+}
+
+testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps();
 
 function testProceduralMapScoringSummarizesDifficultySignals() {
   const variant = generateTemplateMapVariant({
