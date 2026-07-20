@@ -47,11 +47,15 @@ function updateTilt({ tilt, keyboard, physics }, dt) {
     (targetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
 }
 
-function updateVelocity({ marble, tilt, physics }, dt) {
+function updateVelocity(
+  { marble, tilt, physics },
+  dt,
+  friction = physics.friction,
+) {
   marble.vx += tilt.smoothX * physics.accel * dt;
   marble.vy += tilt.smoothY * physics.accel * dt;
 
-  const drag = Math.pow(physics.friction, dt);
+  const drag = Math.pow(friction, dt);
   marble.vx *= drag;
   marble.vy *= drag;
 
@@ -91,6 +95,19 @@ function isOverRoughPatch(marble, intro, roughPatches, physics) {
   );
 }
 
+function isOverIcePatch(marble, intro, icePatches, physics) {
+  return (
+    intro.released &&
+    icePatches.some((rect) =>
+      marbleOverRect(marble, rect, physics.collisionEpsilon ?? 0),
+    )
+  );
+}
+
+function icePatchCandidates({ marble, icePatches, icePatchIndex }) {
+  return icePatchIndex?.queryCircle(marble) ?? icePatches ?? [];
+}
+
 function roughPatchCandidates({ marble, roughPatches, roughPatchIndex }) {
   return roughPatchIndex?.queryCircle(marble) ?? roughPatches;
 }
@@ -114,7 +131,17 @@ function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
 }
 
 function physicsStep(context, dt, feedback) {
-  updateVelocity(context, dt);
+  const overIcePatch = isOverIcePatch(
+    context.marble,
+    context.intro,
+    icePatchCandidates(context),
+    context.physics,
+  );
+  updateVelocity(
+    context,
+    dt,
+    overIcePatch ? context.physics.icePatchFriction : context.physics.friction,
+  );
   const overRoughPatchBeforeMove = isOverRoughPatch(
     context.marble,
     context.intro,

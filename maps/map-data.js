@@ -9,9 +9,11 @@ const defaultElements = [
   { type: "obstacle", x: 520, y: 1380, w: 50, h: 440 },
   { type: "obstacle", x: 520, y: 1570, w: 930, h: 50 },
   { type: "obstacle", x: 1640, y: 1370, w: 50, h: 470 },
+  { type: "icePatch", x: 800, y: 520, w: 230, h: 210 },
   { type: "roughPatch", x: 360, y: 650, w: 290, h: 220 },
   { type: "roughPatch", x: 1040, y: 520, w: 360, h: 240 },
   { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
+  { type: "icePatch", x: 1220, y: 1280, w: 260, h: 210 },
   { type: "roughPatch", x: 600, y: 1780, w: 420, h: 230 },
 ];
 
@@ -26,9 +28,11 @@ const generatedOneElements = [
   { type: "obstacle", x: 1770, y: 1180, w: 50, h: 500 },
   { type: "obstacle", x: 620, y: 1680, w: 600, h: 50 },
   { type: "obstacle", x: 1170, y: 1460, w: 50, h: 270 },
+  { type: "icePatch", x: 980, y: 840, w: 260, h: 220 },
   { type: "roughPatch", x: 460, y: 660, w: 310, h: 240 },
   { type: "roughPatch", x: 1450, y: 440, w: 280, h: 210 },
   { type: "roughPatch", x: 720, y: 1320, w: 350, h: 230 },
+  { type: "icePatch", x: 1260, y: 1320, w: 260, h: 200 },
   { type: "roughPatch", x: 1370, y: 1620, w: 300, h: 240 },
 ];
 

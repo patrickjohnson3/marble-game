@@ -1,4 +1,5 @@
 import {
+  mapIcePatchElements,
   mapObstacleElements,
   mapRoughPatchElements,
   normalizeJoinedObstacleRects,
@@ -14,11 +15,17 @@ export function createResolvedMapState(
   } = {},
 ) {
   const elements = activeMap.elements;
+  const icePatches = mapIcePatchElements(elements);
   const obstacles = normalizeObstacles(mapObstacleElements(elements));
   const roughPatches = mapRoughPatchElements(elements);
   return {
     activeMap,
     elements,
+    icePatches,
+    icePatchBounds: rectBounds(icePatches),
+    icePatchIndex: createSpatialIndex(icePatches, {
+      cellSize: collisionIndexCellSize,
+    }),
     obstacles,
     obstacleBounds: rectBounds(obstacles),
     obstacleIndex: createSpatialIndex(obstacles, {

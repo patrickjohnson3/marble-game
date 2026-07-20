@@ -12,6 +12,7 @@ import {
 } from "./map.js";
 import { createMapRenderer } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
+import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import { renderOuterWalls } from "../rendering/wall-rendering.js";
@@ -27,6 +28,8 @@ export function setupRenderers({
   viewport,
   settings,
   clamp,
+  icePatches,
+  icePatchBounds,
   obstacles,
   obstacleBounds,
   goal,
@@ -37,6 +40,7 @@ export function setupRenderers({
     world: worldEl,
     introWalls: introWallsEl,
     mapWalls: mapWallsEl,
+    icePatches: icePatchesEl,
     roughPatches: roughPatchesEl,
     obstacles: obstaclesEl,
     goal: goalEl,
@@ -70,14 +74,22 @@ export function setupRenderers({
     clamp,
   });
   const terrainView = createTerrainView({
+    icePatchesEl,
     roughPatchesEl,
     obstaclesEl,
     goalEl,
     goal,
+    icePatches,
+    icePatchBounds,
     roughPatches,
     roughPatchBounds,
     obstacles,
     obstacleBounds,
+    renderIcePatches: (container, renderedIcePatches, renderedBounds) =>
+      renderIcePatches(container, renderedIcePatches, {
+        bounds: renderedBounds,
+        padding: visualConfig.map.icePatchCanvasPadding,
+      }),
     renderObstacleWalls: (container, renderedObstacles, renderedBounds) =>
       renderObstacleWalls(container, renderedObstacles, {
         bounds: renderedBounds,

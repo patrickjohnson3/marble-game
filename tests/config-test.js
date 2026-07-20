@@ -55,7 +55,7 @@ function testWorldAndMapElements() {
 
   for (const [index, element] of resolvedMapConfig.elements.entries()) {
     assert.ok(
-      ["obstacle", "roughPatch"].includes(element.type),
+      ["icePatch", "obstacle", "roughPatch"].includes(element.type),
       "element " + index + " type",
     );
     assertPositiveNumber(element.w, "element " + index + " width");
@@ -171,6 +171,12 @@ function testPhysicsAndSettingsRanges() {
     physicsConfig.friction > 0 && physicsConfig.friction <= 1,
     true,
     "physics friction",
+  );
+  assert.equal(
+    physicsConfig.icePatchFriction >= physicsConfig.friction &&
+      physicsConfig.icePatchFriction <= 1,
+    true,
+    "ice patch friction",
   );
   assert.equal(
     physicsConfig.bounce >= 0 && physicsConfig.bounce <= 1,

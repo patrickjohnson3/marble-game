@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import {
@@ -246,6 +247,23 @@ try {
 
   const container = new FakeElement();
   const roughPatchContainer = new FakeElement();
+  const icePatchContainer = new FakeElement();
+
+  renderIcePatches(icePatchContainer, [{ x: 25, y: 35, w: 90, h: 70 }], {
+    padding: 18,
+  });
+  const icePatchCanvas = icePatchContainer.children[0];
+  assert.equal(
+    icePatchCanvas.classList.contains("icePatchCanvas"),
+    true,
+    "ice patches should render to canvas",
+  );
+  assert.equal(icePatchCanvas.attributes["data-ice-patches"], "1");
+  assert.equal(
+    icePatchCanvas.context.calls.some((call) => call[0] === "lineTo"),
+    true,
+    "ice patch canvas should draw slick streaks",
+  );
 
   renderRoughPatches(roughPatchContainer, [{ x: 20, y: 30, w: 80, h: 60 }], {
     padding: 18,

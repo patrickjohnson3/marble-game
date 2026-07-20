@@ -3,6 +3,7 @@ export const domIds = {
   world: "world",
   introWalls: "introWalls",
   mapWalls: "mapWalls",
+  icePatches: "icePatches",
   roughPatches: "roughPatches",
   obstacles: "obstacles",
   goal: "goal",

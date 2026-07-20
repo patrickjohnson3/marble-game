@@ -1,12 +1,16 @@
 export function createTerrainView({
+  icePatchesEl,
   roughPatchesEl,
   obstaclesEl,
   goalEl,
   goal,
+  icePatches,
+  icePatchBounds,
   roughPatches,
   roughPatchBounds,
   obstacles,
   obstacleBounds,
+  renderIcePatches: drawIcePatches = () => {},
   renderObstacleWalls,
   renderRoughPatches: drawRoughPatches,
   goalFillEdgePercent = 70.8,
@@ -14,8 +18,14 @@ export function createTerrainView({
   let currentGoal = goal;
   let currentObstacles = obstacles;
   let currentObstacleBounds = obstacleBounds;
+  let currentIcePatches = icePatches;
+  let currentIcePatchBounds = icePatchBounds;
   let currentRoughPatches = roughPatches;
   let currentRoughPatchBounds = roughPatchBounds;
+
+  function renderIcePatches() {
+    drawIcePatches(icePatchesEl, currentIcePatches, currentIcePatchBounds);
+  }
 
   function renderObstacles() {
     renderObstacleWalls(obstaclesEl, currentObstacles, currentObstacleBounds);
@@ -39,12 +49,15 @@ export function createTerrainView({
 
   function renderTerrain() {
     renderGoal();
+    renderIcePatches();
     renderRoughPatches();
     renderObstacles();
   }
 
   function terrainMatches({
     goal,
+    icePatches,
+    icePatchBounds,
     obstacles,
     obstacleBounds,
     roughPatches,
@@ -52,6 +65,8 @@ export function createTerrainView({
   }) {
     return (
       currentGoal === goal &&
+      currentIcePatches === icePatches &&
+      currentIcePatchBounds === icePatchBounds &&
       currentObstacles === obstacles &&
       currentObstacleBounds === obstacleBounds &&
       currentRoughPatches === roughPatches &&
@@ -61,6 +76,8 @@ export function createTerrainView({
 
   function setTerrain({
     goal,
+    icePatches,
+    icePatchBounds,
     obstacles,
     obstacleBounds,
     roughPatches,
@@ -69,6 +86,8 @@ export function createTerrainView({
     if (
       terrainMatches({
         goal,
+        icePatches,
+        icePatchBounds,
         obstacles,
         obstacleBounds,
         roughPatches,
@@ -78,6 +97,8 @@ export function createTerrainView({
       return;
 
     currentGoal = goal;
+    currentIcePatches = icePatches;
+    currentIcePatchBounds = icePatchBounds;
     currentObstacles = obstacles;
     currentObstacleBounds = obstacleBounds;
     currentRoughPatches = roughPatches;
@@ -96,6 +117,7 @@ export function createTerrainView({
 
   return {
     renderGoal,
+    renderIcePatches,
     renderObstacles,
     renderTerrain,
     renderRoughPatches,

@@ -55,6 +55,13 @@ body {
   opacity: 0;
   transition: opacity 0.45s ease;
 }
+.icePatchCanvas {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
 .roughPatchCanvas {
   position: absolute;
   overflow: visible;
@@ -63,6 +70,7 @@ body {
   transition: opacity 0.45s ease;
 }
 #world.map-open .obstacleCanvas,
+#world.map-open .icePatchCanvas,
 #world.map-open .roughPatchCanvas {
   opacity: 1;
 }

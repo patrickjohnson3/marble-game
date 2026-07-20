@@ -10,8 +10,10 @@ export {
   updateIntroBounds,
 } from "./map-bounds.js";
 export {
+  isIcePatchElement,
   isObstacleElement,
   isRoughPatchElement,
+  mapIcePatchElements,
   mapObstacleElements,
   mapRoughPatchElements,
   MAP_ELEMENT_TYPES,

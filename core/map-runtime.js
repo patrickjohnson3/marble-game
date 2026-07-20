@@ -9,6 +9,9 @@ export function createMapRuntime({
   const state = {
     activeMap: null,
     elements: [],
+    icePatches: [],
+    icePatchBounds: null,
+    icePatchIndex: null,
     obstacles: [],
     obstacleBounds: null,
     obstacleIndex: null,
@@ -33,6 +36,9 @@ export function createMapRuntime({
     });
     state.activeMap = derived.activeMap;
     state.elements = derived.elements;
+    state.icePatches = derived.icePatches;
+    state.icePatchBounds = derived.icePatchBounds;
+    state.icePatchIndex = derived.icePatchIndex;
     state.obstacles = derived.obstacles;
     state.obstacleBounds = derived.obstacleBounds;
     state.obstacleIndex = derived.obstacleIndex;
