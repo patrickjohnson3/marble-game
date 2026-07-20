@@ -204,7 +204,10 @@ export function scoreProceduralMapVariant(variant, world) {
       element.type === MAP_ELEMENT_TYPES.icePatch,
   );
   const worldArea = world.width * world.height;
-  const obstacleArea = obstacles.reduce((total, obstacle) => total + rectArea(obstacle), 0);
+  const obstacleArea = obstacles.reduce(
+    (total, obstacle) => total + rectArea(obstacle),
+    0,
+  );
   const spawnGoalDistance = Math.hypot(
     variant.goal.x - variant.spawn.x,
     variant.goal.y - variant.spawn.y,
@@ -255,15 +258,25 @@ export function generateTemplateMapVariant({
 }) {
   const random = createSeededRandom(seed + ":" + index + ":" + difficulty);
   const selectedTemplate =
-    template ?? pickRandom(random, proceduralMapTemplates) ?? proceduralMapTemplates[0];
+    template ??
+    pickRandom(random, proceduralMapTemplates) ??
+    proceduralMapTemplates[0];
   const world = baseMapConfig.world;
   const gridSize = baseMapConfig.grid.size;
   const spawn = {
     ...baseMapConfig.spawn,
-    ...templatePointToWorld(jitterPoint(selectedTemplate.spawn, random), world, gridSize),
+    ...templatePointToWorld(
+      jitterPoint(selectedTemplate.spawn, random),
+      world,
+      gridSize,
+    ),
   };
   const goal = {
-    ...templatePointToWorld(jitterPoint(selectedTemplate.goal, random), world, gridSize),
+    ...templatePointToWorld(
+      jitterPoint(selectedTemplate.goal, random),
+      world,
+      gridSize,
+    ),
     r: 95,
     holdMs: 5000,
   };
@@ -316,7 +329,11 @@ export function generateValidProceduralMapVariants({
 } = {}) {
   const variants = [];
 
-  for (let attempt = 0; attempt < maxAttempts && variants.length < count; attempt++) {
+  for (
+    let attempt = 0;
+    attempt < maxAttempts && variants.length < count;
+    attempt++
+  ) {
     const difficulty = (variants.length % proceduralMapTemplates.length) + 1;
     const candidate = generateTemplateMapVariant({
       baseMapConfig,

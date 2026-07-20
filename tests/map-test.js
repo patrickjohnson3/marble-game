@@ -168,7 +168,10 @@ function testValidProceduralMapGenerationRetriesInvalidCandidates() {
 testValidProceduralMapGenerationRetriesInvalidCandidates();
 
 function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
-  assert.equal(baseMapConfig.variants.length > authoredMapVariants.length, true);
+  assert.equal(
+    baseMapConfig.variants.length > authoredMapVariants.length,
+    true,
+  );
   assert.deepEqual(
     baseMapConfig.variants
       .slice(0, authoredMapVariants.length)
