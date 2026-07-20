@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
-import { createMapRuntime } from "../core/map-runtime.js";
-import { createResolvedMapState } from "../core/map-state.js";
+import {
+  createMapRuntime,
+  createResolvedMapState,
+} from "../core/map-runtime.js";
 
 const firstMap = {
   variantId: "first",
