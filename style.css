@@ -39,14 +39,23 @@ body {
   inset: 0;
   pointer-events: none;
   background:
+    radial-gradient(circle at 18% 28%, #ffffff08 0 1px, transparent 2px),
+    radial-gradient(circle at 72% 64%, #00000012 0 1px, transparent 2px),
+    linear-gradient(135deg, transparent 0 46%, #ffffff05 48%, transparent 52%),
     linear-gradient(#ffffff08 1px, transparent 1px),
     linear-gradient(90deg, #ffffff08 1px, transparent 1px),
     radial-gradient(circle at center, #2a2d35, #101114 72%);
   background-position:
+    calc(var(--camera-x) * 0.72) calc(var(--camera-y) * 0.72),
+    calc(var(--camera-x) * 0.55) calc(var(--camera-y) * 0.55),
+    var(--camera-x) var(--camera-y),
     var(--camera-x) var(--camera-y),
     var(--camera-x) var(--camera-y),
     center;
   background-size:
+    calc(168px * var(--camera-scale)) calc(168px * var(--camera-scale)),
+    calc(126px * var(--camera-scale)) calc(126px * var(--camera-scale)),
+    calc(336px * var(--camera-scale)) calc(336px * var(--camera-scale)),
     calc(42px * var(--camera-scale)) calc(42px * var(--camera-scale)),
     calc(42px * var(--camera-scale)) calc(42px * var(--camera-scale)),
     100% 100%;
