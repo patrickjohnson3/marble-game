@@ -59,7 +59,6 @@ export const runtimeScripts = [
   "settings/settings-applier.js",
   "settings/settings-config.js",
   "settings/settings-panel.js",
-  "settings/settings-runtime.js",
   "settings/settings-store.js",
 ];
 

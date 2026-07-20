@@ -1,11 +1,9 @@
 import assert from "node:assert/strict";
 import {
-  createRuntimeSettings,
-  persistedSettingsFromRuntime,
-} from "../settings/settings-runtime.js";
-import {
   availableStorage,
+  createRuntimeSettings,
   loadSettings,
+  persistedSettingsFromRuntime,
   saveSettings,
 } from "../settings/settings-store.js";
 

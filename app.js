@@ -36,13 +36,11 @@ import {
 import { bindSettingsPanel } from "./settings/settings-panel.js";
 import { createSettingsApplier } from "./settings/settings-applier.js";
 import {
-  createRuntimeSettings,
-  persistedSettingsFromRuntime,
-} from "./settings/settings-runtime.js";
-import {
   applyRangeConfig,
   availableStorage,
+  createRuntimeSettings,
   loadSettings,
+  persistedSettingsFromRuntime,
   saveSettings as persistSettings,
 } from "./settings/settings-store.js";
 import {

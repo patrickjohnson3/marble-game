@@ -1,9 +1,23 @@
 import { persistedSettingsKeys } from "./settings-config.js";
 
+function copyPersistedSettings(settings) {
+  return Object.fromEntries(
+    persistedSettingsKeys.map((key) => [key, settings[key]]),
+  );
+}
+
 export function applyRangeConfig(input, range) {
   input.min = range.min;
   input.max = range.max;
   input.step = range.step;
+}
+
+export function createRuntimeSettings(persistedSettings) {
+  return copyPersistedSettings(persistedSettings);
+}
+
+export function persistedSettingsFromRuntime(settings) {
+  return copyPersistedSettings(settings);
 }
 
 function numberSetting(value, fallback, range, clamp) {
@@ -91,11 +105,7 @@ export function saveSettings({ storage, storageKey, settings }) {
 
     storage.setItem(
       storageKey,
-      JSON.stringify(
-        Object.fromEntries(
-          persistedSettingsKeys.map((key) => [key, settings[key]]),
-        ),
-      ),
+      JSON.stringify(copyPersistedSettings(settings)),
     );
   } catch {
     // Persistence is optional; gameplay should still work without storage.
