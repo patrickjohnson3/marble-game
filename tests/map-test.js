@@ -11,9 +11,11 @@ import {
   selectSeededMapVariant,
   snapRectToGrid,
   snapToGrid,
+  validateMapConfig,
 } from "../core/map.js";
 import { createMapProgression } from "../core/map-progression.js";
 import {
+  generateValidProceduralMapVariants,
   generateTemplateMapVariant,
   proceduralMapTemplates,
 } from "../core/procedural-generator.js";
@@ -128,6 +130,33 @@ function testTemplateMapGenerationIsDeterministicAndGridAligned() {
 }
 
 testTemplateMapGenerationIsDeterministicAndGridAligned();
+
+function testValidProceduralMapGenerationRetriesInvalidCandidates() {
+  let calls = 0;
+  const variants = generateValidProceduralMapVariants({
+    baseMapConfig: resolvedMapConfig,
+    count: 2,
+    seed: "retry-seed",
+    validateMapConfig(config) {
+      calls++;
+      return calls === 1 ? ["invalid"] : validateMapConfig(config);
+    },
+  });
+
+  assert.equal(variants.length, 2);
+  assert.equal(calls > variants.length, true);
+  variants.forEach((variant) => {
+    assert.deepEqual(
+      validateMapConfig({
+        ...resolvedMapConfig,
+        ...variant,
+      }),
+      [],
+    );
+  });
+}
+
+testValidProceduralMapGenerationRetriesInvalidCandidates();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;

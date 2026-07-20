@@ -206,3 +206,33 @@ export function generateTemplateMapVariant({
     elements: [...wallElements, ...roughPatchElements, ...icePatchElements],
   };
 }
+
+export function generateValidProceduralMapVariants({
+  baseMapConfig,
+  count = 3,
+  maxAttempts = count * 8,
+  seed = baseMapConfig?.seed,
+  validateMapConfig = () => [],
+} = {}) {
+  const variants = [];
+
+  for (let attempt = 0; attempt < maxAttempts && variants.length < count; attempt++) {
+    const difficulty = (variants.length % proceduralMapTemplates.length) + 1;
+    const candidate = generateTemplateMapVariant({
+      baseMapConfig,
+      difficulty,
+      index: attempt,
+      seed,
+    });
+    const validationConfig = {
+      ...baseMapConfig,
+      ...candidate,
+    };
+
+    if (validateMapConfig(validationConfig).length === 0) {
+      variants.push(candidate);
+    }
+  }
+
+  return variants;
+}
