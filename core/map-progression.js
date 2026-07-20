@@ -39,7 +39,11 @@ export function createMapProgression({
       return blockAdvance(copy.goalNoNextMap);
     }
 
-    const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id, variant.id);
+    const nextMap = resolveMapVariantConfig(
+      baseMapConfig,
+      variant.id,
+      variant.id,
+    );
     const validationErrors = validateMapConfig(nextMap);
     if (validationErrors.length > 0) {
       logger.error("Invalid next map:", validationErrors);

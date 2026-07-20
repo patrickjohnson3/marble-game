@@ -115,10 +115,7 @@ function validateRect(rect, { world, label, errors }) {
   }
 }
 
-export function validateMapConfig(
-  config,
-  { normalizedObstacles, spawn } = {},
-) {
+export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
   const errors = [];
   const allowedTypes = new Set(Object.values(MAP_ELEMENT_TYPES));
   const world = config?.world ?? {};

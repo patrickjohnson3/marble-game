@@ -76,10 +76,7 @@ function testSeededMapVariantSelection() {
 testSeededMapVariantSelection();
 
 function testProceduralMapBoundaryWrapsVariantSelection() {
-  assert.equal(
-    resolveSeededMapConfig(simpleSeededMapConfig).variantId,
-    "only",
-  );
+  assert.equal(resolveSeededMapConfig(simpleSeededMapConfig).variantId, "only");
   assert.equal(
     resolveMapVariantConfig(simpleSeededMapConfig, "only").variantId,
     "only",
