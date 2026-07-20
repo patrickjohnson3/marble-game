@@ -1,7 +1,10 @@
 import { distance } from "./geometry.js";
-import { frameDeltaToMs } from "./physics-time.js";
 
 const maxGoalCenterHoldBonus = 1;
+
+function frameDeltaToMs(frameDelta, timing) {
+  return frameDelta * timing.targetFrameMs;
+}
 
 export function goalHoldMultiplier(marble, goal) {
   const holdRadius = Math.max(goal.r - marble.r, 1);

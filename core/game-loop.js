@@ -1,5 +1,12 @@
 import { updatePhysicsInput, updatePhysics } from "./physics.js";
-import { elapsedMsToFrameDelta } from "./physics-time.js";
+
+function elapsedMsToFrameDelta(elapsedMs, timing, clamp) {
+  return clamp(
+    elapsedMs / timing.targetFrameMs,
+    timing.minFrameStep,
+    timing.maxFrameStep,
+  );
+}
 
 export function createGameLoop({
   cameraController,
