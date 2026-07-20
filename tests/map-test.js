@@ -18,6 +18,7 @@ import { createMapProgression } from "../core/map-progression.js";
 import {
   generateValidProceduralMapVariants,
   generateTemplateMapVariant,
+  proceduralElementBudget,
   proceduralScoreFitsDifficulty,
   proceduralMapTemplates,
   scoreProceduralMapVariant,
@@ -206,6 +207,24 @@ function testProceduralMapGenerationKeepsSpawnAndGoalClear() {
 }
 
 testProceduralMapGenerationKeepsSpawnAndGoalClear();
+
+function testProceduralMapGenerationRespectsElementBudgets() {
+  const variant = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    seed: "budget-seed",
+    index: 1,
+    difficulty: 1,
+    template: proceduralMapTemplates[2],
+  });
+  const budget = proceduralElementBudget(variant.difficulty);
+  const counts = Object.groupBy(variant.elements, (element) => element.type);
+
+  assert.equal((counts.obstacle ?? []).length <= budget.obstacle, true);
+  assert.equal((counts.roughPatch ?? []).length <= budget.roughPatch, true);
+  assert.equal((counts.icePatch ?? []).length <= budget.icePatch, true);
+}
+
+testProceduralMapGenerationRespectsElementBudgets();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;

@@ -162,6 +162,33 @@ function outsideClearZones(element, spawn, goal) {
   );
 }
 
+export function proceduralElementBudget(difficulty) {
+  const level = Math.min(Math.max(Math.round(difficulty), 1), 3);
+
+  return {
+    icePatch: level === 1 ? 1 : 2,
+    obstacle: 4 + level,
+    roughPatch: level === 1 ? 2 : 3,
+  };
+}
+
+function limitElementsByBudget(elements, difficulty) {
+  const budget = proceduralElementBudget(difficulty);
+  const counts = {
+    [MAP_ELEMENT_TYPES.icePatch]: 0,
+    [MAP_ELEMENT_TYPES.obstacle]: 0,
+    [MAP_ELEMENT_TYPES.roughPatch]: 0,
+  };
+
+  return elements.filter((element) => {
+    const limit = budget[element.type];
+    if (!Number.isFinite(limit)) return true;
+    if (counts[element.type] >= limit) return false;
+    counts[element.type]++;
+    return true;
+  });
+}
+
 function rectArea(rect) {
   return rect.w * rect.h;
 }
@@ -276,7 +303,7 @@ export function generateTemplateMapVariant({
     templateId: selectedTemplate.id,
     spawn,
     goal,
-    elements,
+    elements: limitElementsByBudget(elements, difficulty),
   };
 }
 
