@@ -1,21 +1,34 @@
 import { createTimeoutRegistry } from "../core/timer-utils.js";
 
-function particleStyle({ x, y, dx, dy, size, lifeMs, opacity }) {
-  return [
-    "--x:" + x.toFixed(1) + "px",
-    "--y:" + y.toFixed(1) + "px",
-    "--dx:" + dx.toFixed(1) + "px",
-    "--dy:" + dy.toFixed(1) + "px",
-    "--size:" + size.toFixed(1) + "px",
-    "--life:" + lifeMs.toFixed(0) + "ms",
-    "--opacity:" + opacity.toFixed(2),
-  ].join(";");
+function particleStyle(x, y, dx, dy, size, lifeMs, opacity) {
+  return (
+    "--x:" +
+    x.toFixed(1) +
+    "px;--y:" +
+    y.toFixed(1) +
+    "px;--dx:" +
+    dx.toFixed(1) +
+    "px;--dy:" +
+    dy.toFixed(1) +
+    "px;--size:" +
+    size.toFixed(1) +
+    "px;--life:" +
+    lifeMs.toFixed(0) +
+    "ms;--opacity:" +
+    opacity.toFixed(2)
+  );
 }
 
-function velocityUnit(marble) {
+function setVelocityUnit(marble, target) {
   const speed = Math.hypot(marble.vx, marble.vy);
-  if (speed <= 0.001) return { x: 0, y: -1 };
-  return { x: marble.vx / speed, y: marble.vy / speed };
+  if (speed <= 0.001) {
+    target.x = 0;
+    target.y = -1;
+    return;
+  }
+
+  target.x = marble.vx / speed;
+  target.y = marble.vy / speed;
 }
 
 export function createEffectsRenderer({
@@ -28,6 +41,8 @@ export function createEffectsRenderer({
 }) {
   let lastImpactAt = Number.NEGATIVE_INFINITY;
   let lastSurfaceAt = 0;
+  const direction = { x: 0, y: -1 };
+  const sideways = { x: 1, y: 0 };
   const cleanupTimers = createTimeoutRegistry();
 
   function spawn(className, style, lifeMs) {
@@ -54,7 +69,7 @@ export function createEffectsRenderer({
     const count = Math.round(
       config.impactMinParticles + intensity * config.impactExtraParticles,
     );
-    const direction = velocityUnit(marble);
+    setVelocityUnit(marble, direction);
     const baseX = marble.x + direction.x * marble.r * config.impactEdgeRatio;
     const baseY = marble.y + direction.y * marble.r * config.impactEdgeRatio;
 
@@ -68,15 +83,15 @@ export function createEffectsRenderer({
         config.impactLifeMinMs + random() * config.impactLifeRangeMs;
       spawn(
         "spark",
-        particleStyle({
-          x: baseX + (random() - 0.5) * marble.r * config.impactJitterRatio,
-          y: baseY + (random() - 0.5) * marble.r * config.impactJitterRatio,
+        particleStyle(
+          baseX + (random() - 0.5) * marble.r * config.impactJitterRatio,
+          baseY + (random() - 0.5) * marble.r * config.impactJitterRatio,
           dx,
           dy,
           size,
           lifeMs,
-          opacity: config.impactOpacity,
-        }),
+          config.impactOpacity,
+        ),
         lifeMs,
       );
     }
@@ -90,8 +105,9 @@ export function createEffectsRenderer({
       return;
 
     lastSurfaceAt = now;
-    const direction = velocityUnit(marble);
-    const sideways = { x: -direction.y, y: direction.x };
+    setVelocityUnit(marble, direction);
+    sideways.x = -direction.y;
+    sideways.y = direction.x;
     const intensity = clamp(speed / config.surfaceReferenceSpeed, 0, 1);
     const count = Math.round(
       config.surfaceMinParticles + intensity * config.surfaceExtraParticles,
@@ -104,28 +120,24 @@ export function createEffectsRenderer({
         config.surfaceLifeMinMs + random() * config.surfaceLifeRangeMs;
       spawn(
         "dust",
-        particleStyle({
-          x:
-            marble.x -
+        particleStyle(
+          marble.x -
             direction.x * marble.r * config.surfaceBackRatio +
             sideways.x * offset,
-          y:
-            marble.y -
+          marble.y -
             direction.y * marble.r * config.surfaceBackRatio +
             sideways.y * offset,
-          dx:
-            -direction.x *
-              (config.surfaceDriftMin + random() * config.surfaceDriftRange) +
+          -direction.x *
+            (config.surfaceDriftMin + random() * config.surfaceDriftRange) +
             sideways.x * offset * config.surfaceScatter,
-          dy:
-            -direction.y *
-              (config.surfaceDriftMin + random() * config.surfaceDriftRange) +
+          -direction.y *
+            (config.surfaceDriftMin + random() * config.surfaceDriftRange) +
             sideways.y * offset * config.surfaceScatter -
             lift,
-          size: config.surfaceSizeMin + random() * config.surfaceSizeRange,
+          config.surfaceSizeMin + random() * config.surfaceSizeRange,
           lifeMs,
-          opacity: config.surfaceOpacity,
-        }),
+          config.surfaceOpacity,
+        ),
         lifeMs,
       );
     }
