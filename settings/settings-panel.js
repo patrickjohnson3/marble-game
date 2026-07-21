@@ -38,46 +38,40 @@ export function bindSettingsPanel({
   fpsSetting.checked = settings.fpsEnabled;
   statsSetting.checked = settings.statsEnabled;
 
+  function bindRangeSetting(input, key) {
+    input.addEventListener("input", () => {
+      settings[key] = Number(input.value);
+      applySettings();
+      saveSettings();
+    });
+  }
+
+  function bindCheckboxSetting(input, key, afterChange = applySettings) {
+    input.addEventListener("change", () => {
+      settings[key] = input.checked;
+      afterChange(settings[key]);
+      saveSettings();
+    });
+  }
+
   settingsToggle.addEventListener("click", onOpenSettings);
   closeSettings.addEventListener("click", onCloseSettings);
   resumeGame.addEventListener("click", onCloseSettings);
   neutralBtn.addEventListener("click", onSetNeutral);
 
-  speedSetting.addEventListener("input", () => {
-    settings.maxSpeed = Number(speedSetting.value);
-    applySettings();
-    saveSettings();
-  });
-  sensitivitySetting.addEventListener("input", () => {
-    settings.acceleration = Number(sensitivitySetting.value);
-    applySettings();
-    saveSettings();
-  });
-  hapticsSetting.addEventListener("change", () => {
-    settings.hapticsEnabled = hapticsSetting.checked;
-    applySettings();
-    saveSettings();
-  });
-  trailSetting.addEventListener("change", () => {
-    settings.trailEnabled = trailSetting.checked;
-    applySettings();
-    saveSettings();
-  });
-  fullscreenSetting.addEventListener("change", () => {
-    settings.fullscreenEnabled = fullscreenSetting.checked;
-    saveSettings();
+  bindRangeSetting(speedSetting, "maxSpeed");
+  bindRangeSetting(sensitivitySetting, "acceleration");
+  bindCheckboxSetting(hapticsSetting, "hapticsEnabled");
+  bindCheckboxSetting(trailSetting, "trailEnabled");
+  bindCheckboxSetting(fullscreenSetting, "fullscreenEnabled", () => {
     applyFullscreenSetting();
   });
-  fpsSetting.addEventListener("change", () => {
-    settings.fpsEnabled = fpsSetting.checked;
-    onFpsChanged(settings.fpsEnabled);
-    saveSettings();
+  bindCheckboxSetting(fpsSetting, "fpsEnabled", (enabled) => {
+    onFpsChanged(enabled);
     requestRender();
   });
-  statsSetting.addEventListener("change", () => {
-    settings.statsEnabled = statsSetting.checked;
-    onStatsChanged(settings.statsEnabled);
-    saveSettings();
+  bindCheckboxSetting(statsSetting, "statsEnabled", (enabled) => {
+    onStatsChanged(enabled);
     requestRender();
   });
   settingsOverlay.addEventListener("click", (event) => {

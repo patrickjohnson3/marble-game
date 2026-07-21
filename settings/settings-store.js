@@ -1,4 +1,4 @@
-import { persistedSettingsKeys } from "./settings-config.js";
+import { persistedSettingsKeys, settingsSchema } from "./settings-config.js";
 
 function copyPersistedSettings(settings) {
   return Object.fromEntries(
@@ -21,7 +21,22 @@ export function persistedSettingsFromRuntime(settings) {
 }
 
 function numberSetting(value, fallback, range, clamp) {
-  return Number.isFinite(value) ? clamp(value, range.min, range.max) : fallback;
+  if (!Number.isFinite(value)) return fallback;
+  if (!range) return value;
+  return clamp(value, range.min, range.max);
+}
+
+function settingValue({ clamp, controls, defaults, key, saved }) {
+  const config = settingsSchema[key];
+  const fallback = defaults[key];
+
+  if (config?.type === "number") {
+    return numberSetting(saved[key], fallback, controls[key], clamp);
+  }
+  if (config?.type === "boolean") {
+    return typeof saved[key] === "boolean" ? saved[key] : fallback;
+  }
+  return saved[key] ?? fallback;
 }
 
 export function availableStorage(getStorage = () => localStorage) {
@@ -49,42 +64,18 @@ export function loadSettings({
       : 1;
     const shouldUseCurrentTrailDefault =
       trailDefaultVersion < defaults.trailDefaultVersion;
+    const settings = Object.fromEntries(
+      persistedSettingsKeys.map((key) => [
+        key,
+        settingValue({ clamp, controls, defaults, key, saved }),
+      ]),
+    );
 
-    return {
-      maxSpeed: numberSetting(
-        saved.maxSpeed,
-        defaults.maxSpeed,
-        controls.maxSpeed,
-        clamp,
-      ),
-      acceleration: numberSetting(
-        saved.acceleration,
-        defaults.acceleration,
-        controls.acceleration,
-        clamp,
-      ),
-      hapticsEnabled:
-        typeof saved.hapticsEnabled === "boolean"
-          ? saved.hapticsEnabled
-          : defaults.hapticsEnabled,
-      trailEnabled:
-        shouldUseCurrentTrailDefault || typeof saved.trailEnabled !== "boolean"
-          ? defaults.trailEnabled
-          : saved.trailEnabled,
-      trailDefaultVersion: defaults.trailDefaultVersion,
-      fullscreenEnabled:
-        typeof saved.fullscreenEnabled === "boolean"
-          ? saved.fullscreenEnabled
-          : defaults.fullscreenEnabled,
-      fpsEnabled:
-        typeof saved.fpsEnabled === "boolean"
-          ? saved.fpsEnabled
-          : defaults.fpsEnabled,
-      statsEnabled:
-        typeof saved.statsEnabled === "boolean"
-          ? saved.statsEnabled
-          : defaults.statsEnabled,
-    };
+    settings.trailEnabled = shouldUseCurrentTrailDefault
+      ? defaults.trailEnabled
+      : settings.trailEnabled;
+    settings.trailDefaultVersion = defaults.trailDefaultVersion;
+    return settings;
   } catch {
     return { ...defaults };
   }
