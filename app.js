@@ -722,6 +722,7 @@ export function createApp({
     ui.setRunTimeLabel("time --");
     registerServiceWorker({
       navigatorRef: windowRef.navigator,
+      onUpdateReady: () => ui.setHint(copy.hints.updateReady),
       windowRef,
     });
   } catch (error) {

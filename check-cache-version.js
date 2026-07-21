@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { runtimeFiles } from "./runtime-assets.js";
 
 function git(args) {
@@ -22,6 +23,12 @@ if (git(["rev-parse", "--is-inside-work-tree"]).status !== 0) {
 
 const latestRuntimeCommit = latestCommitTime(runtimeFiles);
 const latestIndexCommit = latestCommitTime(["index.html"]);
+const html = readFileSync("index.html", "utf8");
+const serviceWorker = readFileSync("sw.js", "utf8");
+const assetVersion = html.match(/const assetVersion = "([^"]+)";/)?.[1];
+const serviceWorkerCacheVersion = serviceWorker.match(
+  /const cacheVersion = "marble-game-([^"]+)";/,
+)?.[1];
 
 if (
   latestRuntimeCommit &&
@@ -31,6 +38,12 @@ if (
   console.error(
     "index.html assetVersion is older than the latest runtime asset change.",
   );
+  console.error("Run: node bump-cache-version.js");
+  process.exit(1);
+}
+
+if (!assetVersion || assetVersion !== serviceWorkerCacheVersion) {
+  console.error("index.html assetVersion and sw.js cacheVersion must match.");
   console.error("Run: node bump-cache-version.js");
   process.exit(1);
 }

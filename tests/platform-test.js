@@ -93,6 +93,7 @@ async function testScreenAdjustedUsesInjectedScreen() {
 async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
   const listeners = {};
   let registration = null;
+  let registrationListener = null;
   const { registerServiceWorker } = await import(
     "../platform/platform.js?test=" + Date.now()
   );
@@ -101,7 +102,11 @@ async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
       serviceWorker: {
         register(scriptUrl, options) {
           registration = { options, scriptUrl };
-          return Promise.resolve();
+          return Promise.resolve({
+            addEventListener(type, listener) {
+              registrationListener = { listener, type };
+            },
+          });
         },
       },
     },
@@ -115,10 +120,13 @@ async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
   assert.equal(registered, true);
   assert.equal(registration, null);
   await listeners.load();
+  await Promise.resolve();
   assert.deepEqual(registration, {
     options: { type: "module" },
     scriptUrl: "sw.js",
   });
+  assert.equal(registrationListener.type, "updatefound");
+  assert.equal(typeof registrationListener.listener, "function");
 }
 
 async function testServiceWorkerRegistrationHandlesUnsupportedBrowsers() {
@@ -132,11 +140,97 @@ async function testServiceWorkerRegistrationHandlesUnsupportedBrowsers() {
   );
 }
 
+async function testServiceWorkerRegistrationReportsWaitingUpdate() {
+  const listeners = {};
+  let updateReadyCount = 0;
+  const { registerServiceWorker } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+
+  registerServiceWorker({
+    navigatorRef: {
+      serviceWorker: {
+        controller: {},
+        register() {
+          return Promise.resolve({
+            addEventListener() {},
+            waiting: {},
+          });
+        },
+      },
+    },
+    onUpdateReady() {
+      updateReadyCount++;
+    },
+    windowRef: {
+      addEventListener(type, listener) {
+        listeners[type] = listener;
+      },
+    },
+  });
+
+  await listeners.load();
+  await Promise.resolve();
+  assert.equal(updateReadyCount, 1);
+}
+
+async function testServiceWorkerRegistrationReportsInstalledUpdate() {
+  const listeners = {};
+  const workerListeners = {};
+  const worker = {
+    state: "installing",
+    addEventListener(type, listener) {
+      workerListeners[type] = listener;
+    },
+  };
+  let registrationListener = null;
+  let updateReadyCount = 0;
+  const { registerServiceWorker } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+
+  registerServiceWorker({
+    navigatorRef: {
+      serviceWorker: {
+        controller: {},
+        register() {
+          return Promise.resolve({
+            get installing() {
+              return worker;
+            },
+            addEventListener(type, listener) {
+              registrationListener = listener;
+            },
+          });
+        },
+      },
+    },
+    onUpdateReady() {
+      updateReadyCount++;
+    },
+    windowRef: {
+      addEventListener(type, listener) {
+        listeners[type] = listener;
+      },
+    },
+  });
+
+  await listeners.load();
+  await Promise.resolve();
+  registrationListener();
+  worker.state = "installed";
+  workerListeners.statechange();
+
+  assert.equal(updateReadyCount, 1);
+}
+
 await testWakeLockRequestIsNotDuplicatedWhilePending();
 await testFullscreenUsesInjectedDocument();
 await testMotionPermissionUsesInjectedWindow();
 await testScreenAdjustedUsesInjectedScreen();
 await testServiceWorkerRegistrationIsDeferredUntilLoad();
 await testServiceWorkerRegistrationHandlesUnsupportedBrowsers();
+await testServiceWorkerRegistrationReportsWaitingUpdate();
+await testServiceWorkerRegistrationReportsInstalledUpdate();
 
 console.log("Platform tests passed.");

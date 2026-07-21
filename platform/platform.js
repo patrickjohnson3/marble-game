@@ -137,8 +137,39 @@ export function createViewport(target = globalThis) {
   };
 }
 
+function notifyServiceWorkerUpdate(onUpdateReady) {
+  if (typeof onUpdateReady === "function") onUpdateReady();
+}
+
+function watchServiceWorkerRegistration({
+  navigatorRef,
+  onUpdateReady,
+  registration,
+}) {
+  if (!registration?.addEventListener) return;
+
+  if (registration.waiting && navigatorRef.serviceWorker.controller) {
+    notifyServiceWorkerUpdate(onUpdateReady);
+  }
+
+  registration.addEventListener("updatefound", () => {
+    const worker = registration.installing;
+    if (!worker?.addEventListener) return;
+
+    worker.addEventListener("statechange", () => {
+      if (
+        worker.state === "installed" &&
+        navigatorRef.serviceWorker.controller
+      ) {
+        notifyServiceWorkerUpdate(onUpdateReady);
+      }
+    });
+  });
+}
+
 export function registerServiceWorker({
   navigatorRef = globalThis.navigator,
+  onUpdateReady,
   windowRef = globalThis.window,
   scriptUrl = "sw.js",
 } = {}) {
@@ -149,6 +180,13 @@ export function registerServiceWorker({
   windowRef.addEventListener("load", () => {
     navigatorRef.serviceWorker
       .register(scriptUrl, { type: "module" })
+      .then((registration) =>
+        watchServiceWorkerRegistration({
+          navigatorRef,
+          onUpdateReady,
+          registration,
+        }),
+      )
       .catch((error) => {
         console.warn("service worker registration failed", error);
       });
