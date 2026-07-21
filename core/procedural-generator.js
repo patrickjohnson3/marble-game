@@ -289,11 +289,27 @@ function normalizedVariantCount(count) {
   return Math.max(0, Math.floor(count));
 }
 
+function hasFinitePoint(point) {
+  return Number.isFinite(point?.x) && Number.isFinite(point?.y);
+}
+
+function hasProceduralBaseMapConfig(baseMapConfig) {
+  return (
+    Number.isFinite(baseMapConfig?.world?.width) &&
+    Number.isFinite(baseMapConfig?.world?.height) &&
+    Number.isFinite(baseMapConfig?.grid?.size) &&
+    hasFinitePoint(baseMapConfig?.spawn) &&
+    Number.isFinite(baseMapConfig?.spawn?.r)
+  );
+}
+
 export function generateProceduralMapVariants({
   baseMapConfig,
   count = 3,
   seed = baseMapConfig?.seed,
 } = {}) {
+  if (!hasProceduralBaseMapConfig(baseMapConfig)) return [];
+
   return Array.from({ length: normalizedVariantCount(count) }, (_, index) => {
     const difficulty = (index % proceduralMapTemplates.length) + 1;
 

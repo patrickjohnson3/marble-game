@@ -142,6 +142,39 @@ function testProceduralMapGenerationHandlesEmptyCounts() {
 
 testProceduralMapGenerationHandlesEmptyCounts();
 
+function testProceduralMapGenerationHandlesMalformedBaseConfig() {
+  assert.deepEqual(generateProceduralMapVariants(), []);
+  assert.deepEqual(
+    generateProceduralMapVariants({
+      baseMapConfig: {
+        ...resolvedMapConfig,
+        world: null,
+      },
+    }),
+    [],
+  );
+  assert.deepEqual(
+    generateProceduralMapVariants({
+      baseMapConfig: {
+        ...resolvedMapConfig,
+        grid: {},
+      },
+    }),
+    [],
+  );
+  assert.deepEqual(
+    generateProceduralMapVariants({
+      baseMapConfig: {
+        ...resolvedMapConfig,
+        spawn: { x: resolvedMapConfig.spawn.x, y: resolvedMapConfig.spawn.y },
+      },
+    }),
+    [],
+  );
+}
+
+testProceduralMapGenerationHandlesMalformedBaseConfig();
+
 function testProceduralMapGenerationIsGridAlignedAndSeeded() {
   const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
