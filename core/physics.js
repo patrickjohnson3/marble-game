@@ -6,6 +6,11 @@ const defaultSettleSpeed = 0;
 const defaultSettleTilt = 0;
 const defaultMaxPhysicsSubsteps = Number.POSITIVE_INFINITY;
 const defaultMaxStepDistance = 1;
+export const SURFACE_TYPES = Object.freeze({
+  floor: "floor",
+  icePatch: "icePatch",
+  roughPatch: "roughPatch",
+});
 
 function deadZone(value, threshold) {
   return Math.abs(value) < threshold ? 0 : value;
@@ -178,6 +183,12 @@ function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
   onSurface(Math.hypot(marble.vx, marble.vy));
 }
 
+function surfaceType({ overIcePatch, overRoughPatch }) {
+  if (overRoughPatch) return SURFACE_TYPES.roughPatch;
+  if (overIcePatch) return SURFACE_TYPES.icePatch;
+  return SURFACE_TYPES.floor;
+}
+
 function physicsStep(context, dt, feedback) {
   const physicsScratch = scratch(context);
   const factors = physicsScratch.frameFactors;
@@ -208,6 +219,7 @@ function physicsStep(context, dt, feedback) {
     context.physics,
   );
   const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
+  feedback.onTerrain?.(surfaceType({ overIcePatch, overRoughPatch }));
   applySurfaceDrag(context, overRoughPatch, factors);
   handleWallCollisions(
     context,

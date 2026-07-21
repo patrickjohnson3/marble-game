@@ -1,4 +1,5 @@
-import { updatePhysicsInput, updatePhysics } from "./physics.js";
+import { copy } from "./copy.js";
+import { SURFACE_TYPES, updatePhysicsInput, updatePhysics } from "./physics.js";
 import { GAME_PHASES } from "./runtime-states.js";
 
 function elapsedMsToFrameDelta(elapsedMs, timing, clamp) {
@@ -28,9 +29,11 @@ export function createGameLoop({
   now = () => performance.now(),
 }) {
   let lastFrame = now();
+  let lastSurfaceType = SURFACE_TYPES.floor;
 
   function resetClock() {
     lastFrame = now();
+    lastSurfaceType = SURFACE_TYPES.floor;
   }
 
   function onImpact(impact) {
@@ -46,9 +49,21 @@ export function createGameLoop({
     hapticFeedback.pulseSurface(speed);
   }
 
+  function onTerrain(surfaceType) {
+    if (surfaceType === lastSurfaceType) return;
+
+    lastSurfaceType = surfaceType;
+    if (surfaceType === SURFACE_TYPES.roughPatch) {
+      ui.setHint(copy.hints.roughPatch);
+    } else if (surfaceType === SURFACE_TYPES.icePatch) {
+      ui.setHint(copy.hints.icePatch);
+    }
+  }
+
   const physicsFeedback = {
     onImpact,
     onSurface,
+    onTerrain,
   };
 
   function tick() {

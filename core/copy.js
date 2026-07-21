@@ -10,6 +10,8 @@ export const copy = {
     motionDenied: "motion permission denied. check chrome site settings.",
     calibrating: "keep holding normally for half a sec...",
     neutralReset: "neutral reset to current hand position.",
+    icePatch: "ice: slippery.",
+    roughPatch: "rough patch: heavy drag.",
     goalNoNextMap: "goal reached. no next map available.",
     goalNextMapInvalid: "goal reached. next map invalid.",
   },

@@ -9,7 +9,11 @@ import {
   marbleOverRect,
   resolveObstacleCollision,
 } from "../core/physics-collisions.js";
-import { updatePhysics, updatePhysicsInput } from "../core/physics.js";
+import {
+  SURFACE_TYPES,
+  updatePhysics,
+  updatePhysicsInput,
+} from "../core/physics.js";
 import { createSpatialIndex } from "../core/spatial-index.js";
 
 function assertNear(actual, expected, tolerance = 1e-9) {
@@ -237,6 +241,43 @@ function testIcePatchReducesDrag() {
   );
 
   assert.equal(marble.vx, 9);
+}
+
+function testTerrainFeedbackReportsSurfaceTypes() {
+  const marble = { x: 50, y: 50, vx: 4, vy: 0, r: 10 };
+  const surfaces = [];
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      keyboard: { x: 0, y: 0 },
+      obstacles: [],
+      roughPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      icePatches: [{ x: 120, y: 40, w: 40, h: 40 }],
+      physics: {
+        accel: 0,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
+        icePatchDragRetention: 1,
+        bounce: 0,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+      onTerrain: (surfaceType) => surfaces.push(surfaceType),
+    },
+  );
+
+  assert.deepEqual(surfaces, [SURFACE_TYPES.roughPatch]);
 }
 
 function testRoughPatchDragAppliesWhenEnteringPatch() {
@@ -859,6 +900,7 @@ testDeepOverlapTieBreaksTowardFirstNearestEdge();
 testRoughPatchAddsDrag();
 testRoughPatchDragUsesSpatialIndex();
 testIcePatchReducesDrag();
+testTerrainFeedbackReportsSurfaceTypes();
 testRoughPatchDragAppliesWhenEnteringPatch();
 testLowSpeedDriftSettles();
 testLowSpeedDriftDoesNotSettleAboveSpeedThreshold();
