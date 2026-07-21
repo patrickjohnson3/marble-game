@@ -37,11 +37,11 @@ function createCanvas(
   return { canvas, context };
 }
 
-export function canvasPixelRatio() {
+function canvasPixelRatio() {
   return Math.min(Math.max(1, globalThis.devicePixelRatio || 1), 2);
 }
 
-export function wallFrameGeometry(walls) {
+function wallFrameGeometry(walls) {
   if (!Array.isArray(walls) || walls.length === 0) return null;
 
   const left = Math.min(...walls.map((wall) => wall.x));

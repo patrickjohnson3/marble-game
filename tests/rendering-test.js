@@ -2,48 +2,85 @@ import assert from "node:assert/strict";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
-import {
-  canvasPixelRatio,
-  renderOuterWalls,
-  wallFrameGeometry,
-} from "../rendering/wall-rendering.js";
+import { renderOuterWalls } from "../rendering/wall-rendering.js";
 import { createTerrainView } from "../rendering/map-renderer.js";
 import { createUi } from "../rendering/ui.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
-function testWallFrameGeometryKeepsPositiveInterior() {
-  const frame = wallFrameGeometry([
-    { x: -34, y: -34, w: 2268, h: 34 },
-    { x: -34, y: 2200, w: 2268, h: 34 },
-    { x: -34, y: 0, w: 34, h: 2200 },
-    { x: 2200, y: 0, w: 34, h: 2200 },
-  ]);
+function withFakeDocument(callback) {
+  const originalDocument = globalThis.document;
 
-  assert.equal(frame.innerLeft, 0);
-  assert.equal(frame.innerRight, 2200);
-  assert.equal(frame.innerTop, 0);
-  assert.equal(frame.innerBottom, 2200);
-  assert.equal(frame.innerRight > frame.innerLeft, true);
-  assert.equal(frame.innerBottom > frame.innerTop, true);
-}
-
-testWallFrameGeometryKeepsPositiveInterior();
-
-function testWallFrameGeometryRejectsInvalidWalls() {
-  assert.equal(wallFrameGeometry([]), null);
-  assert.equal(wallFrameGeometry([{ x: 0, y: 0, w: 100, h: 10 }]), null);
-  assert.equal(wallFrameGeometry([{ x: 0, y: 0, w: 10, h: 100 }]), null);
-  assert.equal(wallFrameGeometry([{ x: 0, y: 0, w: Number.NaN, h: 10 }]), null);
-}
-
-testWallFrameGeometryRejectsInvalidWalls();
-
-function testCanvasPixelRatioCapsHighDensityDisplays() {
-  const originalDevicePixelRatio = globalThis.devicePixelRatio;
-  globalThis.devicePixelRatio = 4;
-
+  globalThis.document = {
+    createElement(tagName) {
+      return tagName === "canvas" ? new FakeCanvasElement() : new FakeElement();
+    },
+  };
   try {
-    assert.equal(canvasPixelRatio(), 2);
+    callback();
+  } finally {
+    if (originalDocument === undefined) {
+      delete globalThis.document;
+    } else {
+      globalThis.document = originalDocument;
+    }
+  }
+}
+
+function testRenderOuterWallsKeepsPositiveInterior() {
+  const container = new FakeElement();
+
+  withFakeDocument(() => {
+    renderOuterWalls(container, [
+      { x: -34, y: -34, w: 2268, h: 34 },
+      { x: -34, y: 2200, w: 2268, h: 34 },
+      { x: -34, y: 0, w: 34, h: 2200 },
+      { x: 2200, y: 0, w: 34, h: 2200 },
+    ]);
+  });
+
+  const canvas = container.children[0];
+  const clearCall = canvas.context.calls.find(
+    (call) => call[0] === "clearRect",
+  );
+
+  assert.deepEqual(clearCall, ["clearRect", 0, 0, 2200, 2200]);
+}
+
+testRenderOuterWallsKeepsPositiveInterior();
+
+function testRenderOuterWallsRejectsInvalidWalls() {
+  [
+    [],
+    [{ x: 0, y: 0, w: 100, h: 10 }],
+    [{ x: 0, y: 0, w: 10, h: 100 }],
+    [{ x: 0, y: 0, w: Number.NaN, h: 10 }],
+  ].forEach((walls) => {
+    const container = new FakeElement();
+
+    withFakeDocument(() => {
+      renderOuterWalls(container, walls);
+    });
+
+    assert.equal(container.children.length, 0);
+  });
+}
+
+testRenderOuterWallsRejectsInvalidWalls();
+
+function testRenderOuterWallsCapsHighDensityDisplays() {
+  const originalDevicePixelRatio = globalThis.devicePixelRatio;
+  const container = new FakeElement();
+
+  globalThis.devicePixelRatio = 4;
+  try {
+    withFakeDocument(() => {
+      renderOuterWalls(container, [
+        { x: -34, y: -34, w: 2268, h: 34 },
+        { x: -34, y: 2200, w: 2268, h: 34 },
+        { x: -34, y: 0, w: 34, h: 2200 },
+        { x: 2200, y: 0, w: 34, h: 2200 },
+      ]);
+    });
   } finally {
     if (originalDevicePixelRatio === undefined) {
       delete globalThis.devicePixelRatio;
@@ -51,9 +88,28 @@ function testCanvasPixelRatioCapsHighDensityDisplays() {
       globalThis.devicePixelRatio = originalDevicePixelRatio;
     }
   }
+
+  assert.equal(container.children[0].width, 4536);
 }
 
-testCanvasPixelRatioCapsHighDensityDisplays();
+testRenderOuterWallsCapsHighDensityDisplays();
+
+function testRenderOuterWallsUsesFrameGeometry() {
+  const container = new FakeElement();
+
+  withFakeDocument(() => {
+    renderOuterWalls(container, [
+      { x: -34, y: -34, w: 2268, h: 34 },
+      { x: -34, y: 2200, w: 2268, h: 34 },
+      { x: -34, y: 0, w: 34, h: 2200 },
+      { x: 2200, y: 0, w: 34, h: 2200 },
+    ]);
+  });
+
+  assert.equal(container.children.length, 1);
+}
+
+testRenderOuterWallsUsesFrameGeometry();
 
 function testFpsCounterDefaultsHiddenAndUpdatesWhenEnabled() {
   const hint = new FakeElement();
