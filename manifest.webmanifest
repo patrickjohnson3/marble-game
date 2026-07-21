@@ -1,0 +1,11 @@
+{
+  "name": "Marble Game",
+  "short_name": "Marble",
+  "description": "Tilt, zoom, and guide the marble through procedural maps.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101114",
+  "theme_color": "#101114",
+  "orientation": "portrait"
+}
