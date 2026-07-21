@@ -150,13 +150,14 @@ function testStatsDefaultsHiddenAndUpdatesWhenEnabled() {
   const debug = new FakeElement();
   const settingsOverlay = new FakeElement();
   const settings = { fpsEnabled: false, statsEnabled: false };
+  let phase = "running";
   const ui = createUi({
     hint,
     fpsCounter,
     debug,
     settings,
     settingsOverlay,
-    debugLines: () => ["phase: running"],
+    debugLines: () => ["phase: " + phase],
     state: {},
   });
 
@@ -172,6 +173,13 @@ function testStatsDefaultsHiddenAndUpdatesWhenEnabled() {
   assert.equal(debug.hidden, false);
   assert.equal(debug.attributes["aria-hidden"], "false");
   assert.equal(debug.textContent, "phase: running");
+
+  phase = "paused";
+  ui.updateDebugPanel({ now: performance.now() + 10 });
+  assert.equal(debug.textContent, "phase: running");
+
+  ui.updateDebugPanel({ now: performance.now() + 300 });
+  assert.equal(debug.textContent, "phase: paused");
 }
 
 testStatsDefaultsHiddenAndUpdatesWhenEnabled();

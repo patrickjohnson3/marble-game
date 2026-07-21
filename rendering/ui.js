@@ -14,6 +14,8 @@ export function createUi({
     sampleElapsed: 0,
     sampleFrames: 0,
   };
+  const debugUpdateIntervalMs = 250;
+  let lastDebugUpdate = Number.NEGATIVE_INFINITY;
 
   function setHint(message) {
     hint.textContent = message;
@@ -29,9 +31,11 @@ export function createUi({
     return settingsOverlay.classList.contains("open");
   }
 
-  function updateDebugPanel() {
+  function updateDebugPanel({ force = false, now = performance.now() } = {}) {
     if (!settings.statsEnabled) return;
+    if (!force && now - lastDebugUpdate < debugUpdateIntervalMs) return;
 
+    lastDebugUpdate = now;
     debug.textContent = debugLines(state).join("\n");
   }
 
@@ -50,7 +54,7 @@ export function createUi({
   function setStatsEnabled(enabled) {
     debug.hidden = !enabled;
     debug.setAttribute("aria-hidden", String(!enabled));
-    if (enabled) updateDebugPanel();
+    if (enabled) updateDebugPanel({ force: true });
   }
 
   setFpsEnabled(settings.fpsEnabled);
@@ -82,7 +86,7 @@ export function createUi({
   function openSettingsModal() {
     settingsOverlay.classList.add("open");
     settingsOverlay.setAttribute("aria-hidden", "false");
-    updateDebugPanel();
+    updateDebugPanel({ force: true });
   }
 
   function closeSettingsModal() {
