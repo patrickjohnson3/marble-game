@@ -26,6 +26,7 @@ import { createMapProgression } from "../core/map-progression.js";
 import {
   generateProceduralMapVariants,
   generateTemplateMapVariant,
+  outsideClearZones,
 } from "../core/procedural-generator.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
@@ -255,6 +256,30 @@ function testProceduralMapGenerationKeepsSpawnAndGoalClear() {
 }
 
 testProceduralMapGenerationKeepsSpawnAndGoalClear();
+
+function testProceduralMapClearZoneBoundaries() {
+  const spawn = { x: 50, y: 50, r: 10 };
+  const goal = { x: 150, y: 150, r: 20 };
+
+  assert.equal(
+    outsideClearZones({ x: 90, y: 45, w: 10, h: 10 }, spawn, goal),
+    false,
+  );
+  assert.equal(
+    outsideClearZones({ x: 91, y: 45, w: 10, h: 10 }, spawn, goal),
+    true,
+  );
+  assert.equal(
+    outsideClearZones({ x: 111, y: 145, w: 10, h: 10 }, spawn, goal),
+    false,
+  );
+  assert.equal(
+    outsideClearZones({ x: 110, y: 145, w: 10, h: 10 }, spawn, goal),
+    true,
+  );
+}
+
+testProceduralMapClearZoneBoundaries();
 
 function testProceduralMapGenerationIncludesPlayableElementMix() {
   const variants = generateProceduralMapVariants({

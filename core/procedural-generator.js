@@ -155,7 +155,7 @@ function templatePointToWorld(point, world, gridSize) {
   };
 }
 
-function outsideClearZones(element, spawn, goal) {
+export function outsideClearZones(element, spawn, goal) {
   const spawnClearZone = { ...spawn, r: spawn.r * 4 };
   const goalClearZone = { ...goal, r: goal.r * 1.45 };
 
