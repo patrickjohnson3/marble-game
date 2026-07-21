@@ -15,34 +15,6 @@ function collisionFeedback(normalSpeed, tangentSpeed, physics) {
   );
 }
 
-function deepOverlapNormal(marble, obstacle) {
-  const distances = [
-    { edge: "left", value: Math.abs(marble.x - obstacle.x), nx: -1, ny: 0 },
-    {
-      edge: "right",
-      value: Math.abs(obstacle.x + obstacle.w - marble.x),
-      nx: 1,
-      ny: 0,
-    },
-    { edge: "top", value: Math.abs(marble.y - obstacle.y), nx: 0, ny: -1 },
-    {
-      edge: "bottom",
-      value: Math.abs(obstacle.y + obstacle.h - marble.y),
-      nx: 0,
-      ny: 1,
-    },
-  ];
-  const nearest = distances.reduce((best, edge) =>
-    edge.value < best.value ? edge : best,
-  );
-
-  return {
-    nx: nearest.nx,
-    ny: nearest.ny,
-    overlap: marble.r + nearest.value,
-  };
-}
-
 export function resolveObstacleCollision(
   marble,
   obstacle,
@@ -63,10 +35,32 @@ export function resolveObstacleCollision(
   let overlap = marble.r - distance;
 
   if (distance === 0) {
-    const deepOverlap = deepOverlapNormal(marble, obstacle);
-    nx = deepOverlap.nx;
-    ny = deepOverlap.ny;
-    overlap = deepOverlap.overlap;
+    let nearestDistance = Math.abs(marble.x - obstacle.x);
+    nx = -1;
+    ny = 0;
+
+    const rightDistance = Math.abs(obstacle.x + obstacle.w - marble.x);
+    if (rightDistance < nearestDistance) {
+      nearestDistance = rightDistance;
+      nx = 1;
+      ny = 0;
+    }
+
+    const topDistance = Math.abs(marble.y - obstacle.y);
+    if (topDistance < nearestDistance) {
+      nearestDistance = topDistance;
+      nx = 0;
+      ny = -1;
+    }
+
+    const bottomDistance = Math.abs(obstacle.y + obstacle.h - marble.y);
+    if (bottomDistance < nearestDistance) {
+      nearestDistance = bottomDistance;
+      nx = 0;
+      ny = 1;
+    }
+
+    overlap = marble.r + nearestDistance;
   }
 
   marble.x += nx * overlap;
