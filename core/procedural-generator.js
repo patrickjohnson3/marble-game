@@ -284,12 +284,17 @@ function generateTemplateMapVariant({
   };
 }
 
+function normalizedVariantCount(count) {
+  if (!Number.isFinite(count)) return 0;
+  return Math.max(0, Math.floor(count));
+}
+
 export function generateProceduralMapVariants({
   baseMapConfig,
   count = 3,
   seed = baseMapConfig?.seed,
 } = {}) {
-  return Array.from({ length: count }, (_, index) => {
+  return Array.from({ length: normalizedVariantCount(count) }, (_, index) => {
     const difficulty = (index % proceduralMapTemplates.length) + 1;
 
     return generateTemplateMapVariant({

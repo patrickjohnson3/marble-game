@@ -113,6 +113,35 @@ function testProceduralMapGenerationReturnsValidSeededVariants() {
 
 testProceduralMapGenerationReturnsValidSeededVariants();
 
+function testProceduralMapGenerationHandlesEmptyCounts() {
+  assert.deepEqual(
+    generateProceduralMapVariants({
+      baseMapConfig: resolvedMapConfig,
+      count: 0,
+      seed: "empty-count-seed",
+    }),
+    [],
+  );
+  assert.deepEqual(
+    generateProceduralMapVariants({
+      baseMapConfig: resolvedMapConfig,
+      count: -2,
+      seed: "negative-count-seed",
+    }),
+    [],
+  );
+  assert.equal(
+    generateProceduralMapVariants({
+      baseMapConfig: resolvedMapConfig,
+      count: 2.8,
+      seed: "fractional-count-seed",
+    }).length,
+    2,
+  );
+}
+
+testProceduralMapGenerationHandlesEmptyCounts();
+
 function testProceduralMapGenerationIsGridAlignedAndSeeded() {
   const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
