@@ -154,7 +154,7 @@ async function testStartRequestsFullscreenFromClickPath() {
     timing,
     trailRenderer: { clear() {} },
     ui: { isSettingsOpen: () => false, setHint() {}, setStartControls() {} },
-    spawn: resolvedMapConfig.spawn,
+    getSpawn: () => resolvedMapConfig.spawn,
     enableMotion() {
       motionEnabled = true;
     },
@@ -239,7 +239,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       },
       setStartControls() {},
     },
-    spawn: resolvedMapConfig.spawn,
+    getSpawn: () => resolvedMapConfig.spawn,
     enableMotion() {
       motionEnabled = true;
     },
@@ -337,7 +337,7 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
         if (disabled !== undefined) startBtn.disabled = disabled;
       },
     },
-    spawn: resolvedMapConfig.spawn,
+    getSpawn: () => resolvedMapConfig.spawn,
     enableMotion() {
       motionEnabled = true;
     },

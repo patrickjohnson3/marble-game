@@ -476,7 +476,7 @@ export function createApp({
     timing,
     trailRenderer,
     ui,
-    spawn: mapState.spawn,
+    getSpawn: () => mapState.spawn,
     enableMotion: () => inputManager.enableMotion(),
     requestFullscreen: (options) =>
       requestFullscreenMode({ ...options, documentRef }),

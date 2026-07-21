@@ -23,7 +23,7 @@ export function createLifecycleController({
   timing,
   trailRenderer,
   ui,
-  spawn,
+  getSpawn,
   enableMotion,
   requestFullscreen,
   requestMotionPermission,
@@ -87,6 +87,7 @@ export function createLifecycleController({
     tilt.smoothX = 0;
     tilt.smoothY = 0;
 
+    const spawn = getSpawn();
     marble.x = spawn.x;
     marble.y = spawn.y;
     marble.vx = 0;
