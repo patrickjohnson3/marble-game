@@ -27,6 +27,7 @@ export function createGoalController({
   mapProgression,
   mapRuntime,
   marble,
+  onComplete = () => {},
   terrainView,
   timing,
   ui,
@@ -41,7 +42,7 @@ export function createGoalController({
     );
   }
 
-  function update(frameDelta) {
+  function update(frameDelta, currentTime = performance.now()) {
     if (mapState.goalCompleted) return;
 
     if (!marbleInsideGoal()) {
@@ -70,6 +71,7 @@ export function createGoalController({
     hapticFeedback.pulseGoal("hold");
 
     if (mapState.goalHoldMs >= mapState.goal.holdMs) {
+      onComplete(mapState.activeMap, mapRuntime.currentRunMs(currentTime));
       mapRuntime.completeGoal();
       effectsRenderer.spawnGoalComplete();
       hapticFeedback.pulseGoal("complete");

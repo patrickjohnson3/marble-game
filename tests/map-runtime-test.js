@@ -96,3 +96,6 @@ assert.equal(runtime.addGoalHold(5000), 1);
 runtime.completeGoal();
 runtime.clearGoalCompleted();
 assert.equal(runtime.state.goalCompleted, false);
+assert.equal(runtime.currentRunMs(2000), null);
+runtime.startRun(1250);
+assert.equal(runtime.currentRunMs(2000), 750);

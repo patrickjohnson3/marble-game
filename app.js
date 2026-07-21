@@ -1,5 +1,10 @@
 import { createCameraController } from "./core/camera.js";
 import {
+  bestTimeLabel,
+  loadBestTime,
+  recordBestTime,
+} from "./core/best-times.js";
+import {
   hapticTuning,
   physicsConfig,
   timing,
@@ -367,6 +372,24 @@ function mapLevelLabel(mapConfig) {
   return "level " + (index >= 0 ? index + 1 : 1);
 }
 
+function createBestTimeUi({ storage, ui }) {
+  function setMapBestTime(mapConfig) {
+    ui.setBestTimeLabel(
+      bestTimeLabel(loadBestTime(storage, mapConfig.variantId)),
+    );
+  }
+
+  function recordMapTime(mapConfig, runMs) {
+    const bestTime = recordBestTime(storage, mapConfig.variantId, runMs);
+    ui.setBestTimeLabel(bestTimeLabel(bestTime));
+  }
+
+  return {
+    recordMapTime,
+    setMapBestTime,
+  };
+}
+
 export function createApp({
   document: documentRef = document,
   window: windowRef = window,
@@ -421,11 +444,13 @@ export function createApp({
     settingsOverlay,
     startBtn,
     levelLabel: els.levelLabel,
+    bestTimeLabel: els.bestTimeLabel,
     debugLines,
     state,
   });
   const frameLoop = createFrameLoop();
   const viewport = createViewport(windowRef);
+  const bestTimes = createBestTimeUi({ storage, ui });
 
   function scheduleFrame() {
     frameLoop.schedule();
@@ -512,6 +537,7 @@ export function createApp({
     applyMap: (nextMap) => {
       mapController.setCurrentMap(nextMap);
       ui.setLevelLabel(mapLevelLabel(nextMap));
+      bestTimes.setMapBestTime(nextMap);
     },
     resetForNextMap: mapController.resetForNextMap,
     terrainView,
@@ -535,6 +561,7 @@ export function createApp({
     mapProgression,
     mapRuntime,
     marble,
+    onComplete: (mapConfig, runMs) => bestTimes.recordMapTime(mapConfig, runMs),
     terrainView,
     timing,
     ui,
@@ -665,6 +692,7 @@ export function createApp({
       windowRef,
     });
     ui.setLevelLabel(mapLevelLabel(mapState.activeMap));
+    bestTimes.setMapBestTime(mapState.activeMap);
   } catch (error) {
     showBootError(documentRef, error);
     throw error;

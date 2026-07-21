@@ -30,6 +30,7 @@ export const domIds = {
   statsSetting: "statsSetting",
   hint: "hint",
   levelLabel: "levelLabel",
+  bestTimeLabel: "bestTimeLabel",
   fpsCounter: "fpsCounter",
   debug: "debug",
 };

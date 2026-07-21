@@ -62,6 +62,7 @@ export function createMapRuntime({
     spawn: null,
     goalHoldMs: 0,
     goalCompleted: false,
+    runStartedAt: null,
   };
 
   function resetGoalProgress() {
@@ -104,6 +105,16 @@ export function createMapRuntime({
     state.goalCompleted = false;
   }
 
+  function startRun(now) {
+    state.runStartedAt = now;
+  }
+
+  function currentRunMs(now) {
+    return Number.isFinite(state.runStartedAt)
+      ? now - state.runStartedAt
+      : null;
+  }
+
   setActiveMap(initialMap);
 
   return {
@@ -111,7 +122,9 @@ export function createMapRuntime({
     addGoalHold,
     clearGoalCompleted,
     completeGoal,
+    currentRunMs,
     resetGoalProgress,
     setActiveMap,
+    startRun,
   };
 }
