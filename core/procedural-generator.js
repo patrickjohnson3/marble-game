@@ -3,7 +3,7 @@ import { circleRectContact } from "./geometry.js";
 import { MAP_ELEMENT_TYPES } from "./map-elements.js";
 import { snapToGrid } from "./map-obstacles.js";
 
-export const proceduralMapTemplates = [
+const proceduralMapTemplates = [
   {
     id: "long-run",
     difficulty: 1,
@@ -193,7 +193,7 @@ function outsideClearZones(element, spawn, goal) {
   );
 }
 
-export function proceduralElementBudget(difficulty) {
+function proceduralElementBudget(difficulty) {
   const level = Math.min(Math.max(Math.round(difficulty), 1), 3);
 
   return {
@@ -220,7 +220,7 @@ function limitElementsByBudget(elements, difficulty) {
   });
 }
 
-export function generateTemplateMapVariant({
+function generateTemplateMapVariant({
   baseMapConfig,
   difficulty = 1,
   index = 0,

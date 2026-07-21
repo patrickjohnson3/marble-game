@@ -23,12 +23,7 @@ import {
 } from "../core/map-variants.js";
 import { validateMapConfig } from "../core/map-validation.js";
 import { createMapProgression } from "../core/map-progression.js";
-import {
-  generateProceduralMapVariants,
-  generateTemplateMapVariant,
-  proceduralElementBudget,
-  proceduralMapTemplates,
-} from "../core/procedural-generator.js";
+import { generateProceduralMapVariants } from "../core/procedural-generator.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import {
@@ -87,52 +82,6 @@ function testProceduralMapBoundaryWrapsVariantSelection() {
 
 testProceduralMapBoundaryWrapsVariantSelection();
 
-function testTemplateMapGenerationIsDeterministicAndGridAligned() {
-  const generated = generateTemplateMapVariant({
-    baseMapConfig: resolvedMapConfig,
-    seed: "same-seed",
-    index: 2,
-    difficulty: 3,
-    template: proceduralMapTemplates[0],
-  });
-  const repeated = generateTemplateMapVariant({
-    baseMapConfig: resolvedMapConfig,
-    seed: "same-seed",
-    index: 2,
-    difficulty: 3,
-    template: proceduralMapTemplates[0],
-  });
-
-  assert.deepEqual(generated, repeated);
-  assert.equal(generated.id, "generated-3-2");
-  assert.equal(generated.templateId, proceduralMapTemplates[0].id);
-  assert.equal(generated.spawn.x % resolvedMapConfig.grid.size, 0);
-  assert.equal(generated.goal.y % resolvedMapConfig.grid.size, 0);
-  assert.equal(
-    generated.elements.every(
-      (element) =>
-        element.x % resolvedMapConfig.grid.size === 0 &&
-        element.y % resolvedMapConfig.grid.size === 0 &&
-        element.w % resolvedMapConfig.grid.size === 0 &&
-        element.h % resolvedMapConfig.grid.size === 0,
-    ),
-    true,
-  );
-
-  assert.notDeepEqual(
-    generated,
-    generateTemplateMapVariant({
-      baseMapConfig: resolvedMapConfig,
-      seed: "other-seed",
-      index: 2,
-      difficulty: 3,
-      template: proceduralMapTemplates[0],
-    }),
-  );
-}
-
-testTemplateMapGenerationIsDeterministicAndGridAligned();
-
 function testProceduralMapGenerationReturnsValidSeededVariants() {
   const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
@@ -147,10 +96,11 @@ function testProceduralMapGenerationReturnsValidSeededVariants() {
 
   assert.equal(variants.length, 4);
   assert.deepEqual(variants, repeated);
-  variants.forEach((variant, index) => {
-    const difficulty = (index % proceduralMapTemplates.length) + 1;
-
-    assert.equal(variant.id, "generated-" + difficulty + "-" + index);
+  assert.deepEqual(
+    variants.map((variant) => variant.id),
+    ["generated-1-0", "generated-2-1", "generated-3-2", "generated-1-3"],
+  );
+  variants.forEach((variant) => {
     assert.deepEqual(
       validateMapConfig({
         ...resolvedMapConfig,
@@ -162,6 +112,36 @@ function testProceduralMapGenerationReturnsValidSeededVariants() {
 }
 
 testProceduralMapGenerationReturnsValidSeededVariants();
+
+function testProceduralMapGenerationIsGridAlignedAndSeeded() {
+  const variants = generateProceduralMapVariants({
+    baseMapConfig: resolvedMapConfig,
+    count: 3,
+    seed: "same-seed",
+  });
+  const otherSeedVariants = generateProceduralMapVariants({
+    baseMapConfig: resolvedMapConfig,
+    count: 3,
+    seed: "other-seed",
+  });
+  const generated = variants[2];
+
+  assert.notDeepEqual(variants, otherSeedVariants);
+  assert.equal(generated.spawn.x % resolvedMapConfig.grid.size, 0);
+  assert.equal(generated.goal.y % resolvedMapConfig.grid.size, 0);
+  assert.equal(
+    generated.elements.every(
+      (element) =>
+        element.x % resolvedMapConfig.grid.size === 0 &&
+        element.y % resolvedMapConfig.grid.size === 0 &&
+        element.w % resolvedMapConfig.grid.size === 0 &&
+        element.h % resolvedMapConfig.grid.size === 0,
+    ),
+    true,
+  );
+}
+
+testProceduralMapGenerationIsGridAlignedAndSeeded();
 
 function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
   assert.equal(
@@ -185,75 +165,55 @@ function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
 testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps();
 
 function testProceduralMapGenerationKeepsSpawnAndGoalClear() {
-  const variant = generateTemplateMapVariant({
+  const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
+    count: 6,
     seed: "clear-zone-seed",
-    index: 1,
-    difficulty: 2,
-    template: proceduralMapTemplates[1],
   });
 
-  variant.elements.forEach((element) => {
-    assert.equal(
-      circleRectContact({ ...variant.spawn, r: variant.spawn.r * 4 }, element)
-        .intersects,
-      false,
-    );
-    assert.equal(
-      circleRectContact({ ...variant.goal, r: variant.goal.r * 1.45 }, element)
-        .intersects,
-      false,
-    );
+  variants.forEach((variant) => {
+    variant.elements.forEach((element) => {
+      assert.equal(
+        circleRectContact({ ...variant.spawn, r: variant.spawn.r * 4 }, element)
+          .intersects,
+        false,
+      );
+      assert.equal(
+        circleRectContact(
+          { ...variant.goal, r: variant.goal.r * 1.45 },
+          element,
+        ).intersects,
+        false,
+      );
+    });
   });
 }
 
 testProceduralMapGenerationKeepsSpawnAndGoalClear();
 
-function testProceduralMapGenerationRespectsElementBudgets() {
-  const variant = generateTemplateMapVariant({
+function testProceduralMapGenerationIncludesPlayableElementMix() {
+  const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
-    seed: "budget-seed",
-    index: 1,
-    difficulty: 1,
-    template: proceduralMapTemplates[2],
+    count: 6,
+    seed: "element-mix-seed",
   });
-  const budget = proceduralElementBudget(variant.difficulty);
-  const counts = Object.groupBy(variant.elements, (element) => element.type);
+  const elements = variants.flatMap((variant) => variant.elements);
 
-  assert.equal((counts.obstacle ?? []).length <= budget.obstacle, true);
-  assert.equal((counts.roughPatch ?? []).length <= budget.roughPatch, true);
-  assert.equal((counts.icePatch ?? []).length <= budget.icePatch, true);
+  assert.equal(
+    elements.some((element) => element.type === "obstacle"),
+    true,
+  );
+  assert.equal(
+    elements.some((element) => element.type === "roughPatch"),
+    true,
+  );
+  assert.equal(
+    elements.some((element) => element.type === "icePatch"),
+    true,
+  );
 }
 
-testProceduralMapGenerationRespectsElementBudgets();
-
-function testProceduralMapTemplatesAddObstacleClusters() {
-  const sparseTemplate = { ...proceduralMapTemplates[0], clusters: [] };
-  const clustered = generateTemplateMapVariant({
-    baseMapConfig: resolvedMapConfig,
-    seed: "cluster-seed",
-    index: 1,
-    difficulty: 3,
-    template: proceduralMapTemplates[0],
-  });
-  const sparse = generateTemplateMapVariant({
-    baseMapConfig: resolvedMapConfig,
-    seed: "cluster-seed",
-    index: 1,
-    difficulty: 3,
-    template: sparseTemplate,
-  });
-  const clusteredObstacleCount = clustered.elements.filter(
-    (element) => element.type === "obstacle",
-  ).length;
-  const sparseObstacleCount = sparse.elements.filter(
-    (element) => element.type === "obstacle",
-  ).length;
-
-  assert.equal(clusteredObstacleCount > sparseObstacleCount, true);
-}
-
-testProceduralMapTemplatesAddObstacleClusters();
+testProceduralMapGenerationIncludesPlayableElementMix();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;
