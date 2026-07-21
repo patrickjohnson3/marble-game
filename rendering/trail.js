@@ -1,3 +1,5 @@
+import { GAME_PHASES } from "../core/runtime-states.js";
+
 export function createTrailRenderer({
   trailEl,
   trailSegmentsEl,
@@ -22,7 +24,7 @@ export function createTrailRenderer({
   }
 
   function update(now) {
-    if (!settings.trailEnabled || game.phase === "waiting") {
+    if (!settings.trailEnabled || game.phase === GAME_PHASES.waiting) {
       clear();
       return;
     }

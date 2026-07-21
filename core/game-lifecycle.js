@@ -1,5 +1,6 @@
 import { copy } from "./copy.js";
 import { resetIntroTimerState, shouldPauseGame } from "./intro-timers.js";
+import { GAME_PHASES, SENSOR_MODES } from "./runtime-states.js";
 import { startGameWithPermissions } from "./startup-flow.js";
 
 export function createLifecycleController({
@@ -54,7 +55,9 @@ export function createLifecycleController({
     game.paused = false;
     resetFrameClock();
     sensorWatchdog.resume(
-      () => game.phase === "calibrating" && sensor.using === "none",
+      () =>
+        game.phase === GAME_PHASES.calibrating &&
+        sensor.using === SENSOR_MODES.none,
     );
     introSequence.resume();
     scheduleFrame();
@@ -66,12 +69,12 @@ export function createLifecycleController({
     resetCalibration();
     resetMap();
 
-    game.phase = "waiting";
+    game.phase = GAME_PHASES.waiting;
     game.paused = false;
     settingsPausedGame = false;
     sensor.gotOrientation = false;
     sensor.gotMotion = false;
-    sensor.using = "none";
+    sensor.using = SENSOR_MODES.none;
 
     intro.released = false;
     introSequenceState.started = false;

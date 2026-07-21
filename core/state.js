@@ -1,4 +1,5 @@
 import { resetIntroTimerState } from "./intro-timers.js";
+import { GAME_PHASES, SENSOR_MODES } from "./runtime-states.js";
 
 export function createGameState({
   world,
@@ -59,7 +60,7 @@ export function createGameState({
       sensor: {
         gotOrientation: false,
         gotMotion: false,
-        using: "none",
+        using: SENSOR_MODES.none,
       },
     },
     camera: {
@@ -89,7 +90,7 @@ export function createGameState({
       },
     },
     game: {
-      phase: "waiting",
+      phase: GAME_PHASES.waiting,
       paused: false,
     },
     physics: { ...physicsConfig },

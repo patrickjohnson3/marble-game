@@ -63,6 +63,7 @@ import {
   settingsConfig,
   settingsControls,
 } from "./settings/settings-config.js";
+import { GAME_PHASES, SENSOR_MODES } from "./core/runtime-states.js";
 import { createGameState } from "./core/state.js";
 import { createUi } from "./rendering/ui.js";
 
@@ -191,8 +192,8 @@ function setupSensors({
     sensor,
     onFallback() {
       ui.setHint(copy.hints.noMotionSensor);
-      sensor.using = "keyboard";
-      game.phase = "keyboard";
+      sensor.using = SENSOR_MODES.keyboard;
+      game.phase = GAME_PHASES.keyboard;
       tilt.neutralX = 0;
       tilt.neutralY = 0;
       calibration.autoNeutralDone = true;
@@ -282,7 +283,10 @@ function bindViewportEvents({
   bounds,
 }) {
   function keepDisplayAwakeWhenVisible() {
-    if (documentRef.visibilityState === "visible" && game.phase !== "waiting") {
+    if (
+      documentRef.visibilityState === "visible" &&
+      game.phase !== GAME_PHASES.waiting
+    ) {
       requestWakeLock({ documentRef, navigatorRef: windowRef.navigator });
     }
   }

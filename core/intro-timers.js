@@ -1,3 +1,5 @@
+import { GAME_PHASES } from "./runtime-states.js";
+
 export function resetIntroTimerState(sequence) {
   sequence.sequenceStage = "idle";
   sequence.timerStartedAt = 0;
@@ -27,5 +29,5 @@ export function resumeIntroTimerAction(intro, sequence) {
 }
 
 export function shouldPauseGame(game) {
-  return !game.paused && game.phase !== "waiting";
+  return !game.paused && game.phase !== GAME_PHASES.waiting;
 }

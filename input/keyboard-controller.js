@@ -1,3 +1,5 @@
+import { GAME_PHASES, SENSOR_MODES } from "../core/runtime-states.js";
+
 const movementKeys = new Set([
   "arrowleft",
   "arrowright",
@@ -20,10 +22,15 @@ export function createKeyboardController({
   closeSettings,
 }) {
   function activateKeyboardFallback() {
-    sensor.using = sensor.using === "none" ? "keyboard" : sensor.using;
-    if (game.phase !== "waiting" && game.phase !== "calibrating") return;
+    sensor.using =
+      sensor.using === SENSOR_MODES.none ? SENSOR_MODES.keyboard : sensor.using;
+    if (
+      game.phase !== GAME_PHASES.waiting &&
+      game.phase !== GAME_PHASES.calibrating
+    )
+      return;
 
-    game.phase = "keyboard";
+    game.phase = GAME_PHASES.keyboard;
     tilt.neutralX = 0;
     tilt.neutralY = 0;
     calibration.autoNeutralDone = true;

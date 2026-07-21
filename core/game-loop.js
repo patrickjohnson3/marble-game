@@ -1,4 +1,5 @@
 import { updatePhysicsInput, updatePhysics } from "./physics.js";
+import { GAME_PHASES } from "./runtime-states.js";
 
 function elapsedMsToFrameDelta(elapsedMs, timing, clamp) {
   return clamp(
@@ -59,7 +60,7 @@ export function createGameLoop({
       clamp,
     );
     lastFrame = currentTime;
-    const active = game.phase !== "waiting" && !game.paused;
+    const active = game.phase !== GAME_PHASES.waiting && !game.paused;
 
     if (frameLoop.shouldSkipIdle(active)) {
       ui.updateDebugPanel();

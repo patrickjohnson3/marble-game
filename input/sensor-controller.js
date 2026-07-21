@@ -1,4 +1,5 @@
 import { copy } from "../core/copy.js";
+import { GAME_PHASES } from "../core/runtime-states.js";
 import { screenAdjusted } from "../platform/platform.js";
 
 export function createSensorController({
@@ -25,7 +26,7 @@ export function createSensorController({
       tilt.neutralX = calibration.sampleX / calibration.sampleCount;
       tilt.neutralY = calibration.sampleY / calibration.sampleCount;
       calibration.autoNeutralDone = true;
-      game.phase = "running";
+      game.phase = GAME_PHASES.running;
       marble.vx = 0;
       marble.vy = 0;
       ui.setHint(copy.hints.neutralSet);
@@ -67,7 +68,8 @@ export function createSensorController({
     tilt.neutralX = tilt.rawX;
     tilt.neutralY = tilt.rawY;
     calibration.autoNeutralDone = true;
-    if (game.phase === "calibrating") game.phase = "running";
+    if (game.phase === GAME_PHASES.calibrating)
+      game.phase = GAME_PHASES.running;
     calibration.sampleCount = tuning.neutralSampleCount;
     marble.vx = 0;
     marble.vy = 0;

@@ -1,4 +1,5 @@
 import { copy } from "./copy.js";
+import { GAME_PHASES } from "./runtime-states.js";
 import {
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
@@ -63,7 +64,7 @@ export async function startGameWithPermissions({
   resetGame();
   ui.setStartControls({ visible: false, disabled: true });
   enableMotion();
-  game.phase = "calibrating";
+  game.phase = GAME_PHASES.calibrating;
   scheduleFrame();
 
   ui.setHint(
