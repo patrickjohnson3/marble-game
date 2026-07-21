@@ -1,8 +1,4 @@
-import {
-  mapIcePatchElements,
-  mapObstacleElements,
-  mapRoughPatchElements,
-} from "./map-elements.js";
+import { MAP_ELEMENT_TYPES, mapElementsByType } from "./map-elements.js";
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { rectBounds } from "./rect-bounds.js";
 import { createSpatialIndex } from "./spatial-index.js";
@@ -15,9 +11,12 @@ export function createResolvedMapState(
   } = {},
 ) {
   const elements = activeMap.elements;
-  const icePatches = mapIcePatchElements(elements);
-  const obstacles = normalizeObstacles(mapObstacleElements(elements));
-  const roughPatches = mapRoughPatchElements(elements);
+  const elementsByType = mapElementsByType(elements);
+  const icePatches = elementsByType[MAP_ELEMENT_TYPES.icePatch];
+  const obstacles = normalizeObstacles(
+    elementsByType[MAP_ELEMENT_TYPES.obstacle],
+  );
+  const roughPatches = elementsByType[MAP_ELEMENT_TYPES.roughPatch];
   return {
     activeMap,
     elements,

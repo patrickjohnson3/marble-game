@@ -1,5 +1,8 @@
 import { circleRectContact } from "./geometry.js";
-import { MAP_ELEMENT_TYPES, mapObstacleElements } from "./map-elements.js";
+import {
+  MAP_ELEMENT_TYPE_VALUES,
+  mapObstacleElements,
+} from "./map-elements.js";
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { hasReachableGoal } from "./map-reachability.js";
 import { mapValidationMessages } from "./map-validation-messages.js";
@@ -287,7 +290,7 @@ function validateReachableGoal({
 
 export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
   const errors = [];
-  const allowedTypes = new Set(Object.values(MAP_ELEMENT_TYPES));
+  const allowedTypes = new Set(MAP_ELEMENT_TYPE_VALUES);
   const {
     checkedObstacles,
     checkedObstaclesSource,
