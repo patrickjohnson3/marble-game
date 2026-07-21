@@ -27,6 +27,24 @@ export function createGameLoop({
   visualConfig,
   now = () => performance.now(),
 }) {
+  function onImpact(impact) {
+    marble.impactSquash = Math.max(
+      marble.impactSquash,
+      clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1),
+    );
+    effectsRenderer.spawnImpact(impact);
+    hapticFeedback.pulseImpact(impact);
+  }
+
+  function onSurface(speed) {
+    hapticFeedback.pulseSurface(speed);
+  }
+
+  const physicsFeedback = {
+    onImpact,
+    onSurface,
+  };
+
   function tick() {
     frameLoop.beginFrame();
     const currentTime = now();
@@ -46,19 +64,7 @@ export function createGameLoop({
     if (active) {
       const context = physicsContext();
       updatePhysicsInput(context, frameDelta);
-      updatePhysics(context, frameDelta, {
-        onImpact: (impact) => {
-          marble.impactSquash = Math.max(
-            marble.impactSquash,
-            clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1),
-          );
-          effectsRenderer.spawnImpact(impact);
-          hapticFeedback.pulseImpact(impact);
-        },
-        onSurface: (speed) => {
-          hapticFeedback.pulseSurface(speed);
-        },
-      });
+      updatePhysics(context, frameDelta, physicsFeedback);
       marble.roll +=
         (Math.hypot(marble.vx, marble.vy) * frameDelta) / Math.max(marble.r, 1);
       marble.impactSquash = Math.max(
