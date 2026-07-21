@@ -49,6 +49,14 @@ function testCircleRectContactEdgeCases() {
   assert.equal(nearMiss.intersects, true);
 }
 
+function testMarbleOverRectHonorsEpsilon() {
+  const marble = { x: 4.9, y: 20, r: 5 };
+  const rect = { x: 10, y: 10, w: 20, h: 20 };
+
+  assert.equal(marbleOverRect(marble, rect), false);
+  assert.equal(marbleOverRect(marble, rect, 1.1), true);
+}
+
 function testObstacleBounce() {
   const marble = { x: 90, y: 50, vx: 8, vy: 0, r: 12 };
   const obstacle = { x: 100, y: 30, w: 40, h: 40 };
@@ -829,6 +837,7 @@ function testSubstepsPreventThinObstacleTunneling() {
 
 testCircleRectContact();
 testCircleRectContactEdgeCases();
+testMarbleOverRectHonorsEpsilon();
 testObstacleBounce();
 testObstacleCornerBounceUsesDiagonalNormal();
 testGlancingImpactReportsScrapeFeedback();
