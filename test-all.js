@@ -21,6 +21,7 @@ const tests = [
   "tests/settings-store-test.js",
   "tests/rendering-test.js",
   "tests/effects-test.js",
+  "tests/trail-test.js",
   "tests/lifecycle-test.js",
   "check-cache-version.js",
 ];

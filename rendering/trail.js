@@ -8,7 +8,12 @@ export function createTrailRenderer({
   clamp,
 }) {
   const points = [];
+  const segmentPool = [];
   const svgNamespace = "http://www.w3.org/2000/svg";
+
+  function createSegment() {
+    return document.createElementNS(svgNamespace, "line");
+  }
 
   function clear() {
     points.length = 0;
@@ -42,21 +47,31 @@ export function createTrailRenderer({
       return;
     }
 
-    const segments = [];
+    const segmentCount = points.length - 1;
     for (let i = 1; i < points.length; i++) {
       const a = points[i - 1];
       const b = points[i];
       const opacity =
         clamp(1 - (now - b.t) / config.durationMs, 0, 1) * config.maxOpacity;
-      const segment = document.createElementNS(svgNamespace, "line");
+      const segmentIndex = i - 1;
+      const segment = segmentPool[segmentIndex] ?? createSegment();
+      segmentPool[segmentIndex] = segment;
       segment.setAttribute("x1", a.x.toFixed(1));
       segment.setAttribute("y1", a.y.toFixed(1));
       segment.setAttribute("x2", b.x.toFixed(1));
       segment.setAttribute("y2", b.y.toFixed(1));
       segment.setAttribute("opacity", opacity.toFixed(3));
-      segments.push(segment);
+      const parent = segment.parentNode ?? segment.parent;
+      if (parent !== trailSegmentsEl) {
+        trailSegmentsEl.appendChild(segment);
+      }
     }
-    trailSegmentsEl.replaceChildren(...segments);
+
+    while (trailSegmentsEl.childNodes.length > segmentCount) {
+      trailSegmentsEl.childNodes[
+        trailSegmentsEl.childNodes.length - 1
+      ].remove();
+    }
   }
 
   function setEnabled(enabled) {
