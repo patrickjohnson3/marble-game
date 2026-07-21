@@ -4,10 +4,7 @@ import {
   marbleOverRect,
   resolveObstacleCollision,
 } from "../core/physics-collisions.js";
-import {
-  updatePhysics,
-  updatePhysicsInput,
-} from "../core/physics.js";
+import { updatePhysics, updatePhysicsInput } from "../core/physics.js";
 import { createSpatialIndex } from "../core/spatial-index.js";
 
 function assertNear(actual, expected, tolerance = 1e-9) {

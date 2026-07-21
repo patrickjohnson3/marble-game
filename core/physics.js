@@ -1,8 +1,5 @@
 import { clamp } from "./geometry.js";
-import {
-  handleWallCollisions,
-  marbleOverRect,
-} from "./physics-collisions.js";
+import { handleWallCollisions, marbleOverRect } from "./physics-collisions.js";
 
 const defaultMaxSpeedEase = 0;
 const defaultSettleSpeed = 0;
