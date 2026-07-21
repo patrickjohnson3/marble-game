@@ -15,7 +15,6 @@ export function createGameLoop({
   frameLoop,
   game,
   hapticFeedback,
-  lifecycle,
   goalController,
   marble,
   marbleView,
@@ -27,6 +26,12 @@ export function createGameLoop({
   visualConfig,
   now = () => performance.now(),
 }) {
+  let lastFrame = now();
+
+  function resetClock() {
+    lastFrame = now();
+  }
+
   function onImpact(impact) {
     marble.impactSquash = Math.max(
       marble.impactSquash,
@@ -49,11 +54,11 @@ export function createGameLoop({
     frameLoop.beginFrame();
     const currentTime = now();
     const frameDelta = elapsedMsToFrameDelta(
-      currentTime - lifecycle.getLastFrame(),
+      currentTime - lastFrame,
       timing,
       clamp,
     );
-    lifecycle.setLastFrame(currentTime);
+    lastFrame = currentTime;
     const active = game.phase !== "waiting" && !game.paused;
 
     if (frameLoop.shouldSkipIdle(active)) {
@@ -85,5 +90,5 @@ export function createGameLoop({
     if (active) scheduleFrame();
   }
 
-  return { tick };
+  return { resetClock, tick };
 }

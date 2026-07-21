@@ -361,9 +361,80 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
   assert.equal(hint, "motion permission denied. check chrome site settings.");
 }
 
+function testResumeResetsFrameClock() {
+  const state = createGameState({
+    world: resolvedMapConfig.world,
+    resolvedMapConfig,
+    timing,
+    hapticTuning,
+    physicsConfig,
+  });
+  let resetClockCalls = 0;
+  state.game.phase = "running";
+
+  const lifecycle = createLifecycleController({
+    cameraController: {
+      camera: state.camera,
+      centerOnMarble() {},
+      resetGesture() {},
+    },
+    calibration: state.calibration,
+    controlsEl: { hidden: false },
+    effectsRenderer: { clear() {} },
+    frameLoop: { requestRender() {} },
+    game: state.game,
+    haptics: state.haptics,
+    intro: state.intro,
+    introSequence: {
+      clearTimers() {},
+      hideMessage() {},
+      pause() {},
+      resume() {},
+      schedule() {},
+    },
+    keyboard: state.keyboard,
+    mapRenderer: { resetIntroPen() {} },
+    marble: state.marble,
+    resetMap() {},
+    resetCalibration() {},
+    scheduleFrame() {},
+    sensor: state.sensor,
+    sensorWatchdog: {
+      pause() {},
+      reset() {},
+      resume() {},
+      schedule() {},
+    },
+    settings: { fullscreenEnabled: true },
+    startBtn: {
+      disabled: false,
+      textContent: "",
+    },
+    tilt: state.tilt,
+    timing,
+    trailRenderer: { clear() {} },
+    ui: { isSettingsOpen: () => false, setHint() {}, setStartControls() {} },
+    getSpawn: () => resolvedMapConfig.spawn,
+    enableMotion() {},
+    requestFullscreen() {},
+    requestMotionPermission() {},
+    keepDisplayAwake() {},
+    resetFrameClock() {
+      resetClockCalls++;
+    },
+    tick() {},
+  });
+
+  assert.equal(lifecycle.gameController.pause(), true);
+  lifecycle.gameController.resume();
+
+  assert.equal(resetClockCalls, 1);
+}
+
 testStartPauseResumeReleaseReset();
 await testStartRequestsFullscreenFromClickPath();
 await testStartContinuesWhenMotionPermissionStalls();
 await testStartRestoresControlsWhenMotionPermissionDenied();
+testResumeResetsFrameClock();
 
 console.log("Lifecycle tests passed.");

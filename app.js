@@ -485,6 +485,7 @@ export function createApp({
       requestMotionPermissionIfNeeded({ windowRef }),
     keepDisplayAwake: () =>
       requestWakeLock({ documentRef, navigatorRef: windowRef.navigator }),
+    resetFrameClock: () => gameLoop.resetClock(),
     tick: () => gameLoop.tick(),
   });
   const { gameController } = lifecycle;
@@ -557,7 +558,6 @@ export function createApp({
     game,
     hapticFeedback,
     goalController,
-    lifecycle,
     marble,
     marbleView,
     physicsContext: currentPhysicsContext,

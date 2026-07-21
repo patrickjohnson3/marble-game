@@ -28,13 +28,12 @@ export function createLifecycleController({
   requestFullscreen,
   requestMotionPermission,
   keepDisplayAwake,
+  resetFrameClock = () => {},
   setTimeoutFn = setTimeout,
   clearTimeoutFn = clearTimeout,
-  now = () => performance.now(),
   tick,
 }) {
   let settingsPausedGame = false;
-  let lastFrame = now();
 
   function pauseGame() {
     if (!shouldPauseGame(game)) return false;
@@ -52,7 +51,7 @@ export function createLifecycleController({
     if (!game.paused) return;
 
     game.paused = false;
-    lastFrame = now();
+    resetFrameClock();
     sensorWatchdog.resume(
       () => game.phase === "calibrating" && sensor.using === "none",
     );
@@ -164,9 +163,5 @@ export function createLifecycleController({
 
   return {
     gameController,
-    getLastFrame: () => lastFrame,
-    setLastFrame: (value) => {
-      lastFrame = value;
-    },
   };
 }
