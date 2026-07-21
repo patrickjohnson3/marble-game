@@ -199,7 +199,7 @@ function proceduralElementBudget(difficulty) {
   return {
     icePatch: level === 1 ? 2 : 3,
     obstacle: 6 + level,
-    roughPatch: level === 1 ? 3 : 4,
+    roughPatch: level === 1 ? 1 : 2,
   };
 }
 
