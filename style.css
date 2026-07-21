@@ -236,7 +236,7 @@ body {
     inset 1px 2px 3px #ffffff1c,
     inset 0 0 0 1px #ffffff14,
     inset -8px -10px 18px #0018;
-  will-change: left, top;
+  will-change: transform;
 }
 #marble::before {
   content: "";

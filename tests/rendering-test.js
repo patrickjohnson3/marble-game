@@ -4,6 +4,7 @@ import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import { renderOuterWalls } from "../rendering/wall-rendering.js";
 import { createTerrainView } from "../rendering/map-renderer.js";
+import { createMarbleView } from "../rendering/marble-view.js";
 import { createUi } from "../rendering/ui.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
@@ -390,5 +391,61 @@ try {
     globalThis.document = originalDocument;
   }
 }
+
+function testMarbleViewRendersWithTransform() {
+  const marbleEl = new FakeElement("marble");
+  const marble = {
+    x: 120,
+    y: 80,
+    vx: 2,
+    vy: -1,
+    r: 0,
+    roll: 0.4,
+    impactSquash: 0.5,
+  };
+  const view = createMarbleView({
+    marbleEl,
+    marble,
+    world: { width: 400, height: 300 },
+    mapConfig: {
+      light: {
+        x: 0,
+        y: 0,
+        shadowMinDistance: 5,
+        shadowMaxDistance: 10,
+        shadowMinBlur: 6,
+        shadowMaxBlur: 12,
+        contactShadowY: 3,
+        contactShadowBlur: 5,
+      },
+    },
+    visualConfig: {
+      marble: {
+        glintCenter: 20,
+        glintLightOffset: 5,
+        glintVelocityScale: 0.1,
+        glintVelocityLimit: 4,
+        impactScaleX: 0.18,
+        impactScaleY: 0.12,
+      },
+    },
+    clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    },
+  });
+
+  view.syncRadius();
+  view.render();
+
+  assert.equal(marble.r, 29);
+  assert.equal(
+    marbleEl.style.transform,
+    "translate(120px, 80px) translate(-50%, -50%) scale(1.090, 0.940)",
+  );
+  assert.equal(marbleEl.style.left, undefined);
+  assert.equal(marbleEl.style.properties["--marble-contact-shadow-y"], "3.0px");
+}
+
+testMarbleViewRendersWithTransform();
 
 console.log("Rendering tests passed.");
