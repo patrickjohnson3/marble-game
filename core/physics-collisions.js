@@ -24,7 +24,7 @@ export function resolveObstacleCollision(
   const contact = circleRectContact(
     marble,
     obstacle,
-    physics.collisionEpsilon ?? 0,
+    physics.collisionDistanceSqEpsilon ?? 0,
   );
 
   if (!contact.intersects) return;

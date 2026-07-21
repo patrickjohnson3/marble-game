@@ -86,7 +86,7 @@ function isOverRoughPatch(marble, intro, roughPatches, physics) {
   return (
     intro.released &&
     roughPatches.some((rect) =>
-      marbleOverRect(marble, rect, physics.collisionEpsilon ?? 0),
+      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
     )
   );
 }
@@ -95,7 +95,7 @@ function isOverIcePatch(marble, intro, icePatches, physics) {
   return (
     intro.released &&
     icePatches.some((rect) =>
-      marbleOverRect(marble, rect, physics.collisionEpsilon ?? 0),
+      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
     )
   );
 }

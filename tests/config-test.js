@@ -188,6 +188,12 @@ function testPhysicsAndSettingsRanges() {
     "rough patch friction",
   );
   assert.equal(
+    Number.isFinite(physicsConfig.collisionDistanceSqEpsilon) &&
+      physicsConfig.collisionDistanceSqEpsilon >= 0,
+    true,
+    "collision distance squared epsilon",
+  );
+  assert.equal(
     settingsControls.maxSpeed.min <= settingsConfig.maxSpeed,
     true,
     "max speed setting min",
