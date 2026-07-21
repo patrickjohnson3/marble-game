@@ -1,11 +1,12 @@
+import {
+  isHorizontalRect,
+  rangesTouchOrOverlap,
+} from "../core/map-obstacles.js";
+
 const mapScale = 2;
 
-function rangesTouchOrOverlap(aStart, aEnd, bStart, bEnd) {
-  return aStart <= bEnd && bStart <= aEnd;
-}
-
 function isHorizontalObstacle(element) {
-  return element.type === "obstacle" && element.w >= element.h;
+  return element.type === "obstacle" && isHorizontalRect(element);
 }
 
 function scaleMapElement(element) {

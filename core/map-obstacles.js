@@ -1,8 +1,8 @@
-function touchesOrOverlaps(aStart, aEnd, bStart, bEnd) {
+export function rangesTouchOrOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
-function isHorizontal(rect) {
+export function isHorizontalRect(rect) {
   return rect.w >= rect.h;
 }
 
@@ -23,21 +23,23 @@ export function snapRectToGrid(rect, gridSize) {
 export function normalizeJoinedObstacleRects(rects) {
   const normalized = rects.map((rect) => ({ ...rect }));
 
-  for (const horizontal of normalized.filter(isHorizontal)) {
-    for (const vertical of normalized.filter((rect) => !isHorizontal(rect))) {
+  for (const horizontal of normalized.filter(isHorizontalRect)) {
+    for (const vertical of normalized.filter(
+      (rect) => !isHorizontalRect(rect),
+    )) {
       const horizontalBottom = horizontal.y + horizontal.h;
       const verticalBottom = vertical.y + vertical.h;
       const horizontalRight = horizontal.x + horizontal.w;
       const verticalRight = vertical.x + vertical.w;
 
       if (
-        !touchesOrOverlaps(
+        !rangesTouchOrOverlap(
           horizontal.x,
           horizontalRight,
           vertical.x,
           verticalRight,
         ) ||
-        !touchesOrOverlaps(
+        !rangesTouchOrOverlap(
           horizontal.y,
           horizontalBottom,
           vertical.y,
