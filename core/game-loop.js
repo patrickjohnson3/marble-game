@@ -18,6 +18,7 @@ export function createGameLoop({
   game,
   hapticFeedback,
   goalController,
+  goalTarget = () => null,
   marble,
   marbleView,
   physicsContext,
@@ -61,6 +62,22 @@ export function createGameLoop({
     }
   }
 
+  function updateGoalIndicator(context) {
+    const goal = goalTarget();
+    if (!context.intro.released || !goal) {
+      ui.setGoalIndicator({ visible: false });
+      return;
+    }
+
+    const dx = goal.x - marble.x;
+    const dy = goal.y - marble.y;
+    const distance = Math.hypot(dx, dy);
+    ui.setGoalIndicator({
+      visible: distance > goal.r * 2.4,
+      angle: Math.atan2(dy, dx),
+    });
+  }
+
   const physicsFeedback = {
     onImpact,
     onSurface,
@@ -97,6 +114,7 @@ export function createGameLoop({
       goalController?.update(frameDelta, currentTime);
       cameraController.updateFollow(frameDelta);
       ui.setRunTimeLabel(runTimeLabel(currentTime));
+      updateGoalIndicator(context);
     }
 
     marbleView.render();

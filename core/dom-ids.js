@@ -11,6 +11,7 @@ export const domIds = {
   trailSegments: "trailSegments",
   effects: "effects",
   marble: "marble",
+  goalIndicator: "goalIndicator",
   messageOverlay: "messageOverlay",
   controls: "controls",
   startBtn: "start",

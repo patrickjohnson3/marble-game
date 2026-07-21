@@ -184,6 +184,36 @@ function testStatsDefaultsHiddenAndUpdatesWhenEnabled() {
 
 testStatsDefaultsHiddenAndUpdatesWhenEnabled();
 
+function testGoalIndicatorUpdatesVisibilityAndAngle() {
+  const goalIndicator = new FakeElement();
+  const ui = createUi({
+    hint: new FakeElement(),
+    fpsCounter: new FakeElement(),
+    debug: new FakeElement(),
+    goalIndicator,
+    levelLabel: new FakeElement(),
+    bestTimeLabel: new FakeElement(),
+    runTimeLabel: new FakeElement(),
+    settings: { fpsEnabled: false, statsEnabled: false },
+    settingsOverlay: new FakeElement(),
+    debugLines: () => [],
+    state: {},
+  });
+
+  ui.setGoalIndicator({ visible: true, angle: 1.25 });
+
+  assert.equal(goalIndicator.classList.contains("show"), true);
+  assert.equal(
+    goalIndicator.style.properties["--goal-indicator-angle"],
+    "1.25rad",
+  );
+
+  ui.setGoalIndicator({ visible: false });
+  assert.equal(goalIndicator.classList.contains("show"), false);
+}
+
+testGoalIndicatorUpdatesVisibilityAndAngle();
+
 function testGoalProgressUsesRadialFillRadius() {
   const goalEl = new FakeElement();
   const terrainView = createTerrainView({

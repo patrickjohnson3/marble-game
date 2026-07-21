@@ -1,5 +1,6 @@
 export function createUi({
   controls,
+  goalIndicator,
   hint,
   levelLabel,
   bestTimeLabel,
@@ -34,6 +35,11 @@ export function createUi({
 
   function setRunTimeLabel(message) {
     runTimeLabel.textContent = message;
+  }
+
+  function setGoalIndicator({ visible, angle = 0 }) {
+    goalIndicator.classList.toggle("show", visible);
+    goalIndicator.style.setProperty("--goal-indicator-angle", angle + "rad");
   }
 
   function setStartControls({ visible, disabled, label }) {
@@ -115,6 +121,7 @@ export function createUi({
     openSettingsModal,
     setFpsEnabled,
     setBestTimeLabel,
+    setGoalIndicator,
     setStatsEnabled,
     setHint,
     setLevelLabel,

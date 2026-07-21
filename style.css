@@ -450,6 +450,48 @@ body {
   outline: 2px solid #ffffffcc;
   outline-offset: 3px;
 }
+#goalIndicator {
+  position: fixed;
+  right: calc(18px + var(--safe-right));
+  bottom: calc(72px + var(--safe-bottom));
+  z-index: 3;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #0008;
+  box-shadow:
+    0 8px 22px #0008,
+    inset 0 0 0 1px #ffffff1f;
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+  pointer-events: none;
+}
+#goalIndicator::before {
+  content: "";
+  width: 19px;
+  height: 19px;
+  clip-path: polygon(
+    0 36%,
+    58% 36%,
+    58% 12%,
+    100% 50%,
+    58% 88%,
+    58% 64%,
+    0 64%
+  );
+  background: #88f7c5;
+  filter: drop-shadow(0 0 6px #53d59a88);
+  transform: rotate(var(--goal-indicator-angle, 0rad));
+}
+#goalIndicator.show {
+  opacity: 0.86;
+  transform: scale(1);
+}
 #controls {
   position: fixed;
   left: calc(12px + var(--safe-left));
