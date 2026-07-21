@@ -1,84 +1,59 @@
-export function createHapticsController(
-  state,
-  tuning,
-  {
-    navigatorRef = () => globalThis.navigator,
-    performanceRef = () => globalThis.performance,
-  } = {},
-) {
+export function createHapticsController(state, tuning) {
   function clamp(v, lo, hi) {
     return Math.max(lo, Math.min(hi, v));
   }
 
-  function now() {
-    return performanceRef()?.now?.() ?? Date.now();
-  }
-
-  function vibrate(pattern) {
-    const navigator = navigatorRef();
-    if (!state.enabled || typeof navigator?.vibrate !== "function")
-      return false;
-
-    try {
-      return navigator.vibrate(pattern) !== false;
-    } catch {
-      // Vibration support can disappear or be blocked by browser policy.
-      return false;
-    }
+  function canVibrate() {
+    return state.enabled && "vibrate" in navigator;
   }
 
   function pulseImpact(impact) {
+    if (!canVibrate()) return;
     if (impact < state.impact.minImpact) return;
 
-    const currentTime = now();
-    if (currentTime - state.impact.lastPulse < state.impact.cooldownMs) return;
+    const now = performance.now();
+    if (now - state.impact.lastPulse < state.impact.cooldownMs) return;
 
-    if (
-      vibrate(
-        clamp(
-          Math.round(impact * tuning.impactScale),
-          tuning.impactMinDurationMs,
-          tuning.impactMaxDurationMs,
-        ),
-      )
-    ) {
-      state.impact.lastPulse = currentTime;
-    }
+    state.impact.lastPulse = now;
+    navigator.vibrate(
+      clamp(
+        Math.round(impact * tuning.impactScale),
+        tuning.impactMinDurationMs,
+        tuning.impactMaxDurationMs,
+      ),
+    );
   }
 
   function pulseSurface(speed) {
+    if (!canVibrate()) return;
     if (speed < state.surface.minSpeed) return;
 
-    const currentTime = now();
-    if (currentTime - state.surface.lastPulse < state.surface.cooldownMs)
-      return;
+    const now = performance.now();
+    if (now - state.surface.lastPulse < state.surface.cooldownMs) return;
 
-    if (
-      vibrate(
-        clamp(
-          Math.round(speed * tuning.surfaceScale),
-          tuning.surfaceMinDurationMs,
-          tuning.surfaceMaxDurationMs,
-        ),
-      )
-    ) {
-      state.surface.lastPulse = currentTime;
-    }
+    state.surface.lastPulse = now;
+    navigator.vibrate(
+      clamp(
+        Math.round(speed * tuning.surfaceScale),
+        tuning.surfaceMinDurationMs,
+        tuning.surfaceMaxDurationMs,
+      ),
+    );
   }
 
   function pulseGoal(kind) {
-    if (kind === "complete") {
-      vibrate(tuning.goalCompletePattern);
-    } else if (kind === "hold") {
-      const currentTime = now();
-      if (currentTime - state.goal.lastHoldPulse < state.goal.holdCooldownMs)
-        return;
+    if (!canVibrate()) return;
 
-      if (vibrate(tuning.goalHoldDurationMs)) {
-        state.goal.lastHoldPulse = currentTime;
-      }
+    if (kind === "complete") {
+      navigator.vibrate(tuning.goalCompletePattern);
+    } else if (kind === "hold") {
+      const now = performance.now();
+      if (now - state.goal.lastHoldPulse < state.goal.holdCooldownMs) return;
+
+      state.goal.lastHoldPulse = now;
+      navigator.vibrate(tuning.goalHoldDurationMs);
     } else {
-      vibrate(tuning.goalEnterDurationMs);
+      navigator.vibrate(tuning.goalEnterDurationMs);
     }
   }
 

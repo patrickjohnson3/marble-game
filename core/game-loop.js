@@ -32,8 +32,8 @@ export function createGameLoop({
       marble.impactSquash,
       clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1),
     );
-    hapticFeedback.pulseImpact(impact);
     effectsRenderer.spawnImpact(impact);
+    hapticFeedback.pulseImpact(impact);
   }
 
   function onSurface(speed) {
