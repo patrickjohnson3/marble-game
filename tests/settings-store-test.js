@@ -148,11 +148,41 @@ function testStatsSettingPersistsValidChoice() {
   assert.equal(settings.statsEnabled, true);
 }
 
+function testMalformedSavedSettingsFallBackToDefaults() {
+  const settings = loadSettings({
+    storage: storageWith(
+      JSON.stringify({
+        maxSpeed: "fast",
+        acceleration: null,
+        hapticsEnabled: "yes",
+        trailEnabled: false,
+        trailDefaultVersion: 2,
+        fullscreenEnabled: 1,
+        fpsEnabled: true,
+        statsEnabled: false,
+      }),
+    ),
+    storageKey: "settings",
+    defaults,
+    controls,
+    clamp,
+  });
+
+  assert.equal(settings.maxSpeed, defaults.maxSpeed);
+  assert.equal(settings.acceleration, defaults.acceleration);
+  assert.equal(settings.hapticsEnabled, defaults.hapticsEnabled);
+  assert.equal(settings.trailEnabled, false);
+  assert.equal(settings.fullscreenEnabled, defaults.fullscreenEnabled);
+  assert.equal(settings.fpsEnabled, true);
+  assert.equal(settings.statsEnabled, false);
+}
+
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
 testRuntimeSettingsAreIndependentFromPersistedSettings();
 testUnavailableStorageFallsBackToDefaults();
 testFpsSettingPersistsValidChoice();
 testStatsSettingPersistsValidChoice();
+testMalformedSavedSettingsFallBackToDefaults();
 
 console.log("Settings store tests passed.");
