@@ -64,6 +64,22 @@ function testObstacleBounce() {
   assert.deepEqual(impacts, [8]);
 }
 
+function testObstacleCornerBounceUsesDiagonalNormal() {
+  const marble = { x: 92, y: 92, vx: 6, vy: 6, r: 12 };
+  const obstacle = { x: 100, y: 100, w: 40, h: 40 };
+  const impacts = [];
+
+  resolveObstacleCollision(marble, obstacle, { bounce: 0.5 }, (impact) =>
+    impacts.push(impact),
+  );
+
+  assertNear(marble.x, 91.51471862576143);
+  assertNear(marble.y, 91.51471862576143);
+  assertNear(marble.vx, -3);
+  assertNear(marble.vy, -3);
+  assertNear(impacts[0], 8.48528137423857);
+}
+
 function testGlancingImpactReportsScrapeFeedback() {
   const marble = { x: 90, y: 50, vx: 8, vy: 4, r: 12 };
   const obstacle = { x: 100, y: 30, w: 40, h: 40 };
@@ -785,6 +801,7 @@ function testSubstepsPreventThinObstacleTunneling() {
 testCircleRectContact();
 testCircleRectContactEdgeCases();
 testObstacleBounce();
+testObstacleCornerBounceUsesDiagonalNormal();
 testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
 testDeepOverlapTieBreaksTowardFirstNearestEdge();
