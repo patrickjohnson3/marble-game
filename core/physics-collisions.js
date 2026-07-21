@@ -121,9 +121,9 @@ export function handleWallCollisions(
     }
 
     if (intro.released) {
-      obstacles.forEach((obstacle) => {
-        resolveObstacleCollision(marble, obstacle, physics, onImpact);
-      });
+      for (let i = 0; i < obstacles.length; i++) {
+        resolveObstacleCollision(marble, obstacles[i], physics, onImpact);
+      }
     }
   }
 }
