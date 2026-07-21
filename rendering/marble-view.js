@@ -7,6 +7,7 @@ export function createMarbleView({
   clamp,
 }) {
   const light = mapConfig.light;
+  const worldDiagonal = Math.hypot(world.width, world.height);
   const contactShadowY = light.contactShadowY.toFixed(1) + "px";
   const contactShadowBlur = light.contactShadowBlur.toFixed(1) + "px";
 
@@ -21,7 +22,6 @@ export function createMarbleView({
     const dx = marble.x - light.x;
     const dy = marble.y - light.y;
     const distance = Math.hypot(dx, dy) || 1;
-    const worldDiagonal = Math.hypot(world.width, world.height);
     const reach = clamp(distance / worldDiagonal, 0, 1);
     const shadowDistance =
       light.shadowMinDistance +
