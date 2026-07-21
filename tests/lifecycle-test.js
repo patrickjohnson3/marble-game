@@ -158,9 +158,6 @@ async function testStartRequestsFullscreenFromClickPath() {
     enableMotion() {
       motionEnabled = true;
     },
-    primeHaptics() {
-      startCalls.push("haptics");
-    },
     requestFullscreen() {
       startCalls.push("fullscreen");
       fullscreenRequests++;
@@ -179,7 +176,7 @@ async function testStartRequestsFullscreenFromClickPath() {
   assert.equal(motionEnabled, true);
   assert.equal(mapResets, 1);
   assert.equal(state.game.phase, "calibrating");
-  assert.deepEqual(startCalls, ["haptics", "motionPermission", "fullscreen"]);
+  assert.deepEqual(startCalls, ["motionPermission", "fullscreen"]);
 }
 
 async function testStartContinuesWhenMotionPermissionStalls() {
