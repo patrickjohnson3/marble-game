@@ -90,9 +90,53 @@ async function testScreenAdjustedUsesInjectedScreen() {
   );
 }
 
+async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
+  const listeners = {};
+  let registration = null;
+  const { registerServiceWorker } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+  const registered = registerServiceWorker({
+    navigatorRef: {
+      serviceWorker: {
+        register(scriptUrl, options) {
+          registration = { options, scriptUrl };
+          return Promise.resolve();
+        },
+      },
+    },
+    windowRef: {
+      addEventListener(type, listener) {
+        listeners[type] = listener;
+      },
+    },
+  });
+
+  assert.equal(registered, true);
+  assert.equal(registration, null);
+  await listeners.load();
+  assert.deepEqual(registration, {
+    options: { type: "module" },
+    scriptUrl: "sw.js",
+  });
+}
+
+async function testServiceWorkerRegistrationHandlesUnsupportedBrowsers() {
+  const { registerServiceWorker } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+
+  assert.equal(
+    registerServiceWorker({ navigatorRef: {}, windowRef: {} }),
+    false,
+  );
+}
+
 await testWakeLockRequestIsNotDuplicatedWhilePending();
 await testFullscreenUsesInjectedDocument();
 await testMotionPermissionUsesInjectedWindow();
 await testScreenAdjustedUsesInjectedScreen();
+await testServiceWorkerRegistrationIsDeferredUntilLoad();
+await testServiceWorkerRegistrationHandlesUnsupportedBrowsers();
 
 console.log("Platform tests passed.");

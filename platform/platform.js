@@ -136,3 +136,22 @@ export function createViewport(target = globalThis) {
     height: () => target.innerHeight,
   };
 }
+
+export function registerServiceWorker({
+  navigatorRef = globalThis.navigator,
+  windowRef = globalThis.window,
+  scriptUrl = "sw.js",
+} = {}) {
+  if (!navigatorRef?.serviceWorker || !windowRef?.addEventListener) {
+    return false;
+  }
+
+  windowRef.addEventListener("load", () => {
+    navigatorRef.serviceWorker
+      .register(scriptUrl, { type: "module" })
+      .catch((error) => {
+        console.warn("service worker registration failed", error);
+      });
+  });
+  return true;
+}

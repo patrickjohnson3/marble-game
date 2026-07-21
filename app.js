@@ -53,6 +53,7 @@ import {
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
   requestWakeLock,
+  registerServiceWorker,
   screenAdjusted,
   createViewport,
 } from "./platform/platform.js";
@@ -719,6 +720,10 @@ export function createApp({
     ui.setLevelLabel(mapLevelLabel(mapState.activeMap));
     bestTimes.setMapBestTime(mapState.activeMap);
     ui.setRunTimeLabel("time --");
+    registerServiceWorker({
+      navigatorRef: windowRef.navigator,
+      windowRef,
+    });
   } catch (error) {
     showBootError(documentRef, error);
     throw error;
