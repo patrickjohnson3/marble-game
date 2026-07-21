@@ -31,6 +31,7 @@ export const domIds = {
   hint: "hint",
   levelLabel: "levelLabel",
   bestTimeLabel: "bestTimeLabel",
+  runTimeLabel: "runTimeLabel",
   fpsCounter: "fpsCounter",
   debug: "debug",
 };

@@ -3,6 +3,7 @@ export function createUi({
   hint,
   levelLabel,
   bestTimeLabel,
+  runTimeLabel,
   fpsCounter,
   debug,
   settings,
@@ -29,6 +30,10 @@ export function createUi({
 
   function setBestTimeLabel(message) {
     bestTimeLabel.textContent = message;
+  }
+
+  function setRunTimeLabel(message) {
+    runTimeLabel.textContent = message;
   }
 
   function setStartControls({ visible, disabled, label }) {
@@ -113,6 +118,7 @@ export function createUi({
     setStatsEnabled,
     setHint,
     setLevelLabel,
+    setRunTimeLabel,
     setStartControls,
     updateDebugPanel,
     updateFps,

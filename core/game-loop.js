@@ -22,6 +22,7 @@ export function createGameLoop({
   marbleView,
   physicsContext,
   scheduleFrame,
+  runTimeLabel = () => "",
   timing,
   trailRenderer,
   ui,
@@ -95,6 +96,7 @@ export function createGameLoop({
       );
       goalController?.update(frameDelta, currentTime);
       cameraController.updateFollow(frameDelta);
+      ui.setRunTimeLabel(runTimeLabel(currentTime));
     }
 
     marbleView.render();

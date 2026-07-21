@@ -1,6 +1,7 @@
 import { createCameraController } from "./core/camera.js";
 import {
   bestTimeLabel,
+  formatRunTime,
   loadBestTime,
   recordBestTime,
 } from "./core/best-times.js";
@@ -445,6 +446,7 @@ export function createApp({
     startBtn,
     levelLabel: els.levelLabel,
     bestTimeLabel: els.bestTimeLabel,
+    runTimeLabel: els.runTimeLabel,
     debugLines,
     state,
   });
@@ -671,6 +673,8 @@ export function createApp({
     marble,
     marbleView,
     physicsContext: currentPhysicsContext,
+    runTimeLabel: (currentTime) =>
+      "time " + formatRunTime(mapRuntime.currentRunMs(currentTime)),
     scheduleFrame,
     terrainView,
     timing,
@@ -693,6 +697,7 @@ export function createApp({
     });
     ui.setLevelLabel(mapLevelLabel(mapState.activeMap));
     bestTimes.setMapBestTime(mapState.activeMap);
+    ui.setRunTimeLabel("time --");
   } catch (error) {
     showBootError(documentRef, error);
     throw error;
