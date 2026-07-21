@@ -523,22 +523,30 @@ export function createApp({
     requestRender,
   });
 
-  function physicsContext() {
-    return {
-      marble,
-      bounds,
-      intro,
-      tilt,
-      keyboard,
-      camera,
-      physics,
-      icePatches: mapState.icePatches,
-      icePatchIndex: mapState.icePatchIndex,
-      obstacles: mapState.obstacles,
-      obstacleIndex: mapState.obstacleIndex,
-      roughPatches: mapState.roughPatches,
-      roughPatchIndex: mapState.roughPatchIndex,
-    };
+  const physicsContext = {
+    marble,
+    bounds,
+    intro,
+    tilt,
+    keyboard,
+    camera,
+    physics,
+    icePatches: mapState.icePatches,
+    icePatchIndex: mapState.icePatchIndex,
+    obstacles: mapState.obstacles,
+    obstacleIndex: mapState.obstacleIndex,
+    roughPatches: mapState.roughPatches,
+    roughPatchIndex: mapState.roughPatchIndex,
+  };
+
+  function currentPhysicsContext() {
+    physicsContext.icePatches = mapState.icePatches;
+    physicsContext.icePatchIndex = mapState.icePatchIndex;
+    physicsContext.obstacles = mapState.obstacles;
+    physicsContext.obstacleIndex = mapState.obstacleIndex;
+    physicsContext.roughPatches = mapState.roughPatches;
+    physicsContext.roughPatchIndex = mapState.roughPatchIndex;
+    return physicsContext;
   }
 
   gameLoop = createGameLoop({
@@ -552,7 +560,7 @@ export function createApp({
     lifecycle,
     marble,
     marbleView,
-    physicsContext,
+    physicsContext: currentPhysicsContext,
     scheduleFrame,
     terrainView,
     timing,
