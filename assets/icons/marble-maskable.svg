@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Marble Game">
+  <defs>
+    <radialGradient id="marble" cx="34%" cy="30%" r="66%">
+      <stop offset="0" stop-color="#d9f2ff"/>
+      <stop offset=".18" stop-color="#7cc7ff"/>
+      <stop offset=".58" stop-color="#1675bf"/>
+      <stop offset="1" stop-color="#06386b"/>
+    </radialGradient>
+    <linearGradient id="wall" x1="92" y1="128" x2="420" y2="384" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd46a"/>
+      <stop offset=".52" stop-color="#ff8064"/>
+      <stop offset="1" stop-color="#ef476f"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="#101114"/>
+  <path d="M112 344h288v52H112zM348 116h52v280h-52z" fill="url(#wall)" filter="url(#shadow)"/>
+  <circle cx="220" cy="238" r="82" fill="url(#marble)" filter="url(#shadow)"/>
+  <circle cx="187" cy="205" r="20" fill="#fff" opacity=".62"/>
+  <circle cx="214" cy="184" r="9" fill="#fff" opacity=".42"/>
+</svg>
