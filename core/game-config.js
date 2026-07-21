@@ -3,6 +3,7 @@ export const appConfig = {
 };
 
 export const hapticTuning = {
+  startPrimeDurationMs: 12,
   impactCooldownMs: 90,
   impactMin: 1.7,
   impactScale: 3,

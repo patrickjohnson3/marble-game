@@ -11,6 +11,7 @@ function createState() {
 }
 
 const tuning = {
+  startPrimeDurationMs: 12,
   impactScale: 3,
   impactMinDurationMs: 8,
   impactMaxDurationMs: 35,
@@ -53,6 +54,7 @@ function createHarness({ vibrateResult = true } = {}) {
 function testImpactSurfaceAndGoalVibrate() {
   const { advance, haptics, vibrations } = createHarness();
 
+  haptics.primeGesture();
   haptics.pulseImpact(3);
   haptics.pulseSurface(5);
   haptics.pulseGoal("enter");
@@ -62,7 +64,7 @@ function testImpactSurfaceAndGoalVibrate() {
   haptics.pulseGoal("hold");
   haptics.pulseGoal("complete");
 
-  assert.deepEqual(vibrations, [9, 7, 12, 6, 6, [18, 40, 28]]);
+  assert.deepEqual(vibrations, [12, 9, 7, 12, 6, 6, [18, 40, 28]]);
 }
 
 testImpactSurfaceAndGoalVibrate();
@@ -90,6 +92,7 @@ function testDisabledHapticsDoNotVibrate() {
 
   haptics.pulseImpact(3);
   haptics.pulseSurface(5);
+  haptics.primeGesture();
   haptics.pulseGoal("complete");
 
   assert.deepEqual(vibrations, []);

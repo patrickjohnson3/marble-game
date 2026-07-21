@@ -33,6 +33,7 @@ export async function startGameWithPermissions({
   enableMotion,
   game,
   keepDisplayAwake = requestWakeLock,
+  primeHaptics = () => {},
   requestFullscreen = requestFullscreenMode,
   requestMotionPermission = requestMotionPermissionIfNeeded,
   resetGame,
@@ -45,6 +46,7 @@ export async function startGameWithPermissions({
   clearTimeoutFn = clearTimeout,
 }) {
   ui.setStartControls({ visible: false, disabled: true });
+  primeHaptics();
 
   const permission = await requestMotionPermissionWithTimeout({
     requestMotionPermission,

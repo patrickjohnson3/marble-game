@@ -478,6 +478,7 @@ export function createApp({
     ui,
     spawn: mapState.spawn,
     enableMotion: () => inputManager.enableMotion(),
+    primeHaptics: () => hapticFeedback.primeGesture(),
     requestFullscreen: (options) =>
       requestFullscreenMode({ ...options, documentRef }),
     exitFullscreen: () => exitFullscreenMode({ documentRef }),

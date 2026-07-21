@@ -82,7 +82,12 @@ export function createHapticsController(
     }
   }
 
+  function primeGesture() {
+    vibrate(tuning.startPrimeDurationMs);
+  }
+
   return {
+    primeGesture,
     pulseImpact,
     pulseGoal,
     pulseSurface,
