@@ -277,6 +277,31 @@ function testProceduralMapGenerationIncludesPlayableElementMix() {
 
 testProceduralMapGenerationIncludesPlayableElementMix();
 
+function testProceduralMapGenerationHonorsElementBudgets() {
+  const variants = generateProceduralMapVariants({
+    baseMapConfig: resolvedMapConfig,
+    count: 6,
+    seed: "budget-seed",
+  });
+
+  variants.forEach((variant) => {
+    const counts = variant.elements.reduce(
+      (totals, element) => ({
+        ...totals,
+        [element.type]: (totals[element.type] ?? 0) + 1,
+      }),
+      {},
+    );
+    const level = Math.min(Math.max(Math.round(variant.difficulty), 1), 3);
+
+    assert.equal((counts.obstacle ?? 0) <= 6 + level, true);
+    assert.equal((counts.roughPatch ?? 0) <= (level === 1 ? 1 : 2), true);
+    assert.equal((counts.icePatch ?? 0) <= (level === 1 ? 0 : 1), true);
+  });
+}
+
+testProceduralMapGenerationHonorsElementBudgets();
+
 function testProceduralMapsUseOneTerrainFocus() {
   const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
