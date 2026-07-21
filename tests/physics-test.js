@@ -94,8 +94,8 @@ function testRoughPatchAddsDrag() {
       roughPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 0.5,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -129,8 +129,8 @@ function testRoughPatchDragUsesSpatialIndex() {
       roughPatchIndex: createSpatialIndex(roughPatches, { cellSize: 100 }),
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 0.5,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -160,9 +160,9 @@ function testIcePatchReducesDrag() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 0.5,
-        icePatchFriction: 0.9,
-        roughPatchFriction: 0.5,
+        baseDragRetention: 0.5,
+        icePatchDragRetention: 0.9,
+        roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -191,8 +191,8 @@ function testRoughPatchDragAppliesWhenEnteringPatch() {
       roughPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 0.5,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -221,8 +221,8 @@ function testLowSpeedDriftSettles() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 0.5,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -254,8 +254,8 @@ function testLowSpeedDriftDoesNotSettleAboveSpeedThreshold() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -286,8 +286,8 @@ function testLowSpeedDriftDoesNotSettleAboveTiltThreshold() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -371,8 +371,8 @@ function testVelocityDragIsFrameRateIndependent() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 0.94,
-        roughPatchFriction: 1,
+        baseDragRetention: 0.94,
+        roughPatchDragRetention: 1,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -411,8 +411,8 @@ function testAccelerationIsFrameRateIndependent() {
       roughPatches: [],
       physics: {
         accel: 0.5,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -452,8 +452,8 @@ function testRoughPatchDragIsFrameRateIndependent() {
       roughPatches: [{ x: 0, y: 0, w: 200, h: 200 }],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 0.9,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 0.9,
         bounce: 0.5,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -494,8 +494,8 @@ function testMaxSpeedEasesDown() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 0.5,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 10,
         maxSpeedEase: 0.5,
@@ -525,8 +525,8 @@ function testMaxSpeedClampIsFrameRateIndependent() {
       roughPatches: [],
       physics: {
         accel: 1,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0.5,
         maxSpeed: 10,
         maxSpeedEase: 0,
@@ -556,7 +556,7 @@ function testMaxSpeedClampIsFrameRateIndependent() {
   assertNear(split.marble.vx, once.marble.vx);
 }
 
-function testWallCollisionAppliesTangentialFriction() {
+function testWallCollisionAppliesTangentialDrag() {
   const marble = { x: 5, y: 50, vx: -4, vy: 10, r: 10 };
 
   updatePhysics(
@@ -569,15 +569,15 @@ function testWallCollisionAppliesTangentialFriction() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 0.5,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 100,
         maxSpeedEase: 0,
         maxStepDistance: 100,
         settleSpeed: 0,
         settleTilt: 0,
-        wallTangentialFriction: 0.5,
+        wallTangentialDragRetention: 0.5,
       },
     },
     1,
@@ -605,8 +605,8 @@ function testWorldBoundCollisionBeforeAdjacentObstacle() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -638,8 +638,8 @@ function testPhysicsSubstepsAreCapped() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0,
         maxSpeed: 1000,
         maxSpeedEase: 0,
@@ -672,8 +672,8 @@ function testInvalidPhysicsStepInputsDoNotPoisonState() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0,
         maxSpeed: 100,
         maxStepDistance: 0,
@@ -703,8 +703,8 @@ function testInvalidPhysicsStepInputsDoNotPoisonState() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0,
         maxSpeed: 100,
         maxStepDistance: 100,
@@ -735,8 +735,8 @@ function testSubstepsPreventThinObstacleTunneling() {
       roughPatches: [],
       physics: {
         accel: 0,
-        friction: 1,
-        roughPatchFriction: 1,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
         bounce: 0,
         maxSpeed: 100,
         maxSpeedEase: 0,
@@ -777,7 +777,7 @@ testAccelerationIsFrameRateIndependent();
 testRoughPatchDragIsFrameRateIndependent();
 testMaxSpeedEasesDown();
 testMaxSpeedClampIsFrameRateIndependent();
-testWallCollisionAppliesTangentialFriction();
+testWallCollisionAppliesTangentialDrag();
 testWorldBoundCollisionBeforeAdjacentObstacle();
 testPhysicsSubstepsAreCapped();
 testInvalidPhysicsStepInputsDoNotPoisonState();

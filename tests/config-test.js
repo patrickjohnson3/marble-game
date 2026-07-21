@@ -166,15 +166,15 @@ function testPhysicsAndSettingsRanges() {
     "collision resolve passes",
   );
   assert.equal(
-    physicsConfig.friction > 0 && physicsConfig.friction <= 1,
+    physicsConfig.baseDragRetention > 0 && physicsConfig.baseDragRetention <= 1,
     true,
-    "physics friction",
+    "base drag retention",
   );
   assert.equal(
-    physicsConfig.icePatchFriction >= physicsConfig.friction &&
-      physicsConfig.icePatchFriction <= 1,
+    physicsConfig.icePatchDragRetention >= physicsConfig.baseDragRetention &&
+      physicsConfig.icePatchDragRetention <= 1,
     true,
-    "ice patch friction",
+    "ice patch drag retention",
   );
   assert.equal(
     physicsConfig.bounce >= 0 && physicsConfig.bounce <= 1,
@@ -182,10 +182,10 @@ function testPhysicsAndSettingsRanges() {
     "physics bounce",
   );
   assert.equal(
-    physicsConfig.roughPatchFriction > 0 &&
-      physicsConfig.roughPatchFriction <= 1,
+    physicsConfig.roughPatchDragRetention > 0 &&
+      physicsConfig.roughPatchDragRetention <= 1,
     true,
-    "rough patch friction",
+    "rough patch drag retention",
   );
   assert.equal(
     Number.isFinite(physicsConfig.collisionDistanceSqEpsilon) &&

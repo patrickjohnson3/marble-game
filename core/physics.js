@@ -103,7 +103,7 @@ function isOverIcePatch(marble, intro, icePatches, physics) {
 function createPhysicsScratch() {
   return {
     frameFactors: {
-      frictionDrag: 1,
+      baseDrag: 1,
       icePatchDrag: 1,
       maxSpeedEase: defaultMaxSpeedEase,
       roughPatchDrag: 1,
@@ -190,7 +190,7 @@ function physicsStep(context, dt, feedback) {
   updateVelocity(
     context,
     dt,
-    overIcePatch ? factors.icePatchDrag : factors.frictionDrag,
+    overIcePatch ? factors.icePatchDrag : factors.baseDrag,
     factors.maxSpeedEase,
   );
   const roughCandidates = roughPatchCandidates(context, dt, physicsScratch);
@@ -232,16 +232,16 @@ export function updatePhysics(context, dt, feedback) {
   const steps = Math.min(uncappedSteps, maxPhysicsSubsteps);
   const stepDt = dt / steps;
   const physicsScratch = scratch(context);
-  physicsScratch.frameFactors.frictionDrag = Math.pow(
-    context.physics.friction,
+  physicsScratch.frameFactors.baseDrag = Math.pow(
+    context.physics.baseDragRetention,
     stepDt,
   );
   physicsScratch.frameFactors.icePatchDrag = Math.pow(
-    context.physics.icePatchFriction,
+    context.physics.icePatchDragRetention,
     stepDt,
   );
   physicsScratch.frameFactors.roughPatchDrag = Math.pow(
-    context.physics.roughPatchFriction,
+    context.physics.roughPatchDragRetention,
     stepDt,
   );
   physicsScratch.frameFactors.maxSpeedEase = Math.pow(

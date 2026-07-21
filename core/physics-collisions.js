@@ -1,7 +1,7 @@
 import { circleRectContact } from "./geometry.js";
 
 const defaultScrapeHapticScale = 0;
-const defaultWallTangentialFriction = 1;
+const defaultWallTangentialDragRetention = 1;
 const defaultCollisionResolvePasses = 1;
 
 export function marbleOverRect(marble, rect, epsilon = 0) {
@@ -90,7 +90,8 @@ export function handleWallCollisions(
       marble.x = bounds.left + marble.r;
       marble.vx = -marble.vx * physics.bounce;
       marble.vy *=
-        physics.wallTangentialFriction ?? defaultWallTangentialFriction;
+        physics.wallTangentialDragRetention ??
+        defaultWallTangentialDragRetention;
     }
     if (marble.x > bounds.right - marble.r) {
       onImpact(
@@ -99,7 +100,8 @@ export function handleWallCollisions(
       marble.x = bounds.right - marble.r;
       marble.vx = -marble.vx * physics.bounce;
       marble.vy *=
-        physics.wallTangentialFriction ?? defaultWallTangentialFriction;
+        physics.wallTangentialDragRetention ??
+        defaultWallTangentialDragRetention;
     }
     if (marble.y < bounds.top + marble.r) {
       onImpact(
@@ -108,7 +110,8 @@ export function handleWallCollisions(
       marble.y = bounds.top + marble.r;
       marble.vy = -marble.vy * physics.bounce;
       marble.vx *=
-        physics.wallTangentialFriction ?? defaultWallTangentialFriction;
+        physics.wallTangentialDragRetention ??
+        defaultWallTangentialDragRetention;
     }
     if (marble.y > bounds.bottom - marble.r) {
       onImpact(
@@ -117,7 +120,8 @@ export function handleWallCollisions(
       marble.y = bounds.bottom - marble.r;
       marble.vy = -marble.vy * physics.bounce;
       marble.vx *=
-        physics.wallTangentialFriction ?? defaultWallTangentialFriction;
+        physics.wallTangentialDragRetention ??
+        defaultWallTangentialDragRetention;
     }
 
     if (intro.released) {
