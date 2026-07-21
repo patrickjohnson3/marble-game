@@ -1,6 +1,6 @@
 import { domIds } from "../core/dom-ids.js";
 
-export class FakeClassList {
+class FakeClassList {
   constructor() {
     this.classes = new Set();
   }
@@ -25,7 +25,7 @@ export class FakeClassList {
   }
 }
 
-export class FakeStyle {
+class FakeStyle {
   constructor() {
     this.properties = {};
   }
@@ -78,7 +78,7 @@ export class FakeElement {
   }
 }
 
-export class FakeCanvasContext {
+class FakeCanvasContext {
   constructor() {
     this.calls = [];
   }
