@@ -1,12 +1,4 @@
-import { createCanvas } from "./wall-rendering.js";
-
-function drawRoundedRect(context, rect, radius) {
-  if (context.roundRect) {
-    context.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
-    return;
-  }
-  context.rect(rect.x, rect.y, rect.w, rect.h);
-}
+import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
 
 function patchNoise(x, y, salt = 0) {
   return (

@@ -1,4 +1,4 @@
-import { createCanvas } from "./wall-rendering.js";
+import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
 
 function patchDotOffset(x, y, salt = 0) {
   return (
@@ -6,14 +6,6 @@ function patchDotOffset(x, y, salt = 0) {
       Math.imul(Math.round(y) - salt, 17)) %
     5
   );
-}
-
-function drawRoundedRect(context, rect, radius) {
-  if (context.roundRect) {
-    context.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
-    return;
-  }
-  context.rect(rect.x, rect.y, rect.w, rect.h);
 }
 
 function drawPatchGritLayer(

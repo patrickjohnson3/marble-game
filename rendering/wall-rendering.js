@@ -41,6 +41,14 @@ function canvasPixelRatio() {
   return Math.min(Math.max(1, globalThis.devicePixelRatio || 1), 2);
 }
 
+function drawRoundedRect(context, rect, radius) {
+  if (context.roundRect) {
+    context.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
+    return;
+  }
+  context.rect(rect.x, rect.y, rect.w, rect.h);
+}
+
 function wallFrameGeometry(walls) {
   if (!Array.isArray(walls) || walls.length === 0) return null;
 
@@ -155,4 +163,4 @@ export function renderOuterWalls(container, walls) {
   container.replaceChildren(canvas);
 }
 
-export { createCanvas, rectBounds };
+export { createCanvas, drawRoundedRect, rectBounds };
