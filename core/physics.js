@@ -5,6 +5,7 @@ const defaultMaxSpeedEase = 0;
 const defaultSettleSpeed = 0;
 const defaultSettleTilt = 0;
 const defaultMaxPhysicsSubsteps = Number.POSITIVE_INFINITY;
+const defaultMaxStepDistance = 1;
 
 function deadZone(value, threshold) {
   return Math.abs(value) < threshold ? 0 : value;
@@ -75,6 +76,10 @@ function updateVelocity(
 function updatePosition(marble, dt) {
   marble.x += marble.vx * dt;
   marble.y += marble.vy * dt;
+}
+
+function finitePositive(value, fallback) {
+  return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
 function isOverRoughPatch(marble, intro, roughPatches, physics) {
@@ -212,15 +217,19 @@ function physicsStep(context, dt, feedback) {
 }
 
 export function updatePhysics(context, dt, feedback) {
-  const speed = Math.hypot(context.marble.vx, context.marble.vy);
-  const uncappedSteps = Math.max(
-    1,
-    Math.ceil((speed * dt) / context.physics.maxStepDistance),
+  if (!Number.isFinite(dt) || dt <= 0) return;
+
+  const maxStepDistance = finitePositive(
+    context.physics.maxStepDistance,
+    defaultMaxStepDistance,
   );
-  const steps = Math.min(
-    uncappedSteps,
+  const maxPhysicsSubsteps = finitePositive(
     context.physics.maxPhysicsSubsteps ?? defaultMaxPhysicsSubsteps,
+    defaultMaxPhysicsSubsteps,
   );
+  const speed = Math.hypot(context.marble.vx, context.marble.vy);
+  const uncappedSteps = Math.max(1, Math.ceil((speed * dt) / maxStepDistance));
+  const steps = Math.min(uncappedSteps, maxPhysicsSubsteps);
   const stepDt = dt / steps;
   const physicsScratch = scratch(context);
   physicsScratch.frameFactors.frictionDrag = Math.pow(

@@ -576,6 +576,69 @@ function testPhysicsSubstepsAreCapped() {
   assert.equal(marble.x, 1050);
 }
 
+function testInvalidPhysicsStepInputsDoNotPoisonState() {
+  const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 1,
+        bounce: 0,
+        maxSpeed: 100,
+        maxStepDistance: 0,
+        maxPhysicsSubsteps: 0,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.equal(Number.isFinite(marble.x), true);
+  assert.equal(Number.isFinite(marble.y), true);
+
+  const x = marble.x;
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        friction: 1,
+        roughPatchFriction: 1,
+        bounce: 0,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    },
+    Number.NaN,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.equal(marble.x, x);
+}
+
 function testSubstepsPreventThinObstacleTunneling() {
   const marble = { x: 50, y: 50, vx: 40, vy: 0, r: 10 };
 
@@ -632,6 +695,7 @@ testMaxSpeedEasesDown();
 testWallCollisionAppliesTangentialFriction();
 testWorldBoundCollisionBeforeAdjacentObstacle();
 testPhysicsSubstepsAreCapped();
+testInvalidPhysicsStepInputsDoNotPoisonState();
 testSubstepsPreventThinObstacleTunneling();
 
 console.log("Physics tests passed.");
