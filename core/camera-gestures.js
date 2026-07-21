@@ -49,12 +49,6 @@ export function createCameraGestureController({
       return;
     }
 
-    if (camera.mode === "lockedCenter") {
-      camera.gestureCooldown = 0;
-      centerOnMarble();
-      return;
-    }
-
     camera.x = gesture.x + nextMidpoint.x - gesture.midpoint.x;
     camera.y = gesture.y + nextMidpoint.y - gesture.midpoint.y;
     camera.gestureCooldown = tuning.gestureCooldownFrames;

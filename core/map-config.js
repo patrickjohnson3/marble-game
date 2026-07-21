@@ -35,7 +35,6 @@ const baseMapDefaults = {
     minScale: 0.12,
     maxScale: 2.5,
     followLag: 0.08,
-    predictiveLookAheadFrames: 18,
   },
   light: {
     x: 420,

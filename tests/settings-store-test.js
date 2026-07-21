@@ -32,12 +32,10 @@ const defaults = {
   fullscreenEnabled: true,
   fpsEnabled: false,
   statsEnabled: false,
-  cameraMode: "follow",
 };
 const controls = {
   maxSpeed: { min: 8, max: 24 },
   acceleration: { min: 0.06, max: 0.18 },
-  cameraModes: ["follow", "lockedCenter", "predictiveLookAhead"],
 };
 
 function testTrailMigrationDefaultsOldSavedTrailOff() {
@@ -116,40 +114,6 @@ function testUnavailableStorageFallsBackToDefaults() {
   );
 }
 
-function testCameraModePersistsValidChoice() {
-  const settings = loadSettings({
-    storage: storageWith(
-      JSON.stringify({
-        ...defaults,
-        cameraMode: "predictiveLookAhead",
-      }),
-    ),
-    storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
-  });
-
-  assert.equal(settings.cameraMode, "predictiveLookAhead");
-}
-
-function testCameraModeFallsBackForInvalidChoice() {
-  const settings = loadSettings({
-    storage: storageWith(
-      JSON.stringify({
-        ...defaults,
-        cameraMode: "orbit",
-      }),
-    ),
-    storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
-  });
-
-  assert.equal(settings.cameraMode, "follow");
-}
-
 function testFpsSettingPersistsValidChoice() {
   const settings = loadSettings({
     storage: storageWith(
@@ -188,8 +152,6 @@ testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
 testRuntimeSettingsAreIndependentFromPersistedSettings();
 testUnavailableStorageFallsBackToDefaults();
-testCameraModePersistsValidChoice();
-testCameraModeFallsBackForInvalidChoice();
 testFpsSettingPersistsValidChoice();
 testStatsSettingPersistsValidChoice();
 

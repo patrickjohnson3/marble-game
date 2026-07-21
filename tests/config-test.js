@@ -210,15 +210,6 @@ function testPhysicsAndSettingsRanges() {
   assert.equal(settingsConfig.trailEnabled, false, "trail defaults off");
   assert.equal(settingsConfig.fpsEnabled, false, "fps defaults off");
   assert.equal(settingsConfig.statsEnabled, false, "stats defaults off");
-  assert.equal(
-    settingsConfig.cameraMode,
-    "follow",
-    "camera mode defaults to follow",
-  );
-  assert.ok(
-    settingsControls.cameraModes.includes(settingsConfig.cameraMode),
-    "camera mode setting option",
-  );
   assertPositiveNumber(
     settingsConfig.trailDefaultVersion,
     "trail default version",

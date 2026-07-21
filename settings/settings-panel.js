@@ -26,7 +26,6 @@ export function bindSettingsPanel({
     fullscreenSetting,
     fpsSetting,
     statsSetting,
-    cameraModeSetting,
   } = els;
 
   applyRangeConfig(speedSetting, controls.maxSpeed);
@@ -38,7 +37,6 @@ export function bindSettingsPanel({
   fullscreenSetting.checked = settings.fullscreenEnabled;
   fpsSetting.checked = settings.fpsEnabled;
   statsSetting.checked = settings.statsEnabled;
-  cameraModeSetting.value = settings.cameraMode;
 
   settingsToggle.addEventListener("click", onOpenSettings);
   closeSettings.addEventListener("click", onCloseSettings);
@@ -79,16 +77,6 @@ export function bindSettingsPanel({
   statsSetting.addEventListener("change", () => {
     settings.statsEnabled = statsSetting.checked;
     onStatsChanged(settings.statsEnabled);
-    saveSettings();
-    requestRender();
-  });
-  cameraModeSetting.addEventListener("change", () => {
-    if (controls.cameraModes.includes(cameraModeSetting.value)) {
-      settings.cameraMode = cameraModeSetting.value;
-    } else {
-      cameraModeSetting.value = settings.cameraMode;
-    }
-    applySettings();
     saveSettings();
     requestRender();
   });

@@ -34,12 +34,6 @@ export const copy = {
       fullscreenSetting: "fullscreen",
       fpsSetting: "fps",
       statsSetting: "stats",
-      cameraModeSetting: "camera",
-    },
-    cameraModes: {
-      follow: "follow",
-      lockedCenter: "locked center",
-      predictiveLookAhead: "look-ahead",
     },
   },
   debugFallback: "waiting for sensors...",
@@ -64,12 +58,5 @@ export function applyDocumentCopy({ document, els }) {
       'label[for="' + controlId + '"] span',
     );
     if (labelEl) labelEl.textContent = label;
-  }
-
-  for (const [mode, label] of Object.entries(copy.settings.cameraModes)) {
-    const optionEl = els.cameraModeSetting.querySelector(
-      'option[value="' + mode + '"]',
-    );
-    if (optionEl) optionEl.textContent = label;
   }
 }

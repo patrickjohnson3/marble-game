@@ -2,14 +2,12 @@ import assert from "node:assert/strict";
 import { createCameraController } from "../core/camera.js";
 import { angle, clamp, distance, midpoint } from "../core/geometry.js";
 
-function createController(mode) {
+function createController() {
   const camera = {
     x: 0,
     y: 0,
     scale: 1,
-    mode,
     followLag: 0.5,
-    predictiveLookAheadFrames: 10,
     gestureCooldown: 0,
     minScale: 0.35,
     maxScale: 3,
@@ -36,8 +34,8 @@ function createController(mode) {
   return { camera, controller };
 }
 
-function testFollowModePreservesSmoothFollow() {
-  const { camera, controller } = createController("follow");
+function testFollowPreservesSmoothFollow() {
+  const { camera, controller } = createController();
 
   controller.updateFollow(1);
 
@@ -45,67 +43,33 @@ function testFollowModePreservesSmoothFollow() {
   assert.equal(camera.y, 25);
 }
 
-function testLockedCenterSnapsToMarble() {
-  const { camera, controller } = createController("lockedCenter");
-
-  controller.updateFollow(1);
-
-  assert.equal(camera.x, 50);
-  assert.equal(camera.y, 50);
-}
-
-function testLockedCenterIgnoresGestureCooldown() {
-  const { camera, controller } = createController("lockedCenter");
+function testFollowWaitsForGestureCooldown() {
+  const { camera, controller } = createController();
   camera.x = -300;
   camera.y = -300;
   camera.gestureCooldown = 10;
 
   controller.updateFollow(1);
 
-  assert.equal(camera.x, 50);
-  assert.equal(camera.y, 50);
+  assert.equal(camera.x, -300);
+  assert.equal(camera.y, -300);
+  assert.equal(camera.gestureCooldown, 9);
 }
 
-function testLockedCenterGestureKeepsMarbleCentered() {
-  const { camera, controller } = createController("lockedCenter");
+function testGesturePansCameraAndStartsCooldown() {
+  const { camera, controller } = createController();
 
   controller.onPointerDown({ pointerId: 1, clientX: 0, clientY: 0 });
   controller.onPointerDown({ pointerId: 2, clientX: 100, clientY: 0 });
   controller.onPointerMove({ pointerId: 1, clientX: 20, clientY: 0 });
 
-  assert.equal(camera.x, 70);
-  assert.equal(camera.y, 70);
-  assert.equal(camera.gestureCooldown, 0);
+  assert.equal(camera.x, 10);
+  assert.equal(camera.y, 0);
+  assert.equal(camera.gestureCooldown, 10);
 }
 
-function testApplyModeCentersLockedCameraImmediately() {
-  const { camera, controller } = createController("follow");
-  camera.x = -200;
-  camera.y = -150;
-  camera.gestureCooldown = 10;
-  camera.mode = "lockedCenter";
-
-  controller.applyMode();
-
-  assert.equal(camera.x, 50);
-  assert.equal(camera.y, 50);
-  assert.equal(camera.gestureCooldown, 0);
-}
-
-function testPredictiveLookAheadTargetsVelocityOffset() {
-  const { camera, controller } = createController("predictiveLookAhead");
-
-  controller.updateFollow(1);
-
-  assert.equal(camera.x, 0);
-  assert.equal(camera.y, 35);
-}
-
-testFollowModePreservesSmoothFollow();
-testLockedCenterSnapsToMarble();
-testLockedCenterIgnoresGestureCooldown();
-testLockedCenterGestureKeepsMarbleCentered();
-testApplyModeCentersLockedCameraImmediately();
-testPredictiveLookAheadTargetsVelocityOffset();
+testFollowPreservesSmoothFollow();
+testFollowWaitsForGestureCooldown();
+testGesturePansCameraAndStartsCooldown();
 
 console.log("Camera tests passed.");

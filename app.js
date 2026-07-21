@@ -370,8 +370,6 @@ export function createApp({
     roughPatchBounds: mapState.roughPatchBounds,
   });
   const { applyFullscreenSetting, applySettings } = createSettingsApplier({
-    camera,
-    cameraController,
     documentRef,
     haptics,
     physics,

@@ -51,12 +51,9 @@ export function createGameState({
       x: 0,
       y: 0,
       scale: 1,
-      mode: "follow",
       minScale: resolvedMapConfig.camera.minScale,
       maxScale: resolvedMapConfig.camera.maxScale,
       followLag: resolvedMapConfig.camera.followLag,
-      predictiveLookAheadFrames:
-        resolvedMapConfig.camera.predictiveLookAheadFrames,
       gestureCooldown: 0,
     },
     haptics: {

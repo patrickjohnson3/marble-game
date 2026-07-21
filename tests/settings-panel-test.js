@@ -21,7 +21,6 @@ function fakeButton() {
 }
 
 function createPanelHarness() {
-  const cameraModeSetting = fakeControl("follow");
   let applyCount = 0;
   let fpsChangeCount = 0;
   let statsChangeCount = 0;
@@ -35,7 +34,6 @@ function createPanelHarness() {
     fullscreenEnabled: true,
     fpsEnabled: false,
     statsEnabled: false,
-    cameraMode: "follow",
   };
   const fpsSetting = fakeControl();
   const statsSetting = fakeControl();
@@ -54,13 +52,11 @@ function createPanelHarness() {
       fullscreenSetting: fakeControl(),
       fpsSetting,
       statsSetting,
-      cameraModeSetting,
     },
     settings,
     controls: {
       maxSpeed: { min: 8, max: 24, step: 1 },
       acceleration: { min: 0.06, max: 0.18, step: 0.005 },
-      cameraModes: ["follow", "lockedCenter", "predictiveLookAhead"],
     },
     applyRangeConfig(input, range) {
       input.min = range.min;
@@ -89,7 +85,6 @@ function createPanelHarness() {
   });
 
   return {
-    cameraModeSetting,
     counts: () => ({
       applyCount,
       fpsChangeCount,
@@ -102,42 +97,6 @@ function createPanelHarness() {
     settings,
   };
 }
-
-function testValidCameraModeChangePersists() {
-  const { cameraModeSetting, counts, settings } = createPanelHarness();
-
-  cameraModeSetting.value = "lockedCenter";
-  cameraModeSetting.listeners.change();
-
-  assert.equal(settings.cameraMode, "lockedCenter");
-  assert.deepEqual(counts(), {
-    applyCount: 1,
-    fpsChangeCount: 0,
-    statsChangeCount: 0,
-    saveCount: 1,
-    renderCount: 1,
-  });
-}
-
-function testInvalidCameraModeChangeFallsBack() {
-  const { cameraModeSetting, counts, settings } = createPanelHarness();
-
-  cameraModeSetting.value = "orbit";
-  cameraModeSetting.listeners.change();
-
-  assert.equal(settings.cameraMode, "follow");
-  assert.equal(cameraModeSetting.value, "follow");
-  assert.deepEqual(counts(), {
-    applyCount: 1,
-    fpsChangeCount: 0,
-    statsChangeCount: 0,
-    saveCount: 1,
-    renderCount: 1,
-  });
-}
-
-testValidCameraModeChangePersists();
-testInvalidCameraModeChangeFallsBack();
 
 function testFpsTogglePersistsAndRenders() {
   const { counts, fpsSetting, settings } = createPanelHarness();

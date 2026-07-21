@@ -175,29 +175,10 @@ export class FakeCanvasElement extends FakeElement {
   }
 }
 
-class FakeSelectElement extends FakeElement {
-  constructor(id, optionValues) {
-    super(id);
-    this.options = Object.fromEntries(
-      optionValues.map((value) => [value, new FakeElement()]),
-    );
-  }
-
-  querySelector(selector) {
-    const match = selector.match(/^option\[value="([^"]+)"\]$/);
-    return match ? this.options[match[1]] || null : null;
-  }
-}
-
 export function createFakeDocument() {
   const elements = Object.fromEntries(
     Object.values(domIds).map((id) => [id, new FakeElement(id)]),
   );
-  elements.cameraModeSetting = new FakeSelectElement("cameraModeSetting", [
-    "follow",
-    "lockedCenter",
-    "predictiveLookAhead",
-  ]);
   const labelSpans = new Map(
     [
       "speedSetting",
@@ -207,7 +188,6 @@ export function createFakeDocument() {
       "fullscreenSetting",
       "fpsSetting",
       "statsSetting",
-      "cameraModeSetting",
     ].map((id) => [id, new FakeElement()]),
   );
 

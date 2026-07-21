@@ -24,10 +24,6 @@ function numberSetting(value, fallback, range, clamp) {
   return Number.isFinite(value) ? clamp(value, range.min, range.max) : fallback;
 }
 
-function optionSetting(value, fallback, options) {
-  return options.includes(value) ? value : fallback;
-}
-
 export function availableStorage(getStorage = () => localStorage) {
   try {
     return getStorage();
@@ -88,11 +84,6 @@ export function loadSettings({
         typeof saved.statsEnabled === "boolean"
           ? saved.statsEnabled
           : defaults.statsEnabled,
-      cameraMode: optionSetting(
-        saved.cameraMode,
-        defaults.cameraMode,
-        controls.cameraModes,
-      ),
     };
   } catch {
     return { ...defaults };

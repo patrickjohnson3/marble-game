@@ -4,8 +4,6 @@ import {
 } from "../platform/platform.js";
 
 export function createSettingsApplier({
-  camera,
-  cameraController,
   documentRef,
   haptics,
   physics,
@@ -17,8 +15,6 @@ export function createSettingsApplier({
   function applySettings() {
     physics.maxSpeed = settings.maxSpeed;
     physics.accel = settings.acceleration;
-    camera.mode = settings.cameraMode;
-    cameraController.applyMode();
     haptics.enabled = settings.hapticsEnabled;
     trailRenderer.setEnabled(settings.trailEnabled);
   }

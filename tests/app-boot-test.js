@@ -56,24 +56,6 @@ try {
     "Settings",
   );
   assert.equal(document.getElementById("resumeGame").textContent, "resume");
-  assert.equal(
-    document
-      .getElementById("cameraModeSetting")
-      .querySelector('option[value="follow"]').textContent,
-    "follow",
-  );
-  assert.equal(
-    document
-      .getElementById("cameraModeSetting")
-      .querySelector('option[value="lockedCenter"]').textContent,
-    "locked center",
-  );
-  assert.equal(
-    document
-      .getElementById("cameraModeSetting")
-      .querySelector('option[value="predictiveLookAhead"]').textContent,
-    "look-ahead",
-  );
 } finally {
   for (const [key, descriptor] of Object.entries(originalGlobals)) {
     if (descriptor === undefined) {
