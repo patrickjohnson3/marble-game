@@ -3,6 +3,8 @@ import { circleRectContact } from "../core/geometry.js";
 import {
   marbleOverRect,
   resolveObstacleCollision,
+} from "../core/physics-collisions.js";
+import {
   updatePhysics,
   updatePhysicsInput,
 } from "../core/physics.js";
