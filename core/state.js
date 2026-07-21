@@ -37,17 +37,30 @@ export function createGameState({
         timing.introReleaseDelayMs / timing.countdownTickMs,
       ),
     },
-    tilt: {
-      rawX: 0,
-      rawY: 0,
-      smoothX: 0,
-      smoothY: 0,
-      neutralX: null,
-      neutralY: null,
-    },
-    keyboard: {
-      x: 0,
-      y: 0,
+    input: {
+      tilt: {
+        rawX: 0,
+        rawY: 0,
+        smoothX: 0,
+        smoothY: 0,
+        neutralX: null,
+        neutralY: null,
+      },
+      keyboard: {
+        x: 0,
+        y: 0,
+      },
+      calibration: {
+        sampleCount: 0,
+        sampleX: 0,
+        sampleY: 0,
+        autoNeutralDone: false,
+      },
+      sensor: {
+        gotOrientation: false,
+        gotMotion: false,
+        using: "none",
+      },
     },
     camera: {
       x: 0,
@@ -74,17 +87,6 @@ export function createGameState({
         holdCooldownMs: hapticTuning.goalHoldCooldownMs,
         lastHoldPulse: 0,
       },
-    },
-    calibration: {
-      sampleCount: 0,
-      sampleX: 0,
-      sampleY: 0,
-      autoNeutralDone: false,
-    },
-    sensor: {
-      gotOrientation: false,
-      gotMotion: false,
-      using: "none",
     },
     game: {
       phase: "waiting",

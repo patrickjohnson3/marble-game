@@ -1,13 +1,6 @@
-export function debugLines({
-  game,
-  sensor,
-  calibration,
-  tilt,
-  marble,
-  camera,
-  haptics,
-  intro,
-}) {
+export function debugLines({ game, input, marble, camera, haptics, intro }) {
+  const { calibration, sensor, tilt } = input;
+
   return [
     "phase: " + game.phase,
     "paused: " + game.paused,

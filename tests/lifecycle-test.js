@@ -26,9 +26,9 @@ function createLifecycleHarness() {
       state.game.paused = false;
       state.intro.released = false;
       state.introSequence.started = false;
-      state.sensor.using = "none";
-      state.keyboard.x = 0;
-      state.keyboard.y = 0;
+      state.input.sensor.using = "none";
+      state.input.keyboard.x = 0;
+      state.input.keyboard.y = 0;
       resetIntroTimerState(state.introSequence);
       pausedBySettings = false;
       resets++;
@@ -72,15 +72,15 @@ function testStartPauseResumeReleaseReset() {
   const harness = createLifecycleHarness();
   const { controller, releaseMap, state } = harness;
 
-  state.keyboard.x = 1;
-  state.sensor.using = "keyboard";
+  state.input.keyboard.x = 1;
+  state.input.sensor.using = "keyboard";
 
   controller.start();
   assert.equal(state.game.phase, "calibrating");
   assert.equal(state.game.paused, false);
   assert.equal(harness.resets, 1);
-  assert.equal(state.keyboard.x, 0);
-  assert.equal(state.sensor.using, "none");
+  assert.equal(state.input.keyboard.x, 0);
+  assert.equal(state.input.sensor.using, "none");
 
   controller.openSettings();
   assert.equal(state.game.paused, true);
@@ -116,7 +116,7 @@ async function testStartRequestsFullscreenFromClickPath() {
       centerOnMarble() {},
       resetGesture() {},
     },
-    calibration: state.calibration,
+    calibration: state.input.calibration,
     controlsEl: { hidden: false },
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
@@ -131,7 +131,7 @@ async function testStartRequestsFullscreenFromClickPath() {
       resume() {},
       schedule() {},
     },
-    keyboard: state.keyboard,
+    keyboard: state.input.keyboard,
     mapRenderer: { resetIntroPen() {} },
     marble: state.marble,
     resetMap() {
@@ -139,7 +139,7 @@ async function testStartRequestsFullscreenFromClickPath() {
     },
     resetCalibration() {},
     scheduleFrame() {},
-    sensor: state.sensor,
+    sensor: state.input.sensor,
     sensorWatchdog: {
       pause() {},
       reset() {},
@@ -151,7 +151,7 @@ async function testStartRequestsFullscreenFromClickPath() {
       disabled: false,
       textContent: "",
     },
-    tilt: state.tilt,
+    tilt: state.input.tilt,
     timing,
     trailRenderer: { clear() {} },
     ui: { isSettingsOpen: () => false, setHint() {}, setStartControls() {} },
@@ -198,7 +198,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       centerOnMarble() {},
       resetGesture() {},
     },
-    calibration: state.calibration,
+    calibration: state.input.calibration,
     controlsEl: { hidden: false },
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
@@ -213,13 +213,13 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       resume() {},
       schedule() {},
     },
-    keyboard: state.keyboard,
+    keyboard: state.input.keyboard,
     mapRenderer: { resetIntroPen() {} },
     marble: state.marble,
     resetMap() {},
     resetCalibration() {},
     scheduleFrame() {},
-    sensor: state.sensor,
+    sensor: state.input.sensor,
     sensorWatchdog: {
       pause() {},
       reset() {},
@@ -231,7 +231,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       disabled: false,
       textContent: "",
     },
-    tilt: state.tilt,
+    tilt: state.input.tilt,
     timing,
     trailRenderer: { clear() {} },
     ui: {
@@ -297,7 +297,7 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       centerOnMarble() {},
       resetGesture() {},
     },
-    calibration: state.calibration,
+    calibration: state.input.calibration,
     controlsEl,
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
@@ -312,13 +312,13 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       resume() {},
       schedule() {},
     },
-    keyboard: state.keyboard,
+    keyboard: state.input.keyboard,
     mapRenderer: { resetIntroPen() {} },
     marble: state.marble,
     resetMap() {},
     resetCalibration() {},
     scheduleFrame() {},
-    sensor: state.sensor,
+    sensor: state.input.sensor,
     sensorWatchdog: {
       pause() {},
       reset() {},
@@ -327,7 +327,7 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
     },
     settings: { fullscreenEnabled: true },
     startBtn,
-    tilt: state.tilt,
+    tilt: state.input.tilt,
     timing,
     trailRenderer: { clear() {} },
     ui: {
@@ -381,7 +381,7 @@ function testResumeResetsFrameClock() {
       centerOnMarble() {},
       resetGesture() {},
     },
-    calibration: state.calibration,
+    calibration: state.input.calibration,
     controlsEl: { hidden: false },
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
@@ -396,13 +396,13 @@ function testResumeResetsFrameClock() {
       resume() {},
       schedule() {},
     },
-    keyboard: state.keyboard,
+    keyboard: state.input.keyboard,
     mapRenderer: { resetIntroPen() {} },
     marble: state.marble,
     resetMap() {},
     resetCalibration() {},
     scheduleFrame() {},
-    sensor: state.sensor,
+    sensor: state.input.sensor,
     sensorWatchdog: {
       pause() {},
       reset() {},
@@ -414,7 +414,7 @@ function testResumeResetsFrameClock() {
       disabled: false,
       textContent: "",
     },
-    tilt: state.tilt,
+    tilt: state.input.tilt,
     timing,
     trailRenderer: { clear() {} },
     ui: { isSettingsOpen: () => false, setHint() {}, setStartControls() {} },

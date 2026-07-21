@@ -189,7 +189,8 @@ function setupSensors({
   ui,
   adjustScreen,
 }) {
-  const { calibration, game, marble, sensor, tilt } = state;
+  const { calibration, sensor, tilt } = state.input;
+  const { game, marble } = state;
   const sensorWatchdog = createSensorWatchdog({
     delayMs: timing.sensorFallbackMs,
     game,
@@ -284,16 +285,14 @@ export function createApp({
     marble,
     bounds,
     intro,
-    tilt,
-    keyboard,
+    input,
     camera,
     introSequence: introSequenceState,
     haptics,
-    calibration,
-    sensor,
     game,
     physics,
   } = state;
+  const { calibration, keyboard, sensor, tilt } = input;
 
   const settingsStorageKey = "marbleGameSettings";
   const settingsStorage = storage;
