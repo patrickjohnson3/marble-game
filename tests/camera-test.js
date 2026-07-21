@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createCameraController } from "../core/camera.js";
-import { angle, clamp, distance, midpoint } from "../core/geometry.js";
+import { clamp, distance, midpoint } from "../core/geometry.js";
 
 function createController() {
   const camera = {
@@ -23,7 +23,6 @@ function createController() {
     tuning: { gestureCooldownFrames: 10 },
     clamp,
     distance,
-    angle,
     midpoint,
     viewport: {
       width: () => 300,

@@ -6,10 +6,6 @@ export function distance(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
-export function angle(a, b) {
-  return Math.atan2(b.y - a.y, b.x - a.x);
-}
-
 export function midpoint(a, b) {
   return {
     x: (a.x + b.x) / 2,
