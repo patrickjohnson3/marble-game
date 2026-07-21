@@ -89,6 +89,32 @@ function testRuntimeSettingsAreIndependentFromPersistedSettings() {
   });
 }
 
+function testPersistedSettingsFilterRuntimeOnlyKeys() {
+  const runtime = {
+    ...defaults,
+    maxSpeed: 18,
+    transientDebugFlag: true,
+    sensorPhase: "running",
+  };
+  const storage = storageWith(null);
+
+  assert.deepEqual(persistedSettingsFromRuntime(runtime), {
+    ...defaults,
+    maxSpeed: 18,
+  });
+
+  saveSettings({
+    storage,
+    storageKey: "settings",
+    settings: runtime,
+  });
+
+  assert.deepEqual(JSON.parse(storage.value), {
+    ...defaults,
+    maxSpeed: 18,
+  });
+}
+
 function testUnavailableStorageFallsBackToDefaults() {
   const storage = availableStorage(() => {
     throw new Error("storage blocked");
@@ -212,6 +238,7 @@ function testNumericSettingsClampToControlRanges() {
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
 testRuntimeSettingsAreIndependentFromPersistedSettings();
+testPersistedSettingsFilterRuntimeOnlyKeys();
 testUnavailableStorageFallsBackToDefaults();
 testFpsSettingPersistsValidChoice();
 testStatsSettingPersistsValidChoice();
