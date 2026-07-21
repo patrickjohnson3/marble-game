@@ -10,6 +10,7 @@ export const SURFACE_TYPES = Object.freeze({
   floor: "floor",
   icePatch: "icePatch",
   roughPatch: "roughPatch",
+  hazardPatch: "hazardPatch",
 });
 
 function deadZone(value, threshold) {
@@ -105,6 +106,15 @@ function isOverIcePatch(marble, intro, icePatches, physics) {
   );
 }
 
+function isOverHazardPatch(marble, intro, hazardPatches, physics) {
+  return (
+    intro.released &&
+    hazardPatches.some((rect) =>
+      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
+    )
+  );
+}
+
 function createPhysicsScratch() {
   return {
     frameFactors: {
@@ -115,6 +125,8 @@ function createPhysicsScratch() {
     },
     icePatchCandidates: [],
     icePatchSeen: new Set(),
+    hazardPatchCandidates: [],
+    hazardPatchSeen: new Set(),
     obstacleCandidates: [],
     obstacleSeen: new Set(),
     roughPatchCandidates: [],
@@ -140,6 +152,16 @@ function icePatchCandidates(context, scratch) {
     context.icePatches,
     scratch.icePatchCandidates,
     scratch.icePatchSeen,
+  );
+}
+
+function hazardPatchCandidates(context, scratch) {
+  return queryCandidates(
+    context.hazardPatchIndex,
+    context.marble,
+    context.hazardPatches,
+    scratch.hazardPatchCandidates,
+    scratch.hazardPatchSeen,
   );
 }
 
@@ -219,6 +241,16 @@ function physicsStep(context, dt, feedback) {
     context.physics,
   );
   const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
+  if (
+    isOverHazardPatch(
+      context.marble,
+      context.intro,
+      hazardPatchCandidates(context, physicsScratch),
+      context.physics,
+    )
+  ) {
+    feedback.onHazard?.();
+  }
   feedback.onTerrain?.(surfaceType({ overIcePatch, overRoughPatch }));
   applySurfaceDrag(context, overRoughPatch, factors);
   handleWallCollisions(

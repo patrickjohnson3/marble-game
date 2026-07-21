@@ -12,6 +12,7 @@ export const copy = {
     neutralReset: "neutral reset to current hand position.",
     icePatch: "ice: slippery.",
     roughPatch: "rough patch: heavy drag.",
+    hazardPatch: "hazard. back to start.",
     goalNoNextMap: "goal reached. no next map available.",
     goalNextMapInvalid: "goal reached. next map invalid.",
   },

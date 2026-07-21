@@ -10,11 +10,13 @@ export function createAppMapController({
   terrainView,
   trailRenderer,
   ui,
+  now = () => performance.now(),
 }) {
   const mapState = mapRuntime.state;
 
   function releaseMap() {
     intro.released = true;
+    mapRuntime.startRun(now());
     mapRenderer.openMap();
     introSequence.hideMessage();
     ui.setHint(copy.mapOpen);
@@ -24,6 +26,8 @@ export function createAppMapController({
     mapRuntime.setActiveMap(nextMap);
     terrainView.setTerrain({
       goal: mapState.goal,
+      hazardPatches: mapState.hazardPatches,
+      hazardPatchBounds: mapState.hazardPatchBounds,
       icePatches: mapState.icePatches,
       icePatchBounds: mapState.icePatchBounds,
       obstacles: mapState.obstacles,
@@ -41,6 +45,7 @@ export function createAppMapController({
     marble.roll = 0;
     trailRenderer.clear();
     effectsRenderer.clear();
+    mapRuntime.startRun(now());
     cameraController.centerOnMarble();
   }
 

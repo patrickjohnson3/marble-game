@@ -44,6 +44,7 @@ export const runtimeScripts = [
   "maps/map-data.js",
   "platform/platform.js",
   "rendering/effects.js",
+  "rendering/hazard-patch-rendering.js",
   "rendering/map-renderer.js",
   "rendering/marble-view.js",
   "rendering/ice-patch-rendering.js",

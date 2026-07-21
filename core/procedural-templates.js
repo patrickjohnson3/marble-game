@@ -19,6 +19,7 @@ export const proceduralMapTemplates = Object.freeze([
       { x: 0.58, y: 0.74, w: 0.18, h: 0.1 },
     ],
     icePatches: [{ x: 0.66, y: 0.3, w: 0.12, h: 0.1 }],
+    hazardPatches: [{ x: 0.42, y: 0.66, w: 0.12, h: 0.09 }],
   },
   {
     id: "switchbacks",
@@ -38,6 +39,7 @@ export const proceduralMapTemplates = Object.freeze([
       { x: 0.58, y: 0.2, w: 0.14, h: 0.12 },
     ],
     icePatches: [{ x: 0.42, y: 0.66, w: 0.16, h: 0.1 }],
+    hazardPatches: [{ x: 0.72, y: 0.32, w: 0.12, h: 0.1 }],
   },
   {
     id: "islands",
@@ -60,5 +62,6 @@ export const proceduralMapTemplates = Object.freeze([
       { x: 0.2, y: 0.3, w: 0.14, h: 0.1 },
       { x: 0.5, y: 0.62, w: 0.14, h: 0.1 },
     ],
+    hazardPatches: [{ x: 0.46, y: 0.5, w: 0.12, h: 0.1 }],
   },
 ]);

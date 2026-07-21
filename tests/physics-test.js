@@ -280,6 +280,43 @@ function testTerrainFeedbackReportsSurfaceTypes() {
   assert.deepEqual(surfaces, [SURFACE_TYPES.roughPatch]);
 }
 
+function testHazardPatchReportsResetFeedback() {
+  const marble = { x: 50, y: 50, vx: 0, vy: 0, r: 10 };
+  let hazards = 0;
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      hazardPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 1,
+        bounce: 0,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    },
+    1,
+    {
+      onHazard: () => {
+        hazards++;
+      },
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.equal(hazards, 1);
+}
+
 function testRoughPatchDragAppliesWhenEnteringPatch() {
   const marble = { x: 20, y: 50, vx: 10, vy: 0, r: 10 };
 
@@ -901,6 +938,7 @@ testRoughPatchAddsDrag();
 testRoughPatchDragUsesSpatialIndex();
 testIcePatchReducesDrag();
 testTerrainFeedbackReportsSurfaceTypes();
+testHazardPatchReportsResetFeedback();
 testRoughPatchDragAppliesWhenEnteringPatch();
 testLowSpeedDriftSettles();
 testLowSpeedDriftDoesNotSettleAboveSpeedThreshold();

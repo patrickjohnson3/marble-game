@@ -104,6 +104,7 @@ function proceduralElementBudget(difficulty) {
   const level = Math.min(Math.max(Math.round(difficulty), 1), 3);
 
   return {
+    hazardPatch: level === 1 ? 1 : 2,
     icePatch: level === 1 ? 0 : 1,
     obstacle: 6 + level,
     roughPatch: level === 1 ? 1 : 2,
@@ -113,6 +114,7 @@ function proceduralElementBudget(difficulty) {
 function limitElementsByBudget(elements, difficulty) {
   const budget = proceduralElementBudget(difficulty);
   const counts = {
+    [MAP_ELEMENT_TYPES.hazardPatch]: 0,
     [MAP_ELEMENT_TYPES.icePatch]: 0,
     [MAP_ELEMENT_TYPES.obstacle]: 0,
     [MAP_ELEMENT_TYPES.roughPatch]: 0,
@@ -202,8 +204,18 @@ function generateTemplateMapVariant({
     world,
     gridSize,
   );
+  const hazardPatchElements = (selectedTemplate.hazardPatches ?? []).map(
+    (rect) =>
+      templateRectToElement({
+        rect: jitterPatch(rect, random),
+        type: MAP_ELEMENT_TYPES.hazardPatch,
+        world,
+        gridSize,
+      }),
+  );
   const elements = [
     ...wallElements,
+    ...hazardPatchElements,
     ...roughPatchElements,
     ...icePatchElements,
   ].filter((element) => outsideClearZones(element, spawn, goal));

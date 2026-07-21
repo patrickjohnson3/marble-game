@@ -10,6 +10,7 @@ const firstMap = {
   spawn: { x: 80, y: 90, r: 12 },
   elements: [
     { type: "obstacle", x: 10, y: 20, w: 30, h: 40 },
+    { type: "hazardPatch", x: 30, y: 45, w: 25, h: 35 },
     { type: "icePatch", x: 80, y: 90, w: 50, h: 60 },
     { type: "roughPatch", x: 50, y: 60, w: 70, h: 80 },
   ],
@@ -31,6 +32,15 @@ const resolvedFirstMap = createResolvedMapState(firstMap);
 assert.equal(resolvedFirstMap.activeMap, firstMap);
 assert.equal(resolvedFirstMap.goal, firstMap.goal);
 assert.equal(resolvedFirstMap.spawn, firstMap.spawn);
+assert.equal(resolvedFirstMap.hazardPatches.length, 1);
+assert.deepEqual(resolvedFirstMap.hazardPatchBounds, {
+  bottom: 80,
+  height: 35,
+  left: 30,
+  right: 55,
+  top: 45,
+  width: 25,
+});
 assert.equal(resolvedFirstMap.icePatches.length, 1);
 assert.deepEqual(resolvedFirstMap.icePatchBounds, {
   bottom: 150,
@@ -62,6 +72,7 @@ assert.deepEqual(resolvedFirstMap.roughPatchBounds, {
 assert.equal(runtime.state.activeMap, firstMap);
 assert.equal(runtime.state.goal, firstMap.goal);
 assert.equal(runtime.state.spawn, firstMap.spawn);
+assert.equal(runtime.state.hazardPatches.length, 1);
 assert.equal(runtime.state.icePatches.length, 1);
 assert.equal(runtime.state.obstacles.length, 1);
 assert.equal(runtime.state.roughPatches.length, 1);
@@ -85,6 +96,8 @@ assert.deepEqual(runtime.state.obstacleBounds, {
 });
 assert.deepEqual(runtime.state.roughPatches, []);
 assert.equal(runtime.state.roughPatchBounds, null);
+assert.deepEqual(runtime.state.hazardPatches, []);
+assert.equal(runtime.state.hazardPatchBounds, null);
 assert.deepEqual(runtime.state.icePatches, []);
 assert.equal(runtime.state.icePatchBounds, null);
 assert.equal(runtime.state.goalHoldMs, 0);

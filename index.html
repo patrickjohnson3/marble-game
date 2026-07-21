@@ -28,7 +28,7 @@
       }
     </style>
     <script>
-      const assetVersion = "20260721.040307";
+      const assetVersion = "20260721.041300";
       const runtimeModuleScripts = [
         "boot.js",
         "core/app-map-controller.js",
@@ -74,6 +74,7 @@
         "maps/map-data.js",
         "platform/platform.js",
         "rendering/effects.js",
+        "rendering/hazard-patch-rendering.js",
         "rendering/map-renderer.js",
         "rendering/marble-view.js",
         "rendering/ice-patch-rendering.js",
@@ -125,6 +126,7 @@
       <div id="world">
         <div id="introWalls" class="walls"></div>
         <div id="mapWalls" class="walls"></div>
+        <div id="hazardPatches"></div>
         <div id="icePatches"></div>
         <div id="roughPatches"></div>
         <div id="obstacles"></div>

@@ -23,7 +23,9 @@ export function createGameLoop({
   marbleView,
   physicsContext,
   scheduleFrame,
+  resetGoalProgress = () => {},
   runTimeLabel = () => "",
+  spawnTarget = () => null,
   timing,
   trailRenderer,
   ui,
@@ -32,6 +34,7 @@ export function createGameLoop({
 }) {
   let lastFrame = now();
   let lastSurfaceType = SURFACE_TYPES.floor;
+  let hazardArmed = true;
 
   function resetClock() {
     lastFrame = now();
@@ -62,6 +65,27 @@ export function createGameLoop({
     }
   }
 
+  function onHazard() {
+    if (!hazardArmed) return;
+
+    const spawn = spawnTarget();
+    if (!spawn) return;
+
+    hazardArmed = false;
+    marble.x = spawn.x;
+    marble.y = spawn.y;
+    marble.vx = 0;
+    marble.vy = 0;
+    marble.roll = 0;
+    resetGoalProgress();
+    trailRenderer.clear();
+    effectsRenderer.clear();
+    effectsRenderer.spawnImpact(12);
+    hapticFeedback.pulseImpact(12);
+    ui.setHint(copy.hints.hazardPatch);
+    cameraController.centerOnMarble();
+  }
+
   function updateGoalIndicator(context) {
     const goal = goalTarget();
     if (!context.intro.released || !goal) {
@@ -78,8 +102,20 @@ export function createGameLoop({
     });
   }
 
+  function updateHazardArmed() {
+    const spawn = spawnTarget();
+    if (!spawn) return;
+
+    const distanceFromSpawn = Math.hypot(
+      marble.x - spawn.x,
+      marble.y - spawn.y,
+    );
+    if (distanceFromSpawn > marble.r * 3) hazardArmed = true;
+  }
+
   const physicsFeedback = {
     onImpact,
+    onHazard,
     onSurface,
     onTerrain,
   };
@@ -115,6 +151,7 @@ export function createGameLoop({
       cameraController.updateFollow(frameDelta);
       ui.setRunTimeLabel(runTimeLabel(currentTime));
       updateGoalIndicator(context);
+      updateHazardArmed();
     }
 
     marbleView.render();

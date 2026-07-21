@@ -12,6 +12,7 @@ export function createResolvedMapState(
 ) {
   const elements = activeMap.elements;
   const elementsByType = mapElementsByType(elements);
+  const hazardPatches = elementsByType[MAP_ELEMENT_TYPES.hazardPatch];
   const icePatches = elementsByType[MAP_ELEMENT_TYPES.icePatch];
   const obstacles = normalizeObstacles(
     elementsByType[MAP_ELEMENT_TYPES.obstacle],
@@ -20,6 +21,11 @@ export function createResolvedMapState(
   return {
     activeMap,
     elements,
+    hazardPatches,
+    hazardPatchBounds: rectBounds(hazardPatches),
+    hazardPatchIndex: createSpatialIndex(hazardPatches, {
+      cellSize: collisionIndexCellSize,
+    }),
     icePatches,
     icePatchBounds: rectBounds(icePatches),
     icePatchIndex: createSpatialIndex(icePatches, {
@@ -49,6 +55,9 @@ export function createMapRuntime({
   const state = {
     activeMap: null,
     elements: [],
+    hazardPatches: [],
+    hazardPatchBounds: null,
+    hazardPatchIndex: null,
     icePatches: [],
     icePatchBounds: null,
     icePatchIndex: null,
@@ -77,6 +86,9 @@ export function createMapRuntime({
     });
     state.activeMap = derived.activeMap;
     state.elements = derived.elements;
+    state.hazardPatches = derived.hazardPatches;
+    state.hazardPatchBounds = derived.hazardPatchBounds;
+    state.hazardPatchIndex = derived.hazardPatchIndex;
     state.icePatches = derived.icePatches;
     state.icePatchBounds = derived.icePatchBounds;
     state.icePatchIndex = derived.icePatchIndex;

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { renderHazardPatches } from "../rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
@@ -341,8 +342,25 @@ try {
   );
 
   const container = new FakeElement();
+  const hazardPatchContainer = new FakeElement();
   const roughPatchContainer = new FakeElement();
   const icePatchContainer = new FakeElement();
+
+  renderHazardPatches(hazardPatchContainer, [{ x: 30, y: 40, w: 100, h: 70 }], {
+    padding: 18,
+  });
+  const hazardPatchCanvas = hazardPatchContainer.children[0];
+  assert.equal(
+    hazardPatchCanvas.classList.contains("hazardPatchCanvas"),
+    true,
+    "hazard patches should render to canvas",
+  );
+  assert.equal(hazardPatchCanvas.attributes["data-hazard-patches"], "1");
+  assert.equal(
+    hazardPatchCanvas.context.calls.some((call) => call[0] === "lineTo"),
+    true,
+    "hazard patch canvas should draw stripes",
+  );
 
   renderIcePatches(icePatchContainer, [{ x: 25, y: 35, w: 90, h: 70 }], {
     padding: 18,

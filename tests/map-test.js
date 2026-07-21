@@ -6,6 +6,7 @@ import {
   resolvedMapConfig,
 } from "../core/map-config.js";
 import {
+  mapHazardPatchElements,
   mapObstacleElements,
   mapRoughPatchElements,
 } from "../core/map-elements.js";
@@ -284,6 +285,10 @@ function testProceduralMapGenerationIncludesPlayableElementMix() {
     elements.some((element) => element.type === "icePatch"),
     true,
   );
+  assert.equal(
+    elements.some((element) => element.type === "hazardPatch"),
+    true,
+  );
 }
 
 testProceduralMapGenerationIncludesPlayableElementMix();
@@ -308,6 +313,7 @@ function testProceduralMapGenerationHonorsElementBudgets() {
     assert.equal((counts.obstacle ?? 0) <= 6 + level, true);
     assert.equal((counts.roughPatch ?? 0) <= (level === 1 ? 1 : 2), true);
     assert.equal((counts.icePatch ?? 0) <= (level === 1 ? 0 : 1), true);
+    assert.equal((counts.hazardPatch ?? 0) <= (level === 1 ? 1 : 2), true);
   });
 }
 
@@ -355,6 +361,7 @@ testNextMapVariantSelectionIsGuarded();
 
 function testMapElementFiltersHandleMalformedInput() {
   assert.deepEqual(mapObstacleElements(null), []);
+  assert.deepEqual(mapHazardPatchElements(null), []);
   assert.deepEqual(mapRoughPatchElements(undefined), []);
 }
 

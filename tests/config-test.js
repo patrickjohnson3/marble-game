@@ -11,7 +11,10 @@ import {
   settingsConfig,
   settingsControls,
 } from "../settings/settings-config.js";
-import { mapObstacleElements } from "../core/map-elements.js";
+import {
+  MAP_ELEMENT_TYPE_VALUES,
+  mapObstacleElements,
+} from "../core/map-elements.js";
 import { normalizeJoinedObstacleRects } from "../core/map-obstacles.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { validateMapConfig } from "../core/map-validation.js";
@@ -53,7 +56,7 @@ function testWorldAndMapElements() {
 
   for (const [index, element] of resolvedMapConfig.elements.entries()) {
     assert.ok(
-      ["icePatch", "obstacle", "roughPatch"].includes(element.type),
+      MAP_ELEMENT_TYPE_VALUES.includes(element.type),
       "element " + index + " type",
     );
     assertPositiveNumber(element.w, "element " + index + " width");
@@ -259,6 +262,10 @@ function testHapticAndVisualRanges() {
   assertPositiveNumber(
     visualConfig.marble.glintLightOffset,
     "glint light offset",
+  );
+  assertPositiveNumber(
+    visualConfig.map.hazardPatchCanvasPadding,
+    "hazard patch canvas padding",
   );
   assertPositiveNumber(
     visualConfig.map.roughPatchCanvasPadding,

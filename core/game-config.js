@@ -120,6 +120,7 @@ export const visualConfig = {
     goalCompleteOpacity: 0.88,
   },
   map: {
+    hazardPatchCanvasPadding: 18,
     icePatchCanvasPadding: 18,
     roughPatchCanvasPadding: 18,
     obstacleCanvasPadding: 32,

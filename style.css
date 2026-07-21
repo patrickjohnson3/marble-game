@@ -87,8 +87,16 @@ body {
   opacity: 0;
   transition: opacity 0.45s ease;
 }
+.hazardPatchCanvas {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
 #world.map-open .obstacleCanvas,
 #world.map-open .icePatchCanvas,
+#world.map-open .hazardPatchCanvas,
 #world.map-open .roughPatchCanvas {
   opacity: 1;
 }

@@ -33,6 +33,7 @@ import {
 import { createMapProgression } from "./core/map-progression.js";
 import { createMapRuntime } from "./core/map-runtime.js";
 import { createEffectsRenderer } from "./rendering/effects.js";
+import { renderHazardPatches } from "./rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "./rendering/ice-patch-rendering.js";
 import {
   createMapRenderer,
@@ -94,6 +95,7 @@ function setupRenderers({
     world: worldEl,
     introWalls: introWallsEl,
     mapWalls: mapWallsEl,
+    hazardPatches: hazardPatchesEl,
     icePatches: icePatchesEl,
     roughPatches: roughPatchesEl,
     obstacles: obstaclesEl,
@@ -128,17 +130,25 @@ function setupRenderers({
     clamp,
   });
   const terrainView = createTerrainView({
+    hazardPatchesEl,
     icePatchesEl,
     roughPatchesEl,
     obstaclesEl,
     goalEl,
     goal: mapState.goal,
+    hazardPatches: mapState.hazardPatches,
+    hazardPatchBounds: mapState.hazardPatchBounds,
     icePatches: mapState.icePatches,
     icePatchBounds: mapState.icePatchBounds,
     roughPatches: mapState.roughPatches,
     roughPatchBounds: mapState.roughPatchBounds,
     obstacles: mapState.obstacles,
     obstacleBounds: mapState.obstacleBounds,
+    renderHazardPatches: (container, renderedHazardPatches, renderedBounds) =>
+      renderHazardPatches(container, renderedHazardPatches, {
+        bounds: renderedBounds,
+        padding: visualConfig.map.hazardPatchCanvasPadding,
+      }),
     renderIcePatches: (container, renderedIcePatches, renderedBounds) =>
       renderIcePatches(container, renderedIcePatches, {
         bounds: renderedBounds,
@@ -323,6 +333,8 @@ function createCurrentPhysicsContext({ state, mapState }) {
     camera,
     game,
     physics,
+    hazardPatches: mapState.hazardPatches,
+    hazardPatchIndex: mapState.hazardPatchIndex,
     icePatches: mapState.icePatches,
     icePatchIndex: mapState.icePatchIndex,
     obstacles: mapState.obstacles,
@@ -332,6 +344,8 @@ function createCurrentPhysicsContext({ state, mapState }) {
   };
 
   return function currentPhysicsContext() {
+    physicsContext.hazardPatches = mapState.hazardPatches;
+    physicsContext.hazardPatchIndex = mapState.hazardPatchIndex;
     physicsContext.icePatches = mapState.icePatches;
     physicsContext.icePatchIndex = mapState.icePatchIndex;
     physicsContext.obstacles = mapState.obstacles;
@@ -675,9 +689,14 @@ export function createApp({
     marble,
     marbleView,
     physicsContext: currentPhysicsContext,
+    resetGoalProgress: () => {
+      mapRuntime.resetGoalProgress();
+      terrainView.updateGoalProgress(0);
+    },
     runTimeLabel: (currentTime) =>
       "time " + formatRunTime(mapRuntime.currentRunMs(currentTime)),
     scheduleFrame,
+    spawnTarget: () => mapState.spawn,
     terrainView,
     timing,
     trailRenderer,
