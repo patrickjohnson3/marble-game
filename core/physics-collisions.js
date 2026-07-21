@@ -78,6 +78,7 @@ export function resolveObstacleCollision(
 export function handleWallCollisions(
   { marble, bounds, intro, obstacles, physics },
   onImpact,
+  collisionObstacles = obstacles,
 ) {
   const passes =
     physics.collisionResolvePasses ?? defaultCollisionResolvePasses;
@@ -125,8 +126,13 @@ export function handleWallCollisions(
     }
 
     if (intro.released) {
-      for (let i = 0; i < obstacles.length; i++) {
-        resolveObstacleCollision(marble, obstacles[i], physics, onImpact);
+      for (let i = 0; i < collisionObstacles.length; i++) {
+        resolveObstacleCollision(
+          marble,
+          collisionObstacles[i],
+          physics,
+          onImpact,
+        );
       }
     }
   }

@@ -209,10 +209,11 @@ function physicsStep(context, dt, feedback) {
   );
   const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
   applySurfaceDrag(context, overRoughPatch, factors);
-  const obstacles = context.obstacles;
-  context.obstacles = obstacleCandidates(context, physicsScratch);
-  handleWallCollisions(context, feedback.onImpact);
-  context.obstacles = obstacles;
+  handleWallCollisions(
+    context,
+    feedback.onImpact,
+    obstacleCandidates(context, physicsScratch),
+  );
   handleSurfaceFeedback(context, feedback.onSurface, overRoughPatch);
 }
 
