@@ -11,7 +11,7 @@ Live version: [https://patrickjohnson3.github.io/marble-game/](https://patrickjo
 - Large scrollable maps with walls, rough patches, and ice patches.
 - Goal zones that advance to the next map after a hold timer.
 - Haptic feedback for impacts, terrain, and goals where supported.
-- Settings modal for calibration, camera mode, fullscreen, haptics, FPS, and stats.
+- Settings modal for calibration, fullscreen, haptics, FPS, and stats.
 
 ## Local Setup
 
