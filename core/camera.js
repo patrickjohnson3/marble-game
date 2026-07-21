@@ -29,17 +29,9 @@ export function createCameraController({
       ")";
   }
 
-  function transformedWorldPoint(x, y) {
-    return {
-      x: x * camera.scale,
-      y: y * camera.scale,
-    };
-  }
-
   function centerOnMarble() {
-    const transformed = transformedWorldPoint(marble.x, marble.y);
-    camera.x = viewport.width() / 2 - transformed.x;
-    camera.y = viewport.height() / 2 - transformed.y;
+    camera.x = viewport.width() / 2 - marble.x * camera.scale;
+    camera.y = viewport.height() / 2 - marble.y * camera.scale;
     applyTransform();
   }
 
@@ -49,9 +41,8 @@ export function createCameraController({
     camera.gestureCooldown = Math.max(0, camera.gestureCooldown - dt);
     if (camera.gestureCooldown > 0) return;
 
-    const transformed = transformedWorldPoint(marble.x, marble.y);
-    const targetX = viewport.width() / 2 - transformed.x;
-    const targetY = viewport.height() / 2 - transformed.y;
+    const targetX = viewport.width() / 2 - marble.x * camera.scale;
+    const targetY = viewport.height() / 2 - marble.y * camera.scale;
     const followStep = 1 - Math.pow(1 - camera.followLag, dt);
 
     camera.x += (targetX - camera.x) * followStep;
