@@ -35,30 +35,27 @@ function updateTilt({ tilt, keyboard, physics }, dt) {
   const sensorY = curveTilt(rawSensorY, physics.maxTilt, physics.tiltCurve);
   const targetX = keyboard.x ? keyboard.x * physics.keyboardTilt : sensorX;
   const targetY = keyboard.y ? keyboard.y * physics.keyboardTilt : sensorY;
-  tilt.smoothX +=
-    (targetX - tilt.smoothX) * (1 - Math.pow(1 - physics.smoothing, dt));
-  tilt.smoothY +=
-    (targetY - tilt.smoothY) * (1 - Math.pow(1 - physics.smoothing, dt));
+  const smoothingStep = 1 - Math.pow(1 - physics.smoothing, dt);
+  tilt.smoothX += (targetX - tilt.smoothX) * smoothingStep;
+  tilt.smoothY += (targetY - tilt.smoothY) * smoothingStep;
 }
 
 function updateVelocity(
   { marble, tilt, physics },
   dt,
-  friction = physics.friction,
+  drag,
+  maxSpeedEaseFactor,
 ) {
   marble.vx += tilt.smoothX * physics.accel * dt;
   marble.vy += tilt.smoothY * physics.accel * dt;
 
-  const drag = Math.pow(friction, dt);
   marble.vx *= drag;
   marble.vy *= drag;
 
   let speed = Math.hypot(marble.vx, marble.vy);
   if (speed > physics.maxSpeed) {
     const easedSpeed =
-      physics.maxSpeed +
-      (speed - physics.maxSpeed) *
-        Math.pow(physics.maxSpeedEase ?? defaultMaxSpeedEase, dt);
+      physics.maxSpeed + (speed - physics.maxSpeed) * maxSpeedEaseFactor;
     const scale = easedSpeed / speed;
     marble.vx *= scale;
     marble.vy *= scale;
@@ -100,6 +97,12 @@ function isOverIcePatch(marble, intro, icePatches, physics) {
 
 function createPhysicsScratch() {
   return {
+    frameFactors: {
+      frictionDrag: 1,
+      icePatchDrag: 1,
+      maxSpeedEase: defaultMaxSpeedEase,
+      roughPatchDrag: 1,
+    },
     icePatchCandidates: [],
     icePatchSeen: new Set(),
     obstacleCandidates: [],
@@ -157,12 +160,11 @@ function roughPatchCandidates(context, dt, scratch) {
   );
 }
 
-function applySurfaceDrag(context, dt, overRoughPatch) {
+function applySurfaceDrag(context, overRoughPatch, factors) {
   if (!overRoughPatch) return;
 
-  const drag = Math.pow(context.physics.roughPatchFriction, dt);
-  context.marble.vx *= drag;
-  context.marble.vy *= drag;
+  context.marble.vx *= factors.roughPatchDrag;
+  context.marble.vy *= factors.roughPatchDrag;
 }
 
 function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
@@ -173,6 +175,7 @@ function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
 
 function physicsStep(context, dt, feedback) {
   const physicsScratch = scratch(context);
+  const factors = physicsScratch.frameFactors;
   const overIcePatch = isOverIcePatch(
     context.marble,
     context.intro,
@@ -182,7 +185,8 @@ function physicsStep(context, dt, feedback) {
   updateVelocity(
     context,
     dt,
-    overIcePatch ? context.physics.icePatchFriction : context.physics.friction,
+    overIcePatch ? factors.icePatchDrag : factors.frictionDrag,
+    factors.maxSpeedEase,
   );
   const roughCandidates = roughPatchCandidates(context, dt, physicsScratch);
   const overRoughPatchBeforeMove = isOverRoughPatch(
@@ -199,7 +203,7 @@ function physicsStep(context, dt, feedback) {
     context.physics,
   );
   const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
-  applySurfaceDrag(context, dt, overRoughPatch);
+  applySurfaceDrag(context, overRoughPatch, factors);
   const obstacles = context.obstacles;
   context.obstacles = obstacleCandidates(context, physicsScratch);
   handleWallCollisions(context, feedback.onImpact);
@@ -218,6 +222,23 @@ export function updatePhysics(context, dt, feedback) {
     context.physics.maxPhysicsSubsteps ?? defaultMaxPhysicsSubsteps,
   );
   const stepDt = dt / steps;
+  const physicsScratch = scratch(context);
+  physicsScratch.frameFactors.frictionDrag = Math.pow(
+    context.physics.friction,
+    stepDt,
+  );
+  physicsScratch.frameFactors.icePatchDrag = Math.pow(
+    context.physics.icePatchFriction,
+    stepDt,
+  );
+  physicsScratch.frameFactors.roughPatchDrag = Math.pow(
+    context.physics.roughPatchFriction,
+    stepDt,
+  );
+  physicsScratch.frameFactors.maxSpeedEase = Math.pow(
+    context.physics.maxSpeedEase ?? defaultMaxSpeedEase,
+    stepDt,
+  );
 
   for (let i = 0; i < steps; i++) {
     physicsStep(context, stepDt, feedback);
