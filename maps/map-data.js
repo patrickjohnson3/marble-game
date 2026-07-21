@@ -107,11 +107,13 @@ const generatedOneElements = [
 export const mapVariants = [
   {
     id: "default",
+    difficulty: 1,
     goal: scaleMapPoint({ x: 1920, y: 1900, r: 95, holdMs: 5000 }),
     elements: trimScaledObstacleJoinOverhangs(defaultElements),
   },
   {
     id: "generated-1",
+    difficulty: 2,
     goal: scaleMapPoint({ x: 1840, y: 1850, r: 95, holdMs: 5000 }),
     elements: trimScaledObstacleJoinOverhangs(generatedOneElements),
   },

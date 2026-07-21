@@ -15,6 +15,7 @@ import {
   snapToGrid,
 } from "../core/map-obstacles.js";
 import {
+  goalRadiusForDifficulty,
   hashMapSeed,
   resolveMapVariantConfig,
   resolveSeededMapConfig,
@@ -81,6 +82,16 @@ function testProceduralMapBoundaryWrapsVariantSelection() {
 }
 
 testProceduralMapBoundaryWrapsVariantSelection();
+
+function testGoalRadiusTunesByDifficulty() {
+  assert.equal(goalRadiusForDifficulty(1, 95), 110);
+  assert.equal(goalRadiusForDifficulty(2, 95), 95);
+  assert.equal(goalRadiusForDifficulty(3, 95), 84);
+  assert.equal(goalRadiusForDifficulty(undefined, 95), 95);
+  assert.equal(resolveMapVariantConfig(baseMapConfig, "default").goal.r, 110);
+}
+
+testGoalRadiusTunesByDifficulty();
 
 function testProceduralMapGenerationReturnsValidSeededVariants() {
   const variants = generateProceduralMapVariants({

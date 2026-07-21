@@ -1,4 +1,4 @@
-import { hashMapSeed } from "./map-variants.js";
+import { goalRadiusForDifficulty, hashMapSeed } from "./map-variants.js";
 import { circleRectContact, expandedCircle } from "./geometry.js";
 import { MAP_ELEMENT_TYPES } from "./map-elements.js";
 import { snapToGrid } from "./map-obstacles.js";
@@ -175,7 +175,7 @@ function generateTemplateMapVariant({
       world,
       gridSize,
     ),
-    r: 95,
+    r: goalRadiusForDifficulty(difficulty, 95),
     holdMs: 5000,
   };
   const wallElements = selectedTemplate.walls.map((rect) =>

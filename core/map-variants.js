@@ -37,6 +37,20 @@ export function selectNextMapVariant(variants, currentVariantId) {
   return validVariants[(currentIndex + 1) % validVariants.length];
 }
 
+export function goalRadiusForDifficulty(difficulty, fallbackRadius) {
+  const level = Math.round(difficulty);
+  if (level <= 1) return Math.max(fallbackRadius, 110);
+  if (level === 2) return fallbackRadius;
+  if (level >= 3) return Math.min(fallbackRadius, 84);
+  return fallbackRadius;
+}
+
+function resolveVariantGoal(variant) {
+  const goal = { ...variant.goal };
+  goal.r = goalRadiusForDifficulty(variant.difficulty, goal.r);
+  return goal;
+}
+
 function resolveMapConfig(config, { seed, variant }) {
   if (!variant) return { ...config, seed };
   const elements = Array.isArray(variant.elements)
@@ -47,7 +61,8 @@ function resolveMapConfig(config, { seed, variant }) {
     ...config,
     seed,
     variantId: variant.id,
-    goal: { ...variant.goal },
+    difficulty: variant.difficulty,
+    goal: resolveVariantGoal(variant),
     spawn: { ...(variant.spawn ?? config.spawn) },
     elements,
   };
