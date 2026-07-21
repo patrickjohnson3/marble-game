@@ -47,6 +47,11 @@ export class FakeElement {
     this.offsetHeight = id === "marble" ? 58 : 0;
     this.offsetWidth = id === "marble" ? 58 : 0;
     this.textContent = "";
+    this.parent = null;
+  }
+
+  get firstChild() {
+    return this.childNodes[0] || null;
   }
 
   addEventListener(type, listener, options) {
@@ -54,19 +59,38 @@ export class FakeElement {
   }
 
   appendChild(child) {
+    child.parent = this;
     this.children.push(child);
     this.childNodes = this.children;
     return child;
   }
 
   append(...children) {
+    children.forEach((child) => {
+      child.parent = this;
+    });
     this.children.push(...children);
     this.childNodes = this.children;
   }
 
   replaceChildren(...children) {
+    this.children.forEach((child) => {
+      child.parent = null;
+    });
+    children.forEach((child) => {
+      child.parent = this;
+    });
     this.children = children;
     this.childNodes = this.children;
+  }
+
+  remove() {
+    if (!this.parent) return;
+    this.parent.children = this.parent.children.filter(
+      (child) => child !== this,
+    );
+    this.parent.childNodes = this.parent.children;
+    this.parent = null;
   }
 
   setAttribute(name, value) {

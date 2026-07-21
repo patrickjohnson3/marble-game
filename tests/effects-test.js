@@ -1,45 +1,14 @@
 import assert from "node:assert/strict";
+import { FakeElement } from "./test-dom.js";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-class FakeParticle {
+class FakeParticle extends FakeElement {
   constructor() {
-    this.parent = null;
+    super();
     this.style = {};
-  }
-
-  setAttribute() {}
-
-  remove() {
-    if (!this.parent) return;
-    this.parent.childNodes = this.parent.childNodes.filter(
-      (child) => child !== this,
-    );
-    this.parent = null;
-  }
-}
-
-class FakeElement {
-  constructor() {
-    this.childNodes = [];
-  }
-
-  get firstChild() {
-    return this.childNodes[0] || null;
-  }
-
-  appendChild(child) {
-    child.parent = this;
-    this.childNodes.push(child);
-  }
-
-  replaceChildren() {
-    this.childNodes.forEach((child) => {
-      child.parent = null;
-    });
-    this.childNodes = [];
   }
 }
 
