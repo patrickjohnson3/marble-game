@@ -220,66 +220,6 @@ function limitElementsByBudget(elements, difficulty) {
   });
 }
 
-function rectArea(rect) {
-  return rect.w * rect.h;
-}
-
-export function scoreProceduralMapVariant(variant, world) {
-  const elements = Array.isArray(variant?.elements) ? variant.elements : [];
-  const obstacles = elements.filter(
-    (element) => element.type === MAP_ELEMENT_TYPES.obstacle,
-  );
-  const terrain = elements.filter(
-    (element) =>
-      element.type === MAP_ELEMENT_TYPES.roughPatch ||
-      element.type === MAP_ELEMENT_TYPES.icePatch,
-  );
-  const worldArea = world.width * world.height;
-  const obstacleArea = obstacles.reduce(
-    (total, obstacle) => total + rectArea(obstacle),
-    0,
-  );
-  const spawnGoalDistance = Math.hypot(
-    variant.goal.x - variant.spawn.x,
-    variant.goal.y - variant.spawn.y,
-  );
-  const normalizedDistance =
-    spawnGoalDistance / Math.max(Math.hypot(world.width, world.height), 1);
-  const obstacleDensity = obstacleArea / Math.max(worldArea, 1);
-  const terrainDensity =
-    terrain.reduce((total, patch) => total + rectArea(patch), 0) /
-    Math.max(worldArea, 1);
-  const score =
-    normalizedDistance * 45 +
-    obstacles.length * 4 +
-    terrain.length * 3 +
-    obstacleDensity * 140 +
-    terrainDensity * 90;
-
-  return {
-    obstacleDensity,
-    obstacleCount: obstacles.length,
-    score,
-    spawnGoalDistance,
-    terrainCount: terrain.length,
-    terrainDensity,
-  };
-}
-
-export function proceduralDifficultyRange(difficulty) {
-  const level = Math.min(Math.max(Math.round(difficulty), 1), 3);
-
-  return {
-    min: 40 + (level - 1) * 8,
-    max: 90 + (level - 1) * 14,
-  };
-}
-
-export function proceduralScoreFitsDifficulty(score, difficulty) {
-  const range = proceduralDifficultyRange(difficulty);
-  return score.score >= range.min && score.score <= range.max;
-}
-
 export function generateTemplateMapVariant({
   baseMapConfig,
   difficulty = 1,
@@ -362,43 +302,19 @@ export function generateTemplateMapVariant({
   };
 }
 
-export function generateValidProceduralMapVariants({
+export function generateProceduralMapVariants({
   baseMapConfig,
   count = 3,
-  maxAttempts = count * 8,
   seed = baseMapConfig?.seed,
-  validateMapConfig = () => [],
 } = {}) {
-  const variants = [];
+  return Array.from({ length: count }, (_, index) => {
+    const difficulty = (index % proceduralMapTemplates.length) + 1;
 
-  for (
-    let attempt = 0;
-    attempt < maxAttempts && variants.length < count;
-    attempt++
-  ) {
-    const difficulty = (variants.length % proceduralMapTemplates.length) + 1;
-    const candidate = generateTemplateMapVariant({
+    return generateTemplateMapVariant({
       baseMapConfig,
       difficulty,
-      index: attempt,
+      index,
       seed,
     });
-    const validationConfig = {
-      ...baseMapConfig,
-      ...candidate,
-    };
-    const score = scoreProceduralMapVariant(candidate, baseMapConfig.world);
-
-    if (
-      validateMapConfig(validationConfig).length === 0 &&
-      proceduralScoreFitsDifficulty(score, difficulty)
-    ) {
-      variants.push({
-        ...candidate,
-        score,
-      });
-    }
-  }
-
-  return variants;
+  });
 }

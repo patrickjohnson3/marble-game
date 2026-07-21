@@ -24,12 +24,10 @@ import {
 import { validateMapConfig } from "../core/map-validation.js";
 import { createMapProgression } from "../core/map-progression.js";
 import {
-  generateValidProceduralMapVariants,
+  generateProceduralMapVariants,
   generateTemplateMapVariant,
   proceduralElementBudget,
-  proceduralScoreFitsDifficulty,
   proceduralMapTemplates,
-  scoreProceduralMapVariant,
 } from "../core/procedural-generator.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
@@ -135,22 +133,24 @@ function testTemplateMapGenerationIsDeterministicAndGridAligned() {
 
 testTemplateMapGenerationIsDeterministicAndGridAligned();
 
-function testValidProceduralMapGenerationRetriesInvalidCandidates() {
-  let calls = 0;
-  const variants = generateValidProceduralMapVariants({
+function testProceduralMapGenerationReturnsValidSeededVariants() {
+  const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
-    count: 2,
-    seed: "retry-seed",
-    validateMapConfig(config) {
-      calls++;
-      return calls === 1 ? ["invalid"] : validateMapConfig(config);
-    },
+    count: 4,
+    seed: "batch-seed",
+  });
+  const repeated = generateProceduralMapVariants({
+    baseMapConfig: resolvedMapConfig,
+    count: 4,
+    seed: "batch-seed",
   });
 
-  assert.equal(variants.length, 2);
-  assert.equal(calls > variants.length, true);
-  variants.forEach((variant) => {
-    assert.equal(Number.isFinite(variant.score.score), true);
+  assert.equal(variants.length, 4);
+  assert.deepEqual(variants, repeated);
+  variants.forEach((variant, index) => {
+    const difficulty = (index % proceduralMapTemplates.length) + 1;
+
+    assert.equal(variant.id, "generated-" + difficulty + "-" + index);
     assert.deepEqual(
       validateMapConfig({
         ...resolvedMapConfig,
@@ -161,7 +161,7 @@ function testValidProceduralMapGenerationRetriesInvalidCandidates() {
   });
 }
 
-testValidProceduralMapGenerationRetriesInvalidCandidates();
+testProceduralMapGenerationReturnsValidSeededVariants();
 
 function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
   assert.equal(
@@ -183,26 +183,6 @@ function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
 }
 
 testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps();
-
-function testProceduralMapScoringSummarizesDifficultySignals() {
-  const variant = generateTemplateMapVariant({
-    baseMapConfig: resolvedMapConfig,
-    seed: "score-seed",
-    index: 0,
-    difficulty: 1,
-    template: proceduralMapTemplates[0],
-  });
-  const score = scoreProceduralMapVariant(variant, resolvedMapConfig.world);
-
-  assert.equal(Number.isFinite(score.score), true);
-  assert.equal(score.obstacleCount > 0, true);
-  assert.equal(score.terrainCount > 0, true);
-  assert.equal(score.spawnGoalDistance > 0, true);
-  assert.equal(score.obstacleDensity > 0, true);
-  assert.equal(proceduralScoreFitsDifficulty(score, variant.difficulty), true);
-}
-
-testProceduralMapScoringSummarizesDifficultySignals();
 
 function testProceduralMapGenerationKeepsSpawnAndGoalClear() {
   const variant = generateTemplateMapVariant({
