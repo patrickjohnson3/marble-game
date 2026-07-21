@@ -93,7 +93,7 @@ function templatePointToWorld(point, world, gridSize) {
   };
 }
 
-export function outsideClearZones(element, spawn, goal) {
+function outsideClearZones(element, spawn, goal) {
   return (
     !circleRectContact(expandedCircle(spawn, 4), element).intersects &&
     !circleRectContact(expandedCircle(goal, 1.45), element).intersects
@@ -147,7 +147,7 @@ function focusedTerrainElements(
   );
 }
 
-export function generateTemplateMapVariant({
+function generateTemplateMapVariant({
   baseMapConfig,
   difficulty = 1,
   index = 0,

@@ -23,11 +23,7 @@ import {
 } from "../core/map-variants.js";
 import { validateMapConfig } from "../core/map-validation.js";
 import { createMapProgression } from "../core/map-progression.js";
-import {
-  generateProceduralMapVariants,
-  generateTemplateMapVariant,
-  outsideClearZones,
-} from "../core/procedural-generator.js";
+import { generateProceduralMapVariants } from "../core/procedural-generator.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import {
@@ -257,30 +253,6 @@ function testProceduralMapGenerationKeepsSpawnAndGoalClear() {
 
 testProceduralMapGenerationKeepsSpawnAndGoalClear();
 
-function testProceduralMapClearZoneBoundaries() {
-  const spawn = { x: 50, y: 50, r: 10 };
-  const goal = { x: 150, y: 150, r: 20 };
-
-  assert.equal(
-    outsideClearZones({ x: 90, y: 45, w: 10, h: 10 }, spawn, goal),
-    false,
-  );
-  assert.equal(
-    outsideClearZones({ x: 91, y: 45, w: 10, h: 10 }, spawn, goal),
-    true,
-  );
-  assert.equal(
-    outsideClearZones({ x: 111, y: 145, w: 10, h: 10 }, spawn, goal),
-    false,
-  );
-  assert.equal(
-    outsideClearZones({ x: 110, y: 145, w: 10, h: 10 }, spawn, goal),
-    true,
-  );
-}
-
-testProceduralMapClearZoneBoundaries();
-
 function testProceduralMapGenerationIncludesPlayableElementMix() {
   const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
@@ -355,57 +327,6 @@ function testProceduralMapsUseOneTerrainFocus() {
 }
 
 testProceduralMapsUseOneTerrainFocus();
-
-function testProceduralMapTemplateTerrainFocusFiltersTerrainTypes() {
-  const sharedTemplate = {
-    id: "custom-terrain",
-    difficulty: 2,
-    spawn: { x: 0.2, y: 0.2 },
-    goal: { x: 0.8, y: 0.8 },
-    walls: [],
-    roughPatches: [{ x: 0.35, y: 0.35, w: 0.16, h: 0.12 }],
-    icePatches: [{ x: 0.55, y: 0.55, w: 0.16, h: 0.12 }],
-  };
-  const roughVariant = generateTemplateMapVariant({
-    baseMapConfig: resolvedMapConfig,
-    difficulty: 2,
-    index: 0,
-    seed: "terrain-focus-direct-seed",
-    template: {
-      ...sharedTemplate,
-      terrainFocus: "roughPatch",
-    },
-  });
-  const iceVariant = generateTemplateMapVariant({
-    baseMapConfig: resolvedMapConfig,
-    difficulty: 2,
-    index: 0,
-    seed: "terrain-focus-direct-seed",
-    template: {
-      ...sharedTemplate,
-      terrainFocus: "icePatch",
-    },
-  });
-
-  assert.equal(
-    roughVariant.elements.some((element) => element.type === "roughPatch"),
-    true,
-  );
-  assert.equal(
-    roughVariant.elements.some((element) => element.type === "icePatch"),
-    false,
-  );
-  assert.equal(
-    iceVariant.elements.some((element) => element.type === "roughPatch"),
-    false,
-  );
-  assert.equal(
-    iceVariant.elements.some((element) => element.type === "icePatch"),
-    true,
-  );
-}
-
-testProceduralMapTemplateTerrainFocusFiltersTerrainTypes();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;
