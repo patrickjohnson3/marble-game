@@ -250,6 +250,117 @@ function setupFeedback(haptics) {
   return createHapticsController(haptics, hapticTuning);
 }
 
+function createSettingsRuntime(storage) {
+  const storageKey = "marbleGameSettings";
+  const persistedSettings = loadSettings({
+    storage,
+    storageKey,
+    defaults: settingsConfig,
+    controls: settingsControls,
+    clamp,
+  });
+  const settings = createRuntimeSettings(persistedSettings);
+
+  function saveSettings() {
+    persistSettings({
+      storage,
+      storageKey,
+      settings: persistedSettingsFromRuntime(settings),
+    });
+  }
+
+  return {
+    saveSettings,
+    settings,
+  };
+}
+
+function bindViewportEvents({
+  cameraController,
+  documentRef,
+  game,
+  intro,
+  mapRenderer,
+  marble,
+  marbleView,
+  requestRender,
+  windowRef,
+  bounds,
+}) {
+  function keepDisplayAwakeWhenVisible() {
+    if (documentRef.visibilityState === "visible" && game.phase !== "waiting") {
+      requestWakeLock({ documentRef, navigatorRef: windowRef.navigator });
+    }
+  }
+
+  function resize() {
+    marbleView.syncRadius();
+    if (!intro.released) mapRenderer.updateIntroBounds();
+    marble.x = clamp(marble.x, bounds.left + marble.r, bounds.right - marble.r);
+    marble.y = clamp(marble.y, bounds.top + marble.r, bounds.bottom - marble.r);
+    if (!intro.released) cameraController.centerOnMarble();
+    else cameraController.applyTransform();
+    requestRender();
+  }
+
+  windowRef.addEventListener("resize", resize);
+  documentRef.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
+}
+
+function createCurrentPhysicsContext({ state, mapState }) {
+  const { bounds, camera, game, input, intro, marble, physics } = state;
+  const { keyboard, tilt } = input;
+  const physicsContext = {
+    marble,
+    bounds,
+    intro,
+    tilt,
+    keyboard,
+    camera,
+    game,
+    physics,
+    icePatches: mapState.icePatches,
+    icePatchIndex: mapState.icePatchIndex,
+    obstacles: mapState.obstacles,
+    obstacleIndex: mapState.obstacleIndex,
+    roughPatches: mapState.roughPatches,
+    roughPatchIndex: mapState.roughPatchIndex,
+  };
+
+  return function currentPhysicsContext() {
+    physicsContext.icePatches = mapState.icePatches;
+    physicsContext.icePatchIndex = mapState.icePatchIndex;
+    physicsContext.obstacles = mapState.obstacles;
+    physicsContext.obstacleIndex = mapState.obstacleIndex;
+    physicsContext.roughPatches = mapState.roughPatches;
+    physicsContext.roughPatchIndex = mapState.roughPatchIndex;
+    return physicsContext;
+  };
+}
+
+function bootInitialRender({
+  applySettings,
+  cameraController,
+  documentRef,
+  els,
+  inputManager,
+  mapRenderer,
+  marbleView,
+  requestRender,
+  windowRef,
+}) {
+  applyDocumentCopy({ document: documentRef, els });
+  mapRenderer.setup();
+  applySettings();
+  marbleView.syncRadius();
+  cameraController.centerOnMarble();
+  inputManager.bindStartButton();
+  inputManager.enableKeyboard();
+  inputManager.enableGestures();
+  requestRender();
+  windowRef.__marbleAppBooted = true;
+}
+
 export function createApp({
   document: documentRef = document,
   window: windowRef = window,
@@ -294,17 +405,7 @@ export function createApp({
   } = state;
   const { calibration, keyboard, sensor, tilt } = input;
 
-  const settingsStorageKey = "marbleGameSettings";
-  const settingsStorage = storage;
-
-  const persistedSettings = loadSettings({
-    storage: settingsStorage,
-    storageKey: settingsStorageKey,
-    defaults: settingsConfig,
-    controls: settingsControls,
-    clamp,
-  });
-  const settings = createRuntimeSettings(persistedSettings);
+  const { saveSettings, settings } = createSettingsRuntime(storage);
   const ui = createUi({
     controls: controlsEl,
     hint,
@@ -318,14 +419,6 @@ export function createApp({
   });
   const frameLoop = createFrameLoop();
   const viewport = createViewport(windowRef);
-
-  function saveSettings() {
-    persistSettings({
-      storage: settingsStorage,
-      storageKey: settingsStorageKey,
-      settings: persistedSettingsFromRuntime(settings),
-    });
-  }
 
   function scheduleFrame() {
     frameLoop.schedule();
@@ -377,23 +470,18 @@ export function createApp({
     trailRenderer,
   });
 
-  function keepDisplayAwakeWhenVisible() {
-    if (documentRef.visibilityState === "visible" && game.phase !== "waiting") {
-      requestWakeLock({ documentRef, navigatorRef: windowRef.navigator });
-    }
-  }
-
-  function resize() {
-    marbleView.syncRadius();
-    if (!intro.released) mapRenderer.updateIntroBounds();
-    marble.x = clamp(marble.x, bounds.left + marble.r, bounds.right - marble.r);
-    marble.y = clamp(marble.y, bounds.top + marble.r, bounds.bottom - marble.r);
-    if (!intro.released) cameraController.centerOnMarble();
-    else cameraController.applyTransform();
-    requestRender();
-  }
-  windowRef.addEventListener("resize", resize);
-  documentRef.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
+  bindViewportEvents({
+    bounds,
+    cameraController,
+    documentRef,
+    game,
+    intro,
+    mapRenderer,
+    marble,
+    marbleView,
+    requestRender,
+    windowRef,
+  });
 
   let mapController;
   const introSequence = createIntroSequence({
@@ -526,31 +614,10 @@ export function createApp({
     requestRender,
   });
 
-  const physicsContext = {
-    marble,
-    bounds,
-    intro,
-    tilt,
-    keyboard,
-    camera,
-    physics,
-    icePatches: mapState.icePatches,
-    icePatchIndex: mapState.icePatchIndex,
-    obstacles: mapState.obstacles,
-    obstacleIndex: mapState.obstacleIndex,
-    roughPatches: mapState.roughPatches,
-    roughPatchIndex: mapState.roughPatchIndex,
-  };
-
-  function currentPhysicsContext() {
-    physicsContext.icePatches = mapState.icePatches;
-    physicsContext.icePatchIndex = mapState.icePatchIndex;
-    physicsContext.obstacles = mapState.obstacles;
-    physicsContext.obstacleIndex = mapState.obstacleIndex;
-    physicsContext.roughPatches = mapState.roughPatches;
-    physicsContext.roughPatchIndex = mapState.roughPatchIndex;
-    return physicsContext;
-  }
+  const currentPhysicsContext = createCurrentPhysicsContext({
+    state,
+    mapState,
+  });
 
   gameLoop = createGameLoop({
     cameraController,
@@ -572,16 +639,17 @@ export function createApp({
   });
 
   try {
-    applyDocumentCopy({ document: documentRef, els });
-    mapRenderer.setup();
-    applySettings();
-    marbleView.syncRadius();
-    cameraController.centerOnMarble();
-    inputManager.bindStartButton();
-    inputManager.enableKeyboard();
-    inputManager.enableGestures();
-    requestRender();
-    windowRef.__marbleAppBooted = true;
+    bootInitialRender({
+      applySettings,
+      cameraController,
+      documentRef,
+      els,
+      inputManager,
+      mapRenderer,
+      marbleView,
+      requestRender,
+      windowRef,
+    });
   } catch (error) {
     showBootError(documentRef, error);
     throw error;
