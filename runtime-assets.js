@@ -63,6 +63,13 @@ export const runtimeModuleScripts = runtimeScripts.filter(
   (script) => script !== "app.js",
 );
 
+export const pwaFiles = [
+  "manifest.webmanifest",
+  "sw.js",
+  "assets/icons/marble-icon.svg",
+  "assets/icons/marble-maskable.svg",
+];
+
 const runtimeStyles = ["style.css"];
 
-export const runtimeFiles = [...runtimeScripts, ...runtimeStyles];
+export const runtimeFiles = [...runtimeScripts, ...runtimeStyles, ...pwaFiles];

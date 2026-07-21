@@ -26,4 +26,15 @@ export default [
       },
     },
   },
+  {
+    files: ["sw.js"],
+    languageOptions: {
+      globals: {
+        caches: "readonly",
+        fetch: "readonly",
+        self: "readonly",
+        URL: "readonly",
+      },
+    },
+  },
 ];
