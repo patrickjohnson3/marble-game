@@ -15,7 +15,6 @@ export function createAppMapController({
 
   function releaseMap() {
     intro.released = true;
-    intro.sequenceStage = "idle";
     mapRenderer.openMap();
     introSequence.hideMessage();
     ui.setHint(copy.mapOpen);

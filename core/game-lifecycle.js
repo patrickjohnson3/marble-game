@@ -9,6 +9,7 @@ export function createLifecycleController({
   game,
   haptics,
   intro,
+  introSequenceState,
   introSequence,
   keyboard,
   mapRenderer,
@@ -72,12 +73,12 @@ export function createLifecycleController({
     sensor.gotMotion = false;
     sensor.using = "none";
 
-    intro.started = false;
     intro.released = false;
-    intro.countdownValue = Math.ceil(
+    introSequenceState.started = false;
+    introSequenceState.countdownValue = Math.ceil(
       timing.introReleaseDelayMs / timing.countdownTickMs,
     );
-    resetIntroTimerState(intro);
+    resetIntroTimerState(introSequenceState);
 
     keyboard.x = 0;
     keyboard.y = 0;

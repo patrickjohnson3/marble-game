@@ -1,28 +1,28 @@
-export function resetIntroTimerState(intro) {
-  intro.sequenceStage = "idle";
-  intro.timerStartedAt = 0;
-  intro.timerDelayMs = 0;
+export function resetIntroTimerState(sequence) {
+  sequence.sequenceStage = "idle";
+  sequence.timerStartedAt = 0;
+  sequence.timerDelayMs = 0;
 }
 
-export function trackIntroTimer(intro, stage, delay, now) {
-  intro.sequenceStage = stage;
-  intro.timerStartedAt = now;
-  intro.timerDelayMs = delay;
+export function trackIntroTimer(sequence, stage, delay, now) {
+  sequence.sequenceStage = stage;
+  sequence.timerStartedAt = now;
+  sequence.timerDelayMs = delay;
 }
 
-export function pauseIntroTimerState(intro, now) {
-  if (!intro.started || intro.released || intro.sequenceStage === "idle")
+export function pauseIntroTimerState(intro, sequence, now) {
+  if (!sequence.started || intro.released || sequence.sequenceStage === "idle")
     return false;
 
-  const elapsed = now - intro.timerStartedAt;
-  intro.timerDelayMs = Math.max(0, intro.timerDelayMs - elapsed);
+  const elapsed = now - sequence.timerStartedAt;
+  sequence.timerDelayMs = Math.max(0, sequence.timerDelayMs - elapsed);
   return true;
 }
 
-export function resumeIntroTimerAction(intro) {
-  if (!intro.started || intro.released) return null;
+export function resumeIntroTimerAction(intro, sequence) {
+  if (!sequence.started || intro.released) return null;
 
-  if (intro.sequenceStage === "releaseCountdown") return "releaseCountdown";
+  if (sequence.sequenceStage === "releaseCountdown") return "releaseCountdown";
   return null;
 }
 

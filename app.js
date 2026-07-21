@@ -287,6 +287,7 @@ export function createApp({
     tilt,
     keyboard,
     camera,
+    introSequence: introSequenceState,
     haptics,
     calibration,
     sensor,
@@ -398,6 +399,7 @@ export function createApp({
   let mapController;
   const introSequence = createIntroSequence({
     intro,
+    sequence: introSequenceState,
     game,
     timing,
     messageOverlay,
@@ -461,6 +463,7 @@ export function createApp({
     game,
     haptics,
     intro,
+    introSequenceState,
     introSequence,
     keyboard,
     mapRenderer,

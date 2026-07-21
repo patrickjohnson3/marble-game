@@ -25,10 +25,12 @@ export function createGameState({
       bottom: world.height,
     },
     intro: {
-      started: false,
       released: false,
       wallThickness: resolvedMapConfig.intro.wallThickness,
       viewportMargin: resolvedMapConfig.intro.viewportMargin,
+    },
+    introSequence: {
+      started: false,
       messageTimer: 0,
       countdownTimer: 0,
       countdownValue: Math.ceil(
@@ -91,6 +93,6 @@ export function createGameState({
     physics: { ...physicsConfig },
   };
 
-  resetIntroTimerState(state.intro);
+  resetIntroTimerState(state.introSequence);
   return state;
 }

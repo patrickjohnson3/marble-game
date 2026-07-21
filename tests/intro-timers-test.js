@@ -9,8 +9,14 @@ import {
 
 function introState(overrides = {}) {
   return {
-    started: true,
     released: false,
+    ...overrides,
+  };
+}
+
+function introSequenceState(overrides = {}) {
+  return {
+    started: true,
     sequenceStage: "idle",
     timerStartedAt: 0,
     timerDelayMs: 0,
@@ -20,42 +26,46 @@ function introState(overrides = {}) {
 
 function testReleaseCountdownPausesRemainingDelay() {
   const intro = introState();
+  const sequence = introSequenceState();
 
-  trackIntroTimer(intro, "releaseCountdown", 6000, 1000);
-  const paused = pauseIntroTimerState(intro, 3500);
+  trackIntroTimer(sequence, "releaseCountdown", 6000, 1000);
+  const paused = pauseIntroTimerState(intro, sequence, 3500);
 
   assert.equal(paused, true);
-  assert.equal(intro.sequenceStage, "releaseCountdown");
-  assert.equal(intro.timerDelayMs, 3500);
-  assert.equal(resumeIntroTimerAction(intro), "releaseCountdown");
+  assert.equal(sequence.sequenceStage, "releaseCountdown");
+  assert.equal(sequence.timerDelayMs, 3500);
+  assert.equal(resumeIntroTimerAction(intro, sequence), "releaseCountdown");
 }
 
 function testCountdownTickResumesNextTick() {
   const intro = introState();
+  const sequence = introSequenceState();
 
-  trackIntroTimer(intro, "countdown", 1000, 5000);
-  pauseIntroTimerState(intro, 5750);
+  trackIntroTimer(sequence, "countdown", 1000, 5000);
+  pauseIntroTimerState(intro, sequence, 5750);
 
-  assert.equal(intro.timerDelayMs, 250);
-  assert.equal(resumeIntroTimerAction(intro), null);
+  assert.equal(sequence.timerDelayMs, 250);
+  assert.equal(resumeIntroTimerAction(intro, sequence), null);
 }
 
 function testReleasedIntroDoesNotResume() {
   const intro = introState({ released: true });
+  const sequence = introSequenceState();
 
-  trackIntroTimer(intro, "countdown", 1000, 0);
+  trackIntroTimer(sequence, "countdown", 1000, 0);
 
-  assert.equal(pauseIntroTimerState(intro, 500), false);
-  assert.equal(resumeIntroTimerAction(intro), null);
+  assert.equal(pauseIntroTimerState(intro, sequence, 500), false);
+  assert.equal(resumeIntroTimerAction(intro, sequence), null);
 }
 
 function testIdleIntroDoesNotPause() {
   const intro = introState();
+  const sequence = introSequenceState();
 
-  resetIntroTimerState(intro);
+  resetIntroTimerState(sequence);
 
-  assert.equal(pauseIntroTimerState(intro, 500), false);
-  assert.equal(resumeIntroTimerAction(intro), null);
+  assert.equal(pauseIntroTimerState(intro, sequence, 500), false);
+  assert.equal(resumeIntroTimerAction(intro, sequence), null);
 }
 
 function testShouldPauseOnlyStartedUnpausedGame() {

@@ -25,11 +25,11 @@ function createLifecycleHarness() {
       state.game.phase = "waiting";
       state.game.paused = false;
       state.intro.released = false;
-      state.intro.started = false;
+      state.introSequence.started = false;
       state.sensor.using = "none";
       state.keyboard.x = 0;
       state.keyboard.y = 0;
-      resetIntroTimerState(state.intro);
+      resetIntroTimerState(state.introSequence);
       pausedBySettings = false;
       resets++;
     },
@@ -123,6 +123,7 @@ async function testStartRequestsFullscreenFromClickPath() {
     game: state.game,
     haptics: state.haptics,
     intro: state.intro,
+    introSequenceState: state.introSequence,
     introSequence: {
       clearTimers() {},
       hideMessage() {},
@@ -204,6 +205,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
     game: state.game,
     haptics: state.haptics,
     intro: state.intro,
+    introSequenceState: state.introSequence,
     introSequence: {
       clearTimers() {},
       hideMessage() {},
@@ -302,6 +304,7 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
     game: state.game,
     haptics: state.haptics,
     intro: state.intro,
+    introSequenceState: state.introSequence,
     introSequence: {
       clearTimers() {},
       hideMessage() {},
@@ -385,6 +388,7 @@ function testResumeResetsFrameClock() {
     game: state.game,
     haptics: state.haptics,
     intro: state.intro,
+    introSequenceState: state.introSequence,
     introSequence: {
       clearTimers() {},
       hideMessage() {},

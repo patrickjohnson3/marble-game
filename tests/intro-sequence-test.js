@@ -47,8 +47,10 @@ function testPausedCountdownTimeoutCanResume() {
 
   try {
     const intro = {
-      started: true,
       released: false,
+    };
+    const introSequenceState = {
+      started: true,
       sequenceStage: "releaseCountdown",
       messageTimer: 0,
       countdownTimer: 0,
@@ -59,6 +61,7 @@ function testPausedCountdownTimeoutCanResume() {
     const game = { paused: true };
     const sequence = createIntroSequence({
       intro,
+      sequence: introSequenceState,
       game,
       timing: {
         introReleaseDelayMs: 2000,
@@ -76,16 +79,16 @@ function testPausedCountdownTimeoutCanResume() {
     sequence.resume();
     callbacks.shift()();
 
-    assert.equal(intro.sequenceStage, "releaseCountdown");
-    assert.equal(intro.timerDelayMs, 1000);
-    assert.equal(intro.countdownValue, 2);
+    assert.equal(introSequenceState.sequenceStage, "releaseCountdown");
+    assert.equal(introSequenceState.timerDelayMs, 1000);
+    assert.equal(introSequenceState.countdownValue, 2);
     assert.equal(released, false);
 
     game.paused = false;
     now = 2000;
     sequence.resume();
     callbacks.shift()();
-    assert.equal(intro.countdownValue, 1);
+    assert.equal(introSequenceState.countdownValue, 1);
   } finally {
     globalThis.setTimeout = originalSetTimeout;
     globalThis.clearTimeout = originalClearTimeout;
