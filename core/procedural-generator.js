@@ -76,7 +76,7 @@ export const proceduralMapTemplates = [
   },
 ];
 
-export function createSeededRandom(seed) {
+function createSeededRandom(seed) {
   let state = hashMapSeed(seed) || 1;
 
   return function nextRandom() {
@@ -88,11 +88,11 @@ export function createSeededRandom(seed) {
   };
 }
 
-export function randomBetween(random, min, max) {
+function randomBetween(random, min, max) {
   return min + (max - min) * random();
 }
 
-export function pickRandom(random, values) {
+function pickRandom(random, values) {
   if (!Array.isArray(values) || values.length === 0) return null;
   return values[Math.floor(random() * values.length)];
 }
