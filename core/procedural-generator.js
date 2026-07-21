@@ -7,6 +7,7 @@ const proceduralMapTemplates = [
   {
     id: "long-run",
     difficulty: 1,
+    terrainFocus: MAP_ELEMENT_TYPES.roughPatch,
     spawn: { x: 0.18, y: 0.2 },
     goal: { x: 0.82, y: 0.82 },
     walls: [
@@ -29,6 +30,7 @@ const proceduralMapTemplates = [
   {
     id: "switchbacks",
     difficulty: 2,
+    terrainFocus: MAP_ELEMENT_TYPES.icePatch,
     spawn: { x: 0.2, y: 0.78 },
     goal: { x: 0.82, y: 0.2 },
     walls: [
@@ -51,6 +53,7 @@ const proceduralMapTemplates = [
   {
     id: "islands",
     difficulty: 3,
+    terrainFocus: MAP_ELEMENT_TYPES.roughPatch,
     spawn: { x: 0.16, y: 0.16 },
     goal: { x: 0.84, y: 0.84 },
     walls: [
@@ -220,6 +223,26 @@ function limitElementsByBudget(elements, difficulty) {
   });
 }
 
+function focusedTerrainElements(
+  template,
+  type,
+  rects,
+  random,
+  world,
+  gridSize,
+) {
+  if (template.terrainFocus !== type) return [];
+
+  return rects.map((rect) =>
+    templateRectToElement({
+      rect: jitterPatch(rect, random),
+      type,
+      world,
+      gridSize,
+    }),
+  );
+}
+
 function generateTemplateMapVariant({
   baseMapConfig,
   difficulty = 1,
@@ -269,21 +292,21 @@ function generateTemplateMapVariant({
         gridSize,
       }),
     );
-  const roughPatchElements = selectedTemplate.roughPatches.map((rect) =>
-    templateRectToElement({
-      rect: jitterPatch(rect, random),
-      type: MAP_ELEMENT_TYPES.roughPatch,
-      world,
-      gridSize,
-    }),
+  const roughPatchElements = focusedTerrainElements(
+    selectedTemplate,
+    MAP_ELEMENT_TYPES.roughPatch,
+    selectedTemplate.roughPatches,
+    random,
+    world,
+    gridSize,
   );
-  const icePatchElements = selectedTemplate.icePatches.map((rect) =>
-    templateRectToElement({
-      rect: jitterPatch(rect, random),
-      type: MAP_ELEMENT_TYPES.icePatch,
-      world,
-      gridSize,
-    }),
+  const icePatchElements = focusedTerrainElements(
+    selectedTemplate,
+    MAP_ELEMENT_TYPES.icePatch,
+    selectedTemplate.icePatches,
+    random,
+    world,
+    gridSize,
   );
   const elements = [
     ...wallElements,
@@ -296,6 +319,7 @@ function generateTemplateMapVariant({
     id: "generated-" + difficulty + "-" + index,
     difficulty,
     templateId: selectedTemplate.id,
+    terrainFocus: selectedTemplate.terrainFocus,
     spawn,
     goal,
     elements: limitElementsByBudget(elements, difficulty),

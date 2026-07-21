@@ -215,6 +215,32 @@ function testProceduralMapGenerationIncludesPlayableElementMix() {
 
 testProceduralMapGenerationIncludesPlayableElementMix();
 
+function testProceduralMapsUseOneTerrainFocus() {
+  const variants = generateProceduralMapVariants({
+    baseMapConfig: resolvedMapConfig,
+    count: 6,
+    seed: "terrain-focus-seed",
+  });
+
+  variants.forEach((variant) => {
+    const terrainTypes = new Set(
+      variant.elements
+        .filter(
+          (element) =>
+            element.type === "roughPatch" || element.type === "icePatch",
+        )
+        .map((element) => element.type),
+    );
+
+    assert.equal(terrainTypes.size <= 1, true);
+    if (terrainTypes.size === 1) {
+      assert.equal([...terrainTypes][0], variant.terrainFocus);
+    }
+  });
+}
+
+testProceduralMapsUseOneTerrainFocus();
+
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;
 
