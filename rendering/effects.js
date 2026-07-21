@@ -143,6 +143,31 @@ export function createEffectsRenderer({
     }
   }
 
+  function spawnGoalComplete() {
+    for (let i = 0; i < config.goalCompleteParticles; i++) {
+      const angle = (Math.PI * 2 * i) / config.goalCompleteParticles;
+      const drift =
+        config.goalCompleteDriftMin + random() * config.goalCompleteDriftRange;
+      const size =
+        config.goalCompleteSizeMin + random() * config.goalCompleteSizeRange;
+      const lifeMs = config.goalCompleteLifeMs;
+
+      spawn(
+        "celebrate",
+        particleStyle(
+          marble.x + Math.cos(angle) * marble.r * 0.4,
+          marble.y + Math.sin(angle) * marble.r * 0.4,
+          Math.cos(angle) * drift,
+          Math.sin(angle) * drift,
+          size,
+          lifeMs,
+          config.goalCompleteOpacity,
+        ),
+        lifeMs,
+      );
+    }
+  }
+
   function clear() {
     cleanupTimers.clearAll();
     effectsEl.replaceChildren();
@@ -152,6 +177,7 @@ export function createEffectsRenderer({
 
   return {
     clear,
+    spawnGoalComplete,
     spawnImpact,
     spawnSurface,
   };

@@ -195,6 +195,15 @@ body {
   );
   filter: blur(0.4px);
 }
+.effectParticle.celebrate {
+  background: radial-gradient(
+    circle,
+    #ffffff 0 18%,
+    #88f7c5dd 36%,
+    #53d59a00 76%
+  );
+  box-shadow: 0 0 10px #88f7c588;
+}
 @keyframes effectFade {
   0% {
     opacity: var(--opacity);

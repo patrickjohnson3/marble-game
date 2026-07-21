@@ -21,6 +21,7 @@ export function goalHoldHint(remainingMs, multiplier) {
 
 export function createGoalController({
   copy,
+  effectsRenderer = { spawnGoalComplete() {} },
   hapticFeedback,
   intro,
   mapProgression,
@@ -70,6 +71,7 @@ export function createGoalController({
 
     if (mapState.goalHoldMs >= mapState.goal.holdMs) {
       mapRuntime.completeGoal();
+      effectsRenderer.spawnGoalComplete();
       hapticFeedback.pulseGoal("complete");
       goalHapticActive = false;
       if (!mapProgression.advanceToNextMap()) {

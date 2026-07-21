@@ -111,6 +111,13 @@ export const visualConfig = {
     surfaceLifeMinMs: 260,
     surfaceLifeRangeMs: 260,
     surfaceOpacity: 0.38,
+    goalCompleteParticles: 14,
+    goalCompleteDriftMin: 22,
+    goalCompleteDriftRange: 20,
+    goalCompleteSizeMin: 4,
+    goalCompleteSizeRange: 5,
+    goalCompleteLifeMs: 620,
+    goalCompleteOpacity: 0.88,
   },
   map: {
     icePatchCanvasPadding: 18,

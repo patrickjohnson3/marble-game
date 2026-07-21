@@ -529,6 +529,7 @@ export function createApp({
   }
   const goalController = createGoalController({
     copy: copy.hints,
+    effectsRenderer,
     hapticFeedback,
     intro,
     mapProgression,

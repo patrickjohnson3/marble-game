@@ -72,6 +72,13 @@ async function testEffectsThrottleAndParticleCap() {
         surfaceLifeMinMs: 100,
         surfaceLifeRangeMs: 0,
         surfaceOpacity: 0.5,
+        goalCompleteParticles: 4,
+        goalCompleteDriftMin: 2,
+        goalCompleteDriftRange: 0,
+        goalCompleteSizeMin: 3,
+        goalCompleteSizeRange: 0,
+        goalCompleteLifeMs: 120,
+        goalCompleteOpacity: 0.7,
       },
       clamp,
       random: () => 0.5,
@@ -90,6 +97,13 @@ async function testEffectsThrottleAndParticleCap() {
     effects.clear();
     assert.equal(effectsEl.childNodes.length, 0);
     assert.deepEqual(clearedTimers, [1, 2, 3, 4]);
+    effects.spawnGoalComplete();
+    assert.equal(effectsEl.childNodes.length, 3);
+    assert.equal(effectsEl.childNodes[0].className, "effectParticle celebrate");
+
+    effects.clear();
+    assert.equal(effectsEl.childNodes.length, 0);
+    assert.deepEqual(clearedTimers, [1, 2, 3, 4, 5, 6, 7, 8]);
     effects.spawnImpact(5);
     assert.equal(effectsEl.childNodes.length, 2);
   } finally {
