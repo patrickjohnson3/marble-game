@@ -24,6 +24,30 @@ function testCircleRectContact() {
   assert.equal(marbleOverRect({ x: 0, y: 0, r: 5 }, rect), false);
 }
 
+function testCircleRectContactEdgeCases() {
+  const rect = { x: 10, y: 10, w: 20, h: 20 };
+  const edge = circleRectContact({ x: 5, y: 20, r: 5 }, rect);
+  const corner = circleRectContact({ x: 6, y: 6, r: Math.SQRT2 * 4 }, rect);
+  const inside = circleRectContact({ x: 20, y: 20, r: 5 }, rect);
+  const nearMiss = circleRectContact({ x: 4.9, y: 20, r: 5 }, rect, 1.1);
+
+  assert.deepEqual(edge, {
+    intersects: true,
+    dx: -5,
+    dy: 0,
+    distanceSq: 25,
+  });
+  assert.equal(corner.intersects, true);
+  assertNear(corner.distanceSq, 32);
+  assert.deepEqual(inside, {
+    intersects: true,
+    dx: 0,
+    dy: 0,
+    distanceSq: 0,
+  });
+  assert.equal(nearMiss.intersects, true);
+}
+
 function testObstacleBounce() {
   const marble = { x: 90, y: 50, vx: 8, vy: 0, r: 12 };
   const obstacle = { x: 100, y: 30, w: 40, h: 40 };
@@ -759,6 +783,7 @@ function testSubstepsPreventThinObstacleTunneling() {
 }
 
 testCircleRectContact();
+testCircleRectContactEdgeCases();
 testObstacleBounce();
 testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
