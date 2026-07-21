@@ -20,4 +20,21 @@ function testSpatialIndexDedupesMultiCellRects() {
 
 testSpatialIndexDedupesMultiCellRects();
 
+function testSpatialIndexCanReuseQueryStorage() {
+  const near = { x: 20, y: 20, w: 30, h: 30 };
+  const far = { x: 600, y: 600, w: 40, h: 40 };
+  const index = createSpatialIndex([near, far], { cellSize: 100 });
+  const matches = [far];
+  const seen = new Set([1]);
+
+  assert.equal(
+    index.queryCircleInto({ x: 35, y: 35, r: 10 }, matches, seen),
+    matches,
+  );
+  assert.deepEqual(matches, [near]);
+  assert.deepEqual([...seen], [0]);
+}
+
+testSpatialIndexCanReuseQueryStorage();
+
 console.log("Spatial index tests passed.");

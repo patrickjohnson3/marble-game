@@ -1,26 +1,20 @@
-function cellRange(start, end, cellSize) {
-  return {
-    from: Math.floor(start / cellSize),
-    to: Math.floor(end / cellSize),
-  };
+function cellStart(value, cellSize) {
+  return Math.floor(value / cellSize);
 }
 
-function cellKey(x, y) {
-  return x + "," + y;
+function cellEnd(value, size, cellSize) {
+  return Math.floor((value + size) / cellSize);
 }
 
-function rectCells(rect, cellSize) {
-  const x = cellRange(rect.x, rect.x + rect.w, cellSize);
-  const y = cellRange(rect.y, rect.y + rect.h, cellSize);
-  const cells = [];
+function cellBucket(cells, x, y) {
+  return cells.get(x)?.get(y);
+}
 
-  for (let cy = y.from; cy <= y.to; cy++) {
-    for (let cx = x.from; cx <= x.to; cx++) {
-      cells.push(cellKey(cx, cy));
-    }
-  }
-
-  return cells;
+function addCellIndex(cells, x, y, index) {
+  if (!cells.has(x)) cells.set(x, new Map());
+  const column = cells.get(x);
+  if (!column.has(y)) column.set(y, []);
+  column.get(y).push(index);
 }
 
 export function createSpatialIndex(rects, { cellSize = 256 } = {}) {
@@ -28,39 +22,54 @@ export function createSpatialIndex(rects, { cellSize = 256 } = {}) {
   const cells = new Map();
 
   source.forEach((rect, index) => {
-    rectCells(rect, cellSize).forEach((key) => {
-      if (!cells.has(key)) cells.set(key, []);
-      cells.get(key).push(index);
-    });
+    const fromX = cellStart(rect.x, cellSize);
+    const toX = cellEnd(rect.x, rect.w, cellSize);
+    const fromY = cellStart(rect.y, cellSize);
+    const toY = cellEnd(rect.y, rect.h, cellSize);
+
+    for (let cy = fromY; cy <= toY; cy++) {
+      for (let cx = fromX; cx <= toX; cx++) {
+        addCellIndex(cells, cx, cy, index);
+      }
+    }
   });
 
-  function queryCircle(circle) {
-    const keys = rectCells(
-      {
-        x: circle.x - circle.r,
-        y: circle.y - circle.r,
-        w: circle.r * 2,
-        h: circle.r * 2,
-      },
-      cellSize,
-    );
-    const seen = new Set();
-    const matches = [];
+  function queryCircleInto(circle, matches, seen) {
+    matches.length = 0;
+    seen.clear();
 
-    keys.forEach((key) => {
-      (cells.get(key) || []).forEach((index) => {
-        if (seen.has(index)) return;
-        seen.add(index);
-        matches.push(source[index]);
-      });
-    });
+    const diameter = circle.r * 2;
+    const fromX = cellStart(circle.x - circle.r, cellSize);
+    const toX = cellEnd(circle.x - circle.r, diameter, cellSize);
+    const fromY = cellStart(circle.y - circle.r, cellSize);
+    const toY = cellEnd(circle.y - circle.r, diameter, cellSize);
+
+    for (let cy = fromY; cy <= toY; cy++) {
+      for (let cx = fromX; cx <= toX; cx++) {
+        const bucket = cellBucket(cells, cx, cy);
+        if (!bucket) continue;
+
+        for (let i = 0; i < bucket.length; i++) {
+          const index = bucket[i];
+
+          if (seen.has(index)) continue;
+          seen.add(index);
+          matches.push(source[index]);
+        }
+      }
+    }
 
     return matches;
+  }
+
+  function queryCircle(circle) {
+    return queryCircleInto(circle, [], new Set());
   }
 
   return {
     cellSize,
     queryCircle,
+    queryCircleInto,
     rects: source,
   };
 }
