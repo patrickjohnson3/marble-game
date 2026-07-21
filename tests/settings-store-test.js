@@ -177,6 +177,38 @@ function testMalformedSavedSettingsFallBackToDefaults() {
   assert.equal(settings.statsEnabled, false);
 }
 
+function testNumericSettingsClampToControlRanges() {
+  const low = loadSettings({
+    storage: storageWith(
+      JSON.stringify({
+        maxSpeed: 1,
+        acceleration: 0.001,
+      }),
+    ),
+    storageKey: "settings",
+    defaults,
+    controls,
+    clamp,
+  });
+  const high = loadSettings({
+    storage: storageWith(
+      JSON.stringify({
+        maxSpeed: 100,
+        acceleration: 10,
+      }),
+    ),
+    storageKey: "settings",
+    defaults,
+    controls,
+    clamp,
+  });
+
+  assert.equal(low.maxSpeed, controls.maxSpeed.min);
+  assert.equal(low.acceleration, controls.acceleration.min);
+  assert.equal(high.maxSpeed, controls.maxSpeed.max);
+  assert.equal(high.acceleration, controls.acceleration.max);
+}
+
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
 testRuntimeSettingsAreIndependentFromPersistedSettings();
@@ -184,5 +216,6 @@ testUnavailableStorageFallsBackToDefaults();
 testFpsSettingPersistsValidChoice();
 testStatsSettingPersistsValidChoice();
 testMalformedSavedSettingsFallBackToDefaults();
+testNumericSettingsClampToControlRanges();
 
 console.log("Settings store tests passed.");
