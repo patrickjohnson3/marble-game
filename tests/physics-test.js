@@ -514,6 +514,48 @@ function testMaxSpeedEasesDown() {
   assert.equal(marble.vx, 15);
 }
 
+function testMaxSpeedClampIsFrameRateIndependent() {
+  function context() {
+    return {
+      marble: { x: 50, y: 50, vx: 9, vy: 0, r: 10 },
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 4, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 1,
+        friction: 1,
+        roughPatchFriction: 1,
+        bounce: 0.5,
+        maxSpeed: 10,
+        maxSpeedEase: 0,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    };
+  }
+  const once = context();
+  const split = context();
+
+  updatePhysics(once, 1, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+  updatePhysics(split, 0.5, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+  updatePhysics(split, 0.5, {
+    onImpact: () => {},
+    onSurface: () => {},
+  });
+
+  assert.equal(once.marble.vx, 10);
+  assertNear(split.marble.vx, once.marble.vx);
+}
+
 function testWallCollisionAppliesTangentialFriction() {
   const marble = { x: 5, y: 50, vx: -4, vy: 10, r: 10 };
 
@@ -734,6 +776,7 @@ testVelocityDragIsFrameRateIndependent();
 testAccelerationIsFrameRateIndependent();
 testRoughPatchDragIsFrameRateIndependent();
 testMaxSpeedEasesDown();
+testMaxSpeedClampIsFrameRateIndependent();
 testWallCollisionAppliesTangentialFriction();
 testWorldBoundCollisionBeforeAdjacentObstacle();
 testPhysicsSubstepsAreCapped();
