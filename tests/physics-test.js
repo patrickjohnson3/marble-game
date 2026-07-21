@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { circleRectContact } from "../core/geometry.js";
 import {
+  handleWallCollisions,
   marbleOverRect,
   resolveObstacleCollision,
 } from "../core/physics-collisions.js";
@@ -665,6 +666,34 @@ function testWorldBoundCollisionBeforeAdjacentObstacle() {
   assert.equal(marble.x, 10);
 }
 
+function testMultipleCollisionPassesResolveChainedOverlaps() {
+  const obstacles = [
+    { x: 100, y: 40, w: 20, h: 20 },
+    { x: 80, y: 40, w: 20, h: 20 },
+  ];
+  const marble = { x: 100, y: 50, vx: 0, vy: 0, r: 15 };
+
+  handleWallCollisions(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      obstacles,
+      physics: {
+        bounce: 0,
+        collisionResolvePasses: 2,
+      },
+    },
+    () => {},
+  );
+
+  for (const obstacle of obstacles) {
+    const contact = circleRectContact(marble, obstacle);
+
+    assert.equal(contact.distanceSq >= marble.r * marble.r, true);
+  }
+}
+
 function testPhysicsSubstepsAreCapped() {
   const marble = { x: 50, y: 50, vx: 1000, vy: 0, r: 10 };
 
@@ -821,6 +850,7 @@ testMaxSpeedEasesDown();
 testMaxSpeedClampIsFrameRateIndependent();
 testWallCollisionAppliesTangentialDrag();
 testWorldBoundCollisionBeforeAdjacentObstacle();
+testMultipleCollisionPassesResolveChainedOverlaps();
 testPhysicsSubstepsAreCapped();
 testInvalidPhysicsStepInputsDoNotPoisonState();
 testSubstepsPreventThinObstacleTunneling();
