@@ -3,8 +3,8 @@ import { updatePhysicsInput, updatePhysics } from "./physics.js";
 function elapsedMsToFrameDelta(elapsedMs, timing, clamp) {
   return clamp(
     elapsedMs / timing.targetFrameMs,
-    timing.minFrameStep,
-    timing.maxFrameStep,
+    timing.minFrameDelta,
+    timing.maxFrameDelta,
   );
 }
 

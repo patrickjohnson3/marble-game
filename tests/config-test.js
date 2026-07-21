@@ -138,12 +138,12 @@ function testTimingAndTuning() {
     "motionPermissionTimeoutMs",
     "sensorFallbackMs",
     "targetFrameMs",
-    "minFrameStep",
-    "maxFrameStep",
+    "minFrameDelta",
+    "maxFrameDelta",
   ].forEach((key) => assertPositiveNumber(timing[key], "timing." + key));
 
   assert.equal(
-    timing.maxFrameStep >= timing.minFrameStep,
+    timing.maxFrameDelta >= timing.minFrameDelta,
     true,
     "frame step range",
   );

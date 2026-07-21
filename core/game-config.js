@@ -48,9 +48,10 @@ export const timing = {
   countdownTickMs: 1000,
   motionPermissionTimeoutMs: 1200,
   sensorFallbackMs: 1400,
+  // Physics dt is expressed in 60fps frame units: 1 equals targetFrameMs.
   targetFrameMs: 16.67,
-  minFrameStep: 0.25,
-  maxFrameStep: 2,
+  minFrameDelta: 0.25,
+  maxFrameDelta: 2,
 };
 
 export const tuning = {
