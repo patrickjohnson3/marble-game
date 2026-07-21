@@ -12,6 +12,13 @@ export function goalHoldMultiplier(marble, goal) {
   return 1 + centerCloseness * maxGoalCenterHoldBonus;
 }
 
+export function goalHoldHint(remainingMs, multiplier) {
+  const seconds = Math.max(1, Math.ceil(remainingMs / 1000));
+  const label = multiplier >= 1.5 ? "hold center" : "hold steady";
+
+  return label + ": " + seconds + "s";
+}
+
 export function createGoalController({
   copy,
   hapticFeedback,
@@ -51,15 +58,13 @@ export function createGoalController({
       hapticFeedback.pulseGoal("enter");
     }
 
+    const multiplier = goalHoldMultiplier(marble, mapState.goal);
     const progress = mapRuntime.addGoalHold(
-      frameDeltaToMs(frameDelta, timing) *
-        goalHoldMultiplier(marble, mapState.goal),
+      frameDeltaToMs(frameDelta, timing) * multiplier,
     );
     terrainView.updateGoalProgress(progress);
     ui.setHint(
-      "hold goal " +
-        Math.ceil((mapState.goal.holdMs - mapState.goalHoldMs) / 1000) +
-        "s",
+      goalHoldHint(mapState.goal.holdMs - mapState.goalHoldMs, multiplier),
     );
     hapticFeedback.pulseGoal("hold");
 
