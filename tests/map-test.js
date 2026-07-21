@@ -23,7 +23,10 @@ import {
 } from "../core/map-variants.js";
 import { validateMapConfig } from "../core/map-validation.js";
 import { createMapProgression } from "../core/map-progression.js";
-import { generateProceduralMapVariants } from "../core/procedural-generator.js";
+import {
+  generateProceduralMapVariants,
+  generateTemplateMapVariant,
+} from "../core/procedural-generator.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import {
@@ -327,6 +330,57 @@ function testProceduralMapsUseOneTerrainFocus() {
 }
 
 testProceduralMapsUseOneTerrainFocus();
+
+function testProceduralMapTemplateTerrainFocusFiltersTerrainTypes() {
+  const sharedTemplate = {
+    id: "custom-terrain",
+    difficulty: 2,
+    spawn: { x: 0.2, y: 0.2 },
+    goal: { x: 0.8, y: 0.8 },
+    walls: [],
+    roughPatches: [{ x: 0.35, y: 0.35, w: 0.16, h: 0.12 }],
+    icePatches: [{ x: 0.55, y: 0.55, w: 0.16, h: 0.12 }],
+  };
+  const roughVariant = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    difficulty: 2,
+    index: 0,
+    seed: "terrain-focus-direct-seed",
+    template: {
+      ...sharedTemplate,
+      terrainFocus: "roughPatch",
+    },
+  });
+  const iceVariant = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    difficulty: 2,
+    index: 0,
+    seed: "terrain-focus-direct-seed",
+    template: {
+      ...sharedTemplate,
+      terrainFocus: "icePatch",
+    },
+  });
+
+  assert.equal(
+    roughVariant.elements.some((element) => element.type === "roughPatch"),
+    true,
+  );
+  assert.equal(
+    roughVariant.elements.some((element) => element.type === "icePatch"),
+    false,
+  );
+  assert.equal(
+    iceVariant.elements.some((element) => element.type === "roughPatch"),
+    false,
+  );
+  assert.equal(
+    iceVariant.elements.some((element) => element.type === "icePatch"),
+    true,
+  );
+}
+
+testProceduralMapTemplateTerrainFocusFiltersTerrainTypes();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;
