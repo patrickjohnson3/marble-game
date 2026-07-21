@@ -98,16 +98,63 @@ function isOverIcePatch(marble, intro, icePatches, physics) {
   );
 }
 
-function icePatchCandidates({ marble, icePatches, icePatchIndex }) {
-  return icePatchIndex?.queryCircle(marble) ?? icePatches ?? [];
+function createPhysicsScratch() {
+  return {
+    icePatchCandidates: [],
+    icePatchSeen: new Set(),
+    obstacleCandidates: [],
+    obstacleSeen: new Set(),
+    roughPatchCandidates: [],
+    roughPatchSeen: new Set(),
+    roughPatchQueryCircle: { x: 0, y: 0, r: 0 },
+  };
 }
 
-function roughPatchCandidates({ marble, roughPatches, roughPatchIndex }) {
-  return roughPatchIndex?.queryCircle(marble) ?? roughPatches;
+function scratch(context) {
+  context.physicsScratch ??= createPhysicsScratch();
+  return context.physicsScratch;
 }
 
-function obstacleCandidates({ marble, obstacles, obstacleIndex }) {
-  return obstacleIndex?.queryCircle(marble) ?? obstacles;
+function queryCandidates(index, circle, fallback, matches, seen) {
+  if (!index?.queryCircleInto) return fallback ?? [];
+  return index.queryCircleInto(circle, matches, seen);
+}
+
+function icePatchCandidates(context, scratch) {
+  return queryCandidates(
+    context.icePatchIndex,
+    context.marble,
+    context.icePatches,
+    scratch.icePatchCandidates,
+    scratch.icePatchSeen,
+  );
+}
+
+function obstacleCandidates(context, scratch) {
+  return queryCandidates(
+    context.obstacleIndex,
+    context.marble,
+    context.obstacles,
+    scratch.obstacleCandidates,
+    scratch.obstacleSeen,
+  );
+}
+
+function roughPatchCandidates(context, dt, scratch) {
+  const distance = Math.hypot(context.marble.vx * dt, context.marble.vy * dt);
+  scratch.roughPatchQueryCircle.x =
+    context.marble.x + (context.marble.vx * dt) / 2;
+  scratch.roughPatchQueryCircle.y =
+    context.marble.y + (context.marble.vy * dt) / 2;
+  scratch.roughPatchQueryCircle.r = context.marble.r + distance / 2;
+
+  return queryCandidates(
+    context.roughPatchIndex,
+    scratch.roughPatchQueryCircle,
+    context.roughPatches,
+    scratch.roughPatchCandidates,
+    scratch.roughPatchSeen,
+  );
 }
 
 function applySurfaceDrag(context, dt, overRoughPatch) {
@@ -125,10 +172,11 @@ function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
 }
 
 function physicsStep(context, dt, feedback) {
+  const physicsScratch = scratch(context);
   const overIcePatch = isOverIcePatch(
     context.marble,
     context.intro,
-    icePatchCandidates(context),
+    icePatchCandidates(context, physicsScratch),
     context.physics,
   );
   updateVelocity(
@@ -136,23 +184,24 @@ function physicsStep(context, dt, feedback) {
     dt,
     overIcePatch ? context.physics.icePatchFriction : context.physics.friction,
   );
+  const roughCandidates = roughPatchCandidates(context, dt, physicsScratch);
   const overRoughPatchBeforeMove = isOverRoughPatch(
     context.marble,
     context.intro,
-    roughPatchCandidates(context),
+    roughCandidates,
     context.physics,
   );
   updatePosition(context.marble, dt);
   const overRoughPatchAfterMove = isOverRoughPatch(
     context.marble,
     context.intro,
-    roughPatchCandidates(context),
+    roughCandidates,
     context.physics,
   );
   const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
   applySurfaceDrag(context, dt, overRoughPatch);
   const obstacles = context.obstacles;
-  context.obstacles = obstacleCandidates(context);
+  context.obstacles = obstacleCandidates(context, physicsScratch);
   handleWallCollisions(context, feedback.onImpact);
   context.obstacles = obstacles;
   handleSurfaceFeedback(context, feedback.onSurface, overRoughPatch);
