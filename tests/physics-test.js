@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
-import { circleRectContact } from "../core/geometry.js";
+import {
+  circleFrom,
+  circleRectContact,
+  expandedCircle,
+} from "../core/geometry.js";
 import {
   handleWallCollisions,
   marbleOverRect,
@@ -23,6 +27,14 @@ function testCircleRectContact() {
   assert.equal(circleRectContact(circle, rect).intersects, true);
   assert.equal(marbleOverRect(circle, rect), true);
   assert.equal(marbleOverRect({ x: 0, y: 0, r: 5 }, rect), false);
+}
+
+function testCircleShapeHelpers() {
+  const source = { x: 12, y: 18, r: 4, extra: true };
+
+  assert.deepEqual(circleFrom(source), { x: 12, y: 18, r: 4 });
+  assert.deepEqual(circleFrom(source, 9), { x: 12, y: 18, r: 9 });
+  assert.deepEqual(expandedCircle(source, 2.5), { x: 12, y: 18, r: 10 });
 }
 
 function testCircleRectContactEdgeCases() {
@@ -836,6 +848,7 @@ function testSubstepsPreventThinObstacleTunneling() {
 }
 
 testCircleRectContact();
+testCircleShapeHelpers();
 testCircleRectContactEdgeCases();
 testMarbleOverRectHonorsEpsilon();
 testObstacleBounce();

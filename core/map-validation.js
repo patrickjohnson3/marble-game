@@ -1,4 +1,4 @@
-import { circleRectContact } from "./geometry.js";
+import { circleFrom, circleRectContact } from "./geometry.js";
 import {
   MAP_ELEMENT_TYPE_VALUES,
   mapObstacleElements,
@@ -62,9 +62,7 @@ function validateGoal(goal, { world, obstacles, errors }) {
   }
   if (
     obstacles.some(
-      (obstacle) =>
-        circleRectContact({ x: goal.x, y: goal.y, r: goal.r }, obstacle)
-          .intersects,
+      (obstacle) => circleRectContact(circleFrom(goal), obstacle).intersects,
     )
   ) {
     errors.push(mapValidationMessages.goalObstacleOverlap);

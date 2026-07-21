@@ -1,5 +1,5 @@
 import { hashMapSeed } from "./map-variants.js";
-import { circleRectContact } from "./geometry.js";
+import { circleRectContact, expandedCircle } from "./geometry.js";
 import { MAP_ELEMENT_TYPES } from "./map-elements.js";
 import { snapToGrid } from "./map-obstacles.js";
 
@@ -156,12 +156,9 @@ function templatePointToWorld(point, world, gridSize) {
 }
 
 export function outsideClearZones(element, spawn, goal) {
-  const spawnClearZone = { ...spawn, r: spawn.r * 4 };
-  const goalClearZone = { ...goal, r: goal.r * 1.45 };
-
   return (
-    !circleRectContact(spawnClearZone, element).intersects &&
-    !circleRectContact(goalClearZone, element).intersects
+    !circleRectContact(expandedCircle(spawn, 4), element).intersects &&
+    !circleRectContact(expandedCircle(goal, 1.45), element).intersects
   );
 }
 

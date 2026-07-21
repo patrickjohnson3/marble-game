@@ -13,6 +13,18 @@ export function midpoint(a, b) {
   };
 }
 
+export function circleFrom(point, radius = point.r) {
+  return {
+    x: point.x,
+    y: point.y,
+    r: radius,
+  };
+}
+
+export function expandedCircle(circle, radiusScale) {
+  return circleFrom(circle, circle.r * radiusScale);
+}
+
 export function circleRectContact(circle, rect, epsilon = 0) {
   const closestX = clamp(circle.x, rect.x, rect.x + rect.w);
   const closestY = clamp(circle.y, rect.y, rect.y + rect.h);
