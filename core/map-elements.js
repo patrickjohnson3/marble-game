@@ -4,15 +4,15 @@ export const MAP_ELEMENT_TYPES = Object.freeze({
   roughPatch: "roughPatch",
 });
 
-export function isIcePatchElement(element) {
+function isIcePatchElement(element) {
   return element?.type === MAP_ELEMENT_TYPES.icePatch;
 }
 
-export function isObstacleElement(element) {
+function isObstacleElement(element) {
   return element?.type === MAP_ELEMENT_TYPES.obstacle;
 }
 
-export function isRoughPatchElement(element) {
+function isRoughPatchElement(element) {
   return element?.type === MAP_ELEMENT_TYPES.roughPatch;
 }
 
