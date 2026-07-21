@@ -115,9 +115,7 @@ function validateRect(rect, { world, label, errors }) {
   }
 }
 
-export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
-  const errors = [];
-  const allowedTypes = new Set(Object.values(MAP_ELEMENT_TYPES));
+function mapValidationContext(config, normalizedObstacles) {
   const world = config?.world ?? {};
   const elements = Array.isArray(config?.elements) ? config.elements : [];
   const objectElements = elements.filter(
@@ -131,15 +129,26 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
         (obstacle) => obstacle && typeof obstacle === "object",
       )
     : [];
-  const gridSize = config?.grid?.size;
 
+  return {
+    checkedObstacles,
+    checkedObstaclesSource,
+    elements,
+    gridSize: config?.grid?.size,
+    world,
+  };
+}
+
+function validateRequiredMapShape(config, { errors }) {
   if (!config || typeof config !== "object") {
     errors.push(mapValidationMessages.configRequired);
   }
   if (!Array.isArray(config?.elements)) {
     errors.push(mapValidationMessages.elementsArray);
   }
+}
 
+function validateWorldAndGrid(config, { errors, gridSize, world }) {
   if (!Number.isFinite(world.width) || world.width <= 0) {
     errors.push(mapValidationMessages.worldWidthPositive);
   }
@@ -163,7 +172,9 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
       }
     }
   }
+}
 
+function validateElements(elements, { allowedTypes, errors, gridSize, world }) {
   elements.forEach((element, index) => {
     if (!element || typeof element !== "object") {
       errors.push(mapValidationMessages.elementObject(index));
@@ -187,14 +198,19 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
       }
     }
   });
+}
 
+function validateNormalizedObstacles(
+  checkedObstaclesSource,
+  normalizedObstacles,
+  { errors, world },
+) {
   if (
     normalizedObstacles !== undefined &&
     !Array.isArray(normalizedObstacles)
   ) {
     errors.push(mapValidationMessages.normalizedObstaclesArray);
   }
-  const checkedSpawn = spawn ?? config?.spawn;
 
   if (Array.isArray(checkedObstaclesSource)) {
     checkedObstaclesSource.forEach((obstacle, index) => {
@@ -209,18 +225,15 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
       });
     });
   }
+}
 
-  validateGoal(config?.goal, {
-    world,
-    obstacles: checkedObstacles,
-    errors,
-  });
-  validateSpawn(checkedSpawn, {
-    world,
-    obstacles: checkedObstacles,
-    errors,
-  });
-  if (
+function canValidateReachability({
+  checkedObstacles,
+  checkedSpawn,
+  config,
+  world,
+}) {
+  return (
     Number.isFinite(world.width) &&
     Number.isFinite(world.height) &&
     checkedSpawn &&
@@ -233,23 +246,85 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
     checkedObstacles.every((obstacle) =>
       ["x", "y", "w", "h"].every((key) => Number.isFinite(obstacle[key])),
     )
+  );
+}
+
+function validateReachableGoal({
+  checkedObstacles,
+  checkedSpawn,
+  config,
+  errors,
+  gridSize,
+  world,
+}) {
+  if (
+    !canValidateReachability({
+      checkedObstacles,
+      checkedSpawn,
+      config,
+      world,
+    })
   ) {
-    if (
-      !hasReachableGoal({
-        world,
-        obstacles: checkedObstacles,
-        spawn: checkedSpawn,
-        goal: config.goal,
-        cellSize: reachabilityCellSize({
-          gridSize,
-          spawn: checkedSpawn,
-          tuning: config?.reachability,
-        }),
-      })
-    ) {
-      errors.push(mapValidationMessages.goalReachable);
-    }
+    return;
   }
+
+  if (
+    !hasReachableGoal({
+      world,
+      obstacles: checkedObstacles,
+      spawn: checkedSpawn,
+      goal: config.goal,
+      cellSize: reachabilityCellSize({
+        gridSize,
+        spawn: checkedSpawn,
+        tuning: config?.reachability,
+      }),
+    })
+  ) {
+    errors.push(mapValidationMessages.goalReachable);
+  }
+}
+
+export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
+  const errors = [];
+  const allowedTypes = new Set(Object.values(MAP_ELEMENT_TYPES));
+  const {
+    checkedObstacles,
+    checkedObstaclesSource,
+    elements,
+    gridSize,
+    world,
+  } = mapValidationContext(config, normalizedObstacles);
+
+  validateRequiredMapShape(config, { errors });
+  validateWorldAndGrid(config, { errors, gridSize, world });
+  validateElements(elements, { allowedTypes, errors, gridSize, world });
+
+  const checkedSpawn = spawn ?? config?.spawn;
+
+  validateNormalizedObstacles(checkedObstaclesSource, normalizedObstacles, {
+    errors,
+    world,
+  });
+
+  validateGoal(config?.goal, {
+    world,
+    obstacles: checkedObstacles,
+    errors,
+  });
+  validateSpawn(checkedSpawn, {
+    world,
+    obstacles: checkedObstacles,
+    errors,
+  });
+  validateReachableGoal({
+    checkedObstacles,
+    checkedSpawn,
+    config,
+    errors,
+    gridSize,
+    world,
+  });
 
   return errors;
 }
