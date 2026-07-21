@@ -55,6 +55,7 @@ try {
     document.getElementById("settingsTitle").textContent,
     "Settings",
   );
+  assert.equal(document.getElementById("levelLabel").textContent, "level 1");
   assert.equal(document.getElementById("resumeGame").textContent, "resume");
 } finally {
   for (const [key, descriptor] of Object.entries(originalGlobals)) {

@@ -1,6 +1,7 @@
 export function createUi({
   controls,
   hint,
+  levelLabel,
   fpsCounter,
   debug,
   settings,
@@ -19,6 +20,10 @@ export function createUi({
 
   function setHint(message) {
     hint.textContent = message;
+  }
+
+  function setLevelLabel(message) {
+    levelLabel.textContent = message;
   }
 
   function setStartControls({ visible, disabled, label }) {
@@ -101,6 +106,7 @@ export function createUi({
     setFpsEnabled,
     setStatsEnabled,
     setHint,
+    setLevelLabel,
     setStartControls,
     updateDebugPanel,
     updateFps,

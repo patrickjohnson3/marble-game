@@ -354,6 +354,7 @@ body {
   gap: 8px;
   pointer-events: none;
 }
+#levelLabel,
 #hint,
 #fpsCounter,
 #debug {
@@ -365,6 +366,15 @@ body {
 #hint {
   font-size: 15px;
   text-align: center;
+}
+#levelLabel {
+  justify-self: start;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  opacity: 0.86;
 }
 #fpsCounter {
   justify-self: start;

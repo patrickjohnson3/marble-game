@@ -359,6 +359,14 @@ function bootInitialRender({
   windowRef.__marbleAppBooted = true;
 }
 
+function mapLevelLabel(mapConfig) {
+  const index = baseMapConfig.variants.findIndex(
+    (variant) => variant.id === mapConfig.variantId,
+  );
+
+  return "level " + (index >= 0 ? index + 1 : 1);
+}
+
 export function createApp({
   document: documentRef = document,
   window: windowRef = window,
@@ -412,6 +420,7 @@ export function createApp({
     settings,
     settingsOverlay,
     startBtn,
+    levelLabel: els.levelLabel,
     debugLines,
     state,
   });
@@ -500,7 +509,10 @@ export function createApp({
   const mapProgression = createMapProgression({
     baseMapConfig,
     getCurrentMap: () => mapState.activeMap,
-    applyMap: mapController.setCurrentMap,
+    applyMap: (nextMap) => {
+      mapController.setCurrentMap(nextMap);
+      ui.setLevelLabel(mapLevelLabel(nextMap));
+    },
     resetForNextMap: mapController.resetForNextMap,
     terrainView,
     ui,
@@ -651,6 +663,7 @@ export function createApp({
       requestRender,
       windowRef,
     });
+    ui.setLevelLabel(mapLevelLabel(mapState.activeMap));
   } catch (error) {
     showBootError(documentRef, error);
     throw error;

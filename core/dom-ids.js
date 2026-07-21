@@ -29,6 +29,7 @@ export const domIds = {
   fpsSetting: "fpsSetting",
   statsSetting: "statsSetting",
   hint: "hint",
+  levelLabel: "levelLabel",
   fpsCounter: "fpsCounter",
   debug: "debug",
 };
