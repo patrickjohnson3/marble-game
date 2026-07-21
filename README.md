@@ -44,6 +44,10 @@ npm run format:check
 
 The pre-push hook runs the same test, lint, and format checks.
 
+## Developer Docs
+
+- [Architecture](docs/architecture.md)
+
 ## Runtime Cache
 
 Runtime files are listed in `runtime-assets.js`. After changing runtime JavaScript, CSS, or HTML, run:
