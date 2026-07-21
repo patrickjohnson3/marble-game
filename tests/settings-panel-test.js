@@ -26,6 +26,7 @@ function createPanelHarness() {
   let statsChangeCount = 0;
   let saveCount = 0;
   let renderCount = 0;
+  let retryCount = 0;
   const settings = {
     maxSpeed: 14,
     acceleration: 0.115,
@@ -45,6 +46,7 @@ function createPanelHarness() {
       settingsOverlay: fakeButton(),
       closeSettings: fakeButton(),
       resumeGame: fakeButton(),
+      retryMap: fakeButton(),
       speedSetting: fakeControl(),
       sensitivitySetting: fakeControl(),
       hapticsSetting: fakeControl(),
@@ -72,6 +74,9 @@ function createPanelHarness() {
     },
     onOpenSettings() {},
     onCloseSettings() {},
+    onRetryMap() {
+      retryCount++;
+    },
     onSetNeutral() {},
     onFpsChanged() {
       fpsChangeCount++;
@@ -91,6 +96,7 @@ function createPanelHarness() {
       statsChangeCount,
       saveCount,
       renderCount,
+      retryCount,
     }),
     fpsSetting,
     statsSetting,
@@ -111,6 +117,7 @@ function testFpsTogglePersistsAndRenders() {
     statsChangeCount: 0,
     saveCount: 1,
     renderCount: 1,
+    retryCount: 0,
   });
 }
 
@@ -129,6 +136,7 @@ function testStatsTogglePersistsAndRenders() {
     statsChangeCount: 1,
     saveCount: 1,
     renderCount: 1,
+    retryCount: 0,
   });
 }
 

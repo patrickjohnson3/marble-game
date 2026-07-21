@@ -20,6 +20,7 @@ export const copy = {
     start: "start",
     closeSettings: "×",
     neutral: "set neutral",
+    retryMap: "retry map",
     resume: "resume",
   },
   settings: {
@@ -49,6 +50,7 @@ export function applyDocumentCopy({ document, els }) {
   els.settingsTitle.textContent = copy.settings.title;
   els.closeSettings.setAttribute("aria-label", copy.settings.closeLabel);
   els.closeSettings.textContent = copy.buttons.closeSettings;
+  els.retryMap.textContent = copy.buttons.retryMap;
   els.neutralBtn.textContent = copy.buttons.neutral;
   els.resumeGame.textContent = copy.buttons.resume;
   els.debug.textContent = copy.debugFallback;

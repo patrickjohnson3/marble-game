@@ -8,6 +8,7 @@ export function bindSettingsPanel({
   saveSettings,
   onOpenSettings,
   onCloseSettings,
+  onRetryMap,
   onSetNeutral,
   onFpsChanged,
   onStatsChanged,
@@ -19,6 +20,7 @@ export function bindSettingsPanel({
     settingsOverlay,
     closeSettings,
     resumeGame,
+    retryMap,
     speedSetting,
     sensitivitySetting,
     hapticsSetting,
@@ -57,6 +59,7 @@ export function bindSettingsPanel({
   settingsToggle.addEventListener("click", onOpenSettings);
   closeSettings.addEventListener("click", onCloseSettings);
   resumeGame.addEventListener("click", onCloseSettings);
+  retryMap.addEventListener("click", onRetryMap);
   neutralBtn.addEventListener("click", onSetNeutral);
 
   bindRangeSetting(speedSetting, "maxSpeed");

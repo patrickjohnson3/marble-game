@@ -20,6 +20,7 @@ export const domIds = {
   settingsTitle: "settingsTitle",
   closeSettings: "closeSettings",
   resumeGame: "resumeGame",
+  retryMap: "retryMap",
   speedSetting: "speedSetting",
   sensitivitySetting: "sensitivitySetting",
   hapticsSetting: "hapticsSetting",

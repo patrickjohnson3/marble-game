@@ -501,7 +501,8 @@ button.primaryAction {
   font-size: 24px;
   line-height: 1;
 }
-#settingsModal #neutral {
+#settingsModal #neutral,
+#settingsModal #retryMap {
   width: 100%;
   margin-bottom: 12px;
 }

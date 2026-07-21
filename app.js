@@ -507,6 +507,14 @@ export function createApp({
     copy: copy.hints,
     requestRender,
   });
+  function retryCurrentMap() {
+    mapRuntime.resetGoalProgress();
+    terrainView.updateGoalProgress(0);
+    mapController.resetForNextMap();
+    ui.setHint(copy.hints.mapOpen);
+    gameController.closeSettings();
+    requestRender();
+  }
   const goalController = createGoalController({
     copy: copy.hints,
     hapticFeedback,
@@ -600,6 +608,7 @@ export function createApp({
     saveSettings,
     onOpenSettings: gameController.openSettings,
     onCloseSettings: gameController.closeSettings,
+    onRetryMap: retryCurrentMap,
     onSetNeutral: sensorController.setNeutralNow,
     onFpsChanged: ui.setFpsEnabled,
     onStatsChanged: ui.setStatsEnabled,
