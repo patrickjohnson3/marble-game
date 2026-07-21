@@ -1,5 +1,4 @@
 import { generateValidProceduralMapVariants } from "./procedural-generator.js";
-import { validateMapConfig } from "./map-validation.js";
 import { resolveSeededMapConfig } from "./map-variants.js";
 import { mapVariants as authoredMapVariants } from "../maps/map-data.js";
 
@@ -56,7 +55,6 @@ export const mapVariants = [
     baseMapConfig: baseMapDefaults,
     count: generatedVariantCount,
     seed: "procedural",
-    validateMapConfig,
   }),
 ];
 
