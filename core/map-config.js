@@ -8,7 +8,7 @@ const mapScale = 2;
 const generatedVariantCount = 6;
 
 const baseMapDefaults = {
-  seed: "default",
+  seed: "kitchen-floor",
   variants: authoredMapVariants,
   world: {
     width: 2200 * mapScale,

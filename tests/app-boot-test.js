@@ -57,7 +57,7 @@ try {
   );
   assert.equal(
     document.getElementById("levelLabel").textContent,
-    "level 1: classic maze",
+    "level 1: kitchen floor",
   );
   assert.equal(document.getElementById("bestTimeLabel").textContent, "best --");
   assert.equal(document.getElementById("runTimeLabel").textContent, "time --");

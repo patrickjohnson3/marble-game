@@ -48,8 +48,8 @@ function testWorldAndMapElements() {
     resolvedMapConfig.intro.viewportMargin,
     "intro viewport margin",
   );
-  assert.equal(resolvedMapConfig.seed, "default", "map seed");
-  assert.equal(resolvedMapConfig.variantId, "default", "map variant");
+  assert.equal(resolvedMapConfig.seed, "kitchen-floor", "map seed");
+  assert.equal(resolvedMapConfig.variantId, "kitchen-floor", "map variant");
   assertPositiveNumber(resolvedMapConfig.spawn.r, "spawn radius");
   assertPositiveNumber(resolvedMapConfig.goal.r, "goal radius");
   assertPositiveNumber(resolvedMapConfig.goal.holdMs, "goal hold time");
@@ -88,7 +88,8 @@ function testMapConfigValidationPasses() {
 }
 
 function testMapIncludesConnectedObstacleGroups() {
-  const obstacles = mapObstacleElements(resolvedMapConfig.elements);
+  const classicMap = resolveMapVariantConfig(baseMapConfig, "default");
+  const obstacles = mapObstacleElements(classicMap.elements);
   const connectedPairs = obstacles.filter((a, index) =>
     obstacles
       .slice(index + 1)

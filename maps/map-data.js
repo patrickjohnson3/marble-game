@@ -169,29 +169,6 @@ const sandLotElements = [
 
 export const mapVariants = [
   {
-    id: "default",
-    name: "classic maze",
-    difficulty: 1,
-    goal: scaleMapPoint({ x: 1920, y: 1900, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(defaultElements),
-  },
-  {
-    id: "generated-1",
-    name: "switchback maze",
-    difficulty: 2,
-    goal: scaleMapPoint({ x: 1840, y: 1850, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(generatedOneElements),
-  },
-  {
-    id: "hockey-rink",
-    name: "hockey rink",
-    theme: "hockeyRink",
-    difficulty: 2,
-    spawn: scaleMapPoint({ x: 1100, y: 1840, r: 29 }),
-    goal: scaleMapPoint({ x: 1100, y: 320, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(hockeyRinkElements),
-  },
-  {
     id: "kitchen-floor",
     name: "kitchen floor",
     theme: "kitchenFloor",
@@ -226,5 +203,28 @@ export const mapVariants = [
     spawn: scaleMapPoint({ x: 300, y: 340, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 1840, r: 95, holdMs: 5000 }),
     elements: trimScaledObstacleJoinOverhangs(sandLotElements),
+  },
+  {
+    id: "hockey-rink",
+    name: "hockey rink",
+    theme: "hockeyRink",
+    difficulty: 2,
+    spawn: scaleMapPoint({ x: 1100, y: 1840, r: 29 }),
+    goal: scaleMapPoint({ x: 1100, y: 320, r: 95, holdMs: 5000 }),
+    elements: trimScaledObstacleJoinOverhangs(hockeyRinkElements),
+  },
+  {
+    id: "default",
+    name: "classic maze",
+    difficulty: 1,
+    goal: scaleMapPoint({ x: 1920, y: 1900, r: 95, holdMs: 5000 }),
+    elements: trimScaledObstacleJoinOverhangs(defaultElements),
+  },
+  {
+    id: "generated-1",
+    name: "switchback maze",
+    difficulty: 2,
+    goal: scaleMapPoint({ x: 1840, y: 1850, r: 95, holdMs: 5000 }),
+    elements: trimScaledObstacleJoinOverhangs(generatedOneElements),
   },
 ];

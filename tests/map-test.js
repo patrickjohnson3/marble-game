@@ -38,9 +38,9 @@ import {
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
 function currentMapObstacles() {
-  return normalizeJoinedObstacleRects(
-    mapObstacleElements(resolvedMapConfig.elements),
-  );
+  const classicMap = resolveMapVariantConfig(baseMapConfig, "default");
+
+  return normalizeJoinedObstacleRects(mapObstacleElements(classicMap.elements));
 }
 
 function testGridSnapping() {
@@ -241,14 +241,14 @@ testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps();
 function testAuthoredMapsIncludeRealWorldVariants() {
   assert.deepEqual(
     authoredMapVariants
-      .slice(2)
+      .slice(0, 5)
       .map((variant) => [variant.name, variant.theme]),
     [
-      ["hockey rink", "hockeyRink"],
       ["kitchen floor", "kitchenFloor"],
       ["living room", "livingRoom"],
       ["parking lot", "parkingLot"],
       ["sand lot", "sandLot"],
+      ["hockey rink", "hockeyRink"],
     ],
   );
 }
