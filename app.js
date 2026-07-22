@@ -163,9 +163,15 @@ function setupRenderers({
         padding: visualConfig.map.icePatchCanvasPadding,
       }),
     renderMapTheme,
-    renderObstacleWalls: (container, renderedObstacles, renderedBounds) =>
+    renderObstacleWalls: (
+      container,
+      renderedObstacles,
+      renderedBounds,
+      renderedMapConfig,
+    ) =>
       renderObstacleWalls(container, renderedObstacles, {
         bounds: renderedBounds,
+        mapConfig: renderedMapConfig,
         padding: visualConfig.map.obstacleCanvasPadding,
       }),
     renderRoughPatches: (container, renderedRoughPatches, renderedBounds) =>

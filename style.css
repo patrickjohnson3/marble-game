@@ -64,10 +64,17 @@ body {
   transform-origin: 0 0;
 }
 .wallCanvas,
-.obstacleCanvas {
+.obstacleCanvas,
+.kitchenObstacleLayer {
   position: absolute;
   overflow: visible;
   pointer-events: none;
+}
+.kitchenObstacleLayer {
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
 }
 .mapThemeLayer,
 .mapThemeOverlayLayer {
@@ -88,6 +95,8 @@ body {
 .goalCrease,
 .themeSpill,
 .themeRug,
+.kitchenFloorMat,
+.kitchenTileAccent,
 .parkingStripe,
 .parkingDriveLine,
 .themeOil,
@@ -96,7 +105,8 @@ body {
   box-sizing: border-box;
   pointer-events: none;
 }
-.obstacleCanvas {
+.obstacleCanvas,
+.kitchenObstacleLayer {
   opacity: 0;
   transition: opacity 0.45s ease;
 }
@@ -122,6 +132,7 @@ body {
   transition: opacity 0.45s ease;
 }
 #world.map-open .obstacleCanvas,
+#world.map-open .kitchenObstacleLayer,
 #world.map-open .mapThemeLayer,
 #world.map-open .mapThemeOverlayLayer,
 #world.map-open .icePatchCanvas,
@@ -171,31 +182,134 @@ body {
 }
 .kitchenFloorSurface {
   background:
-    linear-gradient(#0000000c 1px, transparent 1px),
-    linear-gradient(90deg, #0000000c 1px, transparent 1px),
-    linear-gradient(135deg, #d9d4c6, #aaa695);
+    radial-gradient(circle at 26px 34px, #b58f5650 0 3px, transparent 4px),
+    radial-gradient(circle at 112px 84px, #ffffff42 0 1px, transparent 2px),
+    radial-gradient(circle at 156px 138px, #6f623e24 0 2px, transparent 3px),
+    linear-gradient(#8b7b541f 2px, transparent 2px),
+    linear-gradient(90deg, #8b7b541f 2px, transparent 2px),
+    repeating-linear-gradient(
+      45deg,
+      #e4d3a4 0 180px,
+      #d3bd83 180px 360px,
+      #eadab0 360px 540px,
+      #c5ae76 540px 720px
+    );
   background-size:
     180px 180px,
-    180px 180px,
+    210px 210px,
+    260px 260px,
+    220px 220px,
+    220px 220px,
     100% 100%;
-  box-shadow: inset 0 0 0 6px #ffffff24;
-}
-.counterTop {
-  border-radius: 14px;
-  background: linear-gradient(135deg, #eef1f2, #a8b0b8);
   box-shadow:
-    inset 0 0 0 4px #ffffff55,
-    0 12px 28px #0007;
+    inset 0 0 0 8px #fff2c735,
+    inset 0 0 90px #4a392b42;
 }
-.kitchenTable {
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #f0d6a8, #9b693a);
-  box-shadow: 0 10px 28px #0008;
+.kitchenFloorSurface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 0 34%,
+      #fff7d524 35% 36%,
+      transparent 37%
+    ),
+    radial-gradient(ellipse at 62% 28%, #ffffff20, transparent 28%),
+    radial-gradient(ellipse at 34% 72%, #6b512724, transparent 34%);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
 }
-.appliance {
-  border-radius: 12px;
-  background: linear-gradient(135deg, #dce6ee, #71808f);
-  box-shadow: inset 0 0 0 4px #ffffff45;
+.kitchenTileAccent {
+  background:
+    linear-gradient(135deg, #ffffff30, transparent 42%),
+    linear-gradient(135deg, #d5a855, #8d6c32);
+  border: 2px solid #6f57274d;
+  box-shadow: inset 0 0 0 3px #fff0b030;
+}
+.kitchenObstacle {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.kitchenCabinetRun {
+  border-radius: 8px;
+  background:
+    linear-gradient(#ffffff28, transparent 38%),
+    repeating-linear-gradient(90deg, #e8cf9b 0 42px, #d1ad6e 42px 84px),
+    linear-gradient(135deg, #f2d9a2, #9b7040);
+  box-shadow:
+    inset 0 -10px 0 #6b3e2170,
+    inset 0 0 0 3px #fff0bd54,
+    0 12px 26px #0008;
+}
+.kitchenCabinetRun::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-top: 2px solid #fff0bd59;
+  border-bottom: 3px solid #5c351d59;
+  opacity: 0.72;
+}
+.kitchenTableBlock {
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 35% 28%, #fff1c4, transparent 23%),
+    repeating-linear-gradient(90deg, #d3944d 0 24px, #b67334 24px 48px),
+    radial-gradient(circle at center, #cc8645, #75431e);
+  box-shadow:
+    inset 0 0 0 5px #ffe0a044,
+    0 12px 28px #0009;
+}
+.kitchenTableBlock::before,
+.kitchenTableBlock::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: #fff1c43d;
+  box-shadow: 0 0 0 2px #75431e33;
+}
+.kitchenTableBlock::before {
+  left: 16%;
+  top: 18%;
+  width: 23%;
+  height: 16%;
+}
+.kitchenTableBlock::after {
+  right: 16%;
+  bottom: 18%;
+  width: 23%;
+  height: 16%;
+}
+.kitchenApplianceBlock {
+  border-radius: 8px;
+  background:
+    linear-gradient(#ffffff45, transparent 36%),
+    linear-gradient(90deg, #00000022 0 12%, transparent 13% 87%, #00000018 88%),
+    linear-gradient(135deg, #f3f4ed, #b9b8aa);
+  box-shadow:
+    inset 0 0 0 3px #ffffff66,
+    0 10px 24px #0008;
+}
+.kitchenApplianceBlock::after {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: 18%;
+  height: 12%;
+  border-radius: 999px;
+  background: #4c5660a8;
+}
+.kitchenFloorMat {
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(90deg, #294f5d66 0 18px, #f2d36d55 18px 36px),
+    linear-gradient(135deg, #2f6474, #274653);
+  box-shadow:
+    inset 0 0 0 4px #ffffff1f,
+    0 8px 18px #0005;
 }
 .themeSpill {
   border-radius: 52% 48% 60% 40%;

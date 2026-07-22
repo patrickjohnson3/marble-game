@@ -89,27 +89,20 @@ function renderHockeyRink({ underlay, overlay, world }) {
   );
 }
 
-function renderKitchenFloor({ underlay, overlay, world }) {
+function renderKitchenFloor({ underlay, world }) {
   appendFloor(underlay, "kitchenFloor", world);
   [
-    { x: 0.08, y: 0.09, w: 0.3, h: 0.12 },
-    { x: 0.08, y: 0.09, w: 0.12, h: 0.28 },
-    { x: 0.59, y: 0.08, w: 0.34, h: 0.12 },
-    { x: 0.84, y: 0.08, w: 0.1, h: 0.31 },
-    { x: 0.37, y: 0.37, w: 0.28, h: 0.11 },
-  ].forEach((rect) =>
-    appendBox(overlay, "themeObject counterTop", world, rect),
-  );
-  appendCircle(overlay, "themeObject kitchenTable", world, {
-    x: 0.31,
-    y: 0.71,
-    r: 0.07,
+    { x: 0.18, y: 0.31, w: 0.05, h: 0.05 },
+    { x: 0.39, y: 0.2, w: 0.05, h: 0.05 },
+    { x: 0.56, y: 0.58, w: 0.05, h: 0.05 },
+    { x: 0.76, y: 0.73, w: 0.05, h: 0.05 },
+  ].forEach((rect) => appendBox(underlay, "kitchenTileAccent", world, rect));
+  appendBox(underlay, "kitchenFloorMat", world, {
+    x: 0.64,
+    y: 0.25,
+    w: 0.18,
+    h: 0.065,
   });
-  [
-    { x: 0.25, y: 0.62, w: 0.045, h: 0.055 },
-    { x: 0.37, y: 0.78, w: 0.045, h: 0.055 },
-    { x: 0.69, y: 0.35, w: 0.12, h: 0.085 },
-  ].forEach((rect) => appendBox(overlay, "themeObject appliance", world, rect));
   appendBox(underlay, "themeSpill", world, {
     x: 0.61,
     y: 0.35,

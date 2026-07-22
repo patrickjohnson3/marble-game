@@ -57,7 +57,12 @@ export function createTerrainView({
   }
 
   function renderObstacles() {
-    renderObstacleWalls(obstaclesEl, currentObstacles, currentObstacleBounds);
+    renderObstacleWalls(
+      obstaclesEl,
+      currentObstacles,
+      currentObstacleBounds,
+      currentMapConfig,
+    );
   }
 
   function renderRoughPatches() {

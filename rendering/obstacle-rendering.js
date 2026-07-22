@@ -138,13 +138,47 @@ function drawObstacleOutline(context, obstacles) {
   context.restore();
 }
 
+function applyRectStyle(element, rect) {
+  element.style.left = rect.x + "px";
+  element.style.top = rect.y + "px";
+  element.style.width = rect.w + "px";
+  element.style.height = rect.h + "px";
+}
+
+function kitchenFixtureClass(rect) {
+  const aspect = rect.w / rect.h;
+  if (aspect >= 2.5 || aspect <= 0.4) return "kitchenCabinetRun";
+  if (rect.w >= 500 || rect.h >= 500) return "kitchenApplianceBlock";
+  return "kitchenTableBlock";
+}
+
+function renderKitchenObstacleWalls(container, obstacles) {
+  const layer = document.createElement("div");
+  const obstacleGroups = connectedRectGroups(obstacles);
+
+  layer.className = "kitchenObstacleLayer";
+  layer.setAttribute("aria-hidden", "true");
+  layer.setAttribute("data-wall-groups", String(obstacleGroups.length));
+  obstacles.forEach((rect) => {
+    const fixture = document.createElement("div");
+    fixture.className = "kitchenObstacle " + kitchenFixtureClass(rect);
+    applyRectStyle(fixture, rect);
+    layer.appendChild(fixture);
+  });
+  container.replaceChildren(layer);
+}
+
 export function renderObstacleWalls(
   container,
   obstacles,
-  { bounds, padding = 0 } = {},
+  { bounds, mapConfig, padding = 0 } = {},
 ) {
   if (obstacles.length === 0) {
     container.replaceChildren();
+    return;
+  }
+  if (mapConfig?.theme === "kitchenFloor") {
+    renderKitchenObstacleWalls(container, obstacles);
     return;
   }
 

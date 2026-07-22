@@ -280,6 +280,91 @@ function testMapThemeRendersRealWorldVisualMarkers() {
 
 testMapThemeRendersRealWorldVisualMarkers();
 
+function testKitchenThemeRendersDatedFloorDetails() {
+  const container = new FakeElement();
+  const overlayContainer = new FakeElement();
+
+  withFakeDocument(() => {
+    renderMapTheme({
+      container,
+      overlayContainer,
+      mapConfig: { theme: "kitchenFloor" },
+      world: { width: 4400, height: 4400 },
+    });
+  });
+
+  const underlayChildren = container.children[0].children;
+
+  assert.equal(
+    underlayChildren.some((child) =>
+      child.className.includes("kitchenTileAccent"),
+    ),
+    true,
+    "kitchen floor theme should render accent tiles",
+  );
+  assert.equal(
+    underlayChildren.some((child) =>
+      child.className.includes("kitchenFloorMat"),
+    ),
+    true,
+    "kitchen floor theme should render a floor mat",
+  );
+  assert.equal(
+    overlayContainer.children[0].children.length,
+    0,
+    "kitchen floor theme should not render decorative blockers",
+  );
+}
+
+testKitchenThemeRendersDatedFloorDetails();
+
+function testKitchenObstaclesRenderAsFixtures() {
+  const container = new FakeElement();
+
+  withFakeDocument(() => {
+    renderObstacleWalls(
+      container,
+      [
+        { x: 100, y: 80, w: 620, h: 70 },
+        { x: 1040, y: 2760, w: 440, h: 440 },
+        { x: 2920, y: 2640, w: 520, h: 520 },
+      ],
+      { mapConfig: { theme: "kitchenFloor" } },
+    );
+  });
+
+  const layer = container.children[0];
+
+  assert.equal(
+    layer.className.includes("kitchenObstacleLayer"),
+    true,
+    "kitchen obstacles should render to a fixture layer",
+  );
+  assert.equal(
+    layer.children.some((child) =>
+      child.className.includes("kitchenCabinetRun"),
+    ),
+    true,
+    "wide kitchen obstacles should render as cabinet runs",
+  );
+  assert.equal(
+    layer.children.some((child) =>
+      child.className.includes("kitchenTableBlock"),
+    ),
+    true,
+    "smaller square kitchen obstacles should render as table blocks",
+  );
+  assert.equal(
+    layer.children.some((child) =>
+      child.className.includes("kitchenApplianceBlock"),
+    ),
+    true,
+    "larger square kitchen obstacles should render as appliance blocks",
+  );
+}
+
+testKitchenObstaclesRenderAsFixtures();
+
 function testTerrainViewSkipsUnchangedTerrainRedraw() {
   let obstacleRenderCount = 0;
   let roughPatchRenderCount = 0;
