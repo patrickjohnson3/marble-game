@@ -240,8 +240,16 @@ testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps();
 
 function testAuthoredMapsIncludeRealWorldVariants() {
   assert.deepEqual(
-    authoredMapVariants.slice(2).map((variant) => variant.name),
-    ["hockey rink", "kitchen floor", "living room", "parking lot", "sand lot"],
+    authoredMapVariants
+      .slice(2)
+      .map((variant) => [variant.name, variant.theme]),
+    [
+      ["hockey rink", "hockeyRink"],
+      ["kitchen floor", "kitchenFloor"],
+      ["living room", "livingRoom"],
+      ["parking lot", "parkingLot"],
+      ["sand lot", "sandLot"],
+    ],
   );
 }
 

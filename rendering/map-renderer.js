@@ -1,10 +1,14 @@
 export function createTerrainView({
+  mapThemeEl,
+  mapThemeOverlayEl,
   hazardPatchesEl,
   icePatchesEl,
   roughPatchesEl,
   obstaclesEl,
   goalEl,
   goal,
+  mapConfig,
+  world,
   hazardPatches = [],
   hazardPatchBounds = null,
   icePatches,
@@ -15,11 +19,13 @@ export function createTerrainView({
   obstacleBounds,
   renderHazardPatches: drawHazardPatches = () => {},
   renderIcePatches: drawIcePatches = () => {},
+  renderMapTheme: drawMapTheme = () => {},
   renderObstacleWalls,
   renderRoughPatches: drawRoughPatches,
   goalFillEdgePercent = 70.8,
 }) {
   let currentGoal = goal;
+  let currentMapConfig = mapConfig;
   let currentHazardPatches = hazardPatches;
   let currentHazardPatchBounds = hazardPatchBounds;
   let currentObstacles = obstacles;
@@ -28,6 +34,15 @@ export function createTerrainView({
   let currentIcePatchBounds = icePatchBounds;
   let currentRoughPatches = roughPatches;
   let currentRoughPatchBounds = roughPatchBounds;
+
+  function renderMapTheme() {
+    drawMapTheme({
+      container: mapThemeEl,
+      overlayContainer: mapThemeOverlayEl,
+      mapConfig: currentMapConfig,
+      world,
+    });
+  }
 
   function renderHazardPatches() {
     drawHazardPatches(
@@ -62,6 +77,7 @@ export function createTerrainView({
   }
 
   function renderTerrain() {
+    renderMapTheme();
     renderGoal();
     renderHazardPatches();
     renderIcePatches();
@@ -71,6 +87,7 @@ export function createTerrainView({
 
   function terrainMatches({
     goal,
+    mapConfig,
     hazardPatches,
     hazardPatchBounds,
     icePatches,
@@ -82,6 +99,7 @@ export function createTerrainView({
   }) {
     return (
       currentGoal === goal &&
+      currentMapConfig === mapConfig &&
       currentHazardPatches === hazardPatches &&
       currentHazardPatchBounds === hazardPatchBounds &&
       currentIcePatches === icePatches &&
@@ -95,6 +113,7 @@ export function createTerrainView({
 
   function setTerrain({
     goal,
+    mapConfig = currentMapConfig,
     hazardPatches = currentHazardPatches,
     hazardPatchBounds = currentHazardPatchBounds,
     icePatches,
@@ -107,6 +126,7 @@ export function createTerrainView({
     if (
       terrainMatches({
         goal,
+        mapConfig,
         hazardPatches,
         hazardPatchBounds,
         icePatches,
@@ -120,6 +140,7 @@ export function createTerrainView({
       return;
 
     currentGoal = goal;
+    currentMapConfig = mapConfig;
     currentHazardPatches = hazardPatches;
     currentHazardPatchBounds = hazardPatchBounds;
     currentIcePatches = icePatches;
@@ -144,6 +165,7 @@ export function createTerrainView({
     renderGoal,
     renderHazardPatches,
     renderIcePatches,
+    renderMapTheme,
     renderObstacles,
     renderTerrain,
     renderRoughPatches,

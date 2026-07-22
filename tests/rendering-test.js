@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { renderHazardPatches } from "../rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
+import { renderMapTheme } from "../rendering/map-theme-rendering.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import { renderOuterWalls } from "../rendering/wall-rendering.js";
@@ -243,6 +244,41 @@ function testGoalProgressUsesRadialFillRadius() {
 }
 
 testGoalProgressUsesRadialFillRadius();
+
+function testMapThemeRendersRealWorldVisualMarkers() {
+  const container = new FakeElement();
+  const overlayContainer = new FakeElement();
+
+  withFakeDocument(() => {
+    renderMapTheme({
+      container,
+      overlayContainer,
+      mapConfig: { theme: "hockeyRink" },
+      world: { width: 4400, height: 4400 },
+    });
+  });
+
+  assert.equal(
+    container.children[0].className.includes("theme-hockeyRink"),
+    true,
+  );
+  assert.equal(
+    container.children[0].children.some((child) =>
+      child.className.includes("rinkCircle"),
+    ),
+    true,
+    "hockey rink theme should render faceoff circles",
+  );
+  assert.equal(
+    overlayContainer.children[0].children.some((child) =>
+      child.className.includes("goalCrease"),
+    ),
+    true,
+    "hockey rink theme should render goal creases",
+  );
+}
+
+testMapThemeRendersRealWorldVisualMarkers();
 
 function testTerrainViewSkipsUnchangedTerrainRedraw() {
   let obstacleRenderCount = 0;

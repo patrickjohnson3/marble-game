@@ -39,6 +39,7 @@ import {
   createMapRenderer,
   createTerrainView,
 } from "./rendering/map-renderer.js";
+import { renderMapTheme } from "./rendering/map-theme-rendering.js";
 import { createMarbleView } from "./rendering/marble-view.js";
 import { renderObstacleWalls } from "./rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "./rendering/rough-patch-rendering.js";
@@ -96,6 +97,8 @@ function setupRenderers({
     world: worldEl,
     introWalls: introWallsEl,
     mapWalls: mapWallsEl,
+    mapTheme: mapThemeEl,
+    mapThemeOverlay: mapThemeOverlayEl,
     hazardPatches: hazardPatchesEl,
     icePatches: icePatchesEl,
     roughPatches: roughPatchesEl,
@@ -131,12 +134,16 @@ function setupRenderers({
     clamp,
   });
   const terrainView = createTerrainView({
+    mapThemeEl,
+    mapThemeOverlayEl,
     hazardPatchesEl,
     icePatchesEl,
     roughPatchesEl,
     obstaclesEl,
     goalEl,
     goal: mapState.goal,
+    mapConfig: mapState.activeMap,
+    world,
     hazardPatches: mapState.hazardPatches,
     hazardPatchBounds: mapState.hazardPatchBounds,
     icePatches: mapState.icePatches,
@@ -155,6 +162,7 @@ function setupRenderers({
         bounds: renderedBounds,
         padding: visualConfig.map.icePatchCanvasPadding,
       }),
+    renderMapTheme,
     renderObstacleWalls: (container, renderedObstacles, renderedBounds) =>
       renderObstacleWalls(container, renderedObstacles, {
         bounds: renderedBounds,

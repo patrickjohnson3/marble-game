@@ -185,6 +185,7 @@ export const mapVariants = [
   {
     id: "hockey-rink",
     name: "hockey rink",
+    theme: "hockeyRink",
     difficulty: 2,
     spawn: scaleMapPoint({ x: 1100, y: 1840, r: 29 }),
     goal: scaleMapPoint({ x: 1100, y: 320, r: 95, holdMs: 5000 }),
@@ -193,6 +194,7 @@ export const mapVariants = [
   {
     id: "kitchen-floor",
     name: "kitchen floor",
+    theme: "kitchenFloor",
     difficulty: 2,
     spawn: scaleMapPoint({ x: 420, y: 1820, r: 29 }),
     goal: scaleMapPoint({ x: 1760, y: 420, r: 95, holdMs: 5000 }),
@@ -201,6 +203,7 @@ export const mapVariants = [
   {
     id: "living-room",
     name: "living room",
+    theme: "livingRoom",
     difficulty: 2,
     spawn: scaleMapPoint({ x: 360, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1820, y: 440, r: 95, holdMs: 5000 }),
@@ -209,6 +212,7 @@ export const mapVariants = [
   {
     id: "parking-lot",
     name: "parking lot",
+    theme: "parkingLot",
     difficulty: 3,
     spawn: scaleMapPoint({ x: 280, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 340, r: 95, holdMs: 5000 }),
@@ -217,6 +221,7 @@ export const mapVariants = [
   {
     id: "sand-lot",
     name: "sand lot",
+    theme: "sandLot",
     difficulty: 3,
     spawn: scaleMapPoint({ x: 300, y: 340, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 1840, r: 95, holdMs: 5000 }),
