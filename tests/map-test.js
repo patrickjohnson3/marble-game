@@ -238,6 +238,15 @@ function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
 
 testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps();
 
+function testAuthoredMapsIncludeRealWorldVariants() {
+  assert.deepEqual(
+    authoredMapVariants.slice(2).map((variant) => variant.name),
+    ["hockey rink", "kitchen floor", "living room", "parking lot", "sand lot"],
+  );
+}
+
+testAuthoredMapsIncludeRealWorldVariants();
+
 function testProceduralMapGenerationKeepsSpawnAndGoalClear() {
   const variants = generateProceduralMapVariants({
     baseMapConfig: resolvedMapConfig,
@@ -419,6 +428,7 @@ function testResolveSeededMapConfigCopiesSelectedElements() {
 
   assert.equal(resolved.seed, "seed-a");
   assert.equal(resolved.variantId, "only");
+  assert.equal(resolved.name, undefined);
   assert.deepEqual(resolved.elements, config.variants[0].elements);
   assert.notEqual(resolved.elements, config.variants[0].elements);
 }

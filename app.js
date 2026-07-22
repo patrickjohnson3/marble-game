@@ -384,8 +384,9 @@ function mapLevelLabel(mapConfig) {
   const index = baseMapConfig.variants.findIndex(
     (variant) => variant.id === mapConfig.variantId,
   );
+  const level = "level " + (index >= 0 ? index + 1 : 1);
 
-  return "level " + (index >= 0 ? index + 1 : 1);
+  return mapConfig.name ? level + ": " + mapConfig.name : level;
 }
 
 function createBestTimeUi({ storage, ui }) {

@@ -55,7 +55,10 @@ try {
     document.getElementById("settingsTitle").textContent,
     "Settings",
   );
-  assert.equal(document.getElementById("levelLabel").textContent, "level 1");
+  assert.equal(
+    document.getElementById("levelLabel").textContent,
+    "level 1: classic maze",
+  );
   assert.equal(document.getElementById("bestTimeLabel").textContent, "best --");
   assert.equal(document.getElementById("runTimeLabel").textContent, "time --");
   assert.equal(document.getElementById("resumeGame").textContent, "resume");
