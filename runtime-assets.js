@@ -69,6 +69,8 @@ export const pwaFiles = [
   "sw.js",
   "assets/icons/marble-icon.svg",
   "assets/icons/marble-maskable.svg",
+  "assets/sprites/cheerio.png",
+  "assets/sprites/fork.png",
 ];
 
 const runtimeStyles = ["style.css"];

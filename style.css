@@ -93,10 +93,12 @@ body {
 .rinkLine,
 .rinkCircle,
 .goalCrease,
-.themeSpill,
 .themeRug,
+.kitchenCheerio,
+.kitchenCleanerSpill,
 .kitchenFloorMat,
 .kitchenTileAccent,
+.kitchenWaterSpill,
 .parkingStripe,
 .parkingDriveLine,
 .themeOil,
@@ -182,25 +184,23 @@ body {
 }
 .kitchenFloorSurface {
   background:
-    radial-gradient(circle at 26px 34px, #b58f5650 0 3px, transparent 4px),
-    radial-gradient(circle at 112px 84px, #ffffff42 0 1px, transparent 2px),
-    radial-gradient(circle at 156px 138px, #6f623e24 0 2px, transparent 3px),
-    linear-gradient(#8b7b541f 2px, transparent 2px),
-    linear-gradient(90deg, #8b7b541f 2px, transparent 2px),
-    repeating-linear-gradient(
-      45deg,
-      #e4d3a4 0 180px,
-      #d3bd83 180px 360px,
-      #eadab0 360px 540px,
-      #c5ae76 540px 720px
+    radial-gradient(circle at 38px 46px, #fff8d94a 0 2px, transparent 3px),
+    radial-gradient(circle at 142px 118px, #745d2a26 0 2px, transparent 4px),
+    linear-gradient(#7e6a3a34 3px, transparent 3px),
+    linear-gradient(90deg, #7e6a3a34 3px, transparent 3px),
+    conic-gradient(
+      from 90deg at 50% 50%,
+      #d9c17d 0 25%,
+      #ead9a8 0 50%,
+      #cbb16e 0 75%,
+      #e3ce95 0
     );
   background-size:
-    180px 180px,
-    210px 210px,
-    260px 260px,
+    170px 170px,
+    230px 230px,
     220px 220px,
     220px 220px,
-    100% 100%;
+    440px 440px;
   box-shadow:
     inset 0 0 0 8px #fff2c735,
     inset 0 0 90px #4a392b42;
@@ -210,14 +210,9 @@ body {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(
-      115deg,
-      transparent 0 34%,
-      #fff7d524 35% 36%,
-      transparent 37%
-    ),
-    radial-gradient(ellipse at 62% 28%, #ffffff20, transparent 28%),
-    radial-gradient(ellipse at 34% 72%, #6b512724, transparent 34%);
+    radial-gradient(ellipse at 62% 28%, #ffffff1c, transparent 26%),
+    radial-gradient(ellipse at 34% 72%, #6b512721, transparent 32%),
+    linear-gradient(90deg, #3b2a1518, transparent 18% 82%, #3b2a1518);
   mix-blend-mode: soft-light;
   pointer-events: none;
 }
@@ -311,14 +306,47 @@ body {
     inset 0 0 0 4px #ffffff1f,
     0 8px 18px #0005;
 }
-.themeSpill {
+.kitchenForkSprite {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+  background-image: url("assets/sprites/fork.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 8px 10px #0008);
+}
+.kitchenCheerio {
+  border-radius: 50%;
+  background-image: url("assets/sprites/cheerio.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 2px 4px #0006);
+  transform: translate(var(--push-x, 0px), var(--push-y, 0px));
+  transition: transform 80ms linear;
+}
+.kitchenWaterSpill,
+.kitchenCleanerSpill {
   border-radius: 52% 48% 60% 40%;
+}
+.kitchenWaterSpill {
   background: radial-gradient(
     circle,
-    #a7d8ff70,
-    #73b7e633 62%,
-    transparent 70%
+    #ccecff88,
+    #77c8ef42 58%,
+    transparent 72%
   );
+  box-shadow: inset 0 0 16px #ffffff42;
+}
+.kitchenCleanerSpill {
+  background: radial-gradient(
+    circle,
+    #baff9a8f,
+    #67d77a40 60%,
+    transparent 73%
+  );
+  box-shadow: inset 0 0 14px #ffffff38;
 }
 .livingRoomSurface {
   background:

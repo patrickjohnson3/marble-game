@@ -26,6 +26,7 @@ export function createGameLoop({
   resetGoalProgress = () => {},
   runTimeLabel = () => "",
   spawnTarget = () => null,
+  terrainView,
   timing,
   trailRenderer,
   ui,
@@ -152,6 +153,7 @@ export function createGameLoop({
       ui.setRunTimeLabel(runTimeLabel(currentTime));
       updateGoalIndicator(context);
       updateHazardArmed();
+      terrainView?.updateMapThemeDynamics(marble);
     }
 
     marbleView.render();

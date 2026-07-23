@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { renderHazardPatches } from "../rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
-import { renderMapTheme } from "../rendering/map-theme-rendering.js";
+import {
+  renderMapTheme,
+  updateMapThemeDynamics,
+} from "../rendering/map-theme-rendering.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import { renderOuterWalls } from "../rendering/wall-rendering.js";
@@ -310,6 +313,27 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen floor theme should render a floor mat",
   );
   assert.equal(
+    underlayChildren.filter((child) =>
+      child.className.includes("kitchenCheerio"),
+    ).length,
+    8,
+    "kitchen floor theme should render scattered cereal",
+  );
+  assert.equal(
+    underlayChildren.some((child) =>
+      child.className.includes("kitchenWaterSpill"),
+    ),
+    true,
+    "kitchen floor theme should render a water spill",
+  );
+  assert.equal(
+    underlayChildren.some((child) =>
+      child.className.includes("kitchenCleanerSpill"),
+    ),
+    true,
+    "kitchen floor theme should render a cleaner spill",
+  );
+  assert.equal(
     overlayContainer.children[0].children.length,
     0,
     "kitchen floor theme should not render decorative blockers",
@@ -317,6 +341,50 @@ function testKitchenThemeRendersDatedFloorDetails() {
 }
 
 testKitchenThemeRendersDatedFloorDetails();
+
+function testKitchenCheeriosGiveWayToMarble() {
+  const container = new FakeElement();
+  const overlayContainer = new FakeElement();
+
+  withFakeDocument(() => {
+    renderMapTheme({
+      container,
+      overlayContainer,
+      mapConfig: { theme: "kitchenFloor" },
+      world: { width: 4400, height: 4400 },
+    });
+  });
+
+  const cheerio = container.children[0].children.find((child) =>
+    child.className.includes("kitchenCheerio"),
+  );
+  const marble = {
+    x: Number(cheerio.attributes["data-origin-x"]),
+    y: Number(cheerio.attributes["data-origin-y"]),
+    vx: 18,
+    vy: 0,
+    r: 29,
+  };
+
+  updateMapThemeDynamics({
+    container,
+    mapConfig: { theme: "kitchenFloor" },
+    marble,
+  });
+
+  assert.notEqual(
+    cheerio.attributes["data-push-x"],
+    "0",
+    "nearby Cheerios should be shoved aside",
+  );
+  assert.equal(
+    cheerio.style.properties["--push-x"].endsWith("px"),
+    true,
+    "Cheerio displacement should be applied as a CSS transform variable",
+  );
+}
+
+testKitchenCheeriosGiveWayToMarble();
 
 function testKitchenObstaclesRenderAsFixtures() {
   const container = new FakeElement();
@@ -326,6 +394,9 @@ function testKitchenObstaclesRenderAsFixtures() {
       container,
       [
         { x: 100, y: 80, w: 620, h: 70 },
+        { fixture: "forkHandle", x: 2080, y: 3210, w: 340, h: 30 },
+        { fixture: "forkNeck", x: 2400, y: 3190, w: 160, h: 50 },
+        { fixture: "forkTine", x: 2530, y: 3150, w: 120, h: 10 },
         { x: 1040, y: 2760, w: 440, h: 440 },
         { x: 2920, y: 2640, w: 520, h: 520 },
       ],
@@ -346,6 +417,21 @@ function testKitchenObstaclesRenderAsFixtures() {
     ),
     true,
     "wide kitchen obstacles should render as cabinet runs",
+  );
+  assert.equal(
+    layer.children.some((child) =>
+      child.className.includes("kitchenForkSprite"),
+    ),
+    true,
+    "fork collision pieces should render as one dropped silverware sprite",
+  );
+  const forkSprite = layer.children.find((child) =>
+    child.className.includes("kitchenForkSprite"),
+  );
+  assert.equal(
+    forkSprite.style.width,
+    "760px",
+    "fork sprite should be large enough to read visually",
   );
   assert.equal(
     layer.children.some((child) =>

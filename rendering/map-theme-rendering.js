@@ -43,6 +43,18 @@ function appendCircle(parent, className, world, circle) {
   });
 }
 
+function appendKitchenCheerio(parent, world, circle) {
+  const element = appendCircle(parent, "kitchenCheerio", world, {
+    ...circle,
+    r: 0.00525,
+  });
+
+  element.setAttribute("data-origin-x", String(circle.x * world.width));
+  element.setAttribute("data-origin-y", String(circle.y * world.height));
+  element.setAttribute("data-push-x", "0");
+  element.setAttribute("data-push-y", "0");
+}
+
 function appendFloor(parent, theme, world) {
   appendBox(parent, "mapThemeSurface " + theme + "Surface", world, {
     x: 0.055,
@@ -103,11 +115,27 @@ function renderKitchenFloor({ underlay, world }) {
     w: 0.18,
     h: 0.065,
   });
-  appendBox(underlay, "themeSpill", world, {
+  [
+    { x: 0.47, y: 0.68 },
+    { x: 0.49, y: 0.71 },
+    { x: 0.52, y: 0.69 },
+    { x: 0.54, y: 0.73 },
+    { x: 0.57, y: 0.7 },
+    { x: 0.59, y: 0.75 },
+    { x: 0.51, y: 0.77 },
+    { x: 0.45, y: 0.74 },
+  ].forEach((circle) => appendKitchenCheerio(underlay, world, circle));
+  appendBox(underlay, "kitchenWaterSpill", world, {
     x: 0.61,
     y: 0.35,
     w: 0.12,
     h: 0.09,
+  });
+  appendBox(underlay, "kitchenCleanerSpill", world, {
+    x: 0.2,
+    y: 0.74,
+    w: 0.1,
+    h: 0.08,
   });
 }
 
@@ -199,6 +227,79 @@ const renderers = {
 
 export function isRealWorldTheme(theme) {
   return realWorldThemes.has(theme);
+}
+
+function childrenOf(element) {
+  return Array.from(element?.children || []);
+}
+
+function elementsWithClass(root, className) {
+  const matches = [];
+  const stack = childrenOf(root);
+
+  while (stack.length > 0) {
+    const element = stack.pop();
+    if (element.className?.includes(className)) matches.push(element);
+    stack.push(...childrenOf(element));
+  }
+
+  return matches;
+}
+
+function numericAttribute(element, name, fallback = 0) {
+  const rawValue =
+    element.getAttribute?.(name) ?? element.attributes?.[name] ?? fallback;
+  const value = Number(rawValue);
+
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function capVectorLength(x, y, maxLength) {
+  const length = Math.hypot(x, y);
+  if (length <= maxLength || length === 0) return { x, y };
+
+  return {
+    x: (x / length) * maxLength,
+    y: (y / length) * maxLength,
+  };
+}
+
+export function updateMapThemeDynamics({ container, mapConfig, marble }) {
+  if (mapConfig?.theme !== "kitchenFloor" || !marble) return;
+
+  const cheerios = elementsWithClass(container, "kitchenCheerio");
+  const shoveDistance = marble.r + 34;
+  const maxPush = marble.r * 3.2;
+
+  cheerios.forEach((cheerio) => {
+    const originX = numericAttribute(cheerio, "data-origin-x");
+    const originY = numericAttribute(cheerio, "data-origin-y");
+    const pushX = numericAttribute(cheerio, "data-push-x");
+    const pushY = numericAttribute(cheerio, "data-push-y");
+    const currentX = originX + pushX;
+    const currentY = originY + pushY;
+    const dx = currentX - marble.x;
+    const dy = currentY - marble.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance >= shoveDistance) return;
+
+    const speed = Math.hypot(marble.vx || 0, marble.vy || 0);
+    const nx =
+      distance > 0.001 ? dx / distance : (marble.vx || 1) / Math.max(speed, 1);
+    const ny =
+      distance > 0.001 ? dy / distance : (marble.vy || 0) / Math.max(speed, 1);
+    const amount = (shoveDistance - distance) * 0.72 + speed * 0.04;
+    const cappedPush = capVectorLength(
+      pushX + nx * amount,
+      pushY + ny * amount,
+      maxPush,
+    );
+
+    cheerio.setAttribute("data-push-x", cappedPush.x.toFixed(1));
+    cheerio.setAttribute("data-push-y", cappedPush.y.toFixed(1));
+    cheerio.style.setProperty("--push-x", cappedPush.x.toFixed(1) + "px");
+    cheerio.style.setProperty("--push-y", cappedPush.y.toFixed(1) + "px");
+  });
 }
 
 export function renderMapTheme({

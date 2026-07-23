@@ -39,7 +39,10 @@ import {
   createMapRenderer,
   createTerrainView,
 } from "./rendering/map-renderer.js";
-import { renderMapTheme } from "./rendering/map-theme-rendering.js";
+import {
+  renderMapTheme,
+  updateMapThemeDynamics,
+} from "./rendering/map-theme-rendering.js";
 import { createMarbleView } from "./rendering/marble-view.js";
 import { renderObstacleWalls } from "./rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "./rendering/rough-patch-rendering.js";
@@ -163,6 +166,7 @@ function setupRenderers({
         padding: visualConfig.map.icePatchCanvasPadding,
       }),
     renderMapTheme,
+    updateMapThemeDynamics,
     renderObstacleWalls: (
       container,
       renderedObstacles,

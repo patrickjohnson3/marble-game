@@ -152,19 +152,49 @@ function kitchenFixtureClass(rect) {
   return "kitchenTableBlock";
 }
 
+function isForkFixture(rect) {
+  return (
+    rect.fixture === "forkHandle" ||
+    rect.fixture === "forkNeck" ||
+    rect.fixture === "forkTine"
+  );
+}
+
+function appendKitchenForkSprite(layer, forkParts) {
+  if (forkParts.length === 0) return;
+
+  const sprite = document.createElement("div");
+  const bounds = rectBounds(forkParts);
+  const visualWidth = Math.max(bounds.width, 760);
+  const visualHeight = Math.max(bounds.height, 98);
+
+  sprite.className = "kitchenForkSprite";
+  applyRectStyle(sprite, {
+    x: bounds.left + bounds.width / 2 - visualWidth / 2,
+    y: bounds.top + bounds.height / 2 - visualHeight / 2,
+    w: visualWidth,
+    h: visualHeight,
+  });
+  layer.appendChild(sprite);
+}
+
 function renderKitchenObstacleWalls(container, obstacles) {
   const layer = document.createElement("div");
   const obstacleGroups = connectedRectGroups(obstacles);
+  const forkParts = obstacles.filter(isForkFixture);
 
   layer.className = "kitchenObstacleLayer";
   layer.setAttribute("aria-hidden", "true");
   layer.setAttribute("data-wall-groups", String(obstacleGroups.length));
-  obstacles.forEach((rect) => {
-    const fixture = document.createElement("div");
-    fixture.className = "kitchenObstacle " + kitchenFixtureClass(rect);
-    applyRectStyle(fixture, rect);
-    layer.appendChild(fixture);
-  });
+  obstacles
+    .filter((rect) => !isForkFixture(rect))
+    .forEach((rect) => {
+      const fixture = document.createElement("div");
+      fixture.className = "kitchenObstacle " + kitchenFixtureClass(rect);
+      applyRectStyle(fixture, rect);
+      layer.appendChild(fixture);
+    });
+  appendKitchenForkSprite(layer, forkParts);
   container.replaceChildren(layer);
 }
 

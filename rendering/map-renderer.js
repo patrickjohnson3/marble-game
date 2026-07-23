@@ -20,6 +20,7 @@ export function createTerrainView({
   renderHazardPatches: drawHazardPatches = () => {},
   renderIcePatches: drawIcePatches = () => {},
   renderMapTheme: drawMapTheme = () => {},
+  updateMapThemeDynamics: updateThemeDynamics = () => {},
   renderObstacleWalls,
   renderRoughPatches: drawRoughPatches,
   goalFillEdgePercent = 70.8,
@@ -166,6 +167,14 @@ export function createTerrainView({
     );
   }
 
+  function updateMapThemeDynamics(marble) {
+    updateThemeDynamics({
+      container: mapThemeEl,
+      mapConfig: currentMapConfig,
+      marble,
+    });
+  }
+
   return {
     renderGoal,
     renderHazardPatches,
@@ -176,6 +185,7 @@ export function createTerrainView({
     renderRoughPatches,
     setTerrain,
     updateGoalProgress,
+    updateMapThemeDynamics,
   };
 }
 
