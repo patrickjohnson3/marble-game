@@ -21,6 +21,7 @@ export const mapValidationMessages = Object.freeze({
   elementUnknownType: (index, type) =>
     "element " + index + " has unknown type " + type,
   fieldNonFinite: (label, key) => label + " has non-finite " + key,
+  fieldPositive: (label, key) => label + " " + key + " must be positive",
   rectPositiveDimensions: (label) => label + " must have positive dimensions",
   rectInsideWorldStart: (label) => label + " must start inside world bounds",
   rectInsideWorld: (label) => label + " must fit inside world bounds",

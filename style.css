@@ -315,6 +315,8 @@ body {
   background-repeat: no-repeat;
   background-size: contain;
   filter: drop-shadow(0 8px 10px #0008);
+  transform: rotate(var(--fork-angle, 0rad));
+  transform-origin: center;
 }
 .kitchenCheerio {
   border-radius: 50%;

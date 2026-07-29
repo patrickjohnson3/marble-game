@@ -394,9 +394,16 @@ function testKitchenObstaclesRenderAsFixtures() {
       container,
       [
         { x: 100, y: 80, w: 620, h: 70 },
-        { fixture: "forkHandle", x: 2080, y: 3210, w: 340, h: 30 },
-        { fixture: "forkNeck", x: 2400, y: 3190, w: 160, h: 50 },
-        { fixture: "forkTine", x: 2530, y: 3150, w: 120, h: 10 },
+        {
+          fixture: "fork",
+          x: 1920,
+          y: 2900,
+          w: 880,
+          h: 420,
+          hitboxW: 760,
+          hitboxH: 62,
+          angle: -0.42,
+        },
         { x: 1040, y: 2760, w: 440, h: 440 },
         { x: 2920, y: 2640, w: 520, h: 520 },
       ],
@@ -432,6 +439,11 @@ function testKitchenObstaclesRenderAsFixtures() {
     forkSprite.style.width,
     "760px",
     "fork sprite should be large enough to read visually",
+  );
+  assert.equal(
+    forkSprite.style.properties["--fork-angle"],
+    "-0.42rad",
+    "fork sprite should rotate with the oriented hitbox",
   );
   assert.equal(
     layer.children.some((child) =>

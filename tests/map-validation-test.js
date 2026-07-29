@@ -59,6 +59,41 @@ function testMapValidationRejectsOffGridElementDimensions() {
   );
 }
 
+function testMapValidationReportsInvalidOrientedObstacleFields() {
+  const errors = validateMapConfig({
+    world: { width: 100, height: 100 },
+    grid: { size: 10 },
+    elements: [
+      {
+        type: "obstacle",
+        x: 10,
+        y: 10,
+        w: 20,
+        h: 20,
+        hitboxW: 0,
+        hitboxH: Number.NaN,
+        angle: "diagonal",
+      },
+    ],
+    spawn: { x: 50, y: 50, r: 5 },
+    goal: { x: 80, y: 80, r: 10, holdMs: 5000 },
+  });
+
+  assert.ok(
+    errors.includes(
+      mapValidationMessages.fieldPositive("element 0", "hitboxW"),
+    ),
+  );
+  assert.ok(
+    errors.includes(
+      mapValidationMessages.fieldNonFinite("element 0", "hitboxH"),
+    ),
+  );
+  assert.ok(
+    errors.includes(mapValidationMessages.fieldNonFinite("element 0", "angle")),
+  );
+}
+
 function testMapValidationReportsInvalidNormalizedObstacles() {
   assert.ok(
     validateMapConfig(emptyElementMapConfig, {
@@ -106,6 +141,7 @@ testMapValidationRejectsBlockedSpawn();
 testMapValidationReportsMalformedConfig();
 testMapValidationReportsInvalidElementEntries();
 testMapValidationRejectsOffGridElementDimensions();
+testMapValidationReportsInvalidOrientedObstacleFields();
 testMapValidationReportsInvalidNormalizedObstacles();
 testMapValidationRejectsVariantWorldMismatch();
 testMapValidationRejectsUnreachableGoal();

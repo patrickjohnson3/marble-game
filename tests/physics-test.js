@@ -5,6 +5,7 @@ import {
   expandedCircle,
 } from "../core/geometry.js";
 import {
+  circleOrientedRectContact,
   handleWallCollisions,
   marbleOverRect,
   resolveObstacleCollision,
@@ -65,6 +66,31 @@ function testCircleRectContactEdgeCases() {
   assert.equal(nearMiss.intersects, true);
 }
 
+function testCircleOrientedRectContactUsesRotatedNormal() {
+  const angle = Math.PI / 4;
+  const normal = { x: Math.SQRT1_2, y: -Math.SQRT1_2 };
+  const circle = {
+    x: 100 + normal.x * 18,
+    y: 100 + normal.y * 18,
+    r: 10,
+  };
+  const rect = {
+    x: 50,
+    y: 50,
+    w: 100,
+    h: 100,
+    hitboxW: 100,
+    hitboxH: 20,
+    angle,
+  };
+  const contact = circleOrientedRectContact(circle, rect);
+
+  assert.equal(contact.intersects, true);
+  assertNear(contact.distanceSq, 64);
+  assertNear(contact.dx, normal.x * 8);
+  assertNear(contact.dy, normal.y * 8);
+}
+
 function testMarbleOverRectHonorsEpsilon() {
   const marble = { x: 4.9, y: 20, r: 5 };
   const rect = { x: 10, y: 10, w: 20, h: 20 };
@@ -103,6 +129,36 @@ function testObstacleCornerBounceUsesDiagonalNormal() {
   assertNear(marble.vx, -3);
   assertNear(marble.vy, -3);
   assertNear(impacts[0], 8.48528137423857);
+}
+
+function testOrientedObstacleCollisionResolvesAlongRotatedNormal() {
+  const angle = Math.PI / 4;
+  const normal = { x: Math.SQRT1_2, y: -Math.SQRT1_2 };
+  const marble = {
+    x: 100 + normal.x * 18,
+    y: 100 + normal.y * 18,
+    vx: -normal.x * 8,
+    vy: -normal.y * 8,
+    r: 10,
+  };
+  const obstacle = {
+    x: 50,
+    y: 50,
+    w: 100,
+    h: 100,
+    hitboxW: 100,
+    hitboxH: 20,
+    angle,
+  };
+  const impacts = [];
+
+  resolveObstacleCollision(marble, obstacle, { bounce: 0.5 }, (impact) =>
+    impacts.push(impact),
+  );
+
+  assertNear(marble.x, 100 + normal.x * 20);
+  assertNear(marble.y, 100 + normal.y * 20);
+  assertNear(impacts[0], 8);
 }
 
 function testGlancingImpactReportsScrapeFeedback() {
@@ -928,9 +984,11 @@ function testSubstepsPreventThinObstacleTunneling() {
 testCircleRectContact();
 testCircleShapeHelpers();
 testCircleRectContactEdgeCases();
+testCircleOrientedRectContactUsesRotatedNormal();
 testMarbleOverRectHonorsEpsilon();
 testObstacleBounce();
 testObstacleCornerBounceUsesDiagonalNormal();
+testOrientedObstacleCollisionResolvesAlongRotatedNormal();
 testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
 testDeepOverlapTieBreaksTowardFirstNearestEdge();

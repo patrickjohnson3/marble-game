@@ -153,11 +153,7 @@ function kitchenFixtureClass(rect) {
 }
 
 function isForkFixture(rect) {
-  return (
-    rect.fixture === "forkHandle" ||
-    rect.fixture === "forkNeck" ||
-    rect.fixture === "forkTine"
-  );
+  return rect.fixture === "fork";
 }
 
 function appendKitchenForkSprite(layer, forkParts) {
@@ -165,8 +161,9 @@ function appendKitchenForkSprite(layer, forkParts) {
 
   const sprite = document.createElement("div");
   const bounds = rectBounds(forkParts);
-  const visualWidth = Math.max(bounds.width, 760);
-  const visualHeight = Math.max(bounds.height, 98);
+  const fork = forkParts[0];
+  const visualWidth = Math.max(fork.hitboxW ?? bounds.width, 760);
+  const visualHeight = Math.max((fork.hitboxH ?? bounds.height) * 2.1, 110);
 
   sprite.className = "kitchenForkSprite";
   applyRectStyle(sprite, {
@@ -175,6 +172,9 @@ function appendKitchenForkSprite(layer, forkParts) {
     w: visualWidth,
     h: visualHeight,
   });
+  if (Number.isFinite(fork.angle)) {
+    sprite.style.setProperty("--fork-angle", fork.angle + "rad");
+  }
   layer.appendChild(sprite);
 }
 

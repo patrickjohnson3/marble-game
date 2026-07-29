@@ -116,6 +116,21 @@ function validateRect(rect, { world, label, errors }) {
   }
 }
 
+function validateOrientedObstacleFields(element, { errors, label }) {
+  for (const key of ["hitboxW", "hitboxH"]) {
+    if (!Object.hasOwn(element, key)) continue;
+    if (!Number.isFinite(element[key])) {
+      errors.push(mapValidationMessages.fieldNonFinite(label, key));
+    } else if (element[key] <= 0) {
+      errors.push(mapValidationMessages.fieldPositive(label, key));
+    }
+  }
+
+  if (Object.hasOwn(element, "angle") && !Number.isFinite(element.angle)) {
+    errors.push(mapValidationMessages.fieldNonFinite(label, "angle"));
+  }
+}
+
 function mapValidationContext(config, normalizedObstacles) {
   const world = config?.world ?? {};
   const elements = Array.isArray(config?.elements) ? config.elements : [];
@@ -191,6 +206,12 @@ function validateElements(elements, { allowedTypes, errors, gridSize, world }) {
       label: "element " + index,
       errors,
     });
+    if (element.type === "obstacle") {
+      validateOrientedObstacleFields(element, {
+        errors,
+        label: "element " + index,
+      });
+    }
     if (Number.isFinite(gridSize) && gridSize > 0) {
       for (const key of ["x", "y", "w", "h"]) {
         if (!isMultipleOf(element[key], gridSize)) {

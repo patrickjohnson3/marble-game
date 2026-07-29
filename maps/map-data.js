@@ -9,6 +9,21 @@ function isHorizontalObstacle(element) {
   return element.type === "obstacle" && isHorizontalRect(element);
 }
 
+function scaledObstacleHitbox(element, isHorizontal) {
+  return {
+    ...(Number.isFinite(element.hitboxW)
+      ? {
+          hitboxW: isHorizontal ? element.hitboxW * mapScale : element.hitboxW,
+        }
+      : {}),
+    ...(Number.isFinite(element.hitboxH)
+      ? {
+          hitboxH: isHorizontal ? element.hitboxH : element.hitboxH * mapScale,
+        }
+      : {}),
+  };
+}
+
 function scaleMapElement(element) {
   if (element.type === "obstacle") {
     const isHorizontal = isHorizontalObstacle(element);
@@ -19,6 +34,7 @@ function scaleMapElement(element) {
       y: element.y * mapScale,
       w: isHorizontal ? element.w * mapScale : element.w,
       h: isHorizontal ? element.h : element.h * mapScale,
+      ...scaledObstacleHitbox(element, isHorizontal),
     };
   }
 
@@ -122,12 +138,17 @@ const kitchenFloorElements = [
   { type: "obstacle", x: 1280, y: 220, w: 640, h: 70 },
   { type: "obstacle", x: 1850, y: 220, w: 70, h: 520 },
   { type: "obstacle", x: 780, y: 820, w: 600, h: 120 },
-  { type: "obstacle", fixture: "forkHandle", x: 1040, y: 1605, w: 170, h: 30 },
-  { type: "obstacle", fixture: "forkNeck", x: 1200, y: 1595, w: 80, h: 50 },
-  { type: "obstacle", fixture: "forkTine", x: 1265, y: 1575, w: 60, h: 10 },
-  { type: "obstacle", fixture: "forkTine", x: 1265, y: 1600, w: 60, h: 10 },
-  { type: "obstacle", fixture: "forkTine", x: 1265, y: 1625, w: 60, h: 10 },
-  { type: "obstacle", fixture: "forkTine", x: 1265, y: 1650, w: 60, h: 10 },
+  {
+    type: "obstacle",
+    fixture: "fork",
+    x: 960,
+    y: 1450,
+    w: 440,
+    h: 420,
+    hitboxW: 380,
+    hitboxH: 62,
+    angle: -0.42,
+  },
   { type: "obstacle", x: 520, y: 1380, w: 220, h: 220 },
   { type: "obstacle", x: 1460, y: 1320, w: 260, h: 260 },
   { type: "roughPatch", x: 860, y: 1260, w: 360, h: 260 },
