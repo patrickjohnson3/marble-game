@@ -133,11 +133,6 @@ const hockeyRinkElements = [
 ];
 
 const kitchenFloorElements = [
-  { type: "obstacle", x: 180, y: 240, w: 620, h: 70 },
-  { type: "obstacle", x: 180, y: 240, w: 70, h: 520 },
-  { type: "obstacle", x: 1280, y: 220, w: 640, h: 70 },
-  { type: "obstacle", x: 1850, y: 220, w: 70, h: 520 },
-  { type: "obstacle", x: 780, y: 820, w: 600, h: 120 },
   {
     type: "obstacle",
     fixture: "fork",
@@ -149,11 +144,6 @@ const kitchenFloorElements = [
     hitboxH: 62,
     angle: -0.42,
   },
-  { type: "obstacle", x: 520, y: 1380, w: 220, h: 220 },
-  { type: "obstacle", x: 1460, y: 1320, w: 260, h: 260 },
-  { type: "roughPatch", x: 860, y: 1260, w: 360, h: 260 },
-  { type: "icePatch", x: 1320, y: 760, w: 260, h: 190 },
-  { type: "hazardPatch", x: 360, y: 1540, w: 240, h: 190 },
 ];
 
 const livingRoomElements = [
