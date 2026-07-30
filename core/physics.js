@@ -110,7 +110,7 @@ function createPhysicsScratch() {
       roughPatchDrag: 1,
       waterPatchDrag: 1,
     },
-    sweptTerrainQueryCircle: { x: 0, y: 0, r: 0 },
+    previousTerrainMarble: { x: 0, y: 0, r: 0 },
   };
 }
 
@@ -131,13 +131,67 @@ function terrainCandidates(context, type) {
   return terrainByType(context, type).elements;
 }
 
-function updateSweptTerrainCircle(context, dt, scratch) {
-  const distance = Math.hypot(context.marble.vx * dt, context.marble.vy * dt);
-  scratch.sweptTerrainQueryCircle.x =
-    context.marble.x + (context.marble.vx * dt) / 2;
-  scratch.sweptTerrainQueryCircle.y =
-    context.marble.y + (context.marble.vy * dt) / 2;
-  scratch.sweptTerrainQueryCircle.r = context.marble.r + distance / 2;
+function updatePreviousTerrainMarble(context, scratch) {
+  scratch.previousTerrainMarble.x = context.marble.x;
+  scratch.previousTerrainMarble.y = context.marble.y;
+  scratch.previousTerrainMarble.r = context.marble.r;
+}
+
+function pointInExpandedRect(point, rect, padding) {
+  return (
+    point.x >= rect.x - padding &&
+    point.x <= rect.x + rect.w + padding &&
+    point.y >= rect.y - padding &&
+    point.y <= rect.y + rect.h + padding
+  );
+}
+
+function segmentIntersectsExpandedRect(start, end, rect, padding) {
+  if (
+    pointInExpandedRect(start, rect, padding) ||
+    pointInExpandedRect(end, rect, padding)
+  ) {
+    return true;
+  }
+
+  const left = rect.x - padding;
+  const right = rect.x + rect.w + padding;
+  const top = rect.y - padding;
+  const bottom = rect.y + rect.h + padding;
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  let tMin = 0;
+  let tMax = 1;
+
+  for (const [position, velocity, min, max] of [
+    [start.x, dx, left, right],
+    [start.y, dy, top, bottom],
+  ]) {
+    if (velocity === 0) {
+      if (position < min || position > max) return false;
+      continue;
+    }
+
+    const inverseVelocity = 1 / velocity;
+    let near = (min - position) * inverseVelocity;
+    let far = (max - position) * inverseVelocity;
+    if (near > far) [near, far] = [far, near];
+    tMin = Math.max(tMin, near);
+    tMax = Math.min(tMax, far);
+    if (tMin > tMax) return false;
+  }
+
+  return true;
+}
+
+function sweptOverTerrainPatch(start, end, intro, patches, physics) {
+  if (!intro.released) return false;
+
+  const padding =
+    end.r + Math.sqrt(Math.max(physics.collisionDistanceSqEpsilon ?? 0, 0));
+  return patches.some((rect) =>
+    segmentIntersectsExpandedRect(start, end, rect, padding),
+  );
 }
 
 function applySurfaceDrag(
@@ -200,52 +254,35 @@ function physicsStep(context, dt, feedback) {
     overIcePatch ? factors.icePatchDrag : factors.baseDrag,
     factors.maxSpeedEase,
   );
-  updateSweptTerrainCircle(context, dt, physicsScratch);
+  updatePreviousTerrainMarble(context, physicsScratch);
   const gooCandidates = terrainCandidates(context, SURFACE_TYPES.gooPatch);
   const roughCandidates = terrainCandidates(context, SURFACE_TYPES.roughPatch);
   const waterCandidates = terrainCandidates(context, SURFACE_TYPES.waterPatch);
-  const overGooPatchBeforeMove = isOverTerrainPatch(
-    context.marble,
-    context.intro,
-    gooCandidates,
-    context.physics,
-  );
-  const overRoughPatchBeforeMove = isOverTerrainPatch(
-    context.marble,
-    context.intro,
-    roughCandidates,
-    context.physics,
-  );
-  const overWaterPatchBeforeMove = isOverTerrainPatch(
-    context.marble,
-    context.intro,
-    waterCandidates,
-    context.physics,
-  );
   updatePosition(context.marble, dt);
-  const overGooPatchAfterMove = isOverTerrainPatch(
+  const overGooPatch = sweptOverTerrainPatch(
+    physicsScratch.previousTerrainMarble,
     context.marble,
     context.intro,
     gooCandidates,
     context.physics,
   );
-  const overGooPatch = overGooPatchBeforeMove || overGooPatchAfterMove;
-  const overRoughPatchAfterMove = isOverTerrainPatch(
+  const overRoughPatch = sweptOverTerrainPatch(
+    physicsScratch.previousTerrainMarble,
     context.marble,
     context.intro,
     roughCandidates,
     context.physics,
   );
-  const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
-  const overWaterPatchAfterMove = isOverTerrainPatch(
+  const overWaterPatch = sweptOverTerrainPatch(
+    physicsScratch.previousTerrainMarble,
     context.marble,
     context.intro,
     waterCandidates,
     context.physics,
   );
-  const overWaterPatch = overWaterPatchBeforeMove || overWaterPatchAfterMove;
   if (
-    isOverTerrainPatch(
+    sweptOverTerrainPatch(
+      physicsScratch.previousTerrainMarble,
       context.marble,
       context.intro,
       terrainCandidates(context, SURFACE_TYPES.hazardPatch),
