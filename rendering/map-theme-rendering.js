@@ -49,12 +49,17 @@ function appendKitchenCheerio(parent, world, circle) {
     ...circle,
     r: radius,
   });
+  const state = {
+    element,
+    originX: circle.x * world.width,
+    originY: circle.y * world.height,
+    pushX: 0,
+    pushY: 0,
+    radius: radius * world.width,
+  };
 
-  element.setAttribute("data-origin-x", String(circle.x * world.width));
-  element.setAttribute("data-origin-y", String(circle.y * world.height));
-  element.setAttribute("data-radius", String(radius * world.width));
-  element.setAttribute("data-push-x", "0");
-  element.setAttribute("data-push-y", "0");
+  parent.__kitchenCheerios ??= [];
+  parent.__kitchenCheerios.push(state);
 }
 
 function appendFloor(parent, theme, world) {
@@ -251,31 +256,6 @@ export function isRealWorldTheme(theme) {
   return realWorldThemes.has(theme);
 }
 
-function childrenOf(element) {
-  return Array.from(element?.children || []);
-}
-
-function elementsWithClass(root, className) {
-  const matches = [];
-  const stack = childrenOf(root);
-
-  while (stack.length > 0) {
-    const element = stack.pop();
-    if (element.className?.includes(className)) matches.push(element);
-    stack.push(...childrenOf(element));
-  }
-
-  return matches;
-}
-
-function numericAttribute(element, name, fallback = 0) {
-  const rawValue =
-    element.getAttribute?.(name) ?? element.attributes?.[name] ?? fallback;
-  const value = Number(rawValue);
-
-  return Number.isFinite(value) ? value : fallback;
-}
-
 function capVectorLength(x, y, maxLength) {
   const length = Math.hypot(x, y);
   if (length <= maxLength || length === 0) return { x, y };
@@ -340,24 +320,16 @@ function cheerioSurfaceInfluence(point, elements = []) {
 }
 
 export function updateMapThemeDynamics({
-  container,
   overlayContainer,
   mapConfig,
   marble,
 }) {
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return;
 
-  const cheerios = elementsWithClass(
-    overlayContainer ?? container,
-    "kitchenCheerio",
-  );
+  const cheerios = overlayContainer?.children?.[0]?.__kitchenCheerios ?? [];
 
   cheerios.forEach((cheerio) => {
-    const originX = numericAttribute(cheerio, "data-origin-x");
-    const originY = numericAttribute(cheerio, "data-origin-y");
-    const radius = numericAttribute(cheerio, "data-radius", 23);
-    const pushX = numericAttribute(cheerio, "data-push-x");
-    const pushY = numericAttribute(cheerio, "data-push-y");
+    const { originX, originY, radius, pushX, pushY } = cheerio;
     const currentX = originX + pushX;
     const currentY = originY + pushY;
     const current = { x: currentX, y: currentY };
@@ -387,10 +359,16 @@ export function updateMapThemeDynamics({
       maxPush,
     );
 
-    cheerio.setAttribute("data-push-x", cappedPush.x.toFixed(1));
-    cheerio.setAttribute("data-push-y", cappedPush.y.toFixed(1));
-    cheerio.style.setProperty("--push-x", cappedPush.x.toFixed(1) + "px");
-    cheerio.style.setProperty("--push-y", cappedPush.y.toFixed(1) + "px");
+    cheerio.pushX = cappedPush.x;
+    cheerio.pushY = cappedPush.y;
+    cheerio.element.style.setProperty(
+      "--push-x",
+      cappedPush.x.toFixed(1) + "px",
+    );
+    cheerio.element.style.setProperty(
+      "--push-y",
+      cappedPush.y.toFixed(1) + "px",
+    );
   });
 }
 

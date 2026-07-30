@@ -353,9 +353,12 @@ function testKitchenCheeriosGiveWayToMarble() {
   const cheerio = overlayContainer.children[0].children.find((child) =>
     child.className.includes("kitchenCheerio"),
   );
+  const cheerioState = overlayContainer.children[0].__kitchenCheerios.find(
+    (state) => state.element === cheerio,
+  );
   const marble = {
-    x: Number(cheerio.attributes["data-origin-x"]),
-    y: Number(cheerio.attributes["data-origin-y"]),
+    x: cheerioState.originX,
+    y: cheerioState.originY,
     vx: 18,
     vy: 0,
     r: 29,
@@ -369,8 +372,8 @@ function testKitchenCheeriosGiveWayToMarble() {
   });
 
   assert.notEqual(
-    cheerio.attributes["data-push-x"],
-    "0",
+    cheerioState.pushX,
+    0,
     "nearby Cheerios should be shoved aside",
   );
   assert.equal(
@@ -398,10 +401,10 @@ function firstKitchenCheerio({ container, overlayContainer }) {
 }
 
 function shovedDistance(cheerio) {
-  return Math.hypot(
-    Number(cheerio.attributes["data-push-x"]),
-    Number(cheerio.attributes["data-push-y"]),
+  const state = cheerio.parent.__kitchenCheerios.find(
+    (candidate) => candidate.element === cheerio,
   );
+  return Math.hypot(state.pushX, state.pushY);
 }
 
 function testKitchenCheerioShoveRespondsToTerrainPatch() {
@@ -418,8 +421,8 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
     overlayContainer: gooOverlay,
   });
   const origin = {
-    x: Number(waterCheerio.attributes["data-origin-x"]),
-    y: Number(waterCheerio.attributes["data-origin-y"]),
+    x: waterCheerio.parent.__kitchenCheerios[0].originX,
+    y: waterCheerio.parent.__kitchenCheerios[0].originY,
   };
   const patch = {
     x: origin.x - 10,
