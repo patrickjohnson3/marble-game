@@ -44,13 +44,15 @@ function appendCircle(parent, className, world, circle) {
 }
 
 function appendKitchenCheerio(parent, world, circle) {
+  const radius = 0.00525;
   const element = appendCircle(parent, "kitchenCheerio", world, {
     ...circle,
-    r: 0.00525,
+    r: radius,
   });
 
   element.setAttribute("data-origin-x", String(circle.x * world.width));
   element.setAttribute("data-origin-y", String(circle.y * world.height));
+  element.setAttribute("data-radius", String(radius * world.width));
   element.setAttribute("data-push-x", "0");
   element.setAttribute("data-push-y", "0");
 }
@@ -101,7 +103,7 @@ function renderHockeyRink({ underlay, overlay, world }) {
   );
 }
 
-function renderKitchenFloor({ underlay, world }) {
+function renderKitchenFloor({ underlay, overlay, world }) {
   appendFloor(underlay, "kitchenFloor", world);
   [
     { x: 0.18, y: 0.31, w: 0.05, h: 0.05 },
@@ -126,6 +128,10 @@ function renderKitchenFloor({ underlay, world }) {
     { x: 0.39, y: 0.5 },
     { x: 0.42, y: 0.55 },
     { x: 0.44, y: 0.61 },
+    { x: 0.6, y: 0.37 },
+    { x: 0.63, y: 0.39 },
+    { x: 0.66, y: 0.36 },
+    { x: 0.69, y: 0.4 },
     { x: 0.47, y: 0.68 },
     { x: 0.49, y: 0.71 },
     { x: 0.52, y: 0.69 },
@@ -146,7 +152,7 @@ function renderKitchenFloor({ underlay, world }) {
     { x: 0.83, y: 0.71 },
     { x: 0.86, y: 0.59 },
     { x: 0.88, y: 0.67 },
-  ].forEach((circle) => appendKitchenCheerio(underlay, world, circle));
+  ].forEach((circle) => appendKitchenCheerio(overlay, world, circle));
   appendBox(underlay, "kitchenCleanerSpill", world, {
     x: 0.2,
     y: 0.74,
@@ -280,23 +286,92 @@ function capVectorLength(x, y, maxLength) {
   };
 }
 
-export function updateMapThemeDynamics({ container, mapConfig, marble }) {
+function distanceToSegment(point, start, end) {
+  const segmentX = end.x - start.x;
+  const segmentY = end.y - start.y;
+  const lengthSq = segmentX * segmentX + segmentY * segmentY;
+  const t =
+    lengthSq > 0
+      ? Math.max(
+          0,
+          Math.min(
+            1,
+            ((point.x - start.x) * segmentX + (point.y - start.y) * segmentY) /
+              lengthSq,
+          ),
+        )
+      : 1;
+  const closest = {
+    x: start.x + segmentX * t,
+    y: start.y + segmentY * t,
+  };
+
+  return {
+    closest,
+    distance: Math.hypot(point.x - closest.x, point.y - closest.y),
+  };
+}
+
+function pointInRect(point, rect) {
+  return (
+    point.x >= rect.x &&
+    point.x <= rect.x + rect.w &&
+    point.y >= rect.y &&
+    point.y <= rect.y + rect.h
+  );
+}
+
+function cheerioSurfaceInfluence(point, elements = []) {
+  const surface = elements.find(
+    (element) =>
+      ["gooPatch", "icePatch", "roughPatch", "waterPatch"].includes(
+        element.type,
+      ) && pointInRect(point, element),
+  )?.type;
+
+  return (
+    {
+      gooPatch: { maxPush: 0.55, shove: 0.36, speed: 0.015 },
+      icePatch: { maxPush: 1.35, shove: 1.08, speed: 0.08 },
+      roughPatch: { maxPush: 0.75, shove: 0.55, speed: 0.025 },
+      waterPatch: { maxPush: 1.18, shove: 0.92, speed: 0.06 },
+    }[surface] ?? { maxPush: 1, shove: 0.78, speed: 0.04 }
+  );
+}
+
+export function updateMapThemeDynamics({
+  container,
+  overlayContainer,
+  mapConfig,
+  marble,
+}) {
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return;
 
-  const cheerios = elementsWithClass(container, "kitchenCheerio");
-  const shoveDistance = marble.r + 34;
-  const maxPush = marble.r * 3.2;
+  const cheerios = elementsWithClass(
+    overlayContainer ?? container,
+    "kitchenCheerio",
+  );
 
   cheerios.forEach((cheerio) => {
     const originX = numericAttribute(cheerio, "data-origin-x");
     const originY = numericAttribute(cheerio, "data-origin-y");
+    const radius = numericAttribute(cheerio, "data-radius", 23);
     const pushX = numericAttribute(cheerio, "data-push-x");
     const pushY = numericAttribute(cheerio, "data-push-y");
     const currentX = originX + pushX;
     const currentY = originY + pushY;
-    const dx = currentX - marble.x;
-    const dy = currentY - marble.y;
-    const distance = Math.hypot(dx, dy);
+    const current = { x: currentX, y: currentY };
+    const previousMarble = {
+      x: marble.x - (marble.vx || 0),
+      y: marble.y - (marble.vy || 0),
+    };
+    const swept = distanceToSegment(current, previousMarble, marble);
+    const dx = currentX - swept.closest.x;
+    const dy = currentY - swept.closest.y;
+    const distance = swept.distance;
+    const influence = cheerioSurfaceInfluence(current, mapConfig.elements);
+    const shoveDistance = marble.r + radius + 18;
+    const maxPush = marble.r * 3.2 * influence.maxPush;
     if (distance >= shoveDistance) return;
 
     const speed = Math.hypot(marble.vx || 0, marble.vy || 0);
@@ -304,7 +379,8 @@ export function updateMapThemeDynamics({ container, mapConfig, marble }) {
       distance > 0.001 ? dx / distance : (marble.vx || 1) / Math.max(speed, 1);
     const ny =
       distance > 0.001 ? dy / distance : (marble.vy || 0) / Math.max(speed, 1);
-    const amount = (shoveDistance - distance) * 0.72 + speed * 0.04;
+    const amount =
+      (shoveDistance - distance) * influence.shove + speed * influence.speed;
     const cappedPush = capVectorLength(
       pushX + nx * amount,
       pushY + ny * amount,

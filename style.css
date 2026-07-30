@@ -88,6 +88,10 @@ body {
 .mapThemeOverlayLayer {
   z-index: 1;
 }
+.obstacleCanvas,
+.kitchenObstacleLayer {
+  z-index: 2;
+}
 .mapThemeSurface,
 .themeObject,
 .rinkLine,
@@ -586,6 +590,7 @@ body {
 }
 #marble {
   position: absolute;
+  z-index: 5;
   width: 58px;
   height: 58px;
   border-radius: 50%;

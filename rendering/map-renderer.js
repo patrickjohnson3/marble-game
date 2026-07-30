@@ -216,6 +216,7 @@ export function createTerrainView({
   function updateMapThemeDynamics(marble) {
     updateThemeDynamics({
       container: mapThemeEl,
+      overlayContainer: mapThemeOverlayEl,
       mapConfig: currentMapConfig,
       marble,
     });

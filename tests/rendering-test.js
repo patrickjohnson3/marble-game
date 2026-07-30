@@ -299,6 +299,7 @@ function testKitchenThemeRendersDatedFloorDetails() {
   });
 
   const underlayChildren = container.children[0].children;
+  const overlayChildren = overlayContainer.children[0].children;
 
   assert.equal(
     underlayChildren.some((child) =>
@@ -315,10 +316,10 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen floor theme should render a floor mat",
   );
   assert.equal(
-    underlayChildren.filter((child) =>
+    overlayChildren.filter((child) =>
       child.className.includes("kitchenCheerio"),
     ).length,
-    30,
+    34,
     "kitchen floor theme should render fistfuls of scattered cereal",
   );
   assert.equal(
@@ -329,8 +330,8 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen floor theme should render a cleaner spill",
   );
   assert.equal(
-    overlayContainer.children[0].children.length,
-    0,
+    overlayChildren.some((child) => child.className.includes("themeObject")),
+    false,
     "kitchen floor theme should not render decorative blockers",
   );
 }
@@ -350,7 +351,7 @@ function testKitchenCheeriosGiveWayToMarble() {
     });
   });
 
-  const cheerio = container.children[0].children.find((child) =>
+  const cheerio = overlayContainer.children[0].children.find((child) =>
     child.className.includes("kitchenCheerio"),
   );
   const marble = {
@@ -363,6 +364,7 @@ function testKitchenCheeriosGiveWayToMarble() {
 
   updateMapThemeDynamics({
     container,
+    overlayContainer,
     mapConfig: { theme: "kitchenFloor" },
     marble,
   });
@@ -380,6 +382,81 @@ function testKitchenCheeriosGiveWayToMarble() {
 }
 
 testKitchenCheeriosGiveWayToMarble();
+
+function firstKitchenCheerio({ container, overlayContainer }) {
+  withFakeDocument(() => {
+    renderMapTheme({
+      container,
+      overlayContainer,
+      mapConfig: { theme: "kitchenFloor" },
+      world: { width: 4400, height: 4400 },
+    });
+  });
+
+  return overlayContainer.children[0].children.find((child) =>
+    child.className.includes("kitchenCheerio"),
+  );
+}
+
+function shovedDistance(cheerio) {
+  return Math.hypot(
+    Number(cheerio.attributes["data-push-x"]),
+    Number(cheerio.attributes["data-push-y"]),
+  );
+}
+
+function testKitchenCheerioShoveRespondsToTerrainPatch() {
+  const waterContainer = new FakeElement();
+  const waterOverlay = new FakeElement();
+  const waterCheerio = firstKitchenCheerio({
+    container: waterContainer,
+    overlayContainer: waterOverlay,
+  });
+  const gooContainer = new FakeElement();
+  const gooOverlay = new FakeElement();
+  const gooCheerio = firstKitchenCheerio({
+    container: gooContainer,
+    overlayContainer: gooOverlay,
+  });
+  const origin = {
+    x: Number(waterCheerio.attributes["data-origin-x"]),
+    y: Number(waterCheerio.attributes["data-origin-y"]),
+  };
+  const patch = {
+    x: origin.x - 10,
+    y: origin.y - 10,
+    w: 20,
+    h: 20,
+  };
+  const marble = { ...origin, vx: 24, vy: 0, r: 29 };
+
+  updateMapThemeDynamics({
+    container: waterContainer,
+    overlayContainer: waterOverlay,
+    mapConfig: {
+      theme: "kitchenFloor",
+      elements: [{ ...patch, type: "waterPatch" }],
+    },
+    marble,
+  });
+  updateMapThemeDynamics({
+    container: gooContainer,
+    overlayContainer: gooOverlay,
+    mapConfig: {
+      theme: "kitchenFloor",
+      elements: [{ ...patch, type: "gooPatch" }],
+    },
+    marble,
+  });
+
+  assert.equal(
+    shovedDistance(waterCheerio) > shovedDistance(gooCheerio),
+    true,
+    "Cheerios should shove farther on water than sticky goo",
+  );
+}
+
+testKitchenCheerioShoveRespondsToTerrainPatch();
 
 function testKitchenObstaclesRenderAsFixtures() {
   const container = new FakeElement();
