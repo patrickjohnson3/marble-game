@@ -232,9 +232,9 @@ Key modules:
 - `core/map-bounds.js`: computes intro pen and released-map walls/bounds.
 
 When a goal completes, `core/map-progression.js` selects the next variant,
-resolves it into a full map, validates it, applies it through
-`createAppMapController()`, resets the marble to the new spawn, and requests a
-render.
+resolves it into a full map, applies it, resets the marble to the new spawn,
+and requests a render. Map validation is kept in tests and development checks,
+outside the player-facing progression path.
 
 ## Input Responsibilities
 

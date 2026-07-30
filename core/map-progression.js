@@ -1,4 +1,3 @@
-import { validateMapConfig } from "./map-validation.js";
 import {
   resolveMapVariantConfig,
   selectNextMapVariant,
@@ -15,9 +14,7 @@ export function createMapProgression({
   copy = {
     mapOpen: "map open.",
     goalNoNextMap: "goal reached. no next map available.",
-    goalNextMapInvalid: "goal reached. next map invalid.",
   },
-  logger = console,
 }) {
   function nextMapVariant() {
     const currentMap = getCurrentMap();
@@ -44,11 +41,6 @@ export function createMapProgression({
       variant.id,
       variant.id,
     );
-    const validationErrors = validateMapConfig(nextMap);
-    if (validationErrors.length > 0) {
-      logger.error("Invalid next map:", validationErrors);
-      return blockAdvance(copy.goalNextMapInvalid);
-    }
 
     applyMap(nextMap);
     resetForNextMap();

@@ -16,7 +16,6 @@ export const copy = {
     waterPatch: "water: slower with ripples.",
     hazardPatch: "hazard. back to start.",
     goalNoNextMap: "goal reached. no next map available.",
-    goalNextMapInvalid: "goal reached. next map invalid.",
     updateReady: "update ready. refresh to apply.",
   },
   intro: {
