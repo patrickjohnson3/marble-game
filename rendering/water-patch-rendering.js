@@ -20,6 +20,24 @@ function drawWaterRipple(context, patch, xRatio, yRatio, radiusRatio, alpha) {
   context.restore();
 }
 
+function addPuddleLobePath(context, patch, lobe) {
+  context.ellipse(
+    patch.x + patch.w * lobe.x,
+    patch.y + patch.h * lobe.y,
+    patch.w * lobe.rx,
+    patch.h * lobe.ry,
+    lobe.angle,
+    0,
+    Math.PI * 2,
+  );
+}
+
+function drawPuddleLobe(context, patch, lobe) {
+  context.beginPath();
+  addPuddleLobePath(context, patch, lobe);
+  context.fill();
+}
+
 function drawWaterPatch(context, patch) {
   const gradient = context.createLinearGradient(
     patch.x,
@@ -27,53 +45,54 @@ function drawWaterPatch(context, patch) {
     patch.x + patch.w,
     patch.y + patch.h,
   );
-  const centerX = patch.x + patch.w * 0.5;
-  const centerY = patch.y + patch.h * 0.52;
-  const radiusX = patch.w * 0.5;
-  const radiusY = patch.h * 0.47;
+  const lobes = [
+    { x: 0.46, y: 0.52, rx: 0.39, ry: 0.33, angle: -0.12 },
+    { x: 0.68, y: 0.48, rx: 0.28, ry: 0.26, angle: 0.18 },
+    { x: 0.28, y: 0.58, rx: 0.24, ry: 0.22, angle: -0.24 },
+    { x: 0.5, y: 0.36, rx: 0.22, ry: 0.16, angle: -0.08 },
+  ];
 
-  gradient.addColorStop(0, "rgba(210,246,255,.56)");
-  gradient.addColorStop(0.46, "rgba(93,198,230,.38)");
-  gradient.addColorStop(1, "rgba(36,127,174,.42)");
+  gradient.addColorStop(0, "rgba(225,250,255,.42)");
+  gradient.addColorStop(0.5, "rgba(120,210,230,.24)");
+  gradient.addColorStop(1, "rgba(49,132,166,.28)");
 
   context.save();
-  context.shadowColor = "rgba(61,198,255,.22)";
-  context.shadowBlur = 18;
+  context.shadowColor = "rgba(75,190,230,.12)";
+  context.shadowBlur = 10;
   context.fillStyle = gradient;
-  context.beginPath();
-  context.ellipse(centerX, centerY, radiusX, radiusY, -0.08, 0, Math.PI * 2);
-  context.fill();
+  lobes.forEach((lobe) => drawPuddleLobe(context, patch, lobe));
   context.restore();
 
   context.save();
   context.beginPath();
-  context.ellipse(centerX, centerY, radiusX, radiusY, -0.08, 0, Math.PI * 2);
+  lobes.forEach((lobe) => addPuddleLobePath(context, patch, lobe));
   context.clip();
 
-  context.fillStyle = "rgba(255,255,255,.18)";
+  context.fillStyle = "rgba(255,255,255,.14)";
   context.beginPath();
   context.ellipse(
-    patch.x + patch.w * 0.34,
-    patch.y + patch.h * 0.28,
-    patch.w * 0.22,
-    patch.h * 0.08,
-    -0.28,
+    patch.x + patch.w * 0.38,
+    patch.y + patch.h * 0.34,
+    patch.w * 0.18,
+    patch.h * 0.06,
+    -0.24,
     0,
     Math.PI * 2,
   );
   context.fill();
 
-  drawWaterRipple(context, patch, 0.48, 0.52, 0.24, 0.32);
-  drawWaterRipple(context, patch, 0.66, 0.4, 0.17, 0.24);
-  drawWaterRipple(context, patch, 0.28, 0.63, 0.14, 0.22);
+  drawWaterRipple(context, patch, 0.51, 0.56, 0.18, 0.2);
+  drawWaterRipple(context, patch, 0.68, 0.45, 0.12, 0.17);
   context.restore();
 
   context.save();
-  context.strokeStyle = "rgba(232,252,255,.42)";
-  context.lineWidth = 2;
-  context.beginPath();
-  context.ellipse(centerX, centerY, radiusX, radiusY, -0.08, 0, Math.PI * 2);
-  context.stroke();
+  context.strokeStyle = "rgba(232,252,255,.24)";
+  context.lineWidth = 1.5;
+  lobes.forEach((lobe) => {
+    context.beginPath();
+    addPuddleLobePath(context, patch, lobe);
+    context.stroke();
+  });
   context.restore();
 }
 
