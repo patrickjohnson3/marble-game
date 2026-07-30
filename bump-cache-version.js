@@ -1,11 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
+import { computeRuntimeAssetHash } from "./cache-version.js";
 import { runtimeModuleScripts } from "./runtime-assets.js";
 
-const version = new Date()
-  .toISOString()
-  .replace(/[-:]/g, "")
-  .replace(/\..+/, "")
-  .replace("T", ".");
+const version = computeRuntimeAssetHash();
 const indexPath = "index.html";
 const serviceWorkerPath = "sw.js";
 const html = readFileSync(indexPath, "utf8");

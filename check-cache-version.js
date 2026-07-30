@@ -1,14 +1,19 @@
-import { readFileSync } from "node:fs";
+import {
+  computeRuntimeAssetHash,
+  readCurrentCacheVersions,
+} from "./cache-version.js";
 
-const html = readFileSync("index.html", "utf8");
-const serviceWorker = readFileSync("sw.js", "utf8");
-const assetVersion = html.match(/const assetVersion = "([^"]+)";/)?.[1];
-const serviceWorkerCacheVersion = serviceWorker.match(
-  /const cacheVersion = "marble-game-([^"]+)";/,
-)?.[1];
+const expectedVersion = computeRuntimeAssetHash();
+const { assetVersion, serviceWorkerCacheVersion } = readCurrentCacheVersions();
 
 if (!assetVersion || assetVersion !== serviceWorkerCacheVersion) {
   console.error("index.html assetVersion and sw.js cacheVersion must match.");
+  console.error("Run: npm run sync-cache");
+  process.exit(1);
+}
+
+if (assetVersion !== expectedVersion) {
+  console.error("Runtime asset hash does not match index.html assetVersion.");
   console.error("Run: npm run sync-cache");
   process.exit(1);
 }
