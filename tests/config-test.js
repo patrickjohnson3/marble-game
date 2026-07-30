@@ -175,6 +175,12 @@ function testPhysicsAndSettingsRanges() {
     "base drag retention",
   );
   assert.equal(
+    physicsConfig.gooPatchDragRetention > 0 &&
+      physicsConfig.gooPatchDragRetention <= 1,
+    true,
+    "goo patch drag retention",
+  );
+  assert.equal(
     physicsConfig.icePatchDragRetention >= physicsConfig.baseDragRetention &&
       physicsConfig.icePatchDragRetention <= 1,
     true,
@@ -235,6 +241,7 @@ function testPhysicsAndSettingsRanges() {
 function testHapticAndVisualRanges() {
   assertPositiveNumber(hapticTuning.impactCooldownMs, "impact cooldown");
   assertPositiveNumber(hapticTuning.surfaceCooldownMs, "surface cooldown");
+  assertPositiveNumber(hapticTuning.gooSurfaceScale, "goo haptic scale");
   assertPositiveNumber(hapticTuning.waterSurfaceScale, "water haptic scale");
   assertPositiveNumber(
     hapticTuning.goalEnterDurationMs,
@@ -270,6 +277,10 @@ function testHapticAndVisualRanges() {
   assertPositiveNumber(
     visualConfig.marble.glintLightOffset,
     "glint light offset",
+  );
+  assertPositiveNumber(
+    visualConfig.map.gooPatchCanvasPadding,
+    "goo patch canvas padding",
   );
   assertPositiveNumber(
     visualConfig.map.hazardPatchCanvasPadding,
@@ -313,6 +324,22 @@ function testHapticAndVisualRanges() {
     "effect surface cooldown",
   );
   assertPositiveNumber(
+    visualConfig.effects.gooSplatMinSpeed,
+    "effect goo splat minimum speed",
+  );
+  assertPositiveNumber(
+    visualConfig.effects.gooSplatCooldownMs,
+    "effect goo splat cooldown",
+  );
+  assertPositiveNumber(
+    visualConfig.effects.gooSplatSizeBase,
+    "effect goo splat base size",
+  );
+  assertPositiveNumber(
+    visualConfig.effects.gooSplatLifeMs,
+    "effect goo splat life",
+  );
+  assertPositiveNumber(
     visualConfig.effects.waterRippleMinSpeed,
     "effect water ripple minimum speed",
   );
@@ -339,6 +366,12 @@ function testHapticAndVisualRanges() {
       visualConfig.effects.surfaceOpacity <= 1,
     true,
     "surface effect opacity",
+  );
+  assert.equal(
+    visualConfig.effects.gooSplatOpacity > 0 &&
+      visualConfig.effects.gooSplatOpacity <= 1,
+    true,
+    "goo splat opacity",
   );
   assert.equal(
     visualConfig.effects.waterRippleOpacity > 0 &&

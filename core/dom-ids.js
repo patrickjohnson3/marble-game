@@ -4,6 +4,7 @@ export const domIds = {
   introWalls: "introWalls",
   mapWalls: "mapWalls",
   mapTheme: "mapTheme",
+  gooPatches: "gooPatches",
   hazardPatches: "hazardPatches",
   icePatches: "icePatches",
   roughPatches: "roughPatches",

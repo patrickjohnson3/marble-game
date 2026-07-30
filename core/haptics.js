@@ -33,9 +33,10 @@ export function createHapticsController(state, tuning) {
 
     state.surface.lastPulse = now;
     const scale =
-      surfaceType === "waterPatch"
-        ? (tuning.waterSurfaceScale ?? tuning.surfaceScale)
-        : tuning.surfaceScale;
+      {
+        gooPatch: tuning.gooSurfaceScale,
+        waterPatch: tuning.waterSurfaceScale,
+      }[surfaceType] ?? tuning.surfaceScale;
     navigator.vibrate(
       clamp(
         Math.round(speed * scale),

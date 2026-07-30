@@ -111,6 +111,13 @@ body {
   opacity: 0;
   transition: opacity 0.45s ease;
 }
+.gooPatchCanvas {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
 .icePatchCanvas {
   position: absolute;
   overflow: visible;
@@ -143,6 +150,7 @@ body {
 #world.map-open .kitchenObstacleLayer,
 #world.map-open .mapThemeLayer,
 #world.map-open .mapThemeOverlayLayer,
+#world.map-open .gooPatchCanvas,
 #world.map-open .icePatchCanvas,
 #world.map-open .hazardPatchCanvas,
 #world.map-open .roughPatchCanvas,
@@ -547,6 +555,16 @@ body {
     #53d59a00 76%
   );
   box-shadow: 0 0 10px #88f7c588;
+}
+.effectParticle.gooSplat {
+  background: radial-gradient(
+    circle,
+    #e6ff83e0 0 18%,
+    #80e93acc 42%,
+    #19771f00 74%
+  );
+  filter: blur(0.3px);
+  box-shadow: 0 0 8px #90ff4d73;
 }
 .effectParticle.waterRipple {
   background: transparent;

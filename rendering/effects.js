@@ -40,6 +40,7 @@ export function createEffectsRenderer({
   now = () => performance.now(),
 }) {
   let lastImpactAt = Number.NEGATIVE_INFINITY;
+  let lastGooSplatAt = Number.NEGATIVE_INFINITY;
   let lastSurfaceAt = 0;
   let lastWaterRippleAt = Number.NEGATIVE_INFINITY;
   const direction = { x: 0, y: -1 };
@@ -169,6 +170,33 @@ export function createEffectsRenderer({
     }
   }
 
+  function spawnGooSplat(speed) {
+    const currentTime = now();
+    if (
+      speed < config.gooSplatMinSpeed ||
+      currentTime - lastGooSplatAt < config.gooSplatCooldownMs
+    )
+      return;
+
+    lastGooSplatAt = currentTime;
+    const intensity = clamp(speed / config.gooSplatReferenceSpeed, 0, 1);
+    const size = config.gooSplatSizeBase + intensity * config.gooSplatSizeRange;
+    const lifeMs = config.gooSplatLifeMs;
+    spawn(
+      "gooSplat",
+      particleStyle(
+        marble.x + (random() - 0.5) * marble.r * 0.8,
+        marble.y + (random() - 0.5) * marble.r * 0.8,
+        (random() - 0.5) * 8,
+        (random() - 0.5) * 8,
+        size,
+        lifeMs,
+        config.gooSplatOpacity,
+      ),
+      lifeMs,
+    );
+  }
+
   function spawnWaterRipple(speed) {
     const currentTime = now();
     if (
@@ -201,12 +229,14 @@ export function createEffectsRenderer({
     cleanupTimers.clearAll();
     effectsEl.replaceChildren();
     lastImpactAt = Number.NEGATIVE_INFINITY;
+    lastGooSplatAt = Number.NEGATIVE_INFINITY;
     lastSurfaceAt = 0;
     lastWaterRippleAt = Number.NEGATIVE_INFINITY;
   }
 
   return {
     clear,
+    spawnGooSplat,
     spawnGoalComplete,
     spawnImpact,
     spawnSurface,

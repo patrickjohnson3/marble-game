@@ -27,6 +27,8 @@ export function createAppMapController({
     terrainView.setTerrain({
       goal: mapState.goal,
       mapConfig: mapState.activeMap,
+      gooPatches: mapState.gooPatches,
+      gooPatchBounds: mapState.gooPatchBounds,
       hazardPatches: mapState.hazardPatches,
       hazardPatchBounds: mapState.hazardPatchBounds,
       icePatches: mapState.icePatches,

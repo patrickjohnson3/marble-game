@@ -11,6 +11,7 @@ export const copy = {
     calibrating: "keep holding normally for half a sec...",
     neutralReset: "neutral reset to current hand position.",
     icePatch: "ice: slippery.",
+    gooPatch: "green goo: sticky.",
     roughPatch: "rough patch: heavy drag.",
     waterPatch: "water: slower with ripples.",
     hazardPatch: "hazard. back to start.",

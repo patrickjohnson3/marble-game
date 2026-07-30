@@ -44,6 +44,7 @@ export const runtimeScripts = [
   "maps/map-data.js",
   "platform/platform.js",
   "rendering/effects.js",
+  "rendering/goo-patch-rendering.js",
   "rendering/hazard-patch-rendering.js",
   "rendering/map-renderer.js",
   "rendering/map-theme-rendering.js",

@@ -1,4 +1,5 @@
 export const MAP_ELEMENT_TYPES = Object.freeze({
+  gooPatch: "gooPatch",
   hazardPatch: "hazardPatch",
   icePatch: "icePatch",
   obstacle: "obstacle",
@@ -7,6 +8,10 @@ export const MAP_ELEMENT_TYPES = Object.freeze({
 });
 
 export const MAP_ELEMENT_REGISTRY = Object.freeze({
+  [MAP_ELEMENT_TYPES.gooPatch]: Object.freeze({
+    type: MAP_ELEMENT_TYPES.gooPatch,
+    terrain: true,
+  }),
   [MAP_ELEMENT_TYPES.hazardPatch]: Object.freeze({
     type: MAP_ELEMENT_TYPES.hazardPatch,
     terrain: true,
@@ -57,6 +62,10 @@ export function mapIcePatchElements(elements) {
 
 export function mapHazardPatchElements(elements) {
   return mapElementsOfType(elements, MAP_ELEMENT_TYPES.hazardPatch);
+}
+
+export function mapGooPatchElements(elements) {
+  return mapElementsOfType(elements, MAP_ELEMENT_TYPES.gooPatch);
 }
 
 export function mapRoughPatchElements(elements) {

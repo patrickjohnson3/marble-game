@@ -72,6 +72,13 @@ async function testEffectsThrottleAndParticleCap() {
         surfaceLifeMinMs: 100,
         surfaceLifeRangeMs: 0,
         surfaceOpacity: 0.5,
+        gooSplatMinSpeed: 1,
+        gooSplatReferenceSpeed: 10,
+        gooSplatCooldownMs: 100,
+        gooSplatSizeBase: 18,
+        gooSplatSizeRange: 8,
+        gooSplatLifeMs: 150,
+        gooSplatOpacity: 0.45,
         waterRippleMinSpeed: 1,
         waterRippleReferenceSpeed: 10,
         waterRippleCooldownMs: 100,
@@ -123,6 +130,13 @@ async function testEffectsThrottleAndParticleCap() {
       effectsEl.childNodes[0].className,
       "effectParticle waterRipple",
     );
+
+    effects.clear();
+    currentTime = 500;
+    effects.spawnGooSplat(5);
+    effects.spawnGooSplat(5);
+    assert.equal(effectsEl.childNodes.length, 1);
+    assert.equal(effectsEl.childNodes[0].className, "effectParticle gooSplat");
   } finally {
     globalThis.document = originalDocument;
     globalThis.setTimeout = originalSetTimeout;

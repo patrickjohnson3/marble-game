@@ -12,6 +12,7 @@ export function createResolvedMapState(
 ) {
   const elements = activeMap.elements;
   const elementsByType = mapElementsByType(elements);
+  const gooPatches = elementsByType[MAP_ELEMENT_TYPES.gooPatch];
   const hazardPatches = elementsByType[MAP_ELEMENT_TYPES.hazardPatch];
   const icePatches = elementsByType[MAP_ELEMENT_TYPES.icePatch];
   const obstacles = normalizeObstacles(
@@ -22,6 +23,11 @@ export function createResolvedMapState(
   return {
     activeMap,
     elements,
+    gooPatches,
+    gooPatchBounds: rectBounds(gooPatches),
+    gooPatchIndex: createSpatialIndex(gooPatches, {
+      cellSize: collisionIndexCellSize,
+    }),
     hazardPatches,
     hazardPatchBounds: rectBounds(hazardPatches),
     hazardPatchIndex: createSpatialIndex(hazardPatches, {
@@ -61,6 +67,9 @@ export function createMapRuntime({
   const state = {
     activeMap: null,
     elements: [],
+    gooPatches: [],
+    gooPatchBounds: null,
+    gooPatchIndex: null,
     hazardPatches: [],
     hazardPatchBounds: null,
     hazardPatchIndex: null,
@@ -95,6 +104,9 @@ export function createMapRuntime({
     });
     state.activeMap = derived.activeMap;
     state.elements = derived.elements;
+    state.gooPatches = derived.gooPatches;
+    state.gooPatchBounds = derived.gooPatchBounds;
+    state.gooPatchIndex = derived.gooPatchIndex;
     state.hazardPatches = derived.hazardPatches;
     state.hazardPatchBounds = derived.hazardPatchBounds;
     state.hazardPatchIndex = derived.hazardPatchIndex;

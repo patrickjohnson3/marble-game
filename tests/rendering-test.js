@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { renderGooPatches } from "../rendering/goo-patch-rendering.js";
 import { renderHazardPatches } from "../rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
 import {
@@ -555,10 +556,31 @@ try {
   );
 
   const container = new FakeElement();
+  const gooPatchContainer = new FakeElement();
   const hazardPatchContainer = new FakeElement();
   const roughPatchContainer = new FakeElement();
   const icePatchContainer = new FakeElement();
   const waterPatchContainer = new FakeElement();
+
+  renderGooPatches(gooPatchContainer, [{ x: 18, y: 28, w: 92, h: 68 }], {
+    padding: 24,
+  });
+  const gooPatchCanvas = gooPatchContainer.children[0];
+  assert.equal(
+    gooPatchCanvas.classList.contains("gooPatchCanvas"),
+    true,
+    "goo patches should render to canvas",
+  );
+  assert.equal(gooPatchCanvas.attributes["data-goo-patches"], "1");
+  assert.equal(gooPatchCanvas.style.left, "-6px");
+  assert.equal(gooPatchCanvas.style.top, "4px");
+  assert.equal(gooPatchCanvas.style.width, "140px");
+  assert.equal(gooPatchCanvas.style.height, "116px");
+  assert.equal(
+    gooPatchCanvas.context.calls.some((call) => call[0] === "ellipse"),
+    true,
+    "goo patch canvas should draw a blob and bubbles",
+  );
 
   renderHazardPatches(hazardPatchContainer, [{ x: 30, y: 40, w: 100, h: 70 }], {
     padding: 18,

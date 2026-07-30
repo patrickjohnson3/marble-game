@@ -33,6 +33,7 @@ import {
 import { createMapProgression } from "./core/map-progression.js";
 import { createMapRuntime } from "./core/map-runtime.js";
 import { createEffectsRenderer } from "./rendering/effects.js";
+import { renderGooPatches } from "./rendering/goo-patch-rendering.js";
 import { renderHazardPatches } from "./rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "./rendering/ice-patch-rendering.js";
 import {
@@ -103,6 +104,7 @@ function setupRenderers({
     mapWalls: mapWallsEl,
     mapTheme: mapThemeEl,
     mapThemeOverlay: mapThemeOverlayEl,
+    gooPatches: gooPatchesEl,
     hazardPatches: hazardPatchesEl,
     icePatches: icePatchesEl,
     roughPatches: roughPatchesEl,
@@ -141,6 +143,7 @@ function setupRenderers({
   const terrainView = createTerrainView({
     mapThemeEl,
     mapThemeOverlayEl,
+    gooPatchesEl,
     hazardPatchesEl,
     icePatchesEl,
     roughPatchesEl,
@@ -150,6 +153,8 @@ function setupRenderers({
     goal: mapState.goal,
     mapConfig: mapState.activeMap,
     world,
+    gooPatches: mapState.gooPatches,
+    gooPatchBounds: mapState.gooPatchBounds,
     hazardPatches: mapState.hazardPatches,
     hazardPatchBounds: mapState.hazardPatchBounds,
     icePatches: mapState.icePatches,
@@ -160,6 +165,11 @@ function setupRenderers({
     waterPatchBounds: mapState.waterPatchBounds,
     obstacles: mapState.obstacles,
     obstacleBounds: mapState.obstacleBounds,
+    renderGooPatches: (container, renderedGooPatches, renderedBounds) =>
+      renderGooPatches(container, renderedGooPatches, {
+        bounds: renderedBounds,
+        padding: visualConfig.map.gooPatchCanvasPadding,
+      }),
     renderHazardPatches: (container, renderedHazardPatches, renderedBounds) =>
       renderHazardPatches(container, renderedHazardPatches, {
         bounds: renderedBounds,
@@ -362,6 +372,8 @@ function createCurrentPhysicsContext({ state, mapState }) {
     camera,
     game,
     physics,
+    gooPatches: mapState.gooPatches,
+    gooPatchIndex: mapState.gooPatchIndex,
     hazardPatches: mapState.hazardPatches,
     hazardPatchIndex: mapState.hazardPatchIndex,
     icePatches: mapState.icePatches,
@@ -375,6 +387,8 @@ function createCurrentPhysicsContext({ state, mapState }) {
   };
 
   return function currentPhysicsContext() {
+    physicsContext.gooPatches = mapState.gooPatches;
+    physicsContext.gooPatchIndex = mapState.gooPatchIndex;
     physicsContext.hazardPatches = mapState.hazardPatches;
     physicsContext.hazardPatchIndex = mapState.hazardPatchIndex;
     physicsContext.icePatches = mapState.icePatches;

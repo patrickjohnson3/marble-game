@@ -338,6 +338,47 @@ function testWaterPatchAddsModerateDragAndFeedback() {
   assert.deepEqual(surfaceFeedback, [[8, SURFACE_TYPES.waterPatch]]);
 }
 
+function testGooPatchAddsStickyDragAndFeedback() {
+  const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
+  const surfaces = [];
+  const surfaceFeedback = [];
+
+  updatePhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      gooPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      roughPatches: [],
+      waterPatches: [],
+      physics: {
+        accel: 0,
+        baseDragRetention: 1,
+        gooPatchDragRetention: 0.6,
+        roughPatchDragRetention: 0.8,
+        waterPatchDragRetention: 0.9,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: (speed, surfaceType) => {
+        surfaceFeedback.push([speed, surfaceType]);
+      },
+      onTerrain: (surfaceType) => surfaces.push(surfaceType),
+    },
+  );
+
+  assert.equal(marble.vx, 6);
+  assert.deepEqual(surfaces, [SURFACE_TYPES.gooPatch]);
+  assert.deepEqual(surfaceFeedback, [[6, SURFACE_TYPES.gooPatch]]);
+}
+
 function testTerrainFeedbackReportsSurfaceTypes() {
   const marble = { x: 50, y: 50, vx: 4, vy: 0, r: 10 };
   const surfaces = [];
@@ -1035,6 +1076,7 @@ testDeepOverlapTieBreaksTowardFirstNearestEdge();
 testRoughPatchAddsDrag();
 testRoughPatchDragUsesSpatialIndex();
 testIcePatchReducesDrag();
+testGooPatchAddsStickyDragAndFeedback();
 testWaterPatchAddsModerateDragAndFeedback();
 testTerrainFeedbackReportsSurfaceTypes();
 testHazardPatchReportsResetFeedback();
