@@ -323,6 +323,7 @@ export function updateMapThemeDynamics({
   overlayContainer,
   mapConfig,
   marble,
+  previousMarble = marble,
 }) {
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return;
 
@@ -333,10 +334,6 @@ export function updateMapThemeDynamics({
     const currentX = originX + pushX;
     const currentY = originY + pushY;
     const current = { x: currentX, y: currentY };
-    const previousMarble = {
-      x: marble.x - (marble.vx || 0),
-      y: marble.y - (marble.vy || 0),
-    };
     const swept = distanceToSegment(current, previousMarble, marble);
     const dx = currentX - swept.closest.x;
     const dy = currentY - swept.closest.y;

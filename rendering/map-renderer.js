@@ -89,12 +89,13 @@ export function createTerrainView({
     );
   }
 
-  function updateMapThemeDynamics(marble) {
+  function updateMapThemeDynamics(marble, previousMarble) {
     updateThemeDynamics({
       container: mapThemeEl,
       overlayContainer: mapThemeOverlayEl,
       mapConfig: currentMapConfig,
       marble,
+      previousMarble,
     });
   }
 

@@ -460,6 +460,42 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
 
 testKitchenCheerioShoveRespondsToTerrainPatch();
 
+function testKitchenCheerioUsesActualPreviousMarblePosition() {
+  const container = new FakeElement();
+  const overlayContainer = new FakeElement();
+  const cheerio = firstKitchenCheerio({ container, overlayContainer });
+  const state = cheerio.parent.__kitchenCheerios.find(
+    (candidate) => candidate.element === cheerio,
+  );
+  const previousMarble = {
+    x: state.originX - 80,
+    y: state.originY,
+  };
+  const marble = {
+    x: state.originX + 80,
+    y: state.originY,
+    vx: 0,
+    vy: 0,
+    r: 29,
+  };
+
+  updateMapThemeDynamics({
+    container,
+    overlayContainer,
+    mapConfig: { theme: "kitchenFloor" },
+    marble,
+    previousMarble,
+  });
+
+  assert.notEqual(
+    state.pushX,
+    0,
+    "Cheerio sweep should use the real previous marble position, not velocity",
+  );
+}
+
+testKitchenCheerioUsesActualPreviousMarblePosition();
+
 function testKitchenObstaclesRenderAsFixtures() {
   const container = new FakeElement();
 

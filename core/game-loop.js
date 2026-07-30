@@ -148,6 +148,7 @@ export function createGameLoop({
 
     if (active) {
       const context = physicsContext();
+      const previousMarble = { x: marble.x, y: marble.y };
       updatePhysicsInput(context, frameDelta);
       updatePhysics(context, frameDelta, physicsFeedback);
       marble.roll +=
@@ -162,7 +163,7 @@ export function createGameLoop({
       ui.setRunTimeLabel(runTimeLabel(currentTime));
       updateGoalIndicator(context);
       updateHazardArmed();
-      terrainView?.updateMapThemeDynamics(marble);
+      terrainView?.updateMapThemeDynamics(marble, previousMarble);
     }
 
     marbleView.render();
