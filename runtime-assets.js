@@ -32,7 +32,6 @@ export const runtimeScripts = [
   "core/procedural-templates.js",
   "core/rect-bounds.js",
   "core/runtime-states.js",
-  "core/spatial-index.js",
   "core/state.js",
   "core/startup-flow.js",
   "core/timer-utils.js",

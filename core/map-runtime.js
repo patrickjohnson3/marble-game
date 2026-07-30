@@ -5,14 +5,10 @@ import {
 } from "./map-elements.js";
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { rectBounds } from "./rect-bounds.js";
-import { createSpatialIndex } from "./spatial-index.js";
 
 export function createResolvedMapState(
   activeMap,
-  {
-    collisionIndexCellSize = 256,
-    normalizeObstacles = normalizeJoinedObstacleRects,
-  } = {},
+  { normalizeObstacles = normalizeJoinedObstacleRects } = {},
 ) {
   const elements = activeMap.elements;
   const elementsByType = mapElementsByType(elements);
@@ -24,9 +20,6 @@ export function createResolvedMapState(
         {
           elements: terrainElements,
           bounds: rectBounds(terrainElements),
-          index: createSpatialIndex(terrainElements, {
-            cellSize: collisionIndexCellSize,
-          }),
         },
       ];
     }),
@@ -39,9 +32,6 @@ export function createResolvedMapState(
     elements,
     obstacles,
     obstacleBounds: rectBounds(obstacles),
-    obstacleIndex: createSpatialIndex(obstacles, {
-      cellSize: collisionIndexCellSize,
-    }),
     terrainByType,
     goal: activeMap.goal,
     spawn: activeMap.spawn,
@@ -51,7 +41,6 @@ export function createResolvedMapState(
 
 export function createMapRuntime({
   initialMap,
-  collisionIndexCellSize,
   normalizeObstacles = normalizeJoinedObstacleRects,
 }) {
   const state = {
@@ -59,7 +48,6 @@ export function createMapRuntime({
     elements: [],
     obstacles: [],
     obstacleBounds: null,
-    obstacleIndex: null,
     terrainByType: {},
     goal: null,
     spawn: null,
@@ -75,14 +63,12 @@ export function createMapRuntime({
 
   function setActiveMap(nextMap) {
     const derived = createResolvedMapState(nextMap, {
-      collisionIndexCellSize,
       normalizeObstacles,
     });
     state.activeMap = derived.activeMap;
     state.elements = derived.elements;
     state.obstacles = derived.obstacles;
     state.obstacleBounds = derived.obstacleBounds;
-    state.obstacleIndex = derived.obstacleIndex;
     state.terrainByType = derived.terrainByType;
     state.goal = derived.goal;
     state.spawn = derived.spawn;

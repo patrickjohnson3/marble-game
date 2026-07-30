@@ -1,5 +1,5 @@
 import { clamp } from "./geometry.js";
-import { MAP_ELEMENT_TYPES, MAP_TERRAIN_TYPES } from "./map-elements.js";
+import { MAP_ELEMENT_TYPES } from "./map-elements.js";
 import { handleWallCollisions, marbleOverRect } from "./physics-collisions.js";
 
 const defaultMaxSpeedEase = 0;
@@ -100,18 +100,6 @@ function isOverTerrainPatch(marble, intro, patches, physics) {
   );
 }
 
-function createTerrainScratch() {
-  return Object.fromEntries(
-    MAP_TERRAIN_TYPES.map((type) => [
-      type,
-      {
-        candidates: [],
-        seen: new Set(),
-      },
-    ]),
-  );
-}
-
 function createPhysicsScratch() {
   return {
     frameFactors: {
@@ -122,10 +110,7 @@ function createPhysicsScratch() {
       roughPatchDrag: 1,
       waterPatchDrag: 1,
     },
-    obstacleCandidates: [],
-    obstacleSeen: new Set(),
     sweptTerrainQueryCircle: { x: 0, y: 0, r: 0 },
-    terrain: createTerrainScratch(),
   };
 }
 
@@ -134,40 +119,16 @@ function scratch(context) {
   return context.physicsScratch;
 }
 
-function queryCandidates(index, circle, fallback, matches, seen) {
-  if (!index?.queryCircleInto) return fallback ?? [];
-  return index.queryCircleInto(circle, matches, seen);
-}
-
-function obstacleCandidates(context, scratch) {
-  return queryCandidates(
-    context.obstacleIndex,
-    context.marble,
-    context.obstacles,
-    scratch.obstacleCandidates,
-    scratch.obstacleSeen,
-  );
-}
-
 function terrainByType(context, type) {
   return (
     context.terrainByType?.[type] ?? {
       elements: [],
-      index: null,
     }
   );
 }
 
-function terrainCandidates(context, scratch, type, circle) {
-  const terrain = terrainByType(context, type);
-  const terrainScratch = scratch.terrain[type];
-  return queryCandidates(
-    terrain.index,
-    circle,
-    terrain.elements,
-    terrainScratch.candidates,
-    terrainScratch.seen,
-  );
+function terrainCandidates(context, type) {
+  return terrainByType(context, type).elements;
 }
 
 function updateSweptTerrainCircle(context, dt, scratch) {
@@ -230,12 +191,7 @@ function physicsStep(context, dt, feedback) {
   const overIcePatch = isOverTerrainPatch(
     context.marble,
     context.intro,
-    terrainCandidates(
-      context,
-      physicsScratch,
-      SURFACE_TYPES.icePatch,
-      context.marble,
-    ),
+    terrainCandidates(context, SURFACE_TYPES.icePatch),
     context.physics,
   );
   updateVelocity(
@@ -245,24 +201,9 @@ function physicsStep(context, dt, feedback) {
     factors.maxSpeedEase,
   );
   updateSweptTerrainCircle(context, dt, physicsScratch);
-  const gooCandidates = terrainCandidates(
-    context,
-    physicsScratch,
-    SURFACE_TYPES.gooPatch,
-    physicsScratch.sweptTerrainQueryCircle,
-  );
-  const roughCandidates = terrainCandidates(
-    context,
-    physicsScratch,
-    SURFACE_TYPES.roughPatch,
-    physicsScratch.sweptTerrainQueryCircle,
-  );
-  const waterCandidates = terrainCandidates(
-    context,
-    physicsScratch,
-    SURFACE_TYPES.waterPatch,
-    physicsScratch.sweptTerrainQueryCircle,
-  );
+  const gooCandidates = terrainCandidates(context, SURFACE_TYPES.gooPatch);
+  const roughCandidates = terrainCandidates(context, SURFACE_TYPES.roughPatch);
+  const waterCandidates = terrainCandidates(context, SURFACE_TYPES.waterPatch);
   const overGooPatchBeforeMove = isOverTerrainPatch(
     context.marble,
     context.intro,
@@ -307,12 +248,7 @@ function physicsStep(context, dt, feedback) {
     isOverTerrainPatch(
       context.marble,
       context.intro,
-      terrainCandidates(
-        context,
-        physicsScratch,
-        SURFACE_TYPES.hazardPatch,
-        context.marble,
-      ),
+      terrainCandidates(context, SURFACE_TYPES.hazardPatch),
       context.physics,
     )
   ) {
@@ -330,11 +266,7 @@ function physicsStep(context, dt, feedback) {
     { overGooPatch, overRoughPatch, overWaterPatch },
     factors,
   );
-  handleWallCollisions(
-    context,
-    feedback.onImpact,
-    obstacleCandidates(context, physicsScratch),
-  );
+  handleWallCollisions(context, feedback.onImpact, context.obstacles);
   handleSurfaceFeedback(context, feedback.onSurface, currentSurfaceType);
 }
 

@@ -33,7 +33,6 @@ export const physicsConfig = {
   maxStepDistance: 10,
   maxPhysicsSubsteps: 120,
   collisionResolvePasses: 1,
-  collisionIndexCellSize: 256,
   gooPatchDragRetention: 0.72,
   icePatchDragRetention: 0.992,
   roughPatchDragRetention: 0.86,

@@ -16,7 +16,6 @@ import {
   updatePhysicsInput,
 } from "../core/physics.js";
 import { MAP_ELEMENT_TYPES } from "../core/map-elements.js";
-import { createSpatialIndex } from "../core/spatial-index.js";
 
 function assertNear(actual, expected, tolerance = 1e-9) {
   assert.equal(
@@ -26,32 +25,17 @@ function assertNear(actual, expected, tolerance = 1e-9) {
   );
 }
 
-function terrainBucket(elements = [], index = null) {
-  return { elements, index };
+function terrainBucket(elements = []) {
+  return { elements };
 }
 
 function updateTestPhysics(context, dt, feedback) {
   const terrainByType = context.terrainByType ?? {
-    [MAP_ELEMENT_TYPES.gooPatch]: terrainBucket(
-      context.gooPatches,
-      context.gooPatchIndex,
-    ),
-    [MAP_ELEMENT_TYPES.hazardPatch]: terrainBucket(
-      context.hazardPatches,
-      context.hazardPatchIndex,
-    ),
-    [MAP_ELEMENT_TYPES.icePatch]: terrainBucket(
-      context.icePatches,
-      context.icePatchIndex,
-    ),
-    [MAP_ELEMENT_TYPES.roughPatch]: terrainBucket(
-      context.roughPatches,
-      context.roughPatchIndex,
-    ),
-    [MAP_ELEMENT_TYPES.waterPatch]: terrainBucket(
-      context.waterPatches,
-      context.waterPatchIndex,
-    ),
+    [MAP_ELEMENT_TYPES.gooPatch]: terrainBucket(context.gooPatches),
+    [MAP_ELEMENT_TYPES.hazardPatch]: terrainBucket(context.hazardPatches),
+    [MAP_ELEMENT_TYPES.icePatch]: terrainBucket(context.icePatches),
+    [MAP_ELEMENT_TYPES.roughPatch]: terrainBucket(context.roughPatches),
+    [MAP_ELEMENT_TYPES.waterPatch]: terrainBucket(context.waterPatches),
   };
 
   updatePhysics({ ...context, terrainByType }, dt, feedback);
@@ -264,7 +248,7 @@ function testRoughPatchAddsDrag() {
   assert.equal(marble.vx, 5);
 }
 
-function testRoughPatchDragUsesSpatialIndex() {
+function testRoughPatchDragChecksAllPatches() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
   const roughPatches = [
     { x: 500, y: 500, w: 40, h: 40 },
@@ -279,7 +263,6 @@ function testRoughPatchDragUsesSpatialIndex() {
       tilt: { smoothX: 0, smoothY: 0 },
       obstacles: [],
       roughPatches,
-      roughPatchIndex: createSpatialIndex(roughPatches, { cellSize: 100 }),
       physics: {
         accel: 0,
         baseDragRetention: 1,
@@ -1106,7 +1089,7 @@ testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
 testDeepOverlapTieBreaksTowardFirstNearestEdge();
 testRoughPatchAddsDrag();
-testRoughPatchDragUsesSpatialIndex();
+testRoughPatchDragChecksAllPatches();
 testIcePatchReducesDrag();
 testGooPatchAddsStickyDragAndFeedback();
 testWaterPatchAddsModerateDragAndFeedback();

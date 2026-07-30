@@ -230,7 +230,6 @@ Key modules:
 - `core/map-elements.js`: filters elements by type.
 - `core/map-obstacles.js`: snaps and normalizes obstacle rectangles.
 - `core/map-bounds.js`: computes intro pen and released-map walls/bounds.
-- `core/spatial-index.js`: accelerates collision and terrain candidate lookup.
 
 When a goal completes, `core/map-progression.js` selects the next variant,
 resolves it into a full map, validates it, applies it through
@@ -349,7 +348,6 @@ Use this section when deciding where a change belongs.
 - `core/physics-collisions.js`: wall and obstacle collision resolution.
 - `core/procedural-generator.js`: deterministic procedural variant generation.
 - `core/rect-bounds.js`: rectangle collection bounds.
-- `core/spatial-index.js`: broad-phase lookup for terrain and collisions.
 - `core/startup-flow.js`: permission/fullscreen/wake-lock startup path.
 - `core/state.js`: initial mutable state shape.
 - `core/timer-utils.js`: timer helpers.

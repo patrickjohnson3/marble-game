@@ -372,13 +372,11 @@ function createCurrentPhysicsContext({ state, mapState }) {
     physics,
     terrainByType: mapState.terrainByType,
     obstacles: mapState.obstacles,
-    obstacleIndex: mapState.obstacleIndex,
   };
 
   return function currentPhysicsContext() {
     physicsContext.terrainByType = mapState.terrainByType;
     physicsContext.obstacles = mapState.obstacles;
-    physicsContext.obstacleIndex = mapState.obstacleIndex;
     return physicsContext;
   };
 }
@@ -452,7 +450,6 @@ export function createApp({
 
   const mapRuntime = createMapRuntime({
     initialMap: resolvedMapConfig,
-    collisionIndexCellSize: physicsConfig.collisionIndexCellSize,
   });
   const mapState = mapRuntime.state;
   const world = mapState.activeMap.world;

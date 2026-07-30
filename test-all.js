@@ -15,7 +15,6 @@ const tests = [
   "tests/map-test.js",
   "tests/map-validation-test.js",
   "tests/map-runtime-test.js",
-  "tests/spatial-index-test.js",
   "tests/input-manager-test.js",
   "tests/sensor-controller-test.js",
   "tests/settings-panel-test.js",
