@@ -4,6 +4,7 @@ export function createTerrainView({
   hazardPatchesEl,
   icePatchesEl,
   roughPatchesEl,
+  waterPatchesEl,
   obstaclesEl,
   goalEl,
   goal,
@@ -15,6 +16,8 @@ export function createTerrainView({
   icePatchBounds,
   roughPatches,
   roughPatchBounds,
+  waterPatches = [],
+  waterPatchBounds = null,
   obstacles,
   obstacleBounds,
   renderHazardPatches: drawHazardPatches = () => {},
@@ -23,6 +26,7 @@ export function createTerrainView({
   updateMapThemeDynamics: updateThemeDynamics = () => {},
   renderObstacleWalls,
   renderRoughPatches: drawRoughPatches,
+  renderWaterPatches: drawWaterPatches = () => {},
   goalFillEdgePercent = 70.8,
 }) {
   let currentGoal = goal;
@@ -35,6 +39,8 @@ export function createTerrainView({
   let currentIcePatchBounds = icePatchBounds;
   let currentRoughPatches = roughPatches;
   let currentRoughPatchBounds = roughPatchBounds;
+  let currentWaterPatches = waterPatches;
+  let currentWaterPatchBounds = waterPatchBounds;
 
   function renderMapTheme() {
     drawMapTheme({
@@ -74,6 +80,14 @@ export function createTerrainView({
     );
   }
 
+  function renderWaterPatches() {
+    drawWaterPatches(
+      waterPatchesEl,
+      currentWaterPatches,
+      currentWaterPatchBounds,
+    );
+  }
+
   function renderGoal() {
     goalEl.style.left = currentGoal.x - currentGoal.r + "px";
     goalEl.style.top = currentGoal.y - currentGoal.r + "px";
@@ -88,6 +102,7 @@ export function createTerrainView({
     renderHazardPatches();
     renderIcePatches();
     renderRoughPatches();
+    renderWaterPatches();
     renderObstacles();
   }
 
@@ -102,6 +117,8 @@ export function createTerrainView({
     obstacleBounds,
     roughPatches,
     roughPatchBounds,
+    waterPatches = currentWaterPatches,
+    waterPatchBounds = currentWaterPatchBounds,
   }) {
     return (
       currentGoal === goal &&
@@ -113,7 +130,9 @@ export function createTerrainView({
       currentObstacles === obstacles &&
       currentObstacleBounds === obstacleBounds &&
       currentRoughPatches === roughPatches &&
-      currentRoughPatchBounds === roughPatchBounds
+      currentRoughPatchBounds === roughPatchBounds &&
+      currentWaterPatches === waterPatches &&
+      currentWaterPatchBounds === waterPatchBounds
     );
   }
 
@@ -128,6 +147,8 @@ export function createTerrainView({
     obstacleBounds,
     roughPatches,
     roughPatchBounds,
+    waterPatches,
+    waterPatchBounds,
   }) {
     if (
       terrainMatches({
@@ -141,6 +162,8 @@ export function createTerrainView({
         obstacleBounds,
         roughPatches,
         roughPatchBounds,
+        waterPatches,
+        waterPatchBounds,
       })
     )
       return;
@@ -155,6 +178,8 @@ export function createTerrainView({
     currentObstacleBounds = obstacleBounds;
     currentRoughPatches = roughPatches;
     currentRoughPatchBounds = roughPatchBounds;
+    currentWaterPatches = waterPatches;
+    currentWaterPatchBounds = waterPatchBounds;
     renderTerrain();
   }
 
@@ -183,6 +208,7 @@ export function createTerrainView({
     renderObstacles,
     renderTerrain,
     renderRoughPatches,
+    renderWaterPatches,
     setTerrain,
     updateGoalProgress,
     updateMapThemeDynamics,

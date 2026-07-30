@@ -72,6 +72,13 @@ async function testEffectsThrottleAndParticleCap() {
         surfaceLifeMinMs: 100,
         surfaceLifeRangeMs: 0,
         surfaceOpacity: 0.5,
+        waterRippleMinSpeed: 1,
+        waterRippleReferenceSpeed: 10,
+        waterRippleCooldownMs: 100,
+        waterRippleSizeBase: 20,
+        waterRippleSizeRange: 10,
+        waterRippleLifeMs: 150,
+        waterRippleOpacity: 0.4,
         goalCompleteParticles: 4,
         goalCompleteDriftMin: 2,
         goalCompleteDriftRange: 0,
@@ -106,6 +113,16 @@ async function testEffectsThrottleAndParticleCap() {
     assert.deepEqual(clearedTimers, [1, 2, 3, 4, 5, 6, 7, 8]);
     effects.spawnImpact(5);
     assert.equal(effectsEl.childNodes.length, 2);
+
+    effects.clear();
+    currentTime = 300;
+    effects.spawnWaterRipple(5);
+    effects.spawnWaterRipple(5);
+    assert.equal(effectsEl.childNodes.length, 1);
+    assert.equal(
+      effectsEl.childNodes[0].className,
+      "effectParticle waterRipple",
+    );
   } finally {
     globalThis.document = originalDocument;
     globalThis.setTimeout = originalSetTimeout;

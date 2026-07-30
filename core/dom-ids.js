@@ -7,6 +7,7 @@ export const domIds = {
   hazardPatches: "hazardPatches",
   icePatches: "icePatches",
   roughPatches: "roughPatches",
+  waterPatches: "waterPatches",
   obstacles: "obstacles",
   mapThemeOverlay: "mapThemeOverlay",
   goal: "goal",

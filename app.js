@@ -46,6 +46,7 @@ import {
 import { createMarbleView } from "./rendering/marble-view.js";
 import { renderObstacleWalls } from "./rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "./rendering/rough-patch-rendering.js";
+import { renderWaterPatches } from "./rendering/water-patch-rendering.js";
 import { createTrailRenderer } from "./rendering/trail.js";
 import { renderOuterWalls } from "./rendering/wall-rendering.js";
 import { createInputManager } from "./input/input-manager.js";
@@ -105,6 +106,7 @@ function setupRenderers({
     hazardPatches: hazardPatchesEl,
     icePatches: icePatchesEl,
     roughPatches: roughPatchesEl,
+    waterPatches: waterPatchesEl,
     obstacles: obstaclesEl,
     goal: goalEl,
     trail: trailEl,
@@ -142,6 +144,7 @@ function setupRenderers({
     hazardPatchesEl,
     icePatchesEl,
     roughPatchesEl,
+    waterPatchesEl,
     obstaclesEl,
     goalEl,
     goal: mapState.goal,
@@ -153,6 +156,8 @@ function setupRenderers({
     icePatchBounds: mapState.icePatchBounds,
     roughPatches: mapState.roughPatches,
     roughPatchBounds: mapState.roughPatchBounds,
+    waterPatches: mapState.waterPatches,
+    waterPatchBounds: mapState.waterPatchBounds,
     obstacles: mapState.obstacles,
     obstacleBounds: mapState.obstacleBounds,
     renderHazardPatches: (container, renderedHazardPatches, renderedBounds) =>
@@ -182,6 +187,11 @@ function setupRenderers({
       renderRoughPatches(container, renderedRoughPatches, {
         bounds: renderedBounds,
         padding: visualConfig.map.roughPatchCanvasPadding,
+      }),
+    renderWaterPatches: (container, renderedWaterPatches, renderedBounds) =>
+      renderWaterPatches(container, renderedWaterPatches, {
+        bounds: renderedBounds,
+        padding: visualConfig.map.waterPatchCanvasPadding,
       }),
     goalFillEdgePercent: visualConfig.map.goalFillEdgePercent,
   });
@@ -360,6 +370,8 @@ function createCurrentPhysicsContext({ state, mapState }) {
     obstacleIndex: mapState.obstacleIndex,
     roughPatches: mapState.roughPatches,
     roughPatchIndex: mapState.roughPatchIndex,
+    waterPatches: mapState.waterPatches,
+    waterPatchIndex: mapState.waterPatchIndex,
   };
 
   return function currentPhysicsContext() {
@@ -371,6 +383,8 @@ function createCurrentPhysicsContext({ state, mapState }) {
     physicsContext.obstacleIndex = mapState.obstacleIndex;
     physicsContext.roughPatches = mapState.roughPatches;
     physicsContext.roughPatchIndex = mapState.roughPatchIndex;
+    physicsContext.waterPatches = mapState.waterPatches;
+    physicsContext.waterPatchIndex = mapState.waterPatchIndex;
     return physicsContext;
   };
 }

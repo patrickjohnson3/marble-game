@@ -11,6 +11,7 @@ export const SURFACE_TYPES = Object.freeze({
   icePatch: "icePatch",
   roughPatch: "roughPatch",
   hazardPatch: "hazardPatch",
+  waterPatch: "waterPatch",
 });
 
 function deadZone(value, threshold) {
@@ -115,6 +116,15 @@ function isOverHazardPatch(marble, intro, hazardPatches, physics) {
   );
 }
 
+function isOverWaterPatch(marble, intro, waterPatches, physics) {
+  return (
+    intro.released &&
+    waterPatches.some((rect) =>
+      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
+    )
+  );
+}
+
 function createPhysicsScratch() {
   return {
     frameFactors: {
@@ -122,6 +132,7 @@ function createPhysicsScratch() {
       icePatchDrag: 1,
       maxSpeedEase: defaultMaxSpeedEase,
       roughPatchDrag: 1,
+      waterPatchDrag: 1,
     },
     icePatchCandidates: [],
     icePatchSeen: new Set(),
@@ -131,7 +142,9 @@ function createPhysicsScratch() {
     obstacleSeen: new Set(),
     roughPatchCandidates: [],
     roughPatchSeen: new Set(),
-    roughPatchQueryCircle: { x: 0, y: 0, r: 0 },
+    sweptTerrainQueryCircle: { x: 0, y: 0, r: 0 },
+    waterPatchCandidates: [],
+    waterPatchSeen: new Set(),
   };
 }
 
@@ -177,36 +190,60 @@ function obstacleCandidates(context, scratch) {
 
 function roughPatchCandidates(context, dt, scratch) {
   const distance = Math.hypot(context.marble.vx * dt, context.marble.vy * dt);
-  scratch.roughPatchQueryCircle.x =
+  scratch.sweptTerrainQueryCircle.x =
     context.marble.x + (context.marble.vx * dt) / 2;
-  scratch.roughPatchQueryCircle.y =
+  scratch.sweptTerrainQueryCircle.y =
     context.marble.y + (context.marble.vy * dt) / 2;
-  scratch.roughPatchQueryCircle.r = context.marble.r + distance / 2;
+  scratch.sweptTerrainQueryCircle.r = context.marble.r + distance / 2;
 
   return queryCandidates(
     context.roughPatchIndex,
-    scratch.roughPatchQueryCircle,
+    scratch.sweptTerrainQueryCircle,
     context.roughPatches,
     scratch.roughPatchCandidates,
     scratch.roughPatchSeen,
   );
 }
 
-function applySurfaceDrag(context, overRoughPatch, factors) {
-  if (!overRoughPatch) return;
-
-  context.marble.vx *= factors.roughPatchDrag;
-  context.marble.vy *= factors.roughPatchDrag;
+function waterPatchCandidates(context, scratch) {
+  return queryCandidates(
+    context.waterPatchIndex,
+    scratch.sweptTerrainQueryCircle,
+    context.waterPatches,
+    scratch.waterPatchCandidates,
+    scratch.waterPatchSeen,
+  );
 }
 
-function handleSurfaceFeedback({ marble }, onSurface, overRoughPatch) {
-  if (!overRoughPatch) return;
+function applySurfaceDrag(
+  context,
+  { overRoughPatch, overWaterPatch },
+  factors,
+) {
+  if (overRoughPatch) {
+    context.marble.vx *= factors.roughPatchDrag;
+    context.marble.vy *= factors.roughPatchDrag;
+  }
 
-  onSurface(Math.hypot(marble.vx, marble.vy));
+  if (overWaterPatch) {
+    context.marble.vx *= factors.waterPatchDrag;
+    context.marble.vy *= factors.waterPatchDrag;
+  }
 }
 
-function surfaceType({ overIcePatch, overRoughPatch }) {
+function handleSurfaceFeedback({ marble }, onSurface, surfaceType) {
+  if (
+    surfaceType !== SURFACE_TYPES.roughPatch &&
+    surfaceType !== SURFACE_TYPES.waterPatch
+  )
+    return;
+
+  onSurface(Math.hypot(marble.vx, marble.vy), surfaceType);
+}
+
+function surfaceType({ overIcePatch, overRoughPatch, overWaterPatch }) {
   if (overRoughPatch) return SURFACE_TYPES.roughPatch;
+  if (overWaterPatch) return SURFACE_TYPES.waterPatch;
   if (overIcePatch) return SURFACE_TYPES.icePatch;
   return SURFACE_TYPES.floor;
 }
@@ -233,6 +270,13 @@ function physicsStep(context, dt, feedback) {
     roughCandidates,
     context.physics,
   );
+  const waterCandidates = waterPatchCandidates(context, physicsScratch);
+  const overWaterPatchBeforeMove = isOverWaterPatch(
+    context.marble,
+    context.intro,
+    waterCandidates,
+    context.physics,
+  );
   updatePosition(context.marble, dt);
   const overRoughPatchAfterMove = isOverRoughPatch(
     context.marble,
@@ -241,6 +285,13 @@ function physicsStep(context, dt, feedback) {
     context.physics,
   );
   const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
+  const overWaterPatchAfterMove = isOverWaterPatch(
+    context.marble,
+    context.intro,
+    waterCandidates,
+    context.physics,
+  );
+  const overWaterPatch = overWaterPatchBeforeMove || overWaterPatchAfterMove;
   if (
     isOverHazardPatch(
       context.marble,
@@ -251,14 +302,19 @@ function physicsStep(context, dt, feedback) {
   ) {
     feedback.onHazard?.();
   }
-  feedback.onTerrain?.(surfaceType({ overIcePatch, overRoughPatch }));
-  applySurfaceDrag(context, overRoughPatch, factors);
+  const currentSurfaceType = surfaceType({
+    overIcePatch,
+    overRoughPatch,
+    overWaterPatch,
+  });
+  feedback.onTerrain?.(currentSurfaceType);
+  applySurfaceDrag(context, { overRoughPatch, overWaterPatch }, factors);
   handleWallCollisions(
     context,
     feedback.onImpact,
     obstacleCandidates(context, physicsScratch),
   );
-  handleSurfaceFeedback(context, feedback.onSurface, overRoughPatch);
+  handleSurfaceFeedback(context, feedback.onSurface, currentSurfaceType);
 }
 
 export function updatePhysics(context, dt, feedback) {
@@ -287,6 +343,10 @@ export function updatePhysics(context, dt, feedback) {
   );
   physicsScratch.frameFactors.roughPatchDrag = Math.pow(
     context.physics.roughPatchDragRetention,
+    stepDt,
+  );
+  physicsScratch.frameFactors.waterPatchDrag = Math.pow(
+    context.physics.waterPatchDragRetention ?? 1,
     stepDt,
   );
   physicsScratch.frameFactors.maxSpeedEase = Math.pow(

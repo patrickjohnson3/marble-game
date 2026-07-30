@@ -24,7 +24,7 @@ export function createHapticsController(state, tuning) {
     );
   }
 
-  function pulseSurface(speed) {
+  function pulseSurface(speed, surfaceType = "roughPatch") {
     if (!canVibrate()) return;
     if (speed < state.surface.minSpeed) return;
 
@@ -32,9 +32,13 @@ export function createHapticsController(state, tuning) {
     if (now - state.surface.lastPulse < state.surface.cooldownMs) return;
 
     state.surface.lastPulse = now;
+    const scale =
+      surfaceType === "waterPatch"
+        ? (tuning.waterSurfaceScale ?? tuning.surfaceScale)
+        : tuning.surfaceScale;
     navigator.vibrate(
       clamp(
-        Math.round(speed * tuning.surfaceScale),
+        Math.round(speed * scale),
         tuning.surfaceMinDurationMs,
         tuning.surfaceMaxDurationMs,
       ),

@@ -36,6 +36,7 @@ try {
       impactMinDurationMs: 8,
       impactMaxDurationMs: 35,
       surfaceScale: 1.4,
+      waterSurfaceScale: 0.75,
       surfaceMinDurationMs: 5,
       surfaceMaxDurationMs: 16,
       goalEnterDurationMs: 12,
@@ -50,8 +51,10 @@ try {
   currentTime += 901;
   haptics.pulseGoal("hold");
   haptics.pulseGoal("complete");
+  currentTime += 131;
+  haptics.pulseSurface(8, "waterPatch");
 
-  assert.deepEqual(vibrations, [12, 6, 6, [18, 40, 28]]);
+  assert.deepEqual(vibrations, [12, 6, 6, [18, 40, 28], 6]);
 } finally {
   Object.defineProperty(globalThis, "navigator", {
     configurable: true,

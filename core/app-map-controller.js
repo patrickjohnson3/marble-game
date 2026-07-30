@@ -35,6 +35,8 @@ export function createAppMapController({
       obstacleBounds: mapState.obstacleBounds,
       roughPatches: mapState.roughPatches,
       roughPatchBounds: mapState.roughPatchBounds,
+      waterPatches: mapState.waterPatches,
+      waterPatchBounds: mapState.waterPatchBounds,
     });
   }
 

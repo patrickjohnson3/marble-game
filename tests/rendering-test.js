@@ -7,6 +7,7 @@ import {
 } from "../rendering/map-theme-rendering.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
+import { renderWaterPatches } from "../rendering/water-patch-rendering.js";
 import { renderOuterWalls } from "../rendering/wall-rendering.js";
 import { createTerrainView } from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
@@ -321,13 +322,6 @@ function testKitchenThemeRendersDatedFloorDetails() {
   );
   assert.equal(
     underlayChildren.some((child) =>
-      child.className.includes("kitchenWaterSpill"),
-    ),
-    true,
-    "kitchen floor theme should render a water spill",
-  );
-  assert.equal(
-    underlayChildren.some((child) =>
       child.className.includes("kitchenCleanerSpill"),
     ),
     true,
@@ -564,6 +558,7 @@ try {
   const hazardPatchContainer = new FakeElement();
   const roughPatchContainer = new FakeElement();
   const icePatchContainer = new FakeElement();
+  const waterPatchContainer = new FakeElement();
 
   renderHazardPatches(hazardPatchContainer, [{ x: 30, y: 40, w: 100, h: 70 }], {
     padding: 18,
@@ -626,6 +621,26 @@ try {
       .length >= 40,
     true,
     "rough patch canvas should draw layered grit",
+  );
+
+  renderWaterPatches(waterPatchContainer, [{ x: 24, y: 34, w: 96, h: 72 }], {
+    padding: 24,
+  });
+  const waterPatchCanvas = waterPatchContainer.children[0];
+  assert.equal(
+    waterPatchCanvas.classList.contains("waterPatchCanvas"),
+    true,
+    "water patches should render to canvas",
+  );
+  assert.equal(waterPatchCanvas.attributes["data-water-patches"], "1");
+  assert.equal(waterPatchCanvas.style.left, "0px");
+  assert.equal(waterPatchCanvas.style.top, "10px");
+  assert.equal(waterPatchCanvas.style.width, "144px");
+  assert.equal(waterPatchCanvas.style.height, "120px");
+  assert.equal(
+    waterPatchCanvas.context.calls.some((call) => call[0] === "ellipse"),
+    true,
+    "water patch canvas should draw a rounded pool and ripples",
   );
 
   renderObstacleWalls(

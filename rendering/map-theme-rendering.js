@@ -125,12 +125,6 @@ function renderKitchenFloor({ underlay, world }) {
     { x: 0.51, y: 0.77 },
     { x: 0.45, y: 0.74 },
   ].forEach((circle) => appendKitchenCheerio(underlay, world, circle));
-  appendBox(underlay, "kitchenWaterSpill", world, {
-    x: 0.61,
-    y: 0.35,
-    w: 0.12,
-    h: 0.09,
-  });
   appendBox(underlay, "kitchenCleanerSpill", world, {
     x: 0.2,
     y: 0.74,

@@ -53,6 +53,7 @@ export const runtimeScripts = [
   "rendering/rough-patch-rendering.js",
   "rendering/trail.js",
   "rendering/wall-rendering.js",
+  "rendering/water-patch-rendering.js",
   "rendering/ui.js",
   "settings/settings-applier.js",
   "settings/settings-config.js",

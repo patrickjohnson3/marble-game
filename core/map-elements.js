@@ -3,6 +3,7 @@ export const MAP_ELEMENT_TYPES = Object.freeze({
   icePatch: "icePatch",
   obstacle: "obstacle",
   roughPatch: "roughPatch",
+  waterPatch: "waterPatch",
 });
 
 export const MAP_ELEMENT_REGISTRY = Object.freeze({
@@ -20,6 +21,10 @@ export const MAP_ELEMENT_REGISTRY = Object.freeze({
   }),
   [MAP_ELEMENT_TYPES.roughPatch]: Object.freeze({
     type: MAP_ELEMENT_TYPES.roughPatch,
+    terrain: true,
+  }),
+  [MAP_ELEMENT_TYPES.waterPatch]: Object.freeze({
+    type: MAP_ELEMENT_TYPES.waterPatch,
     terrain: true,
   }),
 });
@@ -56,6 +61,10 @@ export function mapHazardPatchElements(elements) {
 
 export function mapRoughPatchElements(elements) {
   return mapElementsOfType(elements, MAP_ELEMENT_TYPES.roughPatch);
+}
+
+export function mapWaterPatchElements(elements) {
+  return mapElementsOfType(elements, MAP_ELEMENT_TYPES.waterPatch);
 }
 
 export function mapElementsByType(elements) {

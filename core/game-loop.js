@@ -51,8 +51,11 @@ export function createGameLoop({
     hapticFeedback.pulseImpact(impact);
   }
 
-  function onSurface(speed) {
-    hapticFeedback.pulseSurface(speed);
+  function onSurface(speed, surfaceType) {
+    hapticFeedback.pulseSurface(speed, surfaceType);
+    if (surfaceType === SURFACE_TYPES.waterPatch) {
+      effectsRenderer.spawnWaterRipple(speed);
+    }
   }
 
   function onTerrain(surfaceType) {
@@ -63,6 +66,8 @@ export function createGameLoop({
       ui.setHint(copy.hints.roughPatch);
     } else if (surfaceType === SURFACE_TYPES.icePatch) {
       ui.setHint(copy.hints.icePatch);
+    } else if (surfaceType === SURFACE_TYPES.waterPatch) {
+      ui.setHint(copy.hints.waterPatch);
     }
   }
 

@@ -18,6 +18,7 @@ export function createResolvedMapState(
     elementsByType[MAP_ELEMENT_TYPES.obstacle],
   );
   const roughPatches = elementsByType[MAP_ELEMENT_TYPES.roughPatch];
+  const waterPatches = elementsByType[MAP_ELEMENT_TYPES.waterPatch];
   return {
     activeMap,
     elements,
@@ -39,6 +40,11 @@ export function createResolvedMapState(
     roughPatches,
     roughPatchBounds: rectBounds(roughPatches),
     roughPatchIndex: createSpatialIndex(roughPatches, {
+      cellSize: collisionIndexCellSize,
+    }),
+    waterPatches,
+    waterPatchBounds: rectBounds(waterPatches),
+    waterPatchIndex: createSpatialIndex(waterPatches, {
       cellSize: collisionIndexCellSize,
     }),
     goal: activeMap.goal,
@@ -67,6 +73,9 @@ export function createMapRuntime({
     roughPatches: [],
     roughPatchBounds: null,
     roughPatchIndex: null,
+    waterPatches: [],
+    waterPatchBounds: null,
+    waterPatchIndex: null,
     goal: null,
     spawn: null,
     goalHoldMs: 0,
@@ -98,6 +107,9 @@ export function createMapRuntime({
     state.roughPatches = derived.roughPatches;
     state.roughPatchBounds = derived.roughPatchBounds;
     state.roughPatchIndex = derived.roughPatchIndex;
+    state.waterPatches = derived.waterPatches;
+    state.waterPatchBounds = derived.waterPatchBounds;
+    state.waterPatchIndex = derived.waterPatchIndex;
     state.goal = derived.goal;
     state.spawn = derived.spawn;
     resetGoalProgress();

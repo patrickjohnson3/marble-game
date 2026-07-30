@@ -192,6 +192,12 @@ function testPhysicsAndSettingsRanges() {
     "rough patch drag retention",
   );
   assert.equal(
+    physicsConfig.waterPatchDragRetention > 0 &&
+      physicsConfig.waterPatchDragRetention <= 1,
+    true,
+    "water patch drag retention",
+  );
+  assert.equal(
     Number.isFinite(physicsConfig.collisionDistanceSqEpsilon) &&
       physicsConfig.collisionDistanceSqEpsilon >= 0,
     true,
@@ -229,6 +235,7 @@ function testPhysicsAndSettingsRanges() {
 function testHapticAndVisualRanges() {
   assertPositiveNumber(hapticTuning.impactCooldownMs, "impact cooldown");
   assertPositiveNumber(hapticTuning.surfaceCooldownMs, "surface cooldown");
+  assertPositiveNumber(hapticTuning.waterSurfaceScale, "water haptic scale");
   assertPositiveNumber(
     hapticTuning.goalEnterDurationMs,
     "goal enter haptic duration",
@@ -273,6 +280,10 @@ function testHapticAndVisualRanges() {
     "rough patch canvas padding",
   );
   assertPositiveNumber(
+    visualConfig.map.waterPatchCanvasPadding,
+    "water patch canvas padding",
+  );
+  assertPositiveNumber(
     visualConfig.map.obstacleCanvasPadding,
     "obstacle canvas padding",
   );
@@ -301,6 +312,22 @@ function testHapticAndVisualRanges() {
     visualConfig.effects.surfaceCooldownMs,
     "effect surface cooldown",
   );
+  assertPositiveNumber(
+    visualConfig.effects.waterRippleMinSpeed,
+    "effect water ripple minimum speed",
+  );
+  assertPositiveNumber(
+    visualConfig.effects.waterRippleCooldownMs,
+    "effect water ripple cooldown",
+  );
+  assertPositiveNumber(
+    visualConfig.effects.waterRippleSizeBase,
+    "effect water ripple base size",
+  );
+  assertPositiveNumber(
+    visualConfig.effects.waterRippleLifeMs,
+    "effect water ripple life",
+  );
   assert.equal(
     visualConfig.effects.impactOpacity > 0 &&
       visualConfig.effects.impactOpacity <= 1,
@@ -312,6 +339,12 @@ function testHapticAndVisualRanges() {
       visualConfig.effects.surfaceOpacity <= 1,
     true,
     "surface effect opacity",
+  );
+  assert.equal(
+    visualConfig.effects.waterRippleOpacity > 0 &&
+      visualConfig.effects.waterRippleOpacity <= 1,
+    true,
+    "water ripple opacity",
   );
 }
 

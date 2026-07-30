@@ -13,6 +13,7 @@ const firstMap = {
     { type: "hazardPatch", x: 30, y: 45, w: 25, h: 35 },
     { type: "icePatch", x: 80, y: 90, w: 50, h: 60 },
     { type: "roughPatch", x: 50, y: 60, w: 70, h: 80 },
+    { type: "waterPatch", x: 130, y: 140, w: 90, h: 100 },
   ],
 };
 
@@ -68,6 +69,15 @@ assert.deepEqual(resolvedFirstMap.roughPatchBounds, {
   top: 60,
   width: 70,
 });
+assert.equal(resolvedFirstMap.waterPatches.length, 1);
+assert.deepEqual(resolvedFirstMap.waterPatchBounds, {
+  bottom: 240,
+  height: 100,
+  left: 130,
+  right: 220,
+  top: 140,
+  width: 90,
+});
 
 assert.equal(runtime.state.activeMap, firstMap);
 assert.equal(runtime.state.goal, firstMap.goal);
@@ -76,6 +86,7 @@ assert.equal(runtime.state.hazardPatches.length, 1);
 assert.equal(runtime.state.icePatches.length, 1);
 assert.equal(runtime.state.obstacles.length, 1);
 assert.equal(runtime.state.roughPatches.length, 1);
+assert.equal(runtime.state.waterPatches.length, 1);
 
 assert.equal(runtime.addGoalHold(1000), 0.2);
 runtime.completeGoal();
@@ -100,6 +111,8 @@ assert.deepEqual(runtime.state.hazardPatches, []);
 assert.equal(runtime.state.hazardPatchBounds, null);
 assert.deepEqual(runtime.state.icePatches, []);
 assert.equal(runtime.state.icePatchBounds, null);
+assert.deepEqual(runtime.state.waterPatches, []);
+assert.equal(runtime.state.waterPatchBounds, null);
 assert.equal(runtime.state.goalHoldMs, 0);
 assert.equal(runtime.state.goalCompleted, false);
 

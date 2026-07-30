@@ -98,7 +98,6 @@ body {
 .kitchenCleanerSpill,
 .kitchenFloorMat,
 .kitchenTileAccent,
-.kitchenWaterSpill,
 .parkingStripe,
 .parkingDriveLine,
 .themeOil,
@@ -126,6 +125,13 @@ body {
   opacity: 0;
   transition: opacity 0.45s ease;
 }
+.waterPatchCanvas {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
 .hazardPatchCanvas {
   position: absolute;
   overflow: visible;
@@ -139,7 +145,8 @@ body {
 #world.map-open .mapThemeOverlayLayer,
 #world.map-open .icePatchCanvas,
 #world.map-open .hazardPatchCanvas,
-#world.map-open .roughPatchCanvas {
+#world.map-open .roughPatchCanvas,
+#world.map-open .waterPatchCanvas {
   opacity: 1;
 }
 .hockeyRinkSurface {
@@ -328,18 +335,8 @@ body {
   transform: translate(var(--push-x, 0px), var(--push-y, 0px));
   transition: transform 80ms linear;
 }
-.kitchenWaterSpill,
 .kitchenCleanerSpill {
   border-radius: 52% 48% 60% 40%;
-}
-.kitchenWaterSpill {
-  background: radial-gradient(
-    circle,
-    #ccecff88,
-    #77c8ef42 58%,
-    transparent 72%
-  );
-  box-shadow: inset 0 0 16px #ffffff42;
 }
 .kitchenCleanerSpill {
   background: radial-gradient(
@@ -550,6 +547,13 @@ body {
     #53d59a00 76%
   );
   box-shadow: 0 0 10px #88f7c588;
+}
+.effectParticle.waterRipple {
+  background: transparent;
+  border: 3px solid rgba(205, 247, 255, 0.72);
+  box-shadow:
+    inset 0 0 10px #ffffff35,
+    0 0 10px #6adfff55;
 }
 @keyframes effectFade {
   0% {

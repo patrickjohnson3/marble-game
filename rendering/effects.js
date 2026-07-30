@@ -41,6 +41,7 @@ export function createEffectsRenderer({
 }) {
   let lastImpactAt = Number.NEGATIVE_INFINITY;
   let lastSurfaceAt = 0;
+  let lastWaterRippleAt = Number.NEGATIVE_INFINITY;
   const direction = { x: 0, y: -1 };
   const sideways = { x: 1, y: 0 };
   const cleanupTimers = createTimeoutRegistry();
@@ -168,11 +169,40 @@ export function createEffectsRenderer({
     }
   }
 
+  function spawnWaterRipple(speed) {
+    const currentTime = now();
+    if (
+      speed < config.waterRippleMinSpeed ||
+      currentTime - lastWaterRippleAt < config.waterRippleCooldownMs
+    )
+      return;
+
+    lastWaterRippleAt = currentTime;
+    const intensity = clamp(speed / config.waterRippleReferenceSpeed, 0, 1);
+    const size =
+      config.waterRippleSizeBase + intensity * config.waterRippleSizeRange;
+    const lifeMs = config.waterRippleLifeMs;
+    spawn(
+      "waterRipple",
+      particleStyle(
+        marble.x,
+        marble.y,
+        0,
+        0,
+        size,
+        lifeMs,
+        config.waterRippleOpacity,
+      ),
+      lifeMs,
+    );
+  }
+
   function clear() {
     cleanupTimers.clearAll();
     effectsEl.replaceChildren();
     lastImpactAt = Number.NEGATIVE_INFINITY;
     lastSurfaceAt = 0;
+    lastWaterRippleAt = Number.NEGATIVE_INFINITY;
   }
 
   return {
@@ -180,5 +210,6 @@ export function createEffectsRenderer({
     spawnGoalComplete,
     spawnImpact,
     spawnSurface,
+    spawnWaterRipple,
   };
 }

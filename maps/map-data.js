@@ -133,6 +133,7 @@ const hockeyRinkElements = [
 ];
 
 const kitchenFloorElements = [
+  { type: "waterPatch", x: 1230, y: 720, w: 330, h: 230 },
   {
     type: "obstacle",
     fixture: "fork",
