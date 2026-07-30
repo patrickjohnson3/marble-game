@@ -30,6 +30,7 @@ import {
   setReleasedBounds as setReleasedMapBounds,
   updateIntroBounds as updateIntroMapBounds,
 } from "./core/map-bounds.js";
+import { MAP_ELEMENT_TYPES } from "./core/map-elements.js";
 import { createMapProgression } from "./core/map-progression.js";
 import { createMapRuntime } from "./core/map-runtime.js";
 import { createEffectsRenderer } from "./rendering/effects.js";
@@ -116,6 +117,28 @@ function setupRenderers({
     effects: effectsEl,
     marble: marbleEl,
   } = els;
+  const terrainPatchRenderers = {
+    [MAP_ELEMENT_TYPES.gooPatch]: {
+      padding: visualConfig.map.gooPatchCanvasPadding,
+      render: renderGooPatches,
+    },
+    [MAP_ELEMENT_TYPES.hazardPatch]: {
+      padding: visualConfig.map.hazardPatchCanvasPadding,
+      render: renderHazardPatches,
+    },
+    [MAP_ELEMENT_TYPES.icePatch]: {
+      padding: visualConfig.map.icePatchCanvasPadding,
+      render: renderIcePatches,
+    },
+    [MAP_ELEMENT_TYPES.roughPatch]: {
+      padding: visualConfig.map.roughPatchCanvasPadding,
+      render: renderRoughPatches,
+    },
+    [MAP_ELEMENT_TYPES.waterPatch]: {
+      padding: visualConfig.map.waterPatchCanvasPadding,
+      render: renderWaterPatches,
+    },
+  };
   const { bounds, game, intro, marble } = state;
   const trailRenderer = createTrailRenderer({
     trailEl,
@@ -143,43 +166,29 @@ function setupRenderers({
   const terrainView = createTerrainView({
     mapThemeEl,
     mapThemeOverlayEl,
-    gooPatchesEl,
-    hazardPatchesEl,
-    icePatchesEl,
-    roughPatchesEl,
-    waterPatchesEl,
+    terrainContainers: {
+      [MAP_ELEMENT_TYPES.gooPatch]: gooPatchesEl,
+      [MAP_ELEMENT_TYPES.hazardPatch]: hazardPatchesEl,
+      [MAP_ELEMENT_TYPES.icePatch]: icePatchesEl,
+      [MAP_ELEMENT_TYPES.roughPatch]: roughPatchesEl,
+      [MAP_ELEMENT_TYPES.waterPatch]: waterPatchesEl,
+    },
     obstaclesEl,
     goalEl,
     goal: mapState.goal,
     mapConfig: mapState.activeMap,
     world,
-    gooPatches: mapState.gooPatches,
-    gooPatchBounds: mapState.gooPatchBounds,
-    hazardPatches: mapState.hazardPatches,
-    hazardPatchBounds: mapState.hazardPatchBounds,
-    icePatches: mapState.icePatches,
-    icePatchBounds: mapState.icePatchBounds,
-    roughPatches: mapState.roughPatches,
-    roughPatchBounds: mapState.roughPatchBounds,
-    waterPatches: mapState.waterPatches,
-    waterPatchBounds: mapState.waterPatchBounds,
+    terrainByType: mapState.terrainByType,
     obstacles: mapState.obstacles,
     obstacleBounds: mapState.obstacleBounds,
-    renderGooPatches: (container, renderedGooPatches, renderedBounds) =>
-      renderGooPatches(container, renderedGooPatches, {
-        bounds: renderedBounds,
-        padding: visualConfig.map.gooPatchCanvasPadding,
-      }),
-    renderHazardPatches: (container, renderedHazardPatches, renderedBounds) =>
-      renderHazardPatches(container, renderedHazardPatches, {
-        bounds: renderedBounds,
-        padding: visualConfig.map.hazardPatchCanvasPadding,
-      }),
-    renderIcePatches: (container, renderedIcePatches, renderedBounds) =>
-      renderIcePatches(container, renderedIcePatches, {
-        bounds: renderedBounds,
-        padding: visualConfig.map.icePatchCanvasPadding,
-      }),
+    renderTerrainPatches: (type, container, elements, bounds) => {
+      const renderer = terrainPatchRenderers[type];
+      if (!renderer) return;
+      renderer.render(container, elements, {
+        bounds,
+        padding: renderer.padding,
+      });
+    },
     renderMapTheme,
     updateMapThemeDynamics,
     renderObstacleWalls: (
@@ -192,16 +201,6 @@ function setupRenderers({
         bounds: renderedBounds,
         mapConfig: renderedMapConfig,
         padding: visualConfig.map.obstacleCanvasPadding,
-      }),
-    renderRoughPatches: (container, renderedRoughPatches, renderedBounds) =>
-      renderRoughPatches(container, renderedRoughPatches, {
-        bounds: renderedBounds,
-        padding: visualConfig.map.roughPatchCanvasPadding,
-      }),
-    renderWaterPatches: (container, renderedWaterPatches, renderedBounds) =>
-      renderWaterPatches(container, renderedWaterPatches, {
-        bounds: renderedBounds,
-        padding: visualConfig.map.waterPatchCanvasPadding,
       }),
     goalFillEdgePercent: visualConfig.map.goalFillEdgePercent,
   });
@@ -372,33 +371,15 @@ function createCurrentPhysicsContext({ state, mapState }) {
     camera,
     game,
     physics,
-    gooPatches: mapState.gooPatches,
-    gooPatchIndex: mapState.gooPatchIndex,
-    hazardPatches: mapState.hazardPatches,
-    hazardPatchIndex: mapState.hazardPatchIndex,
-    icePatches: mapState.icePatches,
-    icePatchIndex: mapState.icePatchIndex,
+    terrainByType: mapState.terrainByType,
     obstacles: mapState.obstacles,
     obstacleIndex: mapState.obstacleIndex,
-    roughPatches: mapState.roughPatches,
-    roughPatchIndex: mapState.roughPatchIndex,
-    waterPatches: mapState.waterPatches,
-    waterPatchIndex: mapState.waterPatchIndex,
   };
 
   return function currentPhysicsContext() {
-    physicsContext.gooPatches = mapState.gooPatches;
-    physicsContext.gooPatchIndex = mapState.gooPatchIndex;
-    physicsContext.hazardPatches = mapState.hazardPatches;
-    physicsContext.hazardPatchIndex = mapState.hazardPatchIndex;
-    physicsContext.icePatches = mapState.icePatches;
-    physicsContext.icePatchIndex = mapState.icePatchIndex;
+    physicsContext.terrainByType = mapState.terrainByType;
     physicsContext.obstacles = mapState.obstacles;
     physicsContext.obstacleIndex = mapState.obstacleIndex;
-    physicsContext.roughPatches = mapState.roughPatches;
-    physicsContext.roughPatchIndex = mapState.roughPatchIndex;
-    physicsContext.waterPatches = mapState.waterPatches;
-    physicsContext.waterPatchIndex = mapState.waterPatchIndex;
     return physicsContext;
   };
 }

@@ -224,14 +224,13 @@ testGoalIndicatorUpdatesVisibilityAndAngle();
 function testGoalProgressUsesRadialFillRadius() {
   const goalEl = new FakeElement();
   const terrainView = createTerrainView({
-    roughPatchesEl: new FakeElement(),
     obstaclesEl: new FakeElement(),
     goalEl,
     goal: { x: 100, y: 120, r: 50 },
-    roughPatches: [],
+    terrainByType: {},
     obstacles: [],
     renderObstacleWalls() {},
-    renderRoughPatches() {},
+    renderTerrainPatches() {},
   });
 
   terrainView.updateGoalProgress(0.5);
@@ -537,7 +536,7 @@ testKitchenObstaclesRenderAsFixtures();
 
 function testTerrainViewSkipsUnchangedTerrainRedraw() {
   let obstacleRenderCount = 0;
-  let roughPatchRenderCount = 0;
+  let terrainRenderCount = 0;
   const goal = { x: 100, y: 120, r: 50 };
   const obstacles = [{ x: 10, y: 10, w: 20, h: 20 }];
   const obstacleBounds = {
@@ -548,29 +547,32 @@ function testTerrainViewSkipsUnchangedTerrainRedraw() {
     width: 20,
     height: 20,
   };
-  const roughPatches = [{ x: 40, y: 40, w: 20, h: 20 }];
-  const roughPatchBounds = {
-    left: 40,
-    top: 40,
-    right: 60,
-    bottom: 60,
-    width: 20,
-    height: 20,
+  const terrainByType = {
+    roughPatch: {
+      bounds: {
+        left: 40,
+        top: 40,
+        right: 60,
+        bottom: 60,
+        width: 20,
+        height: 20,
+      },
+      elements: [{ x: 40, y: 40, w: 20, h: 20 }],
+    },
   };
   const terrainView = createTerrainView({
-    roughPatchesEl: new FakeElement(),
+    terrainContainers: { roughPatch: new FakeElement() },
     obstaclesEl: new FakeElement(),
     goalEl: new FakeElement(),
     goal,
-    roughPatches,
-    roughPatchBounds,
+    terrainByType,
     obstacles,
     obstacleBounds,
     renderObstacleWalls() {
       obstacleRenderCount++;
     },
-    renderRoughPatches() {
-      roughPatchRenderCount++;
+    renderTerrainPatches() {
+      terrainRenderCount++;
     },
   });
 
@@ -579,12 +581,11 @@ function testTerrainViewSkipsUnchangedTerrainRedraw() {
     goal,
     obstacles,
     obstacleBounds,
-    roughPatches,
-    roughPatchBounds,
+    terrainByType,
   });
 
   assert.equal(obstacleRenderCount, 1);
-  assert.equal(roughPatchRenderCount, 1);
+  assert.equal(terrainRenderCount, 1);
 }
 
 testTerrainViewSkipsUnchangedTerrainRedraw();

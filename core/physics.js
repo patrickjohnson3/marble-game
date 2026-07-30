@@ -1,4 +1,5 @@
 import { clamp } from "./geometry.js";
+import { MAP_ELEMENT_TYPES, MAP_TERRAIN_TYPES } from "./map-elements.js";
 import { handleWallCollisions, marbleOverRect } from "./physics-collisions.js";
 
 const defaultMaxSpeedEase = 0;
@@ -8,11 +9,11 @@ const defaultMaxPhysicsSubsteps = Number.POSITIVE_INFINITY;
 const defaultMaxStepDistance = 1;
 export const SURFACE_TYPES = Object.freeze({
   floor: "floor",
-  gooPatch: "gooPatch",
-  icePatch: "icePatch",
-  roughPatch: "roughPatch",
-  hazardPatch: "hazardPatch",
-  waterPatch: "waterPatch",
+  gooPatch: MAP_ELEMENT_TYPES.gooPatch,
+  icePatch: MAP_ELEMENT_TYPES.icePatch,
+  roughPatch: MAP_ELEMENT_TYPES.roughPatch,
+  hazardPatch: MAP_ELEMENT_TYPES.hazardPatch,
+  waterPatch: MAP_ELEMENT_TYPES.waterPatch,
 });
 
 function deadZone(value, threshold) {
@@ -90,48 +91,24 @@ function finitePositive(value, fallback) {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
-function isOverRoughPatch(marble, intro, roughPatches, physics) {
+function isOverTerrainPatch(marble, intro, patches, physics) {
   return (
     intro.released &&
-    roughPatches.some((rect) =>
+    patches.some((rect) =>
       marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
     )
   );
 }
 
-function isOverIcePatch(marble, intro, icePatches, physics) {
-  return (
-    intro.released &&
-    icePatches.some((rect) =>
-      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
-    )
-  );
-}
-
-function isOverHazardPatch(marble, intro, hazardPatches, physics) {
-  return (
-    intro.released &&
-    hazardPatches.some((rect) =>
-      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
-    )
-  );
-}
-
-function isOverGooPatch(marble, intro, gooPatches, physics) {
-  return (
-    intro.released &&
-    gooPatches.some((rect) =>
-      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
-    )
-  );
-}
-
-function isOverWaterPatch(marble, intro, waterPatches, physics) {
-  return (
-    intro.released &&
-    waterPatches.some((rect) =>
-      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
-    )
+function createTerrainScratch() {
+  return Object.fromEntries(
+    MAP_TERRAIN_TYPES.map((type) => [
+      type,
+      {
+        candidates: [],
+        seen: new Set(),
+      },
+    ]),
   );
 }
 
@@ -145,19 +122,10 @@ function createPhysicsScratch() {
       roughPatchDrag: 1,
       waterPatchDrag: 1,
     },
-    icePatchCandidates: [],
-    icePatchSeen: new Set(),
-    gooPatchCandidates: [],
-    gooPatchSeen: new Set(),
-    hazardPatchCandidates: [],
-    hazardPatchSeen: new Set(),
     obstacleCandidates: [],
     obstacleSeen: new Set(),
-    roughPatchCandidates: [],
-    roughPatchSeen: new Set(),
     sweptTerrainQueryCircle: { x: 0, y: 0, r: 0 },
-    waterPatchCandidates: [],
-    waterPatchSeen: new Set(),
+    terrain: createTerrainScratch(),
   };
 }
 
@@ -171,36 +139,6 @@ function queryCandidates(index, circle, fallback, matches, seen) {
   return index.queryCircleInto(circle, matches, seen);
 }
 
-function icePatchCandidates(context, scratch) {
-  return queryCandidates(
-    context.icePatchIndex,
-    context.marble,
-    context.icePatches,
-    scratch.icePatchCandidates,
-    scratch.icePatchSeen,
-  );
-}
-
-function hazardPatchCandidates(context, scratch) {
-  return queryCandidates(
-    context.hazardPatchIndex,
-    context.marble,
-    context.hazardPatches,
-    scratch.hazardPatchCandidates,
-    scratch.hazardPatchSeen,
-  );
-}
-
-function gooPatchCandidates(context, scratch) {
-  return queryCandidates(
-    context.gooPatchIndex,
-    scratch.sweptTerrainQueryCircle,
-    context.gooPatches,
-    scratch.gooPatchCandidates,
-    scratch.gooPatchSeen,
-  );
-}
-
 function obstacleCandidates(context, scratch) {
   return queryCandidates(
     context.obstacleIndex,
@@ -211,31 +149,34 @@ function obstacleCandidates(context, scratch) {
   );
 }
 
-function roughPatchCandidates(context, dt, scratch) {
+function terrainByType(context, type) {
+  return (
+    context.terrainByType?.[type] ?? {
+      elements: [],
+      index: null,
+    }
+  );
+}
+
+function terrainCandidates(context, scratch, type, circle) {
+  const terrain = terrainByType(context, type);
+  const terrainScratch = scratch.terrain[type];
+  return queryCandidates(
+    terrain.index,
+    circle,
+    terrain.elements,
+    terrainScratch.candidates,
+    terrainScratch.seen,
+  );
+}
+
+function updateSweptTerrainCircle(context, dt, scratch) {
   const distance = Math.hypot(context.marble.vx * dt, context.marble.vy * dt);
   scratch.sweptTerrainQueryCircle.x =
     context.marble.x + (context.marble.vx * dt) / 2;
   scratch.sweptTerrainQueryCircle.y =
     context.marble.y + (context.marble.vy * dt) / 2;
   scratch.sweptTerrainQueryCircle.r = context.marble.r + distance / 2;
-
-  return queryCandidates(
-    context.roughPatchIndex,
-    scratch.sweptTerrainQueryCircle,
-    context.roughPatches,
-    scratch.roughPatchCandidates,
-    scratch.roughPatchSeen,
-  );
-}
-
-function waterPatchCandidates(context, scratch) {
-  return queryCandidates(
-    context.waterPatchIndex,
-    scratch.sweptTerrainQueryCircle,
-    context.waterPatches,
-    scratch.waterPatchCandidates,
-    scratch.waterPatchSeen,
-  );
 }
 
 function applySurfaceDrag(
@@ -286,10 +227,15 @@ function surfaceType({
 function physicsStep(context, dt, feedback) {
   const physicsScratch = scratch(context);
   const factors = physicsScratch.frameFactors;
-  const overIcePatch = isOverIcePatch(
+  const overIcePatch = isOverTerrainPatch(
     context.marble,
     context.intro,
-    icePatchCandidates(context, physicsScratch),
+    terrainCandidates(
+      context,
+      physicsScratch,
+      SURFACE_TYPES.icePatch,
+      context.marble,
+    ),
     context.physics,
   );
   updateVelocity(
@@ -298,43 +244,59 @@ function physicsStep(context, dt, feedback) {
     overIcePatch ? factors.icePatchDrag : factors.baseDrag,
     factors.maxSpeedEase,
   );
-  const roughCandidates = roughPatchCandidates(context, dt, physicsScratch);
-  const gooCandidates = gooPatchCandidates(context, physicsScratch);
-  const overGooPatchBeforeMove = isOverGooPatch(
+  updateSweptTerrainCircle(context, dt, physicsScratch);
+  const gooCandidates = terrainCandidates(
+    context,
+    physicsScratch,
+    SURFACE_TYPES.gooPatch,
+    physicsScratch.sweptTerrainQueryCircle,
+  );
+  const roughCandidates = terrainCandidates(
+    context,
+    physicsScratch,
+    SURFACE_TYPES.roughPatch,
+    physicsScratch.sweptTerrainQueryCircle,
+  );
+  const waterCandidates = terrainCandidates(
+    context,
+    physicsScratch,
+    SURFACE_TYPES.waterPatch,
+    physicsScratch.sweptTerrainQueryCircle,
+  );
+  const overGooPatchBeforeMove = isOverTerrainPatch(
     context.marble,
     context.intro,
     gooCandidates,
     context.physics,
   );
-  const overRoughPatchBeforeMove = isOverRoughPatch(
+  const overRoughPatchBeforeMove = isOverTerrainPatch(
     context.marble,
     context.intro,
     roughCandidates,
     context.physics,
   );
-  const waterCandidates = waterPatchCandidates(context, physicsScratch);
-  const overWaterPatchBeforeMove = isOverWaterPatch(
+  const overWaterPatchBeforeMove = isOverTerrainPatch(
     context.marble,
     context.intro,
     waterCandidates,
     context.physics,
   );
   updatePosition(context.marble, dt);
-  const overGooPatchAfterMove = isOverGooPatch(
+  const overGooPatchAfterMove = isOverTerrainPatch(
     context.marble,
     context.intro,
     gooCandidates,
     context.physics,
   );
   const overGooPatch = overGooPatchBeforeMove || overGooPatchAfterMove;
-  const overRoughPatchAfterMove = isOverRoughPatch(
+  const overRoughPatchAfterMove = isOverTerrainPatch(
     context.marble,
     context.intro,
     roughCandidates,
     context.physics,
   );
   const overRoughPatch = overRoughPatchBeforeMove || overRoughPatchAfterMove;
-  const overWaterPatchAfterMove = isOverWaterPatch(
+  const overWaterPatchAfterMove = isOverTerrainPatch(
     context.marble,
     context.intro,
     waterCandidates,
@@ -342,10 +304,15 @@ function physicsStep(context, dt, feedback) {
   );
   const overWaterPatch = overWaterPatchBeforeMove || overWaterPatchAfterMove;
   if (
-    isOverHazardPatch(
+    isOverTerrainPatch(
       context.marble,
       context.intro,
-      hazardPatchCandidates(context, physicsScratch),
+      terrainCandidates(
+        context,
+        physicsScratch,
+        SURFACE_TYPES.hazardPatch,
+        context.marble,
+      ),
       context.physics,
     )
   ) {

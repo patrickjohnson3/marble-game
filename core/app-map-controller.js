@@ -27,18 +27,9 @@ export function createAppMapController({
     terrainView.setTerrain({
       goal: mapState.goal,
       mapConfig: mapState.activeMap,
-      gooPatches: mapState.gooPatches,
-      gooPatchBounds: mapState.gooPatchBounds,
-      hazardPatches: mapState.hazardPatches,
-      hazardPatchBounds: mapState.hazardPatchBounds,
-      icePatches: mapState.icePatches,
-      icePatchBounds: mapState.icePatchBounds,
+      terrainByType: mapState.terrainByType,
       obstacles: mapState.obstacles,
       obstacleBounds: mapState.obstacleBounds,
-      roughPatches: mapState.roughPatches,
-      roughPatchBounds: mapState.roughPatchBounds,
-      waterPatches: mapState.waterPatches,
-      waterPatchBounds: mapState.waterPatchBounds,
     });
   }
 

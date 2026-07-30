@@ -1,4 +1,8 @@
-import { MAP_ELEMENT_TYPES, mapElementsByType } from "./map-elements.js";
+import {
+  MAP_ELEMENT_TYPES,
+  MAP_TERRAIN_TYPES,
+  mapElementsByType,
+} from "./map-elements.js";
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { rectBounds } from "./rect-bounds.js";
 import { createSpatialIndex } from "./spatial-index.js";
@@ -12,47 +16,33 @@ export function createResolvedMapState(
 ) {
   const elements = activeMap.elements;
   const elementsByType = mapElementsByType(elements);
-  const gooPatches = elementsByType[MAP_ELEMENT_TYPES.gooPatch];
-  const hazardPatches = elementsByType[MAP_ELEMENT_TYPES.hazardPatch];
-  const icePatches = elementsByType[MAP_ELEMENT_TYPES.icePatch];
+  const terrainByType = Object.fromEntries(
+    MAP_TERRAIN_TYPES.map((type) => {
+      const terrainElements = elementsByType[type];
+      return [
+        type,
+        {
+          elements: terrainElements,
+          bounds: rectBounds(terrainElements),
+          index: createSpatialIndex(terrainElements, {
+            cellSize: collisionIndexCellSize,
+          }),
+        },
+      ];
+    }),
+  );
   const obstacles = normalizeObstacles(
     elementsByType[MAP_ELEMENT_TYPES.obstacle],
   );
-  const roughPatches = elementsByType[MAP_ELEMENT_TYPES.roughPatch];
-  const waterPatches = elementsByType[MAP_ELEMENT_TYPES.waterPatch];
   return {
     activeMap,
     elements,
-    gooPatches,
-    gooPatchBounds: rectBounds(gooPatches),
-    gooPatchIndex: createSpatialIndex(gooPatches, {
-      cellSize: collisionIndexCellSize,
-    }),
-    hazardPatches,
-    hazardPatchBounds: rectBounds(hazardPatches),
-    hazardPatchIndex: createSpatialIndex(hazardPatches, {
-      cellSize: collisionIndexCellSize,
-    }),
-    icePatches,
-    icePatchBounds: rectBounds(icePatches),
-    icePatchIndex: createSpatialIndex(icePatches, {
-      cellSize: collisionIndexCellSize,
-    }),
     obstacles,
     obstacleBounds: rectBounds(obstacles),
     obstacleIndex: createSpatialIndex(obstacles, {
       cellSize: collisionIndexCellSize,
     }),
-    roughPatches,
-    roughPatchBounds: rectBounds(roughPatches),
-    roughPatchIndex: createSpatialIndex(roughPatches, {
-      cellSize: collisionIndexCellSize,
-    }),
-    waterPatches,
-    waterPatchBounds: rectBounds(waterPatches),
-    waterPatchIndex: createSpatialIndex(waterPatches, {
-      cellSize: collisionIndexCellSize,
-    }),
+    terrainByType,
     goal: activeMap.goal,
     spawn: activeMap.spawn,
     world: activeMap.world,
@@ -67,24 +57,10 @@ export function createMapRuntime({
   const state = {
     activeMap: null,
     elements: [],
-    gooPatches: [],
-    gooPatchBounds: null,
-    gooPatchIndex: null,
-    hazardPatches: [],
-    hazardPatchBounds: null,
-    hazardPatchIndex: null,
-    icePatches: [],
-    icePatchBounds: null,
-    icePatchIndex: null,
     obstacles: [],
     obstacleBounds: null,
     obstacleIndex: null,
-    roughPatches: [],
-    roughPatchBounds: null,
-    roughPatchIndex: null,
-    waterPatches: [],
-    waterPatchBounds: null,
-    waterPatchIndex: null,
+    terrainByType: {},
     goal: null,
     spawn: null,
     goalHoldMs: 0,
@@ -104,24 +80,10 @@ export function createMapRuntime({
     });
     state.activeMap = derived.activeMap;
     state.elements = derived.elements;
-    state.gooPatches = derived.gooPatches;
-    state.gooPatchBounds = derived.gooPatchBounds;
-    state.gooPatchIndex = derived.gooPatchIndex;
-    state.hazardPatches = derived.hazardPatches;
-    state.hazardPatchBounds = derived.hazardPatchBounds;
-    state.hazardPatchIndex = derived.hazardPatchIndex;
-    state.icePatches = derived.icePatches;
-    state.icePatchBounds = derived.icePatchBounds;
-    state.icePatchIndex = derived.icePatchIndex;
     state.obstacles = derived.obstacles;
     state.obstacleBounds = derived.obstacleBounds;
     state.obstacleIndex = derived.obstacleIndex;
-    state.roughPatches = derived.roughPatches;
-    state.roughPatchBounds = derived.roughPatchBounds;
-    state.roughPatchIndex = derived.roughPatchIndex;
-    state.waterPatches = derived.waterPatches;
-    state.waterPatchBounds = derived.waterPatchBounds;
-    state.waterPatchIndex = derived.waterPatchIndex;
+    state.terrainByType = derived.terrainByType;
     state.goal = derived.goal;
     state.spawn = derived.spawn;
     resetGoalProgress();

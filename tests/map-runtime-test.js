@@ -4,6 +4,10 @@ import {
   createResolvedMapState,
 } from "../core/map-runtime.js";
 
+function terrain(state, type) {
+  return state.terrainByType[type];
+}
+
 const firstMap = {
   variantId: "first",
   goal: { x: 100, y: 120, r: 40, holdMs: 5000 },
@@ -34,8 +38,8 @@ const resolvedFirstMap = createResolvedMapState(firstMap);
 assert.equal(resolvedFirstMap.activeMap, firstMap);
 assert.equal(resolvedFirstMap.goal, firstMap.goal);
 assert.equal(resolvedFirstMap.spawn, firstMap.spawn);
-assert.equal(resolvedFirstMap.gooPatches.length, 1);
-assert.deepEqual(resolvedFirstMap.gooPatchBounds, {
+assert.equal(terrain(resolvedFirstMap, "gooPatch").elements.length, 1);
+assert.deepEqual(terrain(resolvedFirstMap, "gooPatch").bounds, {
   bottom: 24,
   height: 18,
   left: 5,
@@ -43,8 +47,8 @@ assert.deepEqual(resolvedFirstMap.gooPatchBounds, {
   top: 6,
   width: 15,
 });
-assert.equal(resolvedFirstMap.hazardPatches.length, 1);
-assert.deepEqual(resolvedFirstMap.hazardPatchBounds, {
+assert.equal(terrain(resolvedFirstMap, "hazardPatch").elements.length, 1);
+assert.deepEqual(terrain(resolvedFirstMap, "hazardPatch").bounds, {
   bottom: 80,
   height: 35,
   left: 30,
@@ -52,8 +56,8 @@ assert.deepEqual(resolvedFirstMap.hazardPatchBounds, {
   top: 45,
   width: 25,
 });
-assert.equal(resolvedFirstMap.icePatches.length, 1);
-assert.deepEqual(resolvedFirstMap.icePatchBounds, {
+assert.equal(terrain(resolvedFirstMap, "icePatch").elements.length, 1);
+assert.deepEqual(terrain(resolvedFirstMap, "icePatch").bounds, {
   bottom: 150,
   height: 60,
   left: 80,
@@ -70,8 +74,8 @@ assert.deepEqual(resolvedFirstMap.obstacleBounds, {
   top: 20,
   width: 30,
 });
-assert.equal(resolvedFirstMap.roughPatches.length, 1);
-assert.deepEqual(resolvedFirstMap.roughPatchBounds, {
+assert.equal(terrain(resolvedFirstMap, "roughPatch").elements.length, 1);
+assert.deepEqual(terrain(resolvedFirstMap, "roughPatch").bounds, {
   bottom: 140,
   height: 80,
   left: 50,
@@ -79,8 +83,8 @@ assert.deepEqual(resolvedFirstMap.roughPatchBounds, {
   top: 60,
   width: 70,
 });
-assert.equal(resolvedFirstMap.waterPatches.length, 1);
-assert.deepEqual(resolvedFirstMap.waterPatchBounds, {
+assert.equal(terrain(resolvedFirstMap, "waterPatch").elements.length, 1);
+assert.deepEqual(terrain(resolvedFirstMap, "waterPatch").bounds, {
   bottom: 240,
   height: 100,
   left: 130,
@@ -92,12 +96,12 @@ assert.deepEqual(resolvedFirstMap.waterPatchBounds, {
 assert.equal(runtime.state.activeMap, firstMap);
 assert.equal(runtime.state.goal, firstMap.goal);
 assert.equal(runtime.state.spawn, firstMap.spawn);
-assert.equal(runtime.state.gooPatches.length, 1);
-assert.equal(runtime.state.hazardPatches.length, 1);
-assert.equal(runtime.state.icePatches.length, 1);
+assert.equal(terrain(runtime.state, "gooPatch").elements.length, 1);
+assert.equal(terrain(runtime.state, "hazardPatch").elements.length, 1);
+assert.equal(terrain(runtime.state, "icePatch").elements.length, 1);
 assert.equal(runtime.state.obstacles.length, 1);
-assert.equal(runtime.state.roughPatches.length, 1);
-assert.equal(runtime.state.waterPatches.length, 1);
+assert.equal(terrain(runtime.state, "roughPatch").elements.length, 1);
+assert.equal(terrain(runtime.state, "waterPatch").elements.length, 1);
 
 assert.equal(runtime.addGoalHold(1000), 0.2);
 runtime.completeGoal();
@@ -116,16 +120,16 @@ assert.deepEqual(runtime.state.obstacleBounds, {
   top: 120,
   width: 130,
 });
-assert.deepEqual(runtime.state.roughPatches, []);
-assert.equal(runtime.state.roughPatchBounds, null);
-assert.deepEqual(runtime.state.gooPatches, []);
-assert.equal(runtime.state.gooPatchBounds, null);
-assert.deepEqual(runtime.state.hazardPatches, []);
-assert.equal(runtime.state.hazardPatchBounds, null);
-assert.deepEqual(runtime.state.icePatches, []);
-assert.equal(runtime.state.icePatchBounds, null);
-assert.deepEqual(runtime.state.waterPatches, []);
-assert.equal(runtime.state.waterPatchBounds, null);
+assert.deepEqual(terrain(runtime.state, "roughPatch").elements, []);
+assert.equal(terrain(runtime.state, "roughPatch").bounds, null);
+assert.deepEqual(terrain(runtime.state, "gooPatch").elements, []);
+assert.equal(terrain(runtime.state, "gooPatch").bounds, null);
+assert.deepEqual(terrain(runtime.state, "hazardPatch").elements, []);
+assert.equal(terrain(runtime.state, "hazardPatch").bounds, null);
+assert.deepEqual(terrain(runtime.state, "icePatch").elements, []);
+assert.equal(terrain(runtime.state, "icePatch").bounds, null);
+assert.deepEqual(terrain(runtime.state, "waterPatch").elements, []);
+assert.equal(terrain(runtime.state, "waterPatch").bounds, null);
 assert.equal(runtime.state.goalHoldMs, 0);
 assert.equal(runtime.state.goalCompleted, false);
 

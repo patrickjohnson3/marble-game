@@ -15,6 +15,7 @@ import {
   updatePhysics,
   updatePhysicsInput,
 } from "../core/physics.js";
+import { MAP_ELEMENT_TYPES } from "../core/map-elements.js";
 import { createSpatialIndex } from "../core/spatial-index.js";
 
 function assertNear(actual, expected, tolerance = 1e-9) {
@@ -23,6 +24,37 @@ function assertNear(actual, expected, tolerance = 1e-9) {
     true,
     `expected ${actual} to be within ${tolerance} of ${expected}`,
   );
+}
+
+function terrainBucket(elements = [], index = null) {
+  return { elements, index };
+}
+
+function updateTestPhysics(context, dt, feedback) {
+  const terrainByType = context.terrainByType ?? {
+    [MAP_ELEMENT_TYPES.gooPatch]: terrainBucket(
+      context.gooPatches,
+      context.gooPatchIndex,
+    ),
+    [MAP_ELEMENT_TYPES.hazardPatch]: terrainBucket(
+      context.hazardPatches,
+      context.hazardPatchIndex,
+    ),
+    [MAP_ELEMENT_TYPES.icePatch]: terrainBucket(
+      context.icePatches,
+      context.icePatchIndex,
+    ),
+    [MAP_ELEMENT_TYPES.roughPatch]: terrainBucket(
+      context.roughPatches,
+      context.roughPatchIndex,
+    ),
+    [MAP_ELEMENT_TYPES.waterPatch]: terrainBucket(
+      context.waterPatches,
+      context.waterPatchIndex,
+    ),
+  };
+
+  updatePhysics({ ...context, terrainByType }, dt, feedback);
 }
 
 function testCircleRectContact() {
@@ -205,7 +237,7 @@ function testDeepOverlapTieBreaksTowardFirstNearestEdge() {
 function testRoughPatchAddsDrag() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -239,7 +271,7 @@ function testRoughPatchDragUsesSpatialIndex() {
     { x: 40, y: 40, w: 40, h: 40 },
   ];
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 800, top: 0, bottom: 800 },
@@ -270,7 +302,7 @@ function testRoughPatchDragUsesSpatialIndex() {
 function testIcePatchReducesDrag() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -304,7 +336,7 @@ function testWaterPatchAddsModerateDragAndFeedback() {
   const surfaces = [];
   const surfaceFeedback = [];
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -343,7 +375,7 @@ function testGooPatchAddsStickyDragAndFeedback() {
   const surfaces = [];
   const surfaceFeedback = [];
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -383,7 +415,7 @@ function testTerrainFeedbackReportsSurfaceTypes() {
   const marble = { x: 50, y: 50, vx: 4, vy: 0, r: 10 };
   const surfaces = [];
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -421,7 +453,7 @@ function testHazardPatchReportsResetFeedback() {
   const marble = { x: 50, y: 50, vx: 0, vy: 0, r: 10 };
   let hazards = 0;
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -457,7 +489,7 @@ function testHazardPatchReportsResetFeedback() {
 function testRoughPatchDragAppliesWhenEnteringPatch() {
   const marble = { x: 20, y: 50, vx: 10, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -487,7 +519,7 @@ function testRoughPatchDragAppliesWhenEnteringPatch() {
 function testLowSpeedDriftSettles() {
   const marble = { x: 50, y: 50, vx: 0.02, vy: 0.01, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -520,7 +552,7 @@ function testLowSpeedDriftSettles() {
 function testLowSpeedDriftDoesNotSettleAboveSpeedThreshold() {
   const marble = { x: 50, y: 50, vx: 0.05, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -552,7 +584,7 @@ function testLowSpeedDriftDoesNotSettleAboveSpeedThreshold() {
 function testLowSpeedDriftDoesNotSettleAboveTiltThreshold() {
   const marble = { x: 50, y: 50, vx: 0.02, vy: 0.01, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -660,15 +692,15 @@ function testVelocityDragIsFrameRateIndependent() {
   const once = context();
   const split = context();
 
-  updatePhysics(once, 1, {
+  updateTestPhysics(once, 1, {
     onImpact: () => {},
     onSurface: () => {},
   });
-  updatePhysics(split, 0.5, {
+  updateTestPhysics(split, 0.5, {
     onImpact: () => {},
     onSurface: () => {},
   });
-  updatePhysics(split, 0.5, {
+  updateTestPhysics(split, 0.5, {
     onImpact: () => {},
     onSurface: () => {},
   });
@@ -700,15 +732,15 @@ function testAccelerationIsFrameRateIndependent() {
   const once = context();
   const split = context();
 
-  updatePhysics(once, 1, {
+  updateTestPhysics(once, 1, {
     onImpact: () => {},
     onSurface: () => {},
   });
-  updatePhysics(split, 0.5, {
+  updateTestPhysics(split, 0.5, {
     onImpact: () => {},
     onSurface: () => {},
   });
-  updatePhysics(split, 0.5, {
+  updateTestPhysics(split, 0.5, {
     onImpact: () => {},
     onSurface: () => {},
   });
@@ -741,15 +773,15 @@ function testRoughPatchDragIsFrameRateIndependent() {
   const once = context();
   const split = context();
 
-  updatePhysics(once, 1, {
+  updateTestPhysics(once, 1, {
     onImpact: () => {},
     onSurface: () => {},
   });
-  updatePhysics(split, 0.5, {
+  updateTestPhysics(split, 0.5, {
     onImpact: () => {},
     onSurface: () => {},
   });
-  updatePhysics(split, 0.5, {
+  updateTestPhysics(split, 0.5, {
     onImpact: () => {},
     onSurface: () => {},
   });
@@ -760,7 +792,7 @@ function testRoughPatchDragIsFrameRateIndependent() {
 function testMaxSpeedEasesDown() {
   const marble = { x: 50, y: 50, vx: 20, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -815,15 +847,15 @@ function testMaxSpeedClampIsFrameRateIndependent() {
   const once = context();
   const split = context();
 
-  updatePhysics(once, 1, {
+  updateTestPhysics(once, 1, {
     onImpact: () => {},
     onSurface: () => {},
   });
-  updatePhysics(split, 0.5, {
+  updateTestPhysics(split, 0.5, {
     onImpact: () => {},
     onSurface: () => {},
   });
-  updatePhysics(split, 0.5, {
+  updateTestPhysics(split, 0.5, {
     onImpact: () => {},
     onSurface: () => {},
   });
@@ -835,7 +867,7 @@ function testMaxSpeedClampIsFrameRateIndependent() {
 function testWallCollisionAppliesTangentialDrag() {
   const marble = { x: 5, y: 50, vx: -4, vy: 10, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -871,7 +903,7 @@ function testWallCollisionAppliesTangentialDrag() {
 function testWorldBoundCollisionBeforeAdjacentObstacle() {
   const marble = { x: 5, y: 50, vx: 0, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -932,7 +964,7 @@ function testMultipleCollisionPassesResolveChainedOverlaps() {
 function testPhysicsSubstepsAreCapped() {
   const marble = { x: 50, y: 50, vx: 1000, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 10000, top: 0, bottom: 200 },
@@ -966,7 +998,7 @@ function testPhysicsSubstepsAreCapped() {
 function testInvalidPhysicsStepInputsDoNotPoisonState() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -997,7 +1029,7 @@ function testInvalidPhysicsStepInputsDoNotPoisonState() {
   assert.equal(Number.isFinite(marble.y), true);
 
   const x = marble.x;
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },
@@ -1029,7 +1061,7 @@ function testInvalidPhysicsStepInputsDoNotPoisonState() {
 function testSubstepsPreventThinObstacleTunneling() {
   const marble = { x: 50, y: 50, vx: 40, vy: 0, r: 10 };
 
-  updatePhysics(
+  updateTestPhysics(
     {
       marble,
       bounds: { left: 0, right: 200, top: 0, bottom: 200 },

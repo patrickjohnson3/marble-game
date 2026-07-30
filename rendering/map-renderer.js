@@ -1,52 +1,26 @@
 export function createTerrainView({
   mapThemeEl,
   mapThemeOverlayEl,
-  gooPatchesEl,
-  hazardPatchesEl,
-  icePatchesEl,
-  roughPatchesEl,
-  waterPatchesEl,
+  terrainContainers = {},
   obstaclesEl,
   goalEl,
   goal,
   mapConfig,
   world,
-  gooPatches = [],
-  gooPatchBounds = null,
-  hazardPatches = [],
-  hazardPatchBounds = null,
-  icePatches,
-  icePatchBounds,
-  roughPatches,
-  roughPatchBounds,
-  waterPatches = [],
-  waterPatchBounds = null,
+  terrainByType = {},
   obstacles,
   obstacleBounds,
-  renderGooPatches: drawGooPatches = () => {},
-  renderHazardPatches: drawHazardPatches = () => {},
-  renderIcePatches: drawIcePatches = () => {},
+  renderTerrainPatches: drawTerrainPatches = () => {},
   renderMapTheme: drawMapTheme = () => {},
   updateMapThemeDynamics: updateThemeDynamics = () => {},
   renderObstacleWalls,
-  renderRoughPatches: drawRoughPatches,
-  renderWaterPatches: drawWaterPatches = () => {},
   goalFillEdgePercent = 70.8,
 }) {
   let currentGoal = goal;
   let currentMapConfig = mapConfig;
-  let currentGooPatches = gooPatches;
-  let currentGooPatchBounds = gooPatchBounds;
-  let currentHazardPatches = hazardPatches;
-  let currentHazardPatchBounds = hazardPatchBounds;
+  let currentTerrainByType = terrainByType;
   let currentObstacles = obstacles;
   let currentObstacleBounds = obstacleBounds;
-  let currentIcePatches = icePatches;
-  let currentIcePatchBounds = icePatchBounds;
-  let currentRoughPatches = roughPatches;
-  let currentRoughPatchBounds = roughPatchBounds;
-  let currentWaterPatches = waterPatches;
-  let currentWaterPatchBounds = waterPatchBounds;
 
   function renderMapTheme() {
     drawMapTheme({
@@ -55,22 +29,6 @@ export function createTerrainView({
       mapConfig: currentMapConfig,
       world,
     });
-  }
-
-  function renderGooPatches() {
-    drawGooPatches(gooPatchesEl, currentGooPatches, currentGooPatchBounds);
-  }
-
-  function renderHazardPatches() {
-    drawHazardPatches(
-      hazardPatchesEl,
-      currentHazardPatches,
-      currentHazardPatchBounds,
-    );
-  }
-
-  function renderIcePatches() {
-    drawIcePatches(icePatchesEl, currentIcePatches, currentIcePatchBounds);
   }
 
   function renderObstacles() {
@@ -82,20 +40,14 @@ export function createTerrainView({
     );
   }
 
-  function renderRoughPatches() {
-    drawRoughPatches(
-      roughPatchesEl,
-      currentRoughPatches,
-      currentRoughPatchBounds,
-    );
-  }
-
-  function renderWaterPatches() {
-    drawWaterPatches(
-      waterPatchesEl,
-      currentWaterPatches,
-      currentWaterPatchBounds,
-    );
+  function renderTerrainPatches() {
+    Object.entries(terrainContainers).forEach(([type, container]) => {
+      const terrain = currentTerrainByType[type] ?? {
+        bounds: null,
+        elements: [],
+      };
+      drawTerrainPatches(type, container, terrain.elements, terrain.bounds);
+    });
   }
 
   function renderGoal() {
@@ -109,98 +61,49 @@ export function createTerrainView({
   function renderTerrain() {
     renderMapTheme();
     renderGoal();
-    renderGooPatches();
-    renderHazardPatches();
-    renderIcePatches();
-    renderRoughPatches();
-    renderWaterPatches();
+    renderTerrainPatches();
     renderObstacles();
   }
 
   function terrainMatches({
     goal,
     mapConfig,
-    gooPatches,
-    gooPatchBounds,
-    hazardPatches,
-    hazardPatchBounds,
-    icePatches,
-    icePatchBounds,
+    terrainByType,
     obstacles,
     obstacleBounds,
-    roughPatches,
-    roughPatchBounds,
-    waterPatches = currentWaterPatches,
-    waterPatchBounds = currentWaterPatchBounds,
   }) {
     return (
       currentGoal === goal &&
       currentMapConfig === mapConfig &&
-      currentGooPatches === gooPatches &&
-      currentGooPatchBounds === gooPatchBounds &&
-      currentHazardPatches === hazardPatches &&
-      currentHazardPatchBounds === hazardPatchBounds &&
-      currentIcePatches === icePatches &&
-      currentIcePatchBounds === icePatchBounds &&
+      currentTerrainByType === terrainByType &&
       currentObstacles === obstacles &&
-      currentObstacleBounds === obstacleBounds &&
-      currentRoughPatches === roughPatches &&
-      currentRoughPatchBounds === roughPatchBounds &&
-      currentWaterPatches === waterPatches &&
-      currentWaterPatchBounds === waterPatchBounds
+      currentObstacleBounds === obstacleBounds
     );
   }
 
   function setTerrain({
     goal,
     mapConfig = currentMapConfig,
-    gooPatches = currentGooPatches,
-    gooPatchBounds = currentGooPatchBounds,
-    hazardPatches = currentHazardPatches,
-    hazardPatchBounds = currentHazardPatchBounds,
-    icePatches,
-    icePatchBounds,
+    terrainByType = currentTerrainByType,
     obstacles,
     obstacleBounds,
-    roughPatches,
-    roughPatchBounds,
-    waterPatches,
-    waterPatchBounds,
   }) {
     if (
       terrainMatches({
         goal,
         mapConfig,
-        gooPatches,
-        gooPatchBounds,
-        hazardPatches,
-        hazardPatchBounds,
-        icePatches,
-        icePatchBounds,
+        terrainByType,
         obstacles,
         obstacleBounds,
-        roughPatches,
-        roughPatchBounds,
-        waterPatches,
-        waterPatchBounds,
       })
     )
       return;
 
     currentGoal = goal;
     currentMapConfig = mapConfig;
-    currentGooPatches = gooPatches;
-    currentGooPatchBounds = gooPatchBounds;
-    currentHazardPatches = hazardPatches;
-    currentHazardPatchBounds = hazardPatchBounds;
-    currentIcePatches = icePatches;
-    currentIcePatchBounds = icePatchBounds;
+    currentTerrainByType = terrainByType;
     currentObstacles = obstacles;
     currentObstacleBounds = obstacleBounds;
-    currentRoughPatches = roughPatches;
-    currentRoughPatchBounds = roughPatchBounds;
-    currentWaterPatches = waterPatches;
-    currentWaterPatchBounds = waterPatchBounds;
     renderTerrain();
   }
 
@@ -224,14 +127,10 @@ export function createTerrainView({
 
   return {
     renderGoal,
-    renderGooPatches,
-    renderHazardPatches,
-    renderIcePatches,
     renderMapTheme,
     renderObstacles,
     renderTerrain,
-    renderRoughPatches,
-    renderWaterPatches,
+    renderTerrainPatches,
     setTerrain,
     updateGoalProgress,
     updateMapThemeDynamics,
