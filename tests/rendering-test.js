@@ -318,8 +318,8 @@ function testKitchenThemeRendersDatedFloorDetails() {
     underlayChildren.filter((child) =>
       child.className.includes("kitchenCheerio"),
     ).length,
-    8,
-    "kitchen floor theme should render scattered cereal",
+    30,
+    "kitchen floor theme should render fistfuls of scattered cereal",
   );
   assert.equal(
     underlayChildren.some((child) =>
