@@ -43,7 +43,7 @@ function appendCircle(parent, className, world, circle) {
   });
 }
 
-function appendKitchenCheerio(parent, world, circle) {
+function appendKitchenCheerio(parent, world, circle, themeState) {
   const radius = 0.00525;
   const element = appendCircle(parent, "kitchenCheerio", world, {
     ...circle,
@@ -58,8 +58,7 @@ function appendKitchenCheerio(parent, world, circle) {
     radius: radius * world.width,
   };
 
-  parent.__kitchenCheerios ??= [];
-  parent.__kitchenCheerios.push(state);
+  themeState.kitchenCheerios.push(state);
 }
 
 function appendFloor(parent, theme, world) {
@@ -108,7 +107,7 @@ function renderHockeyRink({ underlay, overlay, world }) {
   );
 }
 
-function renderKitchenFloor({ underlay, overlay, world }) {
+function renderKitchenFloor({ underlay, overlay, themeState, world }) {
   appendFloor(underlay, "kitchenFloor", world);
   [
     { x: 0.18, y: 0.31, w: 0.05, h: 0.05 },
@@ -157,7 +156,9 @@ function renderKitchenFloor({ underlay, overlay, world }) {
     { x: 0.83, y: 0.71 },
     { x: 0.86, y: 0.59 },
     { x: 0.88, y: 0.67 },
-  ].forEach((circle) => appendKitchenCheerio(overlay, world, circle));
+  ].forEach((circle) =>
+    appendKitchenCheerio(overlay, world, circle, themeState),
+  );
   appendBox(underlay, "kitchenCleanerSpill", world, {
     x: 0.2,
     y: 0.74,
@@ -320,14 +321,14 @@ function cheerioSurfaceInfluence(point, elements = []) {
 }
 
 export function updateMapThemeDynamics({
-  overlayContainer,
   mapConfig,
   marble,
   previousMarble = marble,
+  themeState,
 }) {
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return;
 
-  const cheerios = overlayContainer?.children?.[0]?.__kitchenCheerios ?? [];
+  const cheerios = themeState?.kitchenCheerios ?? [];
 
   cheerios.forEach((cheerio) => {
     const { originX, originY, radius, pushX, pushY } = cheerio;
@@ -373,10 +374,12 @@ export function renderMapTheme({
   container,
   overlayContainer,
   mapConfig,
+  themeState = {},
   world = mapConfig?.world,
 }) {
   container.replaceChildren();
   overlayContainer.replaceChildren();
+  themeState.kitchenCheerios = [];
   const theme = mapConfig?.theme;
   if (!theme || !renderers[theme] || !world) return;
 
@@ -387,7 +390,7 @@ export function renderMapTheme({
   underlay.setAttribute("aria-hidden", "true");
   overlay.setAttribute("aria-hidden", "true");
 
-  renderers[theme]({ overlay, underlay, world });
+  renderers[theme]({ overlay, underlay, themeState, world });
   container.replaceChildren(underlay);
   overlayContainer.replaceChildren(overlay);
 }

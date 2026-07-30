@@ -340,12 +340,14 @@ testKitchenThemeRendersDatedFloorDetails();
 function testKitchenCheeriosGiveWayToMarble() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
+  const themeState = {};
 
   withFakeDocument(() => {
     renderMapTheme({
       container,
       overlayContainer,
       mapConfig: { theme: "kitchenFloor" },
+      themeState,
       world: { width: 4400, height: 4400 },
     });
   });
@@ -353,7 +355,7 @@ function testKitchenCheeriosGiveWayToMarble() {
   const cheerio = overlayContainer.children[0].children.find((child) =>
     child.className.includes("kitchenCheerio"),
   );
-  const cheerioState = overlayContainer.children[0].__kitchenCheerios.find(
+  const cheerioState = themeState.kitchenCheerios.find(
     (state) => state.element === cheerio,
   );
   const marble = {
@@ -369,6 +371,7 @@ function testKitchenCheeriosGiveWayToMarble() {
     overlayContainer,
     mapConfig: { theme: "kitchenFloor" },
     marble,
+    themeState,
   });
 
   assert.notEqual(
@@ -386,24 +389,29 @@ function testKitchenCheeriosGiveWayToMarble() {
 testKitchenCheeriosGiveWayToMarble();
 
 function firstKitchenCheerio({ container, overlayContainer }) {
+  const themeState = {};
+
   withFakeDocument(() => {
     renderMapTheme({
       container,
       overlayContainer,
       mapConfig: { theme: "kitchenFloor" },
+      themeState,
       world: { width: 4400, height: 4400 },
     });
   });
 
-  return overlayContainer.children[0].children.find((child) =>
+  const cheerio = overlayContainer.children[0].children.find((child) =>
     child.className.includes("kitchenCheerio"),
   );
-}
-
-function shovedDistance(cheerio) {
-  const state = cheerio.parent.__kitchenCheerios.find(
+  const state = themeState.kitchenCheerios.find(
     (candidate) => candidate.element === cheerio,
   );
+
+  return { cheerio, state, themeState };
+}
+
+function shovedDistance({ state }) {
   return Math.hypot(state.pushX, state.pushY);
 }
 
@@ -421,8 +429,8 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
     overlayContainer: gooOverlay,
   });
   const origin = {
-    x: waterCheerio.parent.__kitchenCheerios[0].originX,
-    y: waterCheerio.parent.__kitchenCheerios[0].originY,
+    x: waterCheerio.state.originX,
+    y: waterCheerio.state.originY,
   };
   const patch = {
     x: origin.x - 10,
@@ -440,6 +448,7 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
       elements: [{ ...patch, type: "waterPatch" }],
     },
     marble,
+    themeState: waterCheerio.themeState,
   });
   updateMapThemeDynamics({
     container: gooContainer,
@@ -449,6 +458,7 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
       elements: [{ ...patch, type: "gooPatch" }],
     },
     marble,
+    themeState: gooCheerio.themeState,
   });
 
   assert.equal(
@@ -463,10 +473,10 @@ testKitchenCheerioShoveRespondsToTerrainPatch();
 function testKitchenCheerioUsesActualPreviousMarblePosition() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
-  const cheerio = firstKitchenCheerio({ container, overlayContainer });
-  const state = cheerio.parent.__kitchenCheerios.find(
-    (candidate) => candidate.element === cheerio,
-  );
+  const { state, themeState } = firstKitchenCheerio({
+    container,
+    overlayContainer,
+  });
   const previousMarble = {
     x: state.originX - 80,
     y: state.originY,
@@ -485,6 +495,7 @@ function testKitchenCheerioUsesActualPreviousMarblePosition() {
     mapConfig: { theme: "kitchenFloor" },
     marble,
     previousMarble,
+    themeState,
   });
 
   assert.notEqual(

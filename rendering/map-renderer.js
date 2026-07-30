@@ -21,12 +21,14 @@ export function createTerrainView({
   let currentTerrainByType = terrainByType;
   let currentObstacles = obstacles;
   let currentObstacleBounds = obstacleBounds;
+  const themeState = {};
 
   function renderMapTheme() {
     drawMapTheme({
       container: mapThemeEl,
       overlayContainer: mapThemeOverlayEl,
       mapConfig: currentMapConfig,
+      themeState,
       world,
     });
   }
@@ -96,6 +98,7 @@ export function createTerrainView({
       mapConfig: currentMapConfig,
       marble,
       previousMarble,
+      themeState,
     });
   }
 
