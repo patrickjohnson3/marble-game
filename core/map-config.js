@@ -1,15 +1,17 @@
-import { generateProceduralMapVariants } from "./procedural-generator.js";
 import { resolveSeededMapConfig } from "./map-variants.js";
-import { mapVariants as authoredMapVariants } from "../maps/map-data.js";
+import { mapVariants as staticMapVariants } from "../maps/map-data.js";
 
-export { authoredMapVariants };
+const frozenGeneratedVariantId = /^generated-\d+-\d+$/;
+
+export const authoredMapVariants = staticMapVariants.filter(
+  (variant) => !frozenGeneratedVariantId.test(variant.id),
+);
 
 const mapScale = 2;
-const generatedVariantCount = 6;
 
 const baseMapDefaults = {
   seed: "kitchen-floor",
-  variants: authoredMapVariants,
+  variants: staticMapVariants,
   world: {
     width: 2200 * mapScale,
     height: 2200 * mapScale,
@@ -48,14 +50,7 @@ const baseMapDefaults = {
   },
 };
 
-export const mapVariants = [
-  ...authoredMapVariants,
-  ...generateProceduralMapVariants({
-    baseMapConfig: baseMapDefaults,
-    count: generatedVariantCount,
-    seed: "procedural",
-  }),
-];
+export const mapVariants = staticMapVariants;
 
 export const baseMapConfig = {
   ...baseMapDefaults,

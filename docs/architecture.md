@@ -170,8 +170,8 @@ velocity when moving into the obstacle, and sends impact strength to the
 feedback pipeline. Bounds are resolved before obstacles on each pass.
 
 The physics context is reused across frames in `app.js`; only the map-dependent
-arrays and spatial indexes are refreshed before each physics update. Scratch
-arrays and sets are also reused to avoid hot-loop allocation.
+arrays are refreshed before each physics update. Small scratch objects are also
+reused to avoid hot-loop allocation.
 
 ## Render Pipeline
 
@@ -212,17 +212,17 @@ Map configuration starts in `maps/map-data.js` and is assembled in
 The map system supports:
 
 - authored variants
-- procedural variants
+- frozen generated variants
 - variant selection by id or seed
-- validation before advancing maps
-- derived runtime arrays and spatial indexes
+- validation in tests/development checks
+- derived runtime arrays
 
 Key modules:
 
-- `core/map-config.js`: combines map data, base config, defaults, and generated
-  variants.
-- `core/procedural-generator.js`: creates deterministic generated variants from
-  templates and seed values.
+- `core/map-config.js`: combines map data, base config, defaults, and frozen
+  generated variants.
+- `core/procedural-generator.js`: development/test utility for deterministic
+  generated variants from templates and seed values.
 - `core/map-variants.js`: resolves/selects active variants.
 - `core/map-validation.js`: validates map shape and required fields.
 - `core/map-runtime.js`: owns derived active-map state used by rendering,
@@ -303,8 +303,8 @@ Ownership model:
 - `state.intro`: updated by lifecycle, intro sequence, and map controller.
 - `state.game`: updated by lifecycle/startup and read by most controllers.
 - `state.physics`: updated by settings applier and read by physics.
-- `mapRuntime.state`: active map, derived element arrays, spatial indexes,
-  spawn, goal, and goal hold progress.
+- `mapRuntime.state`: active map, derived element arrays, spawn, goal, and goal
+  hold progress.
 - `settings`: runtime settings loaded from persisted settings and mutated by
   the settings panel.
 
@@ -338,7 +338,7 @@ Use this section when deciding where a change belongs.
 - `core/map-config.js`: resolved map config and combined variants.
 - `core/map-elements.js`: element type filters.
 - `core/map-obstacles.js`: obstacle snapping and joining.
-- `core/map-progression.js`: next-map selection and validation on completion.
+- `core/map-progression.js`: next-map selection on completion.
 - `core/map-reachability.js`: map playability/reachability helpers.
 - `core/map-runtime.js`: active-map derived state and goal progress state.
 - `core/map-validation.js` and `core/map-validation-messages.js`: map schema
@@ -346,7 +346,7 @@ Use this section when deciding where a change belongs.
 - `core/map-variants.js`: variant hashing, selection, and resolution.
 - `core/physics.js`: input smoothing, velocity, drag, substeps, surfaces.
 - `core/physics-collisions.js`: wall and obstacle collision resolution.
-- `core/procedural-generator.js`: deterministic procedural variant generation.
+- `core/procedural-generator.js`: development/test procedural variant utility.
 - `core/rect-bounds.js`: rectangle collection bounds.
 - `core/startup-flow.js`: permission/fullscreen/wake-lock startup path.
 - `core/state.js`: initial mutable state shape.
