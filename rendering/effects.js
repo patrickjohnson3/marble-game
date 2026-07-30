@@ -43,21 +43,37 @@ export function createEffectsRenderer({
   let lastGooSplatAt = Number.NEGATIVE_INFINITY;
   let lastSurfaceAt = 0;
   let lastWaterRippleAt = Number.NEGATIVE_INFINITY;
+  const activeParticles = [];
   const direction = { x: 0, y: -1 };
+  const freeParticles = [];
   const sideways = { x: 1, y: 0 };
   const cleanupTimers = createTimeoutRegistry();
 
+  function acquireParticle() {
+    return freeParticles.pop() ?? document.createElement("i");
+  }
+
+  function releaseParticle(particle) {
+    const activeIndex = activeParticles.indexOf(particle);
+    if (activeIndex < 0) return;
+
+    activeParticles.splice(activeIndex, 1);
+    particle.remove();
+    freeParticles.push(particle);
+  }
+
   function spawn(className, style, lifeMs) {
-    while (effectsEl.childNodes.length >= config.maxParticles) {
-      effectsEl.firstChild.remove();
+    while (activeParticles.length >= config.maxParticles) {
+      releaseParticle(activeParticles[0]);
     }
-    const particle = document.createElement("i");
+    const particle = acquireParticle();
     particle.className = "effectParticle " + className;
     particle.setAttribute("aria-hidden", "true");
     particle.style.cssText = style;
     effectsEl.appendChild(particle);
+    activeParticles.push(particle);
     cleanupTimers.schedule(() => {
-      particle.remove();
+      releaseParticle(particle);
     }, lifeMs);
   }
 
@@ -227,6 +243,9 @@ export function createEffectsRenderer({
 
   function clear() {
     cleanupTimers.clearAll();
+    while (activeParticles.length > 0) {
+      releaseParticle(activeParticles[0]);
+    }
     effectsEl.replaceChildren();
     lastImpactAt = Number.NEGATIVE_INFINITY;
     lastGooSplatAt = Number.NEGATIVE_INFINITY;
