@@ -1,4 +1,4 @@
-import { createCanvas } from "./wall-rendering.js";
+import { renderPatchCanvas } from "./wall-rendering.js";
 
 function drawWaterRipple(context, patch, xRatio, yRatio, radiusRatio, alpha) {
   const radius = Math.min(patch.w, patch.h) * radiusRatio;
@@ -101,18 +101,11 @@ export function renderWaterPatches(
   waterPatches,
   { bounds, padding = 0 } = {},
 ) {
-  if (!Array.isArray(waterPatches) || waterPatches.length === 0) {
-    container.replaceChildren();
-    return;
-  }
-
-  const { canvas, context } = createCanvas(
-    "waterPatchCanvas",
-    waterPatches,
-    padding,
+  renderPatchCanvas(container, waterPatches, {
     bounds,
-  );
-  canvas.setAttribute("data-water-patches", String(waterPatches.length));
-  if (context) waterPatches.forEach((patch) => drawWaterPatch(context, patch));
-  container.replaceChildren(canvas);
+    className: "waterPatchCanvas",
+    dataAttribute: "data-water-patches",
+    drawPatch: drawWaterPatch,
+    padding,
+  });
 }

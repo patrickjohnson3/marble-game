@@ -1,4 +1,4 @@
-import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
+import { drawRoundedRect, renderPatchCanvas } from "./wall-rendering.js";
 
 function drawHazardPatch(context, patch) {
   const radius = 8;
@@ -43,19 +43,11 @@ export function renderHazardPatches(
   hazardPatches,
   { bounds, padding = 0 } = {},
 ) {
-  if (!Array.isArray(hazardPatches) || hazardPatches.length === 0) {
-    container.replaceChildren();
-    return;
-  }
-
-  const { canvas, context } = createCanvas(
-    "hazardPatchCanvas",
-    hazardPatches,
-    padding,
+  renderPatchCanvas(container, hazardPatches, {
     bounds,
-  );
-  canvas.setAttribute("data-hazard-patches", String(hazardPatches.length));
-  if (context)
-    hazardPatches.forEach((patch) => drawHazardPatch(context, patch));
-  container.replaceChildren(canvas);
+    className: "hazardPatchCanvas",
+    dataAttribute: "data-hazard-patches",
+    drawPatch: drawHazardPatch,
+    padding,
+  });
 }

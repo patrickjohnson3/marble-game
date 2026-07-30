@@ -1,4 +1,4 @@
-import { createCanvas } from "./wall-rendering.js";
+import { renderPatchCanvas } from "./wall-rendering.js";
 
 function gooNoise(x, y, salt = 0) {
   return (
@@ -99,18 +99,11 @@ export function renderGooPatches(
   gooPatches,
   { bounds, padding = 0 } = {},
 ) {
-  if (!Array.isArray(gooPatches) || gooPatches.length === 0) {
-    container.replaceChildren();
-    return;
-  }
-
-  const { canvas, context } = createCanvas(
-    "gooPatchCanvas",
-    gooPatches,
-    padding,
+  renderPatchCanvas(container, gooPatches, {
     bounds,
-  );
-  canvas.setAttribute("data-goo-patches", String(gooPatches.length));
-  if (context) gooPatches.forEach((patch) => drawGooPatch(context, patch));
-  container.replaceChildren(canvas);
+    className: "gooPatchCanvas",
+    dataAttribute: "data-goo-patches",
+    drawPatch: drawGooPatch,
+    padding,
+  });
 }

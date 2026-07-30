@@ -49,6 +49,22 @@ function drawRoundedRect(context, rect, radius) {
   context.rect(rect.x, rect.y, rect.w, rect.h);
 }
 
+function renderPatchCanvas(
+  container,
+  patches,
+  { bounds, className, dataAttribute, drawPatch, padding = 0 } = {},
+) {
+  if (!Array.isArray(patches) || patches.length === 0) {
+    container.replaceChildren();
+    return;
+  }
+
+  const { canvas, context } = createCanvas(className, patches, padding, bounds);
+  canvas.setAttribute(dataAttribute, String(patches.length));
+  if (context) patches.forEach((patch) => drawPatch(context, patch));
+  container.replaceChildren(canvas);
+}
+
 function wallFrameGeometry(walls) {
   if (!Array.isArray(walls) || walls.length === 0) return null;
 
@@ -163,4 +179,4 @@ export function renderOuterWalls(container, walls) {
   container.replaceChildren(canvas);
 }
 
-export { createCanvas, drawRoundedRect, rectBounds };
+export { createCanvas, drawRoundedRect, rectBounds, renderPatchCanvas };

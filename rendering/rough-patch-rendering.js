@@ -1,4 +1,4 @@
-import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
+import { drawRoundedRect, renderPatchCanvas } from "./wall-rendering.js";
 
 function patchDotOffset(x, y, salt = 0) {
   return (
@@ -119,18 +119,11 @@ export function renderRoughPatches(
   roughPatches,
   { bounds, padding = 0 } = {},
 ) {
-  if (!Array.isArray(roughPatches) || roughPatches.length === 0) {
-    container.replaceChildren();
-    return;
-  }
-
-  const { canvas, context } = createCanvas(
-    "roughPatchCanvas",
-    roughPatches,
-    padding,
+  renderPatchCanvas(container, roughPatches, {
     bounds,
-  );
-  canvas.setAttribute("data-rough-patches", String(roughPatches.length));
-  if (context) roughPatches.forEach((patch) => drawRoughPatch(context, patch));
-  container.replaceChildren(canvas);
+    className: "roughPatchCanvas",
+    dataAttribute: "data-rough-patches",
+    drawPatch: drawRoughPatch,
+    padding,
+  });
 }

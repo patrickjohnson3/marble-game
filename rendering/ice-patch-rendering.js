@@ -1,4 +1,4 @@
-import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
+import { drawRoundedRect, renderPatchCanvas } from "./wall-rendering.js";
 
 function patchNoise(x, y, salt = 0) {
   return (
@@ -140,18 +140,11 @@ export function renderIcePatches(
   icePatches,
   { bounds, padding = 0 } = {},
 ) {
-  if (!Array.isArray(icePatches) || icePatches.length === 0) {
-    container.replaceChildren();
-    return;
-  }
-
-  const { canvas, context } = createCanvas(
-    "icePatchCanvas",
-    icePatches,
-    padding,
+  renderPatchCanvas(container, icePatches, {
     bounds,
-  );
-  canvas.setAttribute("data-ice-patches", String(icePatches.length));
-  if (context) icePatches.forEach((patch) => drawIcePatch(context, patch));
-  container.replaceChildren(canvas);
+    className: "icePatchCanvas",
+    dataAttribute: "data-ice-patches",
+    drawPatch: drawIcePatch,
+    padding,
+  });
 }
