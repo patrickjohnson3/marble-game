@@ -1,11 +1,10 @@
 import { resolveSeededMapConfig } from "./map-variants.js";
-import { mapVariants as staticMapVariants } from "../maps/map-data.js";
+import {
+  authoredMapVariants,
+  mapVariants as staticMapVariants,
+} from "../maps/map-data.js";
 
-const frozenGeneratedVariantId = /^generated-\d+-\d+$/;
-
-export const authoredMapVariants = staticMapVariants.filter(
-  (variant) => !frozenGeneratedVariantId.test(variant.id),
-);
+export { authoredMapVariants };
 
 const mapScale = 2;
 

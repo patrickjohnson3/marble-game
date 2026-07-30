@@ -186,7 +186,7 @@ const sandLotElements = [
   { type: "icePatch", x: 1660, y: 760, w: 200, h: 160 },
 ];
 
-const staticProceduralVariants = [
+export const frozenGeneratedMapVariants = [
   {
     id: "generated-1-0",
     difficulty: 1,
@@ -292,7 +292,7 @@ const staticProceduralVariants = [
   },
 ];
 
-export const mapVariants = [
+export const authoredMapVariants = [
   {
     id: "kitchen-floor",
     name: "kitchen floor",
@@ -352,5 +352,9 @@ export const mapVariants = [
     goal: scaleMapPoint({ x: 1840, y: 1850, r: 95, holdMs: 5000 }),
     elements: trimScaledObstacleJoinOverhangs(generatedOneElements),
   },
-  ...staticProceduralVariants,
+];
+
+export const mapVariants = [
+  ...authoredMapVariants,
+  ...frozenGeneratedMapVariants,
 ];
