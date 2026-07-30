@@ -561,12 +561,14 @@ export function createApp({
 
   function setCurrentMap(nextMap) {
     mapRuntime.setActiveMap(nextMap);
+    mapRenderer.setWorld(mapState.world);
     terrainView.setTerrain({
       goal: mapState.goal,
       mapConfig: mapState.activeMap,
       terrainByType: mapState.terrainByType,
       obstacles: mapState.obstacles,
       obstacleBounds: mapState.obstacleBounds,
+      world: mapState.world,
     });
   }
 

@@ -21,6 +21,7 @@ export function createTerrainView({
   let currentTerrainByType = terrainByType;
   let currentObstacles = obstacles;
   let currentObstacleBounds = obstacleBounds;
+  let currentWorld = world;
   const themeState = {};
 
   function renderMapTheme() {
@@ -29,7 +30,7 @@ export function createTerrainView({
       overlayContainer: mapThemeOverlayEl,
       mapConfig: currentMapConfig,
       themeState,
-      world,
+      world: currentWorld,
     });
   }
 
@@ -73,12 +74,14 @@ export function createTerrainView({
     terrainByType = currentTerrainByType,
     obstacles,
     obstacleBounds,
+    world = currentWorld,
   }) {
     currentGoal = goal;
     currentMapConfig = mapConfig;
     currentTerrainByType = terrainByType;
     currentObstacles = obstacles;
     currentObstacleBounds = obstacleBounds;
+    currentWorld = world;
     renderTerrain();
   }
 
@@ -131,27 +134,36 @@ export function createMapRenderer({
   setReleasedMapBounds,
   updateIntroMapBounds,
 }) {
+  let currentWorld = world;
+
   function updateIntroBounds() {
     updateIntroMapBounds({
       bounds,
       intro,
       marble,
       viewport: { width: viewport.width(), height: viewport.height() },
-      world,
+      world: currentWorld,
     });
     renderOuterWalls(introWallsEl, introPenWalls(bounds, intro));
   }
 
   function setReleasedBounds() {
-    setReleasedMapBounds(bounds, world);
+    setReleasedMapBounds(bounds, currentWorld);
+  }
+
+  function renderWorldFrame() {
+    worldEl.style.width = currentWorld.width + "px";
+    worldEl.style.height = currentWorld.height + "px";
+    trailEl.setAttribute(
+      "viewBox",
+      "0 0 " + currentWorld.width + " " + currentWorld.height,
+    );
+    renderOuterWalls(mapWallsEl, mapEdgeWalls(currentWorld, intro));
   }
 
   function setup() {
-    worldEl.style.width = world.width + "px";
-    worldEl.style.height = world.height + "px";
-    trailEl.setAttribute("viewBox", "0 0 " + world.width + " " + world.height);
+    renderWorldFrame();
     setReleasedBounds();
-    renderOuterWalls(mapWallsEl, mapEdgeWalls(world, intro));
     terrainView.renderTerrain();
     updateIntroBounds();
   }
@@ -168,10 +180,17 @@ export function createMapRenderer({
     updateIntroBounds();
   }
 
+  function setWorld(nextWorld) {
+    currentWorld = nextWorld;
+    renderWorldFrame();
+    setReleasedBounds();
+  }
+
   return {
     openMap,
     resetIntroPen,
     setReleasedBounds,
+    setWorld,
     setup,
     updateIntroBounds,
   };

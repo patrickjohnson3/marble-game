@@ -10,7 +10,10 @@ import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import { renderWaterPatches } from "../rendering/water-patch-rendering.js";
 import { renderOuterWalls } from "../rendering/wall-rendering.js";
-import { createTerrainView } from "../rendering/map-renderer.js";
+import {
+  createMapRenderer,
+  createTerrainView,
+} from "../rendering/map-renderer.js";
 import { createMarbleView } from "../rendering/marble-view.js";
 import { createUi } from "../rendering/ui.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
@@ -639,6 +642,82 @@ function testTerrainViewRedrawsWhenTerrainIsSet() {
 }
 
 testTerrainViewRedrawsWhenTerrainIsSet();
+
+function testTerrainViewUsesUpdatedWorld() {
+  const renderedWorlds = [];
+  const goal = { x: 100, y: 120, r: 50 };
+  const terrainView = createTerrainView({
+    mapThemeEl: new FakeElement(),
+    mapThemeOverlayEl: new FakeElement(),
+    terrainContainers: {},
+    obstaclesEl: new FakeElement(),
+    goalEl: new FakeElement(),
+    goal,
+    world: { width: 100, height: 100 },
+    terrainByType: {},
+    obstacles: [],
+    obstacleBounds: null,
+    renderMapTheme({ world }) {
+      renderedWorlds.push(world);
+    },
+    renderObstacleWalls() {},
+  });
+  const nextWorld = { width: 220, height: 330 };
+
+  terrainView.renderTerrain();
+  terrainView.setTerrain({
+    goal,
+    obstacles: [],
+    obstacleBounds: null,
+    terrainByType: {},
+    world: nextWorld,
+  });
+
+  assert.deepEqual(renderedWorlds, [{ width: 100, height: 100 }, nextWorld]);
+}
+
+testTerrainViewUsesUpdatedWorld();
+
+function testMapRendererUsesUpdatedWorld() {
+  const worldEl = new FakeElement();
+  const trailEl = new FakeElement();
+  const releasedWorlds = [];
+  const edgeWorlds = [];
+  const renderer = createMapRenderer({
+    worldEl,
+    introWallsEl: new FakeElement(),
+    mapWallsEl: new FakeElement(),
+    trailEl,
+    bounds: {},
+    intro: {},
+    marble: {},
+    world: { width: 100, height: 120 },
+    viewport: { width: () => 50, height: () => 60 },
+    terrainView: { renderTerrain() {} },
+    renderOuterWalls() {},
+    introPenWalls: () => [],
+    mapEdgeWalls: (world) => {
+      edgeWorlds.push(world);
+      return [];
+    },
+    setReleasedMapBounds: (bounds, world) => {
+      releasedWorlds.push(world);
+    },
+    updateIntroMapBounds() {},
+  });
+  const nextWorld = { width: 240, height: 360 };
+
+  renderer.setup();
+  renderer.setWorld(nextWorld);
+
+  assert.equal(worldEl.style.width, "240px");
+  assert.equal(worldEl.style.height, "360px");
+  assert.equal(trailEl.attributes.viewBox, "0 0 240 360");
+  assert.deepEqual(releasedWorlds.at(-1), nextWorld);
+  assert.deepEqual(edgeWorlds.at(-1), nextWorld);
+}
+
+testMapRendererUsesUpdatedWorld();
 
 const originalDocument = globalThis.document;
 
