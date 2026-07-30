@@ -534,7 +534,7 @@ function testKitchenObstaclesRenderAsFixtures() {
 
 testKitchenObstaclesRenderAsFixtures();
 
-function testTerrainViewSkipsUnchangedTerrainRedraw() {
+function testTerrainViewRedrawsWhenTerrainIsSet() {
   let obstacleRenderCount = 0;
   let terrainRenderCount = 0;
   const goal = { x: 100, y: 120, r: 50 };
@@ -584,11 +584,11 @@ function testTerrainViewSkipsUnchangedTerrainRedraw() {
     terrainByType,
   });
 
-  assert.equal(obstacleRenderCount, 1);
-  assert.equal(terrainRenderCount, 1);
+  assert.equal(obstacleRenderCount, 2);
+  assert.equal(terrainRenderCount, 2);
 }
 
-testTerrainViewSkipsUnchangedTerrainRedraw();
+testTerrainViewRedrawsWhenTerrainIsSet();
 
 const originalDocument = globalThis.document;
 

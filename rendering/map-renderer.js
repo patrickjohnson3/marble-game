@@ -65,22 +65,6 @@ export function createTerrainView({
     renderObstacles();
   }
 
-  function terrainMatches({
-    goal,
-    mapConfig,
-    terrainByType,
-    obstacles,
-    obstacleBounds,
-  }) {
-    return (
-      currentGoal === goal &&
-      currentMapConfig === mapConfig &&
-      currentTerrainByType === terrainByType &&
-      currentObstacles === obstacles &&
-      currentObstacleBounds === obstacleBounds
-    );
-  }
-
   function setTerrain({
     goal,
     mapConfig = currentMapConfig,
@@ -88,17 +72,6 @@ export function createTerrainView({
     obstacles,
     obstacleBounds,
   }) {
-    if (
-      terrainMatches({
-        goal,
-        mapConfig,
-        terrainByType,
-        obstacles,
-        obstacleBounds,
-      })
-    )
-      return;
-
     currentGoal = goal;
     currentMapConfig = mapConfig;
     currentTerrainByType = terrainByType;
