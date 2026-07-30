@@ -358,7 +358,7 @@ function bindViewportEvents({
   documentRef.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
 }
 
-function createCurrentPhysicsContext({ state, mapState }) {
+function createCurrentPhysicsContext(state, mapState) {
   const { bounds, camera, game, input, intro, marble, physics } = state;
   const { keyboard, tilt } = input;
   const physicsContext = {
@@ -413,7 +413,7 @@ function mapLevelLabel(mapConfig) {
   return mapConfig.name ? level + ": " + mapConfig.name : level;
 }
 
-function createBestTimeUi({ storage, ui }) {
+function createBestTimeUi(storage, ui) {
   function setMapBestTime(mapConfig) {
     ui.setBestTimeLabel(
       bestTimeLabel(loadBestTime(storage, mapConfig.variantId)),
@@ -492,7 +492,7 @@ export function createApp({
   });
   const frameLoop = createFrameLoop();
   const viewport = createViewport(windowRef);
-  const bestTimes = createBestTimeUi({ storage, ui });
+  const bestTimes = createBestTimeUi(storage, ui);
 
   function scheduleFrame() {
     frameLoop.schedule();
@@ -714,10 +714,7 @@ export function createApp({
     requestRender,
   });
 
-  const currentPhysicsContext = createCurrentPhysicsContext({
-    state,
-    mapState,
-  });
+  const currentPhysicsContext = createCurrentPhysicsContext(state, mapState);
 
   gameLoop = createGameLoop({
     cameraController,
