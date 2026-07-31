@@ -1267,6 +1267,16 @@ function testPhysicsSubstepCountUsesIncomingSpeed() {
   );
 }
 
+function testPhysicsSubstepCountFallsBackFromInvalidTuning() {
+  assert.equal(
+    physicsSubstepCount(12, 1, {
+      maxStepDistance: 0,
+      maxPhysicsSubsteps: Number.NaN,
+    }),
+    12,
+  );
+}
+
 function testInvalidPhysicsStepInputsDoNotPoisonState() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
 
@@ -1410,6 +1420,7 @@ testWorldBoundCollisionBeforeAdjacentObstacle();
 testMultipleCollisionPassesResolveChainedOverlaps();
 testPhysicsSubstepsAreCapped();
 testPhysicsSubstepCountUsesIncomingSpeed();
+testPhysicsSubstepCountFallsBackFromInvalidTuning();
 testInvalidPhysicsStepInputsDoNotPoisonState();
 testSubstepsPreventThinObstacleTunneling();
 
