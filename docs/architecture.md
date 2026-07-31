@@ -34,8 +34,8 @@ The entrypoint is intentionally small:
 2. `boot.js` calls `createApp()`.
 3. `createApp()` gathers DOM references with `createDomElements()`.
 4. `createMapRuntime()` derives the active map state from `resolvedMapConfig`.
-   This produces filtered terrain arrays, obstacle arrays, bounds, spatial
-   indexes, spawn, goal, and active map metadata.
+   This produces filtered terrain arrays, obstacle arrays, bounds, spawn, goal,
+   and active map metadata.
 5. `createGameState()` creates the mutable runtime state object: marble,
    bounds, intro, input, camera, haptics, game phase, and physics tuning.
 6. Settings are loaded from `localStorage` with `loadSettings()`, copied into a
@@ -144,25 +144,24 @@ Each active frame does:
    - rejects invalid or non-positive `dt`
    - computes substeps from speed, `maxStepDistance`, and
      `maxPhysicsSubsteps`
-   - precomputes frame-rate independent drag and max-speed easing factors
+   - precomputes frame-rate independent drag and soft speed-cap factors
    - runs `physicsStep()` one or more times
 
 Inside one `physicsStep()`:
 
-1. Query ice candidates from the spatial index.
+1. Check whether the marble starts the substep over ice.
 2. Apply acceleration from smoothed tilt.
 3. Apply ice or base drag.
-4. Ease velocity down if it exceeds max speed.
+4. Apply the soft speed cap if velocity exceeds max speed.
 5. Zero tiny drift when both speed and tilt are below settle thresholds.
-6. Query rough-patch candidates using a swept circle between old and predicted
-   marble positions.
-7. Check rough-patch contact before movement.
-8. Move the marble.
-9. Check rough-patch contact after movement.
-10. Apply rough-patch drag if either check touched rough terrain.
-11. Query obstacle candidates from the spatial index.
-12. Resolve world bounds and obstacle collisions in `handleWallCollisions()`.
-13. Emit surface feedback for rough patches.
+6. Record the pre-move marble position for terrain sweep checks.
+7. Move the marble.
+8. Sweep the marble segment against goo, rough, water, and hazard patches.
+9. Resolve the current surface using priority:
+   goo, rough, water, ice, floor.
+10. Apply post-move drag for goo, rough, and water patches.
+11. Resolve world bounds and obstacle collisions in `handleWallCollisions()`.
+12. Emit hazard, terrain-change, surface, haptic, and visual feedback.
 
 Collision handling uses circle-rectangle contact from `core/geometry.js`.
 Obstacle collision pushes the marble out along the contact normal, reflects
@@ -183,12 +182,16 @@ Static or rarely changing map visuals:
   walls, sets released bounds, and opens/resets the intro pen.
 - `createTerrainView()` owns the current terrain references and renders:
   - goal DOM position and size
+  - map theme underlay and overlay
+  - goo patch canvas output
+  - hazard patch canvas output
   - ice patch canvas output
   - rough patch canvas output
+  - water patch canvas output
   - obstacle wall canvas output
 - `renderOuterWalls()` draws the outside boundary.
-- `renderObstacleWalls()`, `renderRoughPatches()`, and `renderIcePatches()`
-  draw their respective map layers.
+- Terrain-specific canvas renderers draw their respective map layers:
+  goo, hazard, ice, rough, and water.
 
 Per-frame visuals:
 
@@ -283,7 +286,7 @@ platform supports `navigator.vibrate` and haptics are enabled.
 Feedback sources:
 
 - obstacle and wall impacts from `createGameLoop().onImpact()`
-- rough-patch surface contact from `createGameLoop().onSurface()`
+- goo, rough, and water surface contact from `createGameLoop().onSurface()`
 - goal enter/hold/complete events from `createGoalController()`
 
 Haptics are intentionally best-effort. Lack of support or blocked vibration
@@ -317,8 +320,6 @@ Use this section when deciding where a change belongs.
 - `app.js`: composition root. Wires modules together. Avoid putting gameplay
   rules here unless they are orchestration rules.
 - `boot.js`: browser entrypoint only.
-- `core/app-map-controller.js`: applies active maps to renderers and resets map
-  play state.
 - `core/camera.js`: camera transform, follow behavior, and gesture delegation.
 - `core/camera-gestures.js`: pointer gesture math for camera zoom/pan behavior.
 - `core/copy.js`: user-facing strings.
@@ -362,7 +363,7 @@ Add or tune a surface:
 
 1. Add or adjust map element data.
 2. Update `core/map-elements.js` if the type is new.
-3. Update `core/map-runtime.js` to derive arrays, bounds, and indexes.
+3. Update `core/map-runtime.js` to derive arrays and bounds.
 4. Update `core/physics.js` if the surface affects motion.
 5. Add a renderer under `rendering/`.
 6. Add validation in `core/map-validation.js`.
