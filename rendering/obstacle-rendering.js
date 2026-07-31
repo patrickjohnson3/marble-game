@@ -145,13 +145,6 @@ function applyRectStyle(element, rect) {
   element.style.height = rect.h + "px";
 }
 
-function kitchenFixtureClass(rect) {
-  const aspect = rect.w / rect.h;
-  if (aspect >= 2.5 || aspect <= 0.4) return "kitchenCabinetRun";
-  if (rect.w >= 500 || rect.h >= 500) return "kitchenApplianceBlock";
-  return "kitchenTableBlock";
-}
-
 function isForkFixture(rect) {
   return rect.fixture === "fork";
 }
@@ -180,20 +173,11 @@ function appendKitchenForkSprite(layer, forkParts) {
 
 function renderKitchenObstacleWalls(container, obstacles) {
   const layer = document.createElement("div");
-  const obstacleGroups = connectedRectGroups(obstacles);
   const forkParts = obstacles.filter(isForkFixture);
 
   layer.className = "kitchenObstacleLayer";
   layer.setAttribute("aria-hidden", "true");
-  layer.setAttribute("data-wall-groups", String(obstacleGroups.length));
-  obstacles
-    .filter((rect) => !isForkFixture(rect))
-    .forEach((rect) => {
-      const fixture = document.createElement("div");
-      fixture.className = "kitchenObstacle " + kitchenFixtureClass(rect);
-      applyRectStyle(fixture, rect);
-      layer.appendChild(fixture);
-    });
+  layer.setAttribute("data-fixtures", String(forkParts.length));
   appendKitchenForkSprite(layer, forkParts);
   container.replaceChildren(layer);
 }

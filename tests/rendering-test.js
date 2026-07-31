@@ -577,13 +577,6 @@ function testKitchenObstaclesRenderAsFixtures() {
   );
   assert.equal(
     layer.children.some((child) =>
-      child.className.includes("kitchenCabinetRun"),
-    ),
-    true,
-    "wide kitchen obstacles should render as cabinet runs",
-  );
-  assert.equal(
-    layer.children.some((child) =>
       child.className.includes("kitchenForkSprite"),
     ),
     true,
@@ -603,18 +596,9 @@ function testKitchenObstaclesRenderAsFixtures() {
     "fork sprite should rotate with the oriented hitbox",
   );
   assert.equal(
-    layer.children.some((child) =>
-      child.className.includes("kitchenTableBlock"),
-    ),
-    true,
-    "smaller square kitchen obstacles should render as table blocks",
-  );
-  assert.equal(
-    layer.children.some((child) =>
-      child.className.includes("kitchenApplianceBlock"),
-    ),
-    true,
-    "larger square kitchen obstacles should render as appliance blocks",
+    layer.children.length,
+    1,
+    "anonymous kitchen obstacles should not render as generic brown blocks",
   );
 }
 
