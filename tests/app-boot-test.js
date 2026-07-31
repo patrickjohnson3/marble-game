@@ -17,6 +17,8 @@ const originalGlobals = {
     "requestAnimationFrame",
   ),
   screen: Object.getOwnPropertyDescriptor(globalThis, "screen"),
+  setTimeout: Object.getOwnPropertyDescriptor(globalThis, "setTimeout"),
+  clearTimeout: Object.getOwnPropertyDescriptor(globalThis, "clearTimeout"),
   window: Object.getOwnPropertyDescriptor(globalThis, "window"),
 };
 
@@ -42,10 +44,12 @@ setTestGlobal("localStorage", {
 setTestGlobal("navigator", {});
 setTestGlobal("requestAnimationFrame", () => 1);
 setTestGlobal("screen", { orientation: { angle: 0 } });
+setTestGlobal("setTimeout", () => 1);
+setTestGlobal("clearTimeout", () => {});
 setTestGlobal("window", globalThis);
 
 try {
-  createApp({
+  const app = createApp({
     document,
     window: globalThis,
     storage: globalThis.localStorage,
@@ -60,6 +64,16 @@ try {
     "level 1: kitchen floor",
   );
   assert.equal(document.getElementById("resumeGame").textContent, "resume");
+
+  const startButton = document.getElementById("start");
+  const startListener = startButton.listeners.find(
+    (listener) => listener.type === "click",
+  );
+  await startListener.listener();
+
+  assert.equal(app.state.game.phase, "calibrating");
+  assert.equal(app.state.input.sensor.permission, "granted");
+  assert.equal(document.getElementById("controls").hidden, true);
 } finally {
   for (const [key, descriptor] of Object.entries(originalGlobals)) {
     if (descriptor === undefined) {

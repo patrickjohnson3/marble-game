@@ -51,6 +51,7 @@ export function createMapRuntime({
     terrainByType: {},
     goal: null,
     spawn: null,
+    world: null,
     goalHoldMs: 0,
     goalCompleted: false,
   };
@@ -71,6 +72,7 @@ export function createMapRuntime({
     state.terrainByType = derived.terrainByType;
     state.goal = derived.goal;
     state.spawn = derived.spawn;
+    state.world = derived.world;
     resetGoalProgress();
     return state;
   }

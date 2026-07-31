@@ -10,6 +10,7 @@ function terrain(state, type) {
 
 const firstMap = {
   variantId: "first",
+  world: { width: 500, height: 600 },
   goal: { x: 100, y: 120, r: 40, holdMs: 5000 },
   spawn: { x: 80, y: 90, r: 12 },
   elements: [
@@ -24,6 +25,7 @@ const firstMap = {
 
 const secondMap = {
   variantId: "second",
+  world: { width: 700, height: 800 },
   goal: { x: 300, y: 320, r: 60, holdMs: 4000 },
   spawn: { x: 140, y: 150, r: 12 },
   elements: [
@@ -96,6 +98,7 @@ assert.deepEqual(terrain(resolvedFirstMap, "waterPatch").bounds, {
 assert.equal(runtime.state.activeMap, firstMap);
 assert.equal(runtime.state.goal, firstMap.goal);
 assert.equal(runtime.state.spawn, firstMap.spawn);
+assert.equal(runtime.state.world, firstMap.world);
 assert.equal(terrain(runtime.state, "gooPatch").elements.length, 1);
 assert.equal(terrain(runtime.state, "hazardPatch").elements.length, 1);
 assert.equal(terrain(runtime.state, "icePatch").elements.length, 1);
@@ -111,6 +114,7 @@ runtime.setActiveMap(secondMap);
 assert.equal(runtime.state.activeMap, secondMap);
 assert.equal(runtime.state.goal, secondMap.goal);
 assert.equal(runtime.state.spawn, secondMap.spawn);
+assert.equal(runtime.state.world, secondMap.world);
 assert.equal(runtime.state.obstacles.length, 2);
 assert.deepEqual(runtime.state.obstacleBounds, {
   bottom: 360,

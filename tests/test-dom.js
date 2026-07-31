@@ -75,10 +75,10 @@ export class FakeElement {
 
   replaceChildren(...children) {
     this.children.forEach((child) => {
-      child.parent = null;
+      if (child && typeof child === "object") child.parent = null;
     });
     children.forEach((child) => {
-      child.parent = this;
+      if (child && typeof child === "object") child.parent = this;
     });
     this.children = children;
     this.childNodes = this.children;
