@@ -166,7 +166,14 @@ export function createGameLoop({
       cameraController.updateFollow(frameDelta);
       updateGoalIndicator(context);
       updateHazardArmed();
-      terrainView?.updateMapThemeDynamics(marble, previousMarble);
+      const themeEvents = terrainView?.updateMapThemeDynamics(
+        marble,
+        previousMarble,
+        frameDelta,
+      );
+      if (themeEvents?.squishedAnts > 0) {
+        hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);
+      }
     }
 
     marbleView.render();

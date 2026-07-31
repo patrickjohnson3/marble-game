@@ -331,12 +331,14 @@ testMapThemeRendersRealWorldVisualMarkers();
 function testKitchenThemeRendersDatedFloorDetails() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
+  const themeState = {};
 
   withFakeDocument(() => {
     renderMapTheme({
       container,
       overlayContainer,
       mapConfig: { theme: "kitchenFloor" },
+      themeState,
       world: { width: 4400, height: 4400 },
     });
   });
@@ -364,6 +366,18 @@ function testKitchenThemeRendersDatedFloorDetails() {
     ).length,
     34,
     "kitchen floor theme should render fistfuls of scattered cereal",
+  );
+  assert.equal(
+    overlayChildren.some((child) =>
+      child.className.includes("kitchenAntCanvas"),
+    ),
+    true,
+    "kitchen floor theme should render ants on one canvas layer",
+  );
+  assert.equal(
+    themeState.kitchenAnts.length,
+    10,
+    "kitchen floor should seed a small capped ant colony",
   );
   assert.equal(
     overlayChildren.some((child) => child.className.includes("themeObject")),
@@ -480,6 +494,95 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
 }
 
 testKitchenCheeriosDoNotSlideUnderFork();
+
+function testKitchenAntsMunchCheerios() {
+  const cheerioElement = new FakeElement();
+  const cheerioState = {
+    element: cheerioElement,
+    originX: 100,
+    originY: 100,
+    pushX: 0,
+    pushY: 0,
+    radius: 23,
+    eaten: 0,
+    active: true,
+    sweptClosestX: 0,
+    sweptClosestY: 0,
+    sweptDistance: 0,
+  };
+  const antCanvas = new FakeCanvasElement();
+  const themeState = {
+    kitchenCheerios: [cheerioState],
+    kitchenAnts: [
+      {
+        x: 105,
+        y: 100,
+        angle: 0,
+        alive: true,
+        squished: false,
+        targetIndex: -1,
+        wobble: 0,
+      },
+    ],
+    kitchenAntCanvas: antCanvas,
+    kitchenAntContext: antCanvas.context,
+    kitchenAntWorld: { width: 200, height: 200 },
+    kitchenAntRenderScale: 0.35,
+  };
+
+  updateMapThemeDynamics({
+    mapConfig: { theme: "kitchenFloor", elements: [] },
+    marble: { x: 300, y: 300, vx: 0, vy: 0, r: 29 },
+    frameDelta: 20,
+    themeState,
+  });
+
+  assert.equal(cheerioState.eaten > 0, true, "ants should munch Cheerios");
+  assert.equal(
+    Number(cheerioElement.style.properties["--cheerio-scale"]) < 1,
+    true,
+    "munching should shrink the Cheerio visual",
+  );
+}
+
+testKitchenAntsMunchCheerios();
+
+function testMarbleSquishesKitchenAnts() {
+  const antCanvas = new FakeCanvasElement();
+  const themeState = {
+    kitchenCheerios: [],
+    kitchenAnts: [
+      {
+        x: 100,
+        y: 100,
+        angle: 0,
+        alive: true,
+        squished: false,
+        targetIndex: -1,
+        wobble: 0,
+      },
+    ],
+    kitchenAntCanvas: antCanvas,
+    kitchenAntContext: antCanvas.context,
+    kitchenAntWorld: { width: 200, height: 200 },
+    kitchenAntRenderScale: 0.35,
+  };
+
+  const events = updateMapThemeDynamics({
+    mapConfig: { theme: "kitchenFloor", elements: [] },
+    marble: { x: 100, y: 100, vx: 3, vy: 0, r: 29 },
+    themeState,
+  });
+
+  assert.equal(events.squishedAnts, 1, "marble should squish ants on contact");
+  assert.equal(
+    themeState.kitchenAnts[0].squished,
+    true,
+    "squished ants should stay as splats",
+  );
+}
+
+testMarbleSquishesKitchenAnts();
 
 function firstKitchenCheerio({ container, overlayContainer }) {
   const themeState = {};

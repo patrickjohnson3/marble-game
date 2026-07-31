@@ -26,6 +26,26 @@ const cheerioSurfaceInfluences = Object.freeze({
 });
 const kitchenCheerioObstacleSeparation = 0.5;
 const cheerioObstacleResolvePasses = 2;
+const kitchenAntCanvasScale = 0.35;
+const kitchenAntRadius = 7;
+const kitchenAntSpeed = 0.9;
+const kitchenAntMunchDistance = 20;
+const kitchenAntMunchRate = 0.006;
+const kitchenAntSquishMinSpeed = 1.2;
+const kitchenCheerioMinScale = 0.45;
+const kitchenCheerioOpacityFloor = 0.18;
+const kitchenAntSpawnPoints = Object.freeze([
+  Object.freeze({ x: 0.04, y: 0.24 }),
+  Object.freeze({ x: 0.08, y: 0.82 }),
+  Object.freeze({ x: 0.18, y: 0.96 }),
+  Object.freeze({ x: 0.36, y: 0.05 }),
+  Object.freeze({ x: 0.54, y: 0.94 }),
+  Object.freeze({ x: 0.72, y: 0.07 }),
+  Object.freeze({ x: 0.9, y: 0.26 }),
+  Object.freeze({ x: 0.96, y: 0.52 }),
+  Object.freeze({ x: 0.86, y: 0.92 }),
+  Object.freeze({ x: 0.47, y: 0.02 }),
+]);
 
 function rectFromRatio(world, rect) {
   return {
@@ -76,12 +96,44 @@ function appendKitchenCheerio(parent, world, circle, themeState) {
     pushX: 0,
     pushY: 0,
     radius: kitchenCheerioRadiusRatio * world.width,
+    eaten: 0,
+    active: true,
     sweptClosestX: 0,
     sweptClosestY: 0,
     sweptDistance: 0,
   };
 
   themeState.kitchenCheerios.push(state);
+}
+
+function appendKitchenAntCanvas(parent, world, themeState) {
+  const canvas = document.createElement("canvas");
+
+  canvas.className = "kitchenAntCanvas";
+  canvas.width = Math.ceil(world.width * kitchenAntCanvasScale);
+  canvas.height = Math.ceil(world.height * kitchenAntCanvasScale);
+  applyBox(canvas, { x: 0, y: 0, w: world.width, h: world.height });
+  canvas.setAttribute("aria-hidden", "true");
+  canvas.setAttribute(
+    "data-kitchen-ants",
+    String(kitchenAntSpawnPoints.length),
+  );
+  parent.appendChild(canvas);
+
+  themeState.kitchenAntCanvas = canvas;
+  themeState.kitchenAntContext = canvas.getContext("2d");
+  themeState.kitchenAntWorld = world;
+  themeState.kitchenAntRenderScale = kitchenAntCanvasScale;
+  themeState.kitchenAnts = kitchenAntSpawnPoints.map((point, index) => ({
+    x: point.x * world.width,
+    y: point.y * world.height,
+    angle: (index % 2) * Math.PI,
+    alive: true,
+    squished: false,
+    targetIndex: -1,
+    wobble: index * 1.7,
+  }));
+  renderKitchenAnts(themeState);
 }
 
 function appendFloor(parent, theme, world, rect = {}) {
@@ -176,6 +228,7 @@ function renderKitchenFloor({ underlay, overlay, themeState, world }) {
   ].forEach((circle) =>
     appendKitchenCheerio(overlay, world, circle, themeState),
   );
+  appendKitchenAntCanvas(overlay, world, themeState);
 }
 
 function renderLivingRoom({ underlay, overlay, world }) {
@@ -315,6 +368,188 @@ function cheerioSurfaceInfluence(x, y, elements = []) {
   return defaultCheerioSurfaceInfluence;
 }
 
+function nearestActiveCheerio(ant, cheerios) {
+  let bestIndex = -1;
+  let bestDistanceSq = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < cheerios.length; i++) {
+    const cheerio = cheerios[i];
+    if (!cheerio.active) continue;
+
+    const x = cheerio.originX + cheerio.pushX;
+    const y = cheerio.originY + cheerio.pushY;
+    const dx = x - ant.x;
+    const dy = y - ant.y;
+    const distanceSq = dx * dx + dy * dy;
+    if (distanceSq < bestDistanceSq) {
+      bestDistanceSq = distanceSq;
+      bestIndex = i;
+    }
+  }
+
+  return bestIndex;
+}
+
+function updateCheerioMunchVisual(cheerio) {
+  const scale = 1 - cheerio.eaten * (1 - kitchenCheerioMinScale);
+  const opacity = 1 - cheerio.eaten * (1 - kitchenCheerioOpacityFloor);
+
+  cheerio.element.style.setProperty("--cheerio-scale", scale.toFixed(2));
+  cheerio.element.style.opacity = opacity.toFixed(2);
+  if (cheerio.eaten >= 1) {
+    cheerio.active = false;
+    cheerio.element.style.opacity = "0";
+  }
+}
+
+function antTarget(ant, cheerios) {
+  if (
+    ant.targetIndex < 0 ||
+    !cheerios[ant.targetIndex] ||
+    !cheerios[ant.targetIndex].active
+  ) {
+    ant.targetIndex = nearestActiveCheerio(ant, cheerios);
+  }
+
+  return cheerios[ant.targetIndex] ?? null;
+}
+
+function updateKitchenAnts({ ants, cheerios, frameDelta, marble }) {
+  let squishedAnts = 0;
+  const marbleSpeed = Math.hypot(marble.vx || 0, marble.vy || 0);
+
+  for (let i = 0; i < ants.length; i++) {
+    const ant = ants[i];
+    if (ant.squished) continue;
+
+    const marbleDistance = Math.hypot(ant.x - marble.x, ant.y - marble.y);
+    if (
+      marbleSpeed >= kitchenAntSquishMinSpeed &&
+      marbleDistance <= marble.r + kitchenAntRadius
+    ) {
+      ant.alive = false;
+      ant.squished = true;
+      squishedAnts += 1;
+      continue;
+    }
+
+    const target = antTarget(ant, cheerios);
+    if (!target) continue;
+
+    const targetX = target.originX + target.pushX;
+    const targetY = target.originY + target.pushY;
+    const dx = targetX - ant.x;
+    const dy = targetY - ant.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= target.radius + kitchenAntMunchDistance) {
+      target.eaten = Math.min(
+        1,
+        target.eaten + kitchenAntMunchRate * frameDelta,
+      );
+      updateCheerioMunchVisual(target);
+      continue;
+    }
+
+    ant.angle = Math.atan2(dy, dx) + Math.sin(ant.wobble) * 0.18;
+    ant.wobble += 0.11 * frameDelta;
+    ant.x += Math.cos(ant.angle) * kitchenAntSpeed * frameDelta;
+    ant.y += Math.sin(ant.angle) * kitchenAntSpeed * frameDelta;
+  }
+
+  return squishedAnts;
+}
+
+function drawAnt(context, ant) {
+  const cos = Math.cos(ant.angle);
+  const sin = Math.sin(ant.angle);
+  const sideX = -sin;
+  const sideY = cos;
+
+  context.fillStyle = "#15100c";
+  context.strokeStyle = "#15100c";
+  context.lineWidth = 1.4;
+  for (let leg = -1; leg <= 1; leg++) {
+    const along = leg * 3;
+    context.beginPath();
+    context.moveTo(
+      ant.x + cos * along + sideX * 2,
+      ant.y + sin * along + sideY * 2,
+    );
+    context.lineTo(
+      ant.x + cos * (along - 4) + sideX * 8,
+      ant.y + sin * (along - 4) + sideY * 8,
+    );
+    context.moveTo(
+      ant.x + cos * along - sideX * 2,
+      ant.y + sin * along - sideY * 2,
+    );
+    context.lineTo(
+      ant.x + cos * (along - 4) - sideX * 8,
+      ant.y + sin * (along - 4) - sideY * 8,
+    );
+    context.stroke();
+  }
+
+  context.beginPath();
+  context.ellipse(
+    ant.x - cos * 5,
+    ant.y - sin * 5,
+    4.5,
+    3.2,
+    ant.angle,
+    0,
+    Math.PI * 2,
+  );
+  context.ellipse(ant.x, ant.y, 3.6, 2.8, ant.angle, 0, Math.PI * 2);
+  context.ellipse(
+    ant.x + cos * 5,
+    ant.y + sin * 5,
+    3.2,
+    2.6,
+    ant.angle,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+}
+
+function drawSquishedAnt(context, ant) {
+  context.fillStyle = "#23150e";
+  context.beginPath();
+  context.ellipse(ant.x, ant.y, 8, 4, ant.angle, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#0b0806";
+  context.beginPath();
+  context.ellipse(ant.x - 3, ant.y + 1, 3, 2, ant.angle, 0, Math.PI * 2);
+  context.ellipse(ant.x + 4, ant.y - 1, 2.5, 1.8, ant.angle, 0, Math.PI * 2);
+  context.fill();
+}
+
+function renderKitchenAnts(themeState) {
+  const context = themeState.kitchenAntContext;
+  const canvas = themeState.kitchenAntCanvas;
+  const world = themeState.kitchenAntWorld;
+  if (!context || !canvas || !world) return;
+
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.setTransform(
+    themeState.kitchenAntRenderScale,
+    0,
+    0,
+    themeState.kitchenAntRenderScale,
+    0,
+    0,
+  );
+
+  const ants = themeState.kitchenAnts ?? [];
+  for (let i = 0; i < ants.length; i++) {
+    const ant = ants[i];
+    if (ant.squished) drawSquishedAnt(context, ant);
+    else if (ant.alive) drawAnt(context, ant);
+  }
+}
+
 function resolveCheerioObstacleCollision(cheerioCircle, obstacle, contact) {
   circleOrientedRectContact(
     cheerioCircle,
@@ -357,13 +592,17 @@ export function updateMapThemeDynamics({
   mapConfig,
   marble,
   previousMarble = marble,
-  themeState,
+  frameDelta = 1,
+  themeState = {},
 }) {
-  if (mapConfig?.theme !== "kitchenFloor" || !marble) return;
+  const events = { squishedAnts: 0 };
+  if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
   const cheerios = themeState?.kitchenCheerios ?? [];
 
   cheerios.forEach((cheerio) => {
+    if (!cheerio.active) return;
+
     const { originX, originY, radius, pushX, pushY } = cheerio;
     const currentX = originX + pushX;
     const currentY = originY + pushY;
@@ -426,6 +665,15 @@ export function updateMapThemeDynamics({
       cheerio.pushY.toFixed(1) + "px",
     );
   });
+
+  events.squishedAnts = updateKitchenAnts({
+    ants: themeState?.kitchenAnts ?? [],
+    cheerios,
+    frameDelta,
+    marble,
+  });
+  renderKitchenAnts(themeState);
+  return events;
 }
 
 export function renderMapTheme({
@@ -438,6 +686,11 @@ export function renderMapTheme({
   container.replaceChildren();
   overlayContainer.replaceChildren();
   themeState.kitchenCheerios = [];
+  themeState.kitchenAnts = [];
+  themeState.kitchenAntCanvas = null;
+  themeState.kitchenAntContext = null;
+  themeState.kitchenAntWorld = null;
+  themeState.kitchenAntRenderScale = kitchenAntCanvasScale;
   const theme = mapConfig?.theme;
   if (!theme || !renderers[theme] || !world) return;
 

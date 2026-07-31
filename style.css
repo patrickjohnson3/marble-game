@@ -108,6 +108,10 @@ body {
   box-sizing: border-box;
   pointer-events: none;
 }
+.kitchenAntCanvas {
+  position: absolute;
+  pointer-events: none;
+}
 .obstacleCanvas,
 .kitchenObstacleLayer {
   opacity: 0;
@@ -259,7 +263,8 @@ body {
   background-repeat: no-repeat;
   background-size: contain;
   filter: drop-shadow(0 2px 4px #0006);
-  transform: translate(var(--push-x, 0px), var(--push-y, 0px));
+  transform: translate(var(--push-x, 0px), var(--push-y, 0px))
+    scale(var(--cheerio-scale, 1));
   transition: transform 80ms linear;
 }
 .livingRoomSurface {

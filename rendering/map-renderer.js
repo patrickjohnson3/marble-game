@@ -94,11 +94,12 @@ export function createTerrainView({
     );
   }
 
-  function updateMapThemeDynamics(marble, previousMarble) {
-    updateThemeDynamics({
+  function updateMapThemeDynamics(marble, previousMarble, frameDelta) {
+    return updateThemeDynamics({
       container: mapThemeEl,
       overlayContainer: mapThemeOverlayEl,
       mapConfig: currentMapConfig,
+      frameDelta,
       marble,
       previousMarble,
       themeState,

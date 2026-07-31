@@ -71,6 +71,7 @@ export const tuning = {
   goalIndicatorDistanceMultiplier: 2.4,
   hazardRearmDistanceMultiplier: 3,
   hazardResetImpactFeedback: 12,
+  antSquishImpactFeedback: 2.4,
 };
 
 export const visualConfig = {
