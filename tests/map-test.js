@@ -22,6 +22,7 @@ import {
   resolveSeededMapConfig,
   selectNextMapVariant,
   selectSeededMapVariant,
+  validMapVariants,
 } from "../core/map-variants.js";
 import { validateMapConfig } from "../core/map-validation.js";
 import { createMapProgression } from "../core/map-progression.js";
@@ -82,6 +83,15 @@ function testSeededMapVariantSelection() {
 
 testSeededMapVariantSelection();
 
+function testValidMapVariantsFiltersMalformedEntries() {
+  const valid = { id: "valid", elements: [] };
+
+  assert.deepEqual(validMapVariants(null), []);
+  assert.deepEqual(validMapVariants([null, "bad", valid, 7]), [valid]);
+}
+
+testValidMapVariantsFiltersMalformedEntries();
+
 function testProceduralMapBoundaryWrapsVariantSelection() {
   assert.equal(resolveSeededMapConfig(simpleSeededMapConfig).variantId, "only");
   assert.equal(
@@ -98,7 +108,9 @@ testProceduralMapBoundaryWrapsVariantSelection();
 
 function testGoalRadiusTunesByDifficulty() {
   assert.equal(goalRadiusForDifficulty(1, 95), 110);
+  assert.equal(goalRadiusForDifficulty(1.4, 95), 110);
   assert.equal(goalRadiusForDifficulty(2, 95), 95);
+  assert.equal(goalRadiusForDifficulty(2.49, 95), 95);
   assert.equal(goalRadiusForDifficulty(3, 95), 84);
   assert.equal(goalRadiusForDifficulty(undefined, 95), 95);
   assert.equal(resolveMapVariantConfig(baseMapConfig, "default").goal.r, 110);
@@ -558,6 +570,16 @@ function testResolveMapVariantConfigIgnoresMalformedVariants() {
 }
 
 testResolveMapVariantConfigIgnoresMalformedVariants();
+
+function testResolveMapVariantConfigFallsBackToBaseWhenMissing() {
+  const resolved = resolveMapVariantConfig(simpleSeededMapConfig, "missing");
+
+  assert.equal(resolved.variantId, undefined);
+  assert.equal(resolved.seed, simpleSeededMapConfig.seed);
+  assert.deepEqual(resolved.spawn, simpleSeededMapConfig.spawn);
+}
+
+testResolveMapVariantConfigFallsBackToBaseWhenMissing();
 
 function testObstacleVisualsTrimSmallJoinOverhangs() {
   const [horizontal, vertical] = normalizeJoinedObstacleRects(
