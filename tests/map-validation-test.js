@@ -39,11 +39,50 @@ function testMapValidationReportsMalformedConfig() {
   ]);
 }
 
+function testMapValidationReportsInvalidWorldAndGrid() {
+  const errors = validateMapConfig({
+    world: { width: 95, height: -1 },
+    grid: { size: 10 },
+    elements: [],
+    spawn: { x: 20, y: 20, r: 5 },
+    goal: { x: 80, y: 80, r: 10, holdMs: 5000 },
+  });
+
+  assert.ok(errors.includes(mapValidationMessages.worldHeightPositive));
+  assert.ok(errors.includes(mapValidationMessages.worldWidthGrid));
+}
+
 function testMapValidationReportsInvalidElementEntries() {
   assert.ok(
     validateMapConfig(invalidElementConfig).includes(
       mapValidationMessages.elementObject(0),
     ),
+  );
+}
+
+function testMapValidationReportsUnknownAndOutOfBoundsElements() {
+  const errors = validateMapConfig({
+    world: { width: 100, height: 100 },
+    grid: { size: 10 },
+    elements: [
+      { type: "mystery", x: -10, y: 10, w: 20, h: 0 },
+      { type: "obstacle", x: 90, y: 90, w: 20, h: 20 },
+    ],
+    spawn: { x: 20, y: 20, r: 5 },
+    goal: { x: 80, y: 80, r: 10, holdMs: 5000 },
+  });
+
+  assert.ok(
+    errors.includes(mapValidationMessages.elementUnknownType(0, "mystery")),
+  );
+  assert.ok(
+    errors.includes(mapValidationMessages.rectPositiveDimensions("element 0")),
+  );
+  assert.ok(
+    errors.includes(mapValidationMessages.rectInsideWorldStart("element 0")),
+  );
+  assert.ok(
+    errors.includes(mapValidationMessages.rectInsideWorld("element 1")),
   );
 }
 
@@ -104,6 +143,18 @@ function testMapValidationReportsInvalidNormalizedObstacles() {
     validateMapConfig(emptyElementMapConfig, {
       normalizedObstacles: "bad",
     }).includes(mapValidationMessages.normalizedObstaclesArray),
+  );
+}
+
+function testMapValidationUsesNormalizedObstacleOverrideForSpawnAndGoal() {
+  const errors = validateMapConfig(emptyElementMapConfig, {
+    normalizedObstacles: [{ x: 75, y: 75, w: 20, h: 20 }],
+  });
+
+  assert.ok(errors.includes(mapValidationMessages.goalObstacleOverlap));
+  assert.equal(
+    errors.includes(mapValidationMessages.spawnObstacleOverlap),
+    false,
   );
 }
 
@@ -211,10 +262,13 @@ function testReachabilityHandlesGoalNearCellBoundary() {
 testResolveSeededMapConfigAllowsValidationOfMissingVariantElements();
 testMapValidationRejectsBlockedSpawn();
 testMapValidationReportsMalformedConfig();
+testMapValidationReportsInvalidWorldAndGrid();
 testMapValidationReportsInvalidElementEntries();
+testMapValidationReportsUnknownAndOutOfBoundsElements();
 testMapValidationRejectsOffGridElementDimensions();
 testMapValidationReportsInvalidOrientedObstacleFields();
 testMapValidationReportsInvalidNormalizedObstacles();
+testMapValidationUsesNormalizedObstacleOverrideForSpawnAndGoal();
 testMapValidationRejectsVariantWorldMismatch();
 testMapValidationRejectsUnreachableGoal();
 testReachabilityUsesExactSpawnAndGoalSamples();
