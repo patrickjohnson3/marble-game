@@ -255,7 +255,6 @@ body {
   background-size: contain;
   transform: translate(var(--push-x, 0px), var(--push-y, 0px))
     scale(var(--cheerio-scale, 1));
-  transition: transform 80ms linear;
 }
 .livingRoomSurface {
   background:
