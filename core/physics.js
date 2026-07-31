@@ -111,6 +111,13 @@ function createPhysicsScratch() {
       waterPatchDrag: 1,
     },
     previousTerrainMarble: { x: 0, y: 0, r: 0 },
+    surfaceHits: {
+      gooPatch: false,
+      hazardPatch: false,
+      icePatch: false,
+      roughPatch: false,
+      waterPatch: false,
+    },
   };
 }
 
@@ -163,18 +170,24 @@ function segmentIntersectsExpandedRect(start, end, rect, padding) {
   let tMin = 0;
   let tMax = 1;
 
-  for (const [position, velocity, min, max] of [
-    [start.x, dx, left, right],
-    [start.y, dy, top, bottom],
-  ]) {
-    if (velocity === 0) {
-      if (position < min || position > max) return false;
-      continue;
-    }
+  if (dx === 0) {
+    if (start.x < left || start.x > right) return false;
+  } else {
+    const inverseVelocity = 1 / dx;
+    let near = (left - start.x) * inverseVelocity;
+    let far = (right - start.x) * inverseVelocity;
+    if (near > far) [near, far] = [far, near];
+    tMin = Math.max(tMin, near);
+    tMax = Math.min(tMax, far);
+    if (tMin > tMax) return false;
+  }
 
-    const inverseVelocity = 1 / velocity;
-    let near = (min - position) * inverseVelocity;
-    let far = (max - position) * inverseVelocity;
+  if (dy === 0) {
+    if (start.y < top || start.y > bottom) return false;
+  } else {
+    const inverseVelocity = 1 / dy;
+    let near = (top - start.y) * inverseVelocity;
+    let far = (bottom - start.y) * inverseVelocity;
     if (near > far) [near, far] = [far, near];
     tMin = Math.max(tMin, near);
     tMax = Math.min(tMax, far);
@@ -194,22 +207,18 @@ function sweptOverTerrainPatch(start, end, intro, patches, physics) {
   );
 }
 
-function applySurfaceDrag(
-  context,
-  { overGooPatch, overRoughPatch, overWaterPatch },
-  factors,
-) {
-  if (overGooPatch) {
+function applySurfaceDrag(context, hits, factors) {
+  if (hits.gooPatch) {
     context.marble.vx *= factors.gooPatchDrag;
     context.marble.vy *= factors.gooPatchDrag;
   }
 
-  if (overRoughPatch) {
+  if (hits.roughPatch) {
     context.marble.vx *= factors.roughPatchDrag;
     context.marble.vy *= factors.roughPatchDrag;
   }
 
-  if (overWaterPatch) {
+  if (hits.waterPatch) {
     context.marble.vx *= factors.waterPatchDrag;
     context.marble.vy *= factors.waterPatchDrag;
   }
@@ -226,17 +235,48 @@ function handleSurfaceFeedback({ marble }, onSurface, surfaceType) {
   onSurface(Math.hypot(marble.vx, marble.vy), surfaceType);
 }
 
-function surfaceType({
-  overGooPatch,
-  overIcePatch,
-  overRoughPatch,
-  overWaterPatch,
-}) {
-  if (overGooPatch) return SURFACE_TYPES.gooPatch;
-  if (overRoughPatch) return SURFACE_TYPES.roughPatch;
-  if (overWaterPatch) return SURFACE_TYPES.waterPatch;
-  if (overIcePatch) return SURFACE_TYPES.icePatch;
+function surfaceType(hits) {
+  if (hits.gooPatch) return SURFACE_TYPES.gooPatch;
+  if (hits.roughPatch) return SURFACE_TYPES.roughPatch;
+  if (hits.waterPatch) return SURFACE_TYPES.waterPatch;
+  if (hits.icePatch) return SURFACE_TYPES.icePatch;
   return SURFACE_TYPES.floor;
+}
+
+function updateSurfaceHits(context, physicsScratch) {
+  const hits = physicsScratch.surfaceHits;
+  const previous = physicsScratch.previousTerrainMarble;
+
+  hits.gooPatch = sweptOverTerrainPatch(
+    previous,
+    context.marble,
+    context.intro,
+    terrainCandidates(context, SURFACE_TYPES.gooPatch),
+    context.physics,
+  );
+  hits.roughPatch = sweptOverTerrainPatch(
+    previous,
+    context.marble,
+    context.intro,
+    terrainCandidates(context, SURFACE_TYPES.roughPatch),
+    context.physics,
+  );
+  hits.waterPatch = sweptOverTerrainPatch(
+    previous,
+    context.marble,
+    context.intro,
+    terrainCandidates(context, SURFACE_TYPES.waterPatch),
+    context.physics,
+  );
+  hits.hazardPatch = sweptOverTerrainPatch(
+    previous,
+    context.marble,
+    context.intro,
+    terrainCandidates(context, SURFACE_TYPES.hazardPatch),
+    context.physics,
+  );
+
+  return hits;
 }
 
 function physicsStep(context, dt, feedback) {
@@ -255,54 +295,13 @@ function physicsStep(context, dt, feedback) {
     factors.maxSpeedEase,
   );
   updatePreviousTerrainMarble(context, physicsScratch);
-  const gooCandidates = terrainCandidates(context, SURFACE_TYPES.gooPatch);
-  const roughCandidates = terrainCandidates(context, SURFACE_TYPES.roughPatch);
-  const waterCandidates = terrainCandidates(context, SURFACE_TYPES.waterPatch);
   updatePosition(context.marble, dt);
-  const overGooPatch = sweptOverTerrainPatch(
-    physicsScratch.previousTerrainMarble,
-    context.marble,
-    context.intro,
-    gooCandidates,
-    context.physics,
-  );
-  const overRoughPatch = sweptOverTerrainPatch(
-    physicsScratch.previousTerrainMarble,
-    context.marble,
-    context.intro,
-    roughCandidates,
-    context.physics,
-  );
-  const overWaterPatch = sweptOverTerrainPatch(
-    physicsScratch.previousTerrainMarble,
-    context.marble,
-    context.intro,
-    waterCandidates,
-    context.physics,
-  );
-  if (
-    sweptOverTerrainPatch(
-      physicsScratch.previousTerrainMarble,
-      context.marble,
-      context.intro,
-      terrainCandidates(context, SURFACE_TYPES.hazardPatch),
-      context.physics,
-    )
-  ) {
-    feedback.onHazard?.();
-  }
-  const currentSurfaceType = surfaceType({
-    overGooPatch,
-    overIcePatch,
-    overRoughPatch,
-    overWaterPatch,
-  });
+  const hits = updateSurfaceHits(context, physicsScratch);
+  hits.icePatch = overIcePatch;
+  if (hits.hazardPatch) feedback.onHazard?.();
+  const currentSurfaceType = surfaceType(hits);
   feedback.onTerrain?.(currentSurfaceType);
-  applySurfaceDrag(
-    context,
-    { overGooPatch, overRoughPatch, overWaterPatch },
-    factors,
-  );
+  applySurfaceDrag(context, hits, factors);
   handleWallCollisions(context, feedback.onImpact, context.obstacles);
   handleSurfaceFeedback(context, feedback.onSurface, currentSurfaceType);
 }
