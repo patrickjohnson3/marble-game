@@ -54,10 +54,20 @@ export function createEffectsRenderer({
   }
 
   function releaseParticle(particle) {
-    const activeIndex = activeParticles.indexOf(particle);
-    if (activeIndex < 0) return;
+    const activeIndex = particle.effectActiveIndex;
+    if (
+      !Number.isInteger(activeIndex) ||
+      activeIndex < 0 ||
+      activeParticles[activeIndex] !== particle
+    )
+      return;
 
-    activeParticles.splice(activeIndex, 1);
+    const lastParticle = activeParticles.pop();
+    if (lastParticle !== particle) {
+      activeParticles[activeIndex] = lastParticle;
+      lastParticle.effectActiveIndex = activeIndex;
+    }
+    particle.effectActiveIndex = -1;
     particle.remove();
     freeParticles.push(particle);
   }
@@ -71,6 +81,7 @@ export function createEffectsRenderer({
     particle.setAttribute("aria-hidden", "true");
     particle.style.cssText = style;
     effectsEl.appendChild(particle);
+    particle.effectActiveIndex = activeParticles.length;
     activeParticles.push(particle);
     cleanupTimers.schedule(() => {
       releaseParticle(particle);
