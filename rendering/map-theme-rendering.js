@@ -365,6 +365,22 @@ function cheerioSurfaceInfluence(x, y, elements = []) {
   return defaultCheerioSurfaceInfluence;
 }
 
+function kitchenElementCaches(elements = []) {
+  const obstacles = [];
+  const terrainElements = [];
+
+  for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    if (element.type === MAP_ELEMENT_TYPES.obstacle) {
+      obstacles.push(element);
+    } else if (cheerioSurfaceInfluences[element.type]) {
+      terrainElements.push(element);
+    }
+  }
+
+  return { obstacles, terrainElements };
+}
+
 function nearestActiveCheerio(ant, cheerios) {
   let bestIndex = -1;
   let bestDistanceSq = Number.POSITIVE_INFINITY;
@@ -771,7 +787,6 @@ function resolveCheerioObstacleCollisions(cheerioCircle, elements = []) {
   for (let pass = 0; pass < cheerioObstacleResolvePasses; pass++) {
     for (let i = 0; i < elements.length; i++) {
       const element = elements[i];
-      if (element.type !== MAP_ELEMENT_TYPES.obstacle) continue;
       resolveCheerioObstacleCollision(cheerioCircle, element, contact);
     }
   }
@@ -789,6 +804,24 @@ export function updateMapThemeDynamics({
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
   const cheerios = themeState?.kitchenCheerios ?? [];
+  const cacheValid =
+    themeState.kitchenElementCacheSource === mapConfig.elements &&
+    themeState.kitchenObstacles &&
+    themeState.kitchenTerrainElements;
+  const fallbackCaches = cacheValid
+    ? null
+    : kitchenElementCaches(mapConfig.elements);
+  const kitchenObstacles = cacheValid
+    ? themeState.kitchenObstacles
+    : fallbackCaches.obstacles;
+  const kitchenTerrainElements = cacheValid
+    ? themeState.kitchenTerrainElements
+    : fallbackCaches.terrainElements;
+  if (fallbackCaches) {
+    themeState.kitchenElementCacheSource = mapConfig.elements;
+    themeState.kitchenObstacles = fallbackCaches.obstacles;
+    themeState.kitchenTerrainElements = fallbackCaches.terrainElements;
+  }
 
   cheerios.forEach((cheerio) => {
     if (!cheerio.active) return;
@@ -817,7 +850,7 @@ export function updateMapThemeDynamics({
     const influence = cheerioSurfaceInfluence(
       currentX,
       currentY,
-      mapConfig.elements,
+      kitchenTerrainElements,
     );
     const maxPush =
       marble.r * kitchenCheerioMaxPushRadiusMultiplier * influence.maxPush;
@@ -843,7 +876,7 @@ export function updateMapThemeDynamics({
       r: radius,
     };
 
-    resolveCheerioObstacleCollisions(cheerioCircle, mapConfig.elements);
+    resolveCheerioObstacleCollisions(cheerioCircle, kitchenObstacles);
 
     cheerio.pushX = cheerioCircle.x - originX;
     cheerio.pushY = cheerioCircle.y - originY;
@@ -876,8 +909,16 @@ export function renderMapTheme({
   themeState.kitchenDynamicWorld = null;
   themeState.kitchenDynamicRenderScale = kitchenDynamicCanvasScale;
   themeState.kitchenDynamicNeedsFullRedraw = false;
+  themeState.kitchenElementCacheSource = null;
+  themeState.kitchenObstacles = [];
+  themeState.kitchenTerrainElements = [];
   const theme = mapConfig?.theme;
   if (!theme || !renderers[theme] || !world) return;
+
+  const kitchenCaches = kitchenElementCaches(mapConfig.elements);
+  themeState.kitchenElementCacheSource = mapConfig.elements;
+  themeState.kitchenObstacles = kitchenCaches.obstacles;
+  themeState.kitchenTerrainElements = kitchenCaches.terrainElements;
 
   const underlay = document.createElement("div");
   const overlay = document.createElement("div");

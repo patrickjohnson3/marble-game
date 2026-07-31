@@ -378,6 +378,16 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen floor should seed a small capped ant colony",
   );
   assert.equal(
+    Array.isArray(themeState.kitchenObstacles),
+    true,
+    "kitchen theme should precompute obstacle candidates",
+  );
+  assert.equal(
+    Array.isArray(themeState.kitchenTerrainElements),
+    true,
+    "kitchen theme should precompute terrain candidates",
+  );
+  assert.equal(
     overlayChildren.some((child) => child.className.includes("themeObject")),
     false,
     "kitchen floor theme should not render decorative blockers",
