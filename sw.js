@@ -1,6 +1,6 @@
 import { runtimeFiles } from "./runtime-assets.js";
 
-const cacheVersion = "marble-game-aa6dd2106a1b9261";
+const cacheVersion = "marble-game-877db50c50b14a9c";
 const cacheableFiles = [
   "./",
   "index.html",

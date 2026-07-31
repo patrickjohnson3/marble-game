@@ -106,7 +106,8 @@ body {
   box-sizing: border-box;
   pointer-events: none;
 }
-.kitchenDynamicCanvas {
+.kitchenDynamicCanvas,
+.kitchenFloorCanvas {
   position: absolute;
   pointer-events: none;
 }
@@ -200,40 +201,6 @@ body {
   border: 6px solid #4da3ff85;
   border-radius: 999px;
   background: #4da3ff1a;
-}
-.kitchenFloorSurface {
-  background:
-    radial-gradient(circle at 38px 46px, #fff8d94a 0 2px, transparent 3px),
-    radial-gradient(circle at 142px 118px, #745d2a26 0 2px, transparent 4px),
-    linear-gradient(#7e6a3a34 3px, transparent 3px),
-    linear-gradient(90deg, #7e6a3a34 3px, transparent 3px),
-    conic-gradient(
-      from 90deg at 50% 50%,
-      #d9c17d 0 25%,
-      #ead9a8 0 50%,
-      #cbb16e 0 75%,
-      #e3ce95 0
-    );
-  background-size:
-    170px 170px,
-    230px 230px,
-    220px 220px,
-    220px 220px,
-    440px 440px;
-  box-shadow:
-    inset 0 0 0 8px #fff2c735,
-    inset 0 0 90px #4a392b42;
-}
-.kitchenFloorSurface::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 62% 28%, #ffffff1c, transparent 26%),
-    radial-gradient(ellipse at 34% 72%, #6b512721, transparent 32%),
-    linear-gradient(90deg, #3b2a1518, transparent 18% 82%, #3b2a1518);
-  mix-blend-mode: soft-light;
-  pointer-events: none;
 }
 .kitchenForkSprite {
   position: absolute;

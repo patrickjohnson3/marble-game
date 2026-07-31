@@ -26,6 +26,7 @@ const cheerioSurfaceInfluences = Object.freeze({
 });
 const kitchenCheerioObstacleSeparation = 0.5;
 const cheerioObstacleResolvePasses = 2;
+const kitchenFloorCanvasScale = 0.4;
 const kitchenDynamicCanvasScale = 0.35;
 const kitchenAntRadius = 7;
 const kitchenAntSpeed = 0.9;
@@ -142,6 +143,65 @@ function appendFloor(parent, theme, world, rect = {}) {
   });
 }
 
+function appendKitchenFloorCanvas(parent, world) {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  const tileSize = 220;
+
+  canvas.className = "kitchenFloorCanvas";
+  canvas.width = Math.ceil(world.width * kitchenFloorCanvasScale);
+  canvas.height = Math.ceil(world.height * kitchenFloorCanvasScale);
+  applyBox(canvas, { x: 0, y: 0, w: world.width, h: world.height });
+  canvas.setAttribute("aria-hidden", "true");
+  parent.appendChild(canvas);
+  if (!context) return;
+
+  context.setTransform(
+    kitchenFloorCanvasScale,
+    0,
+    0,
+    kitchenFloorCanvasScale,
+    0,
+    0,
+  );
+  context.fillStyle = "#dec684";
+  context.fillRect(0, 0, world.width, world.height);
+
+  for (let y = 0; y < world.height; y += tileSize) {
+    for (let x = 0; x < world.width; x += tileSize) {
+      const alternate = (x / tileSize + y / tileSize) % 2 === 0;
+      context.fillStyle = alternate ? "#ead9a8" : "#cdb16d";
+      context.fillRect(x, y, tileSize, tileSize);
+      context.fillStyle = alternate ? "#fff2bc26" : "#7a622626";
+      context.fillRect(x + 12, y + 12, tileSize - 24, tileSize - 24);
+    }
+  }
+
+  context.strokeStyle = "#7e6a3a4d";
+  context.lineWidth = 3;
+  for (let x = 0; x <= world.width; x += tileSize) {
+    context.beginPath();
+    context.moveTo(x, 0);
+    context.lineTo(x, world.height);
+    context.stroke();
+  }
+  for (let y = 0; y <= world.height; y += tileSize) {
+    context.beginPath();
+    context.moveTo(0, y);
+    context.lineTo(world.width, y);
+    context.stroke();
+  }
+
+  for (let y = 70; y < world.height; y += 275) {
+    for (let x = 70; x < world.width; x += 335) {
+      context.fillStyle = (x + y) % 2 === 0 ? "#fff8d94a" : "#745d2a26";
+      context.beginPath();
+      context.ellipse(x, y, 3, 3, 0, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+}
+
 function renderHockeyRink({ underlay, overlay, world }) {
   appendFloor(underlay, "hockeyRink", world);
   appendBox(underlay, "rinkLine redLine horizontal", world, {
@@ -180,7 +240,7 @@ function renderHockeyRink({ underlay, overlay, world }) {
 }
 
 function renderKitchenStaticFloor({ underlay, world }) {
-  appendFloor(underlay, "kitchenFloor", world, { x: 0, y: 0, w: 1, h: 1 });
+  appendKitchenFloorCanvas(underlay, world);
 }
 
 function renderKitchenDynamicObjects({ overlay, themeState, world }) {

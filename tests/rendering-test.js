@@ -346,13 +346,18 @@ function testKitchenThemeRendersDatedFloorDetails() {
   const underlayChildren = container.children[0].children;
   const overlayChildren = overlayContainer.children[0].children;
   const floor = underlayChildren.find((child) =>
-    child.className.includes("kitchenFloorSurface"),
+    child.className.includes("kitchenFloorCanvas"),
   );
 
   assert.equal(floor.style.left, "0px");
   assert.equal(floor.style.top, "0px");
   assert.equal(floor.style.width, "4400px");
   assert.equal(floor.style.height, "4400px");
+  assert.equal(
+    floor.context.calls.some((call) => call[0] === "fillRect"),
+    true,
+    "kitchen floor canvas should draw tile fills",
+  );
   assert.equal(
     underlayChildren.some((child) =>
       child.className.includes("kitchenTileAccent"),
