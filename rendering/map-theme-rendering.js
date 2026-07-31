@@ -397,13 +397,20 @@ function antTarget(ant, cheerios) {
   return cheerios[ant.targetIndex] ?? null;
 }
 
-function updateKitchenAnts({ ants, cheerios, frameDelta, marble }) {
+function updateKitchenAnts({
+  ants,
+  cheerios,
+  frameDelta,
+  marble,
+  visibleWorld,
+}) {
   let squishedAnts = 0;
   const marbleSpeed = Math.hypot(marble.vx || 0, marble.vy || 0);
 
   for (let i = 0; i < ants.length; i++) {
     const ant = ants[i];
     if (ant.squished) continue;
+    if (!dynamicBoundsVisible(antBounds(ant), visibleWorld)) continue;
 
     const marbleDistance = Math.hypot(ant.x - marble.x, ant.y - marble.y);
     if (
@@ -555,12 +562,18 @@ function boundsChanged(a, b) {
 }
 
 function rectsIntersect(a, b) {
+  if (!a || !b) return false;
+
   return (
     a.left <= b.right &&
     b.left <= a.right &&
     a.top <= b.bottom &&
     b.top <= a.bottom
   );
+}
+
+function dynamicBoundsVisible(bounds, visibleWorld) {
+  return !visibleWorld || rectsIntersect(bounds, visibleWorld);
 }
 
 function clearDynamicRect(context, scale, rect) {
@@ -762,6 +775,7 @@ export function updateMapThemeDynamics({
   previousMarble = marble,
   frameDelta = 1,
   themeState = {},
+  visibleWorld,
 }) {
   const events = { squishedAnts: 0 };
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
@@ -770,6 +784,7 @@ export function updateMapThemeDynamics({
 
   cheerios.forEach((cheerio) => {
     if (!cheerio.active) return;
+    if (!dynamicBoundsVisible(cheerioBounds(cheerio), visibleWorld)) return;
 
     const { originX, originY, radius, pushX, pushY } = cheerio;
     const currentX = originX + pushX;
@@ -831,6 +846,7 @@ export function updateMapThemeDynamics({
     cheerios,
     frameDelta,
     marble,
+    visibleWorld,
   });
   renderKitchenDynamics(themeState);
   return events;

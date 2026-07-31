@@ -577,6 +577,64 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
 
 testKitchenDynamicsUseDirtyRedrawsAfterInitialRender();
 
+function testKitchenDynamicsSkipOffscreenAnts() {
+  const antCanvas = new FakeCanvasElement();
+  const themeState = {
+    kitchenCheerios: [
+      {
+        originX: 1010,
+        originY: 1000,
+        pushX: 0,
+        pushY: 0,
+        radius: 23,
+        eaten: 0,
+        active: true,
+        sweptClosestX: 0,
+        sweptClosestY: 0,
+        sweptDistance: 0,
+        lastBounds: null,
+      },
+    ],
+    kitchenAnts: [
+      {
+        x: 1000,
+        y: 1000,
+        angle: 0,
+        alive: true,
+        squished: false,
+        targetIndex: -1,
+        wobble: 0,
+        lastBounds: null,
+      },
+    ],
+    kitchenDynamicCanvas: antCanvas,
+    kitchenDynamicContext: antCanvas.context,
+    kitchenDynamicWorld: { width: 2000, height: 2000 },
+    kitchenDynamicRenderScale: 0.35,
+  };
+
+  updateMapThemeDynamics({
+    mapConfig: { theme: "kitchenFloor", elements: [] },
+    marble: { x: 1000, y: 1000, vx: 3, vy: 0, r: 29 },
+    frameDelta: 20,
+    themeState,
+    visibleWorld: { bottom: 120, left: 0, right: 120, top: 0 },
+  });
+
+  assert.equal(
+    themeState.kitchenAnts[0].squished,
+    false,
+    "offscreen ants should not be updated",
+  );
+  assert.equal(
+    themeState.kitchenCheerios[0].eaten,
+    0,
+    "offscreen Cheerios should not be updated",
+  );
+}
+
+testKitchenDynamicsSkipOffscreenAnts();
+
 function testMarbleSquishesKitchenAnts() {
   const antCanvas = new FakeCanvasElement();
   const themeState = {
