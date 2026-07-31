@@ -12,11 +12,40 @@ function fullscreenElement(documentRef = globalThis.document) {
   );
 }
 
+export function appDisplayMode({
+  navigatorRef = globalThis.navigator,
+  windowRef = globalThis.window,
+} = {}) {
+  if (windowRef?.matchMedia?.("(display-mode: fullscreen)")?.matches) {
+    return "fullscreen";
+  }
+  if (windowRef?.matchMedia?.("(display-mode: standalone)")?.matches) {
+    return "standalone";
+  }
+  if (navigatorRef?.standalone) return "standalone";
+
+  return "browser";
+}
+
+export function isInstalledPwa({
+  navigatorRef = globalThis.navigator,
+  windowRef = globalThis.window,
+} = {}) {
+  return appDisplayMode({ navigatorRef, windowRef }) !== "browser";
+}
+
 export async function requestFullscreenMode({
   fullscreenOnStart,
   documentRef = globalThis.document,
+  navigatorRef = globalThis.navigator,
+  windowRef = globalThis.window,
 } = {}) {
-  if (!fullscreenOnStart || !documentRef || fullscreenElement(documentRef))
+  if (
+    !fullscreenOnStart ||
+    !documentRef ||
+    fullscreenElement(documentRef) ||
+    isInstalledPwa({ navigatorRef, windowRef })
+  )
     return;
 
   const target = documentRef.documentElement;
@@ -141,18 +170,24 @@ function notifyServiceWorkerUpdate(onUpdateReady) {
   if (typeof onUpdateReady === "function") onUpdateReady();
 }
 
+function notifyServiceWorkerStatus(onStatusChange, status) {
+  if (typeof onStatusChange === "function") onStatusChange(status);
+}
+
 function watchServiceWorkerRegistration({
   navigatorRef,
-  onUpdateReady,
+  onStatusChange,
+  notifyUpdateReady,
   registration,
 }) {
   if (!registration?.addEventListener) return;
 
   if (registration.waiting && navigatorRef.serviceWorker.controller) {
-    notifyServiceWorkerUpdate(onUpdateReady);
+    notifyUpdateReady();
   }
 
   registration.addEventListener("updatefound", () => {
+    notifyServiceWorkerStatus(onStatusChange, "update-installing");
     const worker = registration.installing;
     if (!worker?.addEventListener) return;
 
@@ -161,7 +196,7 @@ function watchServiceWorkerRegistration({
         worker.state === "installed" &&
         navigatorRef.serviceWorker.controller
       ) {
-        notifyServiceWorkerUpdate(onUpdateReady);
+        notifyUpdateReady();
       }
     });
   });
@@ -169,25 +204,48 @@ function watchServiceWorkerRegistration({
 
 export function registerServiceWorker({
   navigatorRef = globalThis.navigator,
+  onStatusChange,
   onUpdateReady,
   windowRef = globalThis.window,
   scriptUrl = "sw.js",
 } = {}) {
   if (!navigatorRef?.serviceWorker || !windowRef?.addEventListener) {
+    notifyServiceWorkerStatus(onStatusChange, "unsupported");
     return false;
   }
 
+  let updateReadyNotified = false;
+  function notifyUpdateReady() {
+    if (updateReadyNotified) return;
+    updateReadyNotified = true;
+    notifyServiceWorkerUpdate(onUpdateReady);
+    notifyServiceWorkerStatus(onStatusChange, "update-ready");
+  }
+
   windowRef.addEventListener("load", () => {
+    const hadController = Boolean(navigatorRef.serviceWorker.controller);
+    notifyServiceWorkerStatus(onStatusChange, "checking");
+    if (hadController && navigatorRef.serviceWorker.addEventListener) {
+      navigatorRef.serviceWorker.addEventListener(
+        "controllerchange",
+        notifyUpdateReady,
+        { once: true },
+      );
+    }
+
     navigatorRef.serviceWorker
       .register(scriptUrl, { type: "module" })
-      .then((registration) =>
+      .then((registration) => {
+        notifyServiceWorkerStatus(onStatusChange, "ready");
         watchServiceWorkerRegistration({
           navigatorRef,
-          onUpdateReady,
+          onStatusChange,
+          notifyUpdateReady,
           registration,
-        }),
-      )
+        });
+      })
       .catch((error) => {
+        notifyServiceWorkerStatus(onStatusChange, "error");
         console.warn("service worker registration failed", error);
       });
   });

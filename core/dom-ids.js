@@ -24,6 +24,7 @@ export const domIds = {
   settingsToggle: "settingsToggle",
   settingsOverlay: "settingsOverlay",
   settingsTitle: "settingsTitle",
+  pwaStatus: "pwaStatus",
   closeSettings: "closeSettings",
   resumeGame: "resumeGame",
   retryMap: "retryMap",

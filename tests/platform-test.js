@@ -48,6 +48,48 @@ async function testFullscreenUsesInjectedDocument() {
   assert.equal(requested, true);
 }
 
+async function testFullscreenSkipsInstalledPwaDisplayMode() {
+  let requested = false;
+  const documentRef = {
+    fullscreenElement: null,
+    documentElement: {
+      requestFullscreen() {
+        requested = true;
+      },
+    },
+  };
+  const windowRef = {
+    matchMedia(query) {
+      return { matches: query === "(display-mode: standalone)" };
+    },
+  };
+
+  const { requestFullscreenMode } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+  await requestFullscreenMode({
+    fullscreenOnStart: true,
+    documentRef,
+    windowRef,
+  });
+
+  assert.equal(requested, false);
+}
+
+async function testAppDisplayModeDetectsInstalledPwa() {
+  const { appDisplayMode, isInstalledPwa } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+  const windowRef = {
+    matchMedia(query) {
+      return { matches: query === "(display-mode: fullscreen)" };
+    },
+  };
+
+  assert.equal(appDisplayMode({ windowRef }), "fullscreen");
+  assert.equal(isInstalledPwa({ windowRef }), true);
+}
+
 async function testMotionPermissionUsesInjectedWindow() {
   let orientationRequested = false;
   let motionRequested = false;
@@ -94,6 +136,7 @@ async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
   const listeners = {};
   let registration = null;
   let registrationListener = null;
+  const statuses = [];
   const { registerServiceWorker } = await import(
     "../platform/platform.js?test=" + Date.now()
   );
@@ -110,6 +153,9 @@ async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
         },
       },
     },
+    onStatusChange(status) {
+      statuses.push(status);
+    },
     windowRef: {
       addEventListener(type, listener) {
         listeners[type] = listener;
@@ -125,6 +171,7 @@ async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
     options: { type: "module" },
     scriptUrl: "sw.js",
   });
+  assert.deepEqual(statuses, ["checking", "ready"]);
   assert.equal(registrationListener.type, "updatefound");
   assert.equal(typeof registrationListener.listener, "function");
 }
@@ -133,11 +180,19 @@ async function testServiceWorkerRegistrationHandlesUnsupportedBrowsers() {
   const { registerServiceWorker } = await import(
     "../platform/platform.js?test=" + Date.now()
   );
+  const statuses = [];
 
   assert.equal(
-    registerServiceWorker({ navigatorRef: {}, windowRef: {} }),
+    registerServiceWorker({
+      navigatorRef: {},
+      onStatusChange(status) {
+        statuses.push(status);
+      },
+      windowRef: {},
+    }),
     false,
   );
+  assert.deepEqual(statuses, ["unsupported"]);
 }
 
 async function testServiceWorkerRegistrationReportsWaitingUpdate() {
@@ -226,6 +281,8 @@ async function testServiceWorkerRegistrationReportsInstalledUpdate() {
 
 await testWakeLockRequestIsNotDuplicatedWhilePending();
 await testFullscreenUsesInjectedDocument();
+await testFullscreenSkipsInstalledPwaDisplayMode();
+await testAppDisplayModeDetectsInstalledPwa();
 await testMotionPermissionUsesInjectedWindow();
 await testScreenAdjustedUsesInjectedScreen();
 await testServiceWorkerRegistrationIsDeferredUntilLoad();

@@ -16,7 +16,16 @@ export const copy = {
     waterPatch: "water: slower with ripples.",
     hazardPatch: "hazard. back to start.",
     goalNoNextMap: "goal reached. no next map available.",
-    updateReady: "update ready. refresh to apply.",
+  },
+  pwa: {
+    checking: "checking for app updates...",
+    error: "offline app setup failed. refresh online and try again.",
+    installedFullscreen:
+      "installed app mode. fullscreen is handled by the app.",
+    ready: "offline app ready.",
+    unsupported: "offline app unavailable in this browser.",
+    updateInstalling: "downloading app update...",
+    updateReady: "update ready. close and reopen the app.",
   },
   intro: {
     countdown: "map opens in",

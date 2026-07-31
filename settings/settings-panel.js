@@ -13,6 +13,7 @@ export function bindSettingsPanel({
   onFpsChanged,
   onStatsChanged,
   requestRender,
+  fullscreenManagedByPwa = false,
 }) {
   const {
     neutralBtn,
@@ -37,6 +38,7 @@ export function bindSettingsPanel({
   hapticsSetting.checked = settings.hapticsEnabled;
   trailSetting.checked = settings.trailEnabled;
   fullscreenSetting.checked = settings.fullscreenEnabled;
+  fullscreenSetting.disabled = fullscreenManagedByPwa;
   fpsSetting.checked = settings.fpsEnabled;
   statsSetting.checked = settings.statsEnabled;
 
@@ -50,6 +52,8 @@ export function bindSettingsPanel({
 
   function bindCheckboxSetting(input, key, afterChange = applySettings) {
     input.addEventListener("change", () => {
+      if (input.disabled) return;
+
       settings[key] = input.checked;
       afterChange(settings[key]);
       saveSettings();

@@ -5,6 +5,7 @@ export function createUi({
   levelLabel,
   fpsCounter,
   debug,
+  pwaStatus,
   settings,
   settingsOverlay,
   startBtn,
@@ -31,6 +32,13 @@ export function createUi({
 
   function setLevelLabel(message) {
     levelLabel.textContent = message;
+  }
+
+  function setPwaStatus(message) {
+    if (!pwaStatus) return;
+
+    pwaStatus.textContent = message;
+    pwaStatus.hidden = !message;
   }
 
   function setGoalIndicator({ visible, angle = 0 }) {
@@ -135,6 +143,7 @@ export function createUi({
     setStatsEnabled,
     setHint,
     setLevelLabel,
+    setPwaStatus,
     setStartControls,
     updateDebugPanel,
     updateFps,

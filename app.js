@@ -56,6 +56,7 @@ import {
   registerServiceWorker,
   screenAdjusted,
   createViewport,
+  isInstalledPwa,
 } from "./platform/platform.js";
 import { bindSettingsPanel } from "./settings/settings-panel.js";
 import { createSettingsApplier } from "./settings/settings-applier.js";
@@ -399,6 +400,19 @@ function bootInitialRender({
   windowRef.__marbleAppBooted = true;
 }
 
+function pwaUpdateStatusText(status) {
+  return (
+    {
+      checking: copy.pwa.checking,
+      error: copy.pwa.error,
+      ready: copy.pwa.ready,
+      unsupported: copy.pwa.unsupported,
+      "update-installing": copy.pwa.updateInstalling,
+      "update-ready": copy.pwa.updateReady,
+    }[status] || ""
+  );
+}
+
 function mapLevelLabel(mapConfig) {
   const index = baseMapConfig.variants.findIndex(
     (variant) => variant.id === mapConfig.variantId,
@@ -452,11 +466,16 @@ export function createApp({
   const { calibration, keyboard, sensor, tilt } = input;
 
   const { saveSettings, settings } = createSettingsRuntime(storage);
+  const fullscreenManagedByPwa = isInstalledPwa({
+    navigatorRef: windowRef.navigator,
+    windowRef,
+  });
   const ui = createUi({
     controls: controlsEl,
     hint,
     fpsCounter,
     debug,
+    pwaStatus: els.pwaStatus,
     settings,
     settingsOverlay,
     startBtn,
@@ -475,6 +494,16 @@ export function createApp({
   function requestRender() {
     frameLoop.requestRender();
   }
+
+  let pwaUpdateStatus = "";
+  function updatePwaStatus(status = "") {
+    const displayStatus = fullscreenManagedByPwa
+      ? copy.pwa.installedFullscreen
+      : "";
+    pwaUpdateStatus = pwaUpdateStatusText(status) || pwaUpdateStatus;
+    ui.setPwaStatus([displayStatus, pwaUpdateStatus].filter(Boolean).join(" "));
+  }
+  updatePwaStatus();
 
   const hapticFeedback = setupFeedback(haptics);
   const cameraController = createCameraController({
@@ -509,6 +538,13 @@ export function createApp({
     documentRef,
     haptics,
     physics,
+    requestFullscreen: (options) =>
+      requestFullscreenMode({
+        ...options,
+        documentRef,
+        navigatorRef: windowRef.navigator,
+        windowRef,
+      }),
     settings,
     trailRenderer,
   });
@@ -641,7 +677,12 @@ export function createApp({
     getSpawn: () => mapState.spawn,
     enableMotion: () => inputManager.enableMotion(),
     requestFullscreen: (options) =>
-      requestFullscreenMode({ ...options, documentRef }),
+      requestFullscreenMode({
+        ...options,
+        documentRef,
+        navigatorRef: windowRef.navigator,
+        windowRef,
+      }),
     exitFullscreen: () => exitFullscreenMode({ documentRef }),
     requestMotionPermission: () =>
       requestMotionPermissionIfNeeded({ windowRef }),
@@ -685,6 +726,7 @@ export function createApp({
     onFpsChanged: ui.setFpsEnabled,
     onStatsChanged: ui.setStatsEnabled,
     requestRender,
+    fullscreenManagedByPwa,
   });
 
   const currentPhysicsContext = createCurrentPhysicsContext(state, mapState);
@@ -731,7 +773,7 @@ export function createApp({
     ui.setLevelLabel(mapLevelLabel(mapState.activeMap));
     registerServiceWorker({
       navigatorRef: windowRef.navigator,
-      onUpdateReady: () => ui.setHint(copy.hints.updateReady),
+      onStatusChange: updatePwaStatus,
       windowRef,
     });
   } catch (error) {

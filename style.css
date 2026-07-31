@@ -722,6 +722,18 @@ button.primaryAction {
   margin: 0;
   font-size: 20px;
 }
+.settingsStatus {
+  margin: -4px 0 12px;
+  border-radius: 10px;
+  background: #ffffff10;
+  padding: 9px 10px;
+  color: #d7dde8;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.settingsStatus:empty {
+  display: none;
+}
 #closeSettings {
   flex: 0 0 auto;
   width: 40px;
@@ -756,4 +768,7 @@ button.primaryAction {
   justify-self: start;
   width: 22px;
   height: 22px;
+}
+.settingRow:has(input:disabled) {
+  opacity: 0.48;
 }

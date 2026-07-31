@@ -195,6 +195,29 @@ function testStatsDefaultsHiddenAndUpdatesWhenEnabled() {
 
 testStatsDefaultsHiddenAndUpdatesWhenEnabled();
 
+function testPwaStatusUpdatesSettingsStatus() {
+  const pwaStatus = new FakeElement();
+  const ui = createUi({
+    hint: new FakeElement(),
+    fpsCounter: new FakeElement(),
+    debug: new FakeElement(),
+    pwaStatus,
+    settings: { fpsEnabled: false, statsEnabled: false },
+    settingsOverlay: new FakeElement(),
+    debugLines: () => [],
+    state: {},
+  });
+
+  ui.setPwaStatus("offline app ready.");
+  assert.equal(pwaStatus.textContent, "offline app ready.");
+  assert.equal(pwaStatus.hidden, false);
+
+  ui.setPwaStatus("");
+  assert.equal(pwaStatus.hidden, true);
+}
+
+testPwaStatusUpdatesSettingsStatus();
+
 function testGoalIndicatorUpdatesVisibilityAndAngle() {
   const goalIndicator = new FakeElement();
   const ui = createUi({
