@@ -367,7 +367,7 @@ function testKitchenThemeRendersDatedFloorDetails() {
   );
   assert.equal(
     overlayChildren.some((child) =>
-      child.className.includes("kitchenAntCanvas"),
+      child.className.includes("kitchenDynamicCanvas"),
     ),
     true,
     "kitchen floor theme should render ants on one canvas layer",
@@ -402,7 +402,7 @@ function testKitchenCheeriosGiveWayToMarble() {
   });
 
   const cheerioState = themeState.kitchenCheerios[0];
-  const antCanvas = themeState.kitchenAntCanvas;
+  const antCanvas = themeState.kitchenDynamicCanvas;
   const drawCallsBefore = antCanvas.context.calls.length;
   const marble = {
     x: cheerioState.originX,
@@ -515,10 +515,10 @@ function testKitchenAntsMunchCheerios() {
         wobble: 0,
       },
     ],
-    kitchenAntCanvas: antCanvas,
-    kitchenAntContext: antCanvas.context,
-    kitchenAntWorld: { width: 200, height: 200 },
-    kitchenAntRenderScale: 0.35,
+    kitchenDynamicCanvas: antCanvas,
+    kitchenDynamicContext: antCanvas.context,
+    kitchenDynamicWorld: { width: 200, height: 200 },
+    kitchenDynamicRenderScale: 0.35,
   };
 
   updateMapThemeDynamics({
@@ -553,10 +553,10 @@ function testMarbleSquishesKitchenAnts() {
         wobble: 0,
       },
     ],
-    kitchenAntCanvas: antCanvas,
-    kitchenAntContext: antCanvas.context,
-    kitchenAntWorld: { width: 200, height: 200 },
-    kitchenAntRenderScale: 0.35,
+    kitchenDynamicCanvas: antCanvas,
+    kitchenDynamicContext: antCanvas.context,
+    kitchenDynamicWorld: { width: 200, height: 200 },
+    kitchenDynamicRenderScale: 0.35,
   };
 
   const events = updateMapThemeDynamics({

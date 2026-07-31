@@ -98,7 +98,6 @@ body {
 .rinkCircle,
 .goalCrease,
 .themeRug,
-.kitchenCheerio,
 .parkingStripe,
 .parkingDriveLine,
 .themeOil,
@@ -107,7 +106,7 @@ body {
   box-sizing: border-box;
   pointer-events: none;
 }
-.kitchenAntCanvas {
+.kitchenDynamicCanvas {
   position: absolute;
   pointer-events: none;
 }
@@ -246,15 +245,6 @@ body {
   background-size: contain;
   transform: rotate(var(--fork-angle, 0rad));
   transform-origin: center;
-}
-.kitchenCheerio {
-  border-radius: 50%;
-  background-image: url("assets/sprites/cheerio.png");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-  transform: translate(var(--push-x, 0px), var(--push-y, 0px))
-    scale(var(--cheerio-scale, 1));
 }
 .livingRoomSurface {
   background:

@@ -26,7 +26,7 @@ const cheerioSurfaceInfluences = Object.freeze({
 });
 const kitchenCheerioObstacleSeparation = 0.5;
 const cheerioObstacleResolvePasses = 2;
-const kitchenAntCanvasScale = 0.35;
+const kitchenDynamicCanvasScale = 0.35;
 const kitchenAntRadius = 7;
 const kitchenAntSpeed = 0.9;
 const kitchenAntMunchDistance = 20;
@@ -101,24 +101,24 @@ function appendKitchenCheerio(world, circle, themeState) {
   themeState.kitchenCheerios.push(state);
 }
 
-function appendKitchenAntCanvas(parent, world, themeState) {
+function appendKitchenDynamicCanvas(parent, world, themeState) {
   const canvas = document.createElement("canvas");
 
-  canvas.className = "kitchenAntCanvas";
-  canvas.width = Math.ceil(world.width * kitchenAntCanvasScale);
-  canvas.height = Math.ceil(world.height * kitchenAntCanvasScale);
+  canvas.className = "kitchenDynamicCanvas";
+  canvas.width = Math.ceil(world.width * kitchenDynamicCanvasScale);
+  canvas.height = Math.ceil(world.height * kitchenDynamicCanvasScale);
   applyBox(canvas, { x: 0, y: 0, w: world.width, h: world.height });
   canvas.setAttribute("aria-hidden", "true");
   canvas.setAttribute(
-    "data-kitchen-ants",
+    "data-kitchen-dynamics",
     String(kitchenAntSpawnPoints.length),
   );
   parent.appendChild(canvas);
 
-  themeState.kitchenAntCanvas = canvas;
-  themeState.kitchenAntContext = canvas.getContext("2d");
-  themeState.kitchenAntWorld = world;
-  themeState.kitchenAntRenderScale = kitchenAntCanvasScale;
+  themeState.kitchenDynamicCanvas = canvas;
+  themeState.kitchenDynamicContext = canvas.getContext("2d");
+  themeState.kitchenDynamicWorld = world;
+  themeState.kitchenDynamicRenderScale = kitchenDynamicCanvasScale;
   themeState.kitchenAnts = kitchenAntSpawnPoints.map((point, index) => ({
     x: point.x * world.width,
     y: point.y * world.height,
@@ -128,7 +128,7 @@ function appendKitchenAntCanvas(parent, world, themeState) {
     targetIndex: -1,
     wobble: index * 1.7,
   }));
-  renderKitchenAnts(themeState);
+  renderKitchenDynamics(themeState);
 }
 
 function appendFloor(parent, theme, world, rect = {}) {
@@ -215,7 +215,7 @@ function renderKitchenFloor({ underlay, overlay, themeState, world }) {
     { x: 0.86, y: 0.59 },
     { x: 0.88, y: 0.67 },
   ].forEach((circle) => appendKitchenCheerio(world, circle, themeState));
-  appendKitchenAntCanvas(overlay, world, themeState);
+  appendKitchenDynamicCanvas(overlay, world, themeState);
 }
 
 function renderLivingRoom({ underlay, overlay, world }) {
@@ -549,19 +549,19 @@ function drawCheerio(context, cheerio) {
   context.globalAlpha = 1;
 }
 
-function renderKitchenAnts(themeState) {
-  const context = themeState.kitchenAntContext;
-  const canvas = themeState.kitchenAntCanvas;
-  const world = themeState.kitchenAntWorld;
+function renderKitchenDynamics(themeState) {
+  const context = themeState.kitchenDynamicContext;
+  const canvas = themeState.kitchenDynamicCanvas;
+  const world = themeState.kitchenDynamicWorld;
   if (!context || !canvas || !world) return;
 
   context.setTransform(1, 0, 0, 1, 0, 0);
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.setTransform(
-    themeState.kitchenAntRenderScale,
+    themeState.kitchenDynamicRenderScale,
     0,
     0,
-    themeState.kitchenAntRenderScale,
+    themeState.kitchenDynamicRenderScale,
     0,
     0,
   );
@@ -693,7 +693,7 @@ export function updateMapThemeDynamics({
     frameDelta,
     marble,
   });
-  renderKitchenAnts(themeState);
+  renderKitchenDynamics(themeState);
   return events;
 }
 
@@ -708,10 +708,10 @@ export function renderMapTheme({
   overlayContainer.replaceChildren();
   themeState.kitchenCheerios = [];
   themeState.kitchenAnts = [];
-  themeState.kitchenAntCanvas = null;
-  themeState.kitchenAntContext = null;
-  themeState.kitchenAntWorld = null;
-  themeState.kitchenAntRenderScale = kitchenAntCanvasScale;
+  themeState.kitchenDynamicCanvas = null;
+  themeState.kitchenDynamicContext = null;
+  themeState.kitchenDynamicWorld = null;
+  themeState.kitchenDynamicRenderScale = kitchenDynamicCanvasScale;
   const theme = mapConfig?.theme;
   if (!theme || !renderers[theme] || !world) return;
 
