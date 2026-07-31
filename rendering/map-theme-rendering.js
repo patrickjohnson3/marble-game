@@ -6,6 +6,18 @@ const realWorldThemes = new Set([
   "sandLot",
 ]);
 
+const defaultCheerioSurfaceInfluence = Object.freeze({
+  maxPush: 1,
+  shove: 0.78,
+  speed: 0.04,
+});
+const cheerioSurfaceInfluences = Object.freeze({
+  gooPatch: Object.freeze({ maxPush: 0.55, shove: 0.36, speed: 0.015 }),
+  icePatch: Object.freeze({ maxPush: 1.35, shove: 1.08, speed: 0.08 }),
+  roughPatch: Object.freeze({ maxPush: 0.75, shove: 0.55, speed: 0.025 }),
+  waterPatch: Object.freeze({ maxPush: 1.18, shove: 0.92, speed: 0.06 }),
+});
+
 function rectFromRatio(world, rect) {
   return {
     x: rect.x * world.width,
@@ -56,6 +68,9 @@ function appendKitchenCheerio(parent, world, circle, themeState) {
     pushX: 0,
     pushY: 0,
     radius: radius * world.width,
+    sweptClosestX: 0,
+    sweptClosestY: 0,
+    sweptDistance: 0,
   };
 
   themeState.kitchenCheerios.push(state);
@@ -245,17 +260,14 @@ export function isRealWorldTheme(theme) {
   return realWorldThemes.has(theme);
 }
 
-function capVectorLength(x, y, maxLength) {
+function cappedVectorScale(x, y, maxLength) {
   const length = Math.hypot(x, y);
-  if (length <= maxLength || length === 0) return { x, y };
+  if (length <= maxLength || length === 0) return 1;
 
-  return {
-    x: (x / length) * maxLength,
-    y: (y / length) * maxLength,
-  };
+  return maxLength / length;
 }
 
-function distanceToSegment(point, start, end) {
+function setDistanceToSegment(pointX, pointY, start, end, target) {
   const segmentX = end.x - start.x;
   const segmentY = end.y - start.y;
   const lengthSq = segmentX * segmentX + segmentY * segmentY;
@@ -265,47 +277,34 @@ function distanceToSegment(point, start, end) {
           0,
           Math.min(
             1,
-            ((point.x - start.x) * segmentX + (point.y - start.y) * segmentY) /
+            ((pointX - start.x) * segmentX + (pointY - start.y) * segmentY) /
               lengthSq,
           ),
         )
       : 1;
-  const closest = {
-    x: start.x + segmentX * t,
-    y: start.y + segmentY * t,
-  };
 
-  return {
-    closest,
-    distance: Math.hypot(point.x - closest.x, point.y - closest.y),
-  };
-}
-
-function pointInRect(point, rect) {
-  return (
-    point.x >= rect.x &&
-    point.x <= rect.x + rect.w &&
-    point.y >= rect.y &&
-    point.y <= rect.y + rect.h
+  target.sweptClosestX = start.x + segmentX * t;
+  target.sweptClosestY = start.y + segmentY * t;
+  target.sweptDistance = Math.hypot(
+    pointX - target.sweptClosestX,
+    pointY - target.sweptClosestY,
   );
 }
 
-function cheerioSurfaceInfluence(point, elements = []) {
-  const surface = elements.find(
-    (element) =>
-      ["gooPatch", "icePatch", "roughPatch", "waterPatch"].includes(
-        element.type,
-      ) && pointInRect(point, element),
-  )?.type;
-
+function pointInRect(x, y, rect) {
   return (
-    {
-      gooPatch: { maxPush: 0.55, shove: 0.36, speed: 0.015 },
-      icePatch: { maxPush: 1.35, shove: 1.08, speed: 0.08 },
-      roughPatch: { maxPush: 0.75, shove: 0.55, speed: 0.025 },
-      waterPatch: { maxPush: 1.18, shove: 0.92, speed: 0.06 },
-    }[surface] ?? { maxPush: 1, shove: 0.78, speed: 0.04 }
+    x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
   );
+}
+
+function cheerioSurfaceInfluence(x, y, elements = []) {
+  for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    const influence = cheerioSurfaceInfluences[element.type];
+    if (influence && pointInRect(x, y, element)) return influence;
+  }
+
+  return defaultCheerioSurfaceInfluence;
 }
 
 export function updateMapThemeDynamics({
@@ -322,13 +321,28 @@ export function updateMapThemeDynamics({
     const { originX, originY, radius, pushX, pushY } = cheerio;
     const currentX = originX + pushX;
     const currentY = originY + pushY;
-    const current = { x: currentX, y: currentY };
-    const swept = distanceToSegment(current, previousMarble, marble);
-    const dx = currentX - swept.closest.x;
-    const dy = currentY - swept.closest.y;
-    const distance = swept.distance;
-    const influence = cheerioSurfaceInfluence(current, mapConfig.elements);
     const shoveDistance = marble.r + radius + 18;
+    const minX = Math.min(previousMarble.x, marble.x) - shoveDistance;
+    const maxX = Math.max(previousMarble.x, marble.x) + shoveDistance;
+    const minY = Math.min(previousMarble.y, marble.y) - shoveDistance;
+    const maxY = Math.max(previousMarble.y, marble.y) + shoveDistance;
+    if (
+      currentX < minX ||
+      currentX > maxX ||
+      currentY < minY ||
+      currentY > maxY
+    )
+      return;
+
+    setDistanceToSegment(currentX, currentY, previousMarble, marble, cheerio);
+    const dx = currentX - cheerio.sweptClosestX;
+    const dy = currentY - cheerio.sweptClosestY;
+    const distance = cheerio.sweptDistance;
+    const influence = cheerioSurfaceInfluence(
+      currentX,
+      currentY,
+      mapConfig.elements,
+    );
     const maxPush = marble.r * 3.2 * influence.maxPush;
     if (distance >= shoveDistance) return;
 
@@ -339,21 +353,19 @@ export function updateMapThemeDynamics({
       distance > 0.001 ? dy / distance : (marble.vy || 0) / Math.max(speed, 1);
     const amount =
       (shoveDistance - distance) * influence.shove + speed * influence.speed;
-    const cappedPush = capVectorLength(
-      pushX + nx * amount,
-      pushY + ny * amount,
-      maxPush,
-    );
+    const nextPushX = pushX + nx * amount;
+    const nextPushY = pushY + ny * amount;
+    const pushScale = cappedVectorScale(nextPushX, nextPushY, maxPush);
 
-    cheerio.pushX = cappedPush.x;
-    cheerio.pushY = cappedPush.y;
+    cheerio.pushX = nextPushX * pushScale;
+    cheerio.pushY = nextPushY * pushScale;
     cheerio.element.style.setProperty(
       "--push-x",
-      cappedPush.x.toFixed(1) + "px",
+      cheerio.pushX.toFixed(1) + "px",
     );
     cheerio.element.style.setProperty(
       "--push-y",
-      cappedPush.y.toFixed(1) + "px",
+      cheerio.pushY.toFixed(1) + "px",
     );
   });
 }
