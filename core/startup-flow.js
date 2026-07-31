@@ -38,6 +38,7 @@ export async function startGameWithPermissions({
   requestMotionPermission = requestMotionPermissionIfNeeded,
   resetGame,
   scheduleFrame,
+  sensor,
   sensorWatchdog,
   settings,
   timing,
@@ -46,6 +47,16 @@ export async function startGameWithPermissions({
   clearTimeoutFn = clearTimeout,
 }) {
   ui.setStartControls({ visible: false, disabled: true });
+  resetGame();
+  ui.setStartControls({ visible: false, disabled: true });
+  requestFullscreen({ fullscreenOnStart: settings.fullscreenEnabled });
+  keepDisplayAwake();
+  enableMotion();
+  game.phase = GAME_PHASES.calibrating;
+  if (sensor) sensor.permission = "pending";
+  scheduleFrame();
+  ui.setHint(copy.hints.calibrating);
+  sensorWatchdog.schedule();
 
   const permission = await requestMotionPermissionWithTimeout({
     requestMotionPermission,
@@ -53,25 +64,15 @@ export async function startGameWithPermissions({
     setTimeoutFn,
     clearTimeoutFn,
   });
+  if (sensor) {
+    sensor.permission =
+      permission === "timeout" ? "timeout" : permission ? "granted" : "denied";
+  }
+
   if (permission === false) {
-    ui.setStartControls({ visible: true, disabled: false });
     ui.setHint(copy.hints.motionDenied);
     return;
   }
 
-  requestFullscreen({ fullscreenOnStart: settings.fullscreenEnabled });
-  keepDisplayAwake();
-  resetGame();
-  ui.setStartControls({ visible: false, disabled: true });
-  enableMotion();
-  game.phase = GAME_PHASES.calibrating;
-  scheduleFrame();
-
-  ui.setHint(
-    permission === "timeout"
-      ? copy.hints.noMotionSensor
-      : copy.hints.calibrating,
-  );
-
-  sensorWatchdog.schedule();
+  if (permission === "timeout") ui.setHint(copy.hints.noMotionSensor);
 }

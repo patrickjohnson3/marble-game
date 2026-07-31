@@ -60,6 +60,7 @@ export function createGameState({
       sensor: {
         gotOrientation: false,
         gotMotion: false,
+        permission: "unknown",
         using: SENSOR_MODES.none,
       },
     },

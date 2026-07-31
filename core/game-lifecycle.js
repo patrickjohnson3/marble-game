@@ -74,6 +74,7 @@ export function createLifecycleController({
     settingsPausedGame = false;
     sensor.gotOrientation = false;
     sensor.gotMotion = false;
+    sensor.permission = "unknown";
     sensor.using = SENSOR_MODES.none;
 
     intro.released = false;
@@ -131,6 +132,7 @@ export function createLifecycleController({
       requestMotionPermission,
       resetGame: gameController.reset,
       scheduleFrame,
+      sensor,
       sensorWatchdog,
       settings,
       timing,

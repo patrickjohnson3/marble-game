@@ -108,6 +108,7 @@ async function testStartRequestsFullscreenFromClickPath() {
   let fullscreenRequests = 0;
   let motionEnabled = false;
   let mapResets = 0;
+  let watchdogScheduled = false;
   const startCalls = [];
 
   const lifecycle = createLifecycleController({
@@ -144,7 +145,9 @@ async function testStartRequestsFullscreenFromClickPath() {
       pause() {},
       reset() {},
       resume() {},
-      schedule() {},
+      schedule() {
+        watchdogScheduled = true;
+      },
     },
     settings: { fullscreenEnabled: true },
     startBtn: {
@@ -177,7 +180,9 @@ async function testStartRequestsFullscreenFromClickPath() {
   assert.equal(motionEnabled, true);
   assert.equal(mapResets, 1);
   assert.equal(state.game.phase, "calibrating");
-  assert.deepEqual(startCalls, ["motionPermission", "fullscreen"]);
+  assert.equal(state.input.sensor.permission, "granted");
+  assert.equal(watchdogScheduled, true);
+  assert.deepEqual(startCalls, ["fullscreen", "motionPermission"]);
 }
 
 async function testStartContinuesWhenMotionPermissionStalls() {
@@ -262,13 +267,15 @@ async function testStartContinuesWhenMotionPermissionStalls() {
 
   const startPromise = lifecycle.gameController.start();
   await Promise.resolve();
-  assert.equal(motionEnabled, false);
+  assert.equal(motionEnabled, true);
+  assert.equal(state.game.phase, "calibrating");
 
   timeoutCallback();
   await startPromise;
 
   assert.equal(motionEnabled, true);
   assert.equal(state.game.phase, "calibrating");
+  assert.equal(state.input.sensor.permission, "timeout");
   assert.equal(
     hint,
     "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
@@ -285,6 +292,7 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
   });
   let motionEnabled = false;
   let hint = "";
+  let fullscreenRequests = 0;
   const controlsEl = { hidden: false };
   const startBtn = {
     disabled: false,
@@ -345,9 +353,7 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       motionEnabled = true;
     },
     requestFullscreen() {
-      throw new Error(
-        "fullscreen should not be requested after denied motion permission",
-      );
+      fullscreenRequests++;
     },
     requestMotionPermission() {
       return Promise.resolve(false);
@@ -358,9 +364,12 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
 
   await lifecycle.gameController.start();
 
-  assert.equal(motionEnabled, false);
-  assert.equal(controlsEl.hidden, false);
-  assert.equal(startBtn.disabled, false);
+  assert.equal(fullscreenRequests, 1);
+  assert.equal(motionEnabled, true);
+  assert.equal(controlsEl.hidden, true);
+  assert.equal(startBtn.disabled, true);
+  assert.equal(state.game.phase, "calibrating");
+  assert.equal(state.input.sensor.permission, "denied");
   assert.equal(hint, "motion permission denied. check chrome site settings.");
 }
 

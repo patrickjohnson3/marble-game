@@ -5,6 +5,7 @@ export function debugLines({ game, input, marble, camera, haptics, intro }) {
     "phase: " + game.phase,
     "paused: " + game.paused,
     "sensor: " + sensor.using,
+    "permission: " + sensor.permission,
     "orientation seen: " +
       sensor.gotOrientation +
       " | motion seen: " +
