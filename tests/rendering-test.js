@@ -351,13 +351,6 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen floor theme should render accent tiles",
   );
   assert.equal(
-    underlayChildren.some((child) =>
-      child.className.includes("kitchenFloorMat"),
-    ),
-    true,
-    "kitchen floor theme should render a floor mat",
-  );
-  assert.equal(
     overlayChildren.filter((child) =>
       child.className.includes("kitchenCheerio"),
     ).length,

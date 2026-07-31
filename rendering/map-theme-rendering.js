@@ -115,12 +115,6 @@ function renderKitchenFloor({ underlay, overlay, themeState, world }) {
     { x: 0.56, y: 0.58, w: 0.05, h: 0.05 },
     { x: 0.76, y: 0.73, w: 0.05, h: 0.05 },
   ].forEach((rect) => appendBox(underlay, "kitchenTileAccent", world, rect));
-  appendBox(underlay, "kitchenFloorMat", world, {
-    x: 0.64,
-    y: 0.25,
-    w: 0.18,
-    h: 0.065,
-  });
   [
     { x: 0.16, y: 0.49 },
     { x: 0.19, y: 0.52 },
