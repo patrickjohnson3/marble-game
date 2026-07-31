@@ -16,6 +16,10 @@ export function createUi({
     sampleElapsed: 0,
     sampleFrames: 0,
   };
+  const goalIndicatorState = {
+    angleKey: null,
+    visible: null,
+  };
   const debugUpdateIntervalMs = 250;
   let lastDebugUpdate = Number.NEGATIVE_INFINITY;
 
@@ -28,8 +32,18 @@ export function createUi({
   }
 
   function setGoalIndicator({ visible, angle = 0 }) {
-    goalIndicator.classList.toggle("show", visible);
-    goalIndicator.style.setProperty("--goal-indicator-angle", angle + "rad");
+    if (goalIndicatorState.visible !== visible) {
+      goalIndicatorState.visible = visible;
+      goalIndicator.classList.toggle("show", visible);
+    }
+    const angleKey = Math.round(angle * 1000);
+    if (visible && goalIndicatorState.angleKey !== angleKey) {
+      goalIndicatorState.angleKey = angleKey;
+      goalIndicator.style.setProperty(
+        "--goal-indicator-angle",
+        angleKey / 1000 + "rad",
+      );
+    }
   }
 
   function setStartControls({ visible, disabled, label }) {
