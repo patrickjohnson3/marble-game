@@ -42,7 +42,7 @@ export function createGoalController({
     );
   }
 
-  function update(frameDelta, currentTime = performance.now()) {
+  function update(frameDelta) {
     if (mapState.goalCompleted) return;
 
     if (!marbleInsideGoal()) {
@@ -71,7 +71,7 @@ export function createGoalController({
     hapticFeedback.pulseGoal("hold");
 
     if (mapState.goalHoldMs >= mapState.goal.holdMs) {
-      onComplete(mapState.activeMap, mapRuntime.currentRunMs(currentTime));
+      onComplete(mapState.activeMap);
       mapRuntime.completeGoal();
       effectsRenderer.spawnGoalComplete();
       hapticFeedback.pulseGoal("complete");

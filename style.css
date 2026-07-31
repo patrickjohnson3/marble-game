@@ -742,8 +742,6 @@ body {
   pointer-events: none;
 }
 #levelLabel,
-#bestTimeLabel,
-#runTimeLabel,
 #hint,
 #fpsCounter,
 #debug {
@@ -756,9 +754,7 @@ body {
   font-size: 15px;
   text-align: center;
 }
-#levelLabel,
-#bestTimeLabel,
-#runTimeLabel {
+#levelLabel {
   justify-self: start;
   padding: 7px 10px;
   font-size: 12px;

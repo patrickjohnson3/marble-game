@@ -1,11 +1,5 @@
 import { createCameraController } from "./core/camera.js";
 import {
-  bestTimeLabel,
-  formatRunTime,
-  loadBestTime,
-  recordBestTime,
-} from "./core/best-times.js";
-import {
   hapticTuning,
   physicsConfig,
   timing,
@@ -413,24 +407,6 @@ function mapLevelLabel(mapConfig) {
   return mapConfig.name ? level + ": " + mapConfig.name : level;
 }
 
-function createBestTimeUi(storage, ui) {
-  function setMapBestTime(mapConfig) {
-    ui.setBestTimeLabel(
-      bestTimeLabel(loadBestTime(storage, mapConfig.variantId)),
-    );
-  }
-
-  function recordMapTime(mapConfig, runMs) {
-    const bestTime = recordBestTime(storage, mapConfig.variantId, runMs);
-    ui.setBestTimeLabel(bestTimeLabel(bestTime));
-  }
-
-  return {
-    recordMapTime,
-    setMapBestTime,
-  };
-}
-
 export function createApp({
   document: documentRef = document,
   window: windowRef = window,
@@ -485,14 +461,11 @@ export function createApp({
     startBtn,
     goalIndicator: els.goalIndicator,
     levelLabel: els.levelLabel,
-    bestTimeLabel: els.bestTimeLabel,
-    runTimeLabel: els.runTimeLabel,
     debugLines,
     state,
   });
   const frameLoop = createFrameLoop();
   const viewport = createViewport(windowRef);
-  const bestTimes = createBestTimeUi(storage, ui);
 
   function scheduleFrame() {
     frameLoop.schedule();
@@ -553,7 +526,6 @@ export function createApp({
 
   function releaseMap() {
     intro.released = true;
-    mapRuntime.startRun(performance.now());
     mapRenderer.openMap();
     introSequence.hideMessage();
     ui.setHint(copy.hints.mapOpen);
@@ -580,7 +552,6 @@ export function createApp({
     marble.roll = 0;
     trailRenderer.clear();
     effectsRenderer.clear();
-    mapRuntime.startRun(performance.now());
     cameraController.centerOnMarble();
   }
 
@@ -598,7 +569,6 @@ export function createApp({
     applyMap: (nextMap) => {
       setCurrentMap(nextMap);
       ui.setLevelLabel(mapLevelLabel(nextMap));
-      bestTimes.setMapBestTime(nextMap);
     },
     resetForNextMap,
     terrainView,
@@ -622,7 +592,6 @@ export function createApp({
     mapProgression,
     mapRuntime,
     marble,
-    onComplete: (mapConfig, runMs) => bestTimes.recordMapTime(mapConfig, runMs),
     terrainView,
     timing,
     ui,
@@ -734,8 +703,6 @@ export function createApp({
       mapRuntime.resetGoalProgress();
       terrainView.updateGoalProgress(0);
     },
-    runTimeLabel: (currentTime) =>
-      "time " + formatRunTime(mapRuntime.currentRunMs(currentTime)),
     scheduleFrame,
     spawnTarget: () => mapState.spawn,
     terrainView,
@@ -758,8 +725,6 @@ export function createApp({
       windowRef,
     });
     ui.setLevelLabel(mapLevelLabel(mapState.activeMap));
-    bestTimes.setMapBestTime(mapState.activeMap);
-    ui.setRunTimeLabel("time --");
     registerServiceWorker({
       navigatorRef: windowRef.navigator,
       onUpdateReady: () => ui.setHint(copy.hints.updateReady),

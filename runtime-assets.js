@@ -1,7 +1,6 @@
 export const runtimeScripts = [
   "app.js",
   "boot.js",
-  "core/best-times.js",
   "core/camera.js",
   "core/camera-gestures.js",
   "core/copy.js",

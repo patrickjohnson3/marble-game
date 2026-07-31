@@ -202,8 +202,6 @@ function testGoalIndicatorUpdatesVisibilityAndAngle() {
     debug: new FakeElement(),
     goalIndicator,
     levelLabel: new FakeElement(),
-    bestTimeLabel: new FakeElement(),
-    runTimeLabel: new FakeElement(),
     settings: { fpsEnabled: false, statsEnabled: false },
     settingsOverlay: new FakeElement(),
     debugLines: () => [],

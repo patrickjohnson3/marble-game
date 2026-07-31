@@ -3,8 +3,6 @@ export function createUi({
   goalIndicator,
   hint,
   levelLabel,
-  bestTimeLabel,
-  runTimeLabel,
   fpsCounter,
   debug,
   settings,
@@ -27,14 +25,6 @@ export function createUi({
 
   function setLevelLabel(message) {
     levelLabel.textContent = message;
-  }
-
-  function setBestTimeLabel(message) {
-    bestTimeLabel.textContent = message;
-  }
-
-  function setRunTimeLabel(message) {
-    runTimeLabel.textContent = message;
   }
 
   function setGoalIndicator({ visible, angle = 0 }) {
@@ -120,12 +110,10 @@ export function createUi({
     isSettingsOpen,
     openSettingsModal,
     setFpsEnabled,
-    setBestTimeLabel,
     setGoalIndicator,
     setStatsEnabled,
     setHint,
     setLevelLabel,
-    setRunTimeLabel,
     setStartControls,
     updateDebugPanel,
     updateFps,

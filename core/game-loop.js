@@ -24,7 +24,6 @@ export function createGameLoop({
   physicsContext,
   scheduleFrame,
   resetGoalProgress = () => {},
-  runTimeLabel = () => "",
   spawnTarget = () => null,
   terrainView,
   timing,
@@ -160,7 +159,6 @@ export function createGameLoop({
       );
       goalController?.update(frameDelta, currentTime);
       cameraController.updateFollow(frameDelta);
-      ui.setRunTimeLabel(runTimeLabel(currentTime));
       updateGoalIndicator(context);
       updateHazardArmed();
       terrainView?.updateMapThemeDynamics(marble, previousMarble);
