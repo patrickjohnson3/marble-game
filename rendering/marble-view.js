@@ -20,9 +20,7 @@ export function createMarbleView({
 
   function marbleHasValidLayout() {
     return (
-      marble.r > 0 &&
-      Number.isFinite(marble.x) &&
-      Number.isFinite(marble.y)
+      marble.r > 0 && Number.isFinite(marble.x) && Number.isFinite(marble.y)
     );
   }
 
