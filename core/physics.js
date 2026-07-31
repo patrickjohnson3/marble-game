@@ -15,6 +15,18 @@ export const SURFACE_TYPES = Object.freeze({
   hazardPatch: MAP_ELEMENT_TYPES.hazardPatch,
   waterPatch: MAP_ELEMENT_TYPES.waterPatch,
 });
+export const SURFACE_PRIORITY = Object.freeze([
+  SURFACE_TYPES.gooPatch,
+  SURFACE_TYPES.roughPatch,
+  SURFACE_TYPES.waterPatch,
+  SURFACE_TYPES.icePatch,
+  SURFACE_TYPES.floor,
+]);
+const SURFACE_FEEDBACK_TYPES = Object.freeze([
+  SURFACE_TYPES.gooPatch,
+  SURFACE_TYPES.roughPatch,
+  SURFACE_TYPES.waterPatch,
+]);
 
 function deadZone(value, threshold) {
   return Math.abs(value) < threshold ? 0 : value;
@@ -225,22 +237,13 @@ function applySurfaceDrag(context, hits, factors) {
 }
 
 function handleSurfaceFeedback({ marble }, onSurface, surfaceType) {
-  if (
-    surfaceType !== SURFACE_TYPES.gooPatch &&
-    surfaceType !== SURFACE_TYPES.roughPatch &&
-    surfaceType !== SURFACE_TYPES.waterPatch
-  )
-    return;
+  if (!SURFACE_FEEDBACK_TYPES.includes(surfaceType)) return;
 
   onSurface(Math.hypot(marble.vx, marble.vy), surfaceType);
 }
 
 function surfaceType(hits) {
-  if (hits.gooPatch) return SURFACE_TYPES.gooPatch;
-  if (hits.roughPatch) return SURFACE_TYPES.roughPatch;
-  if (hits.waterPatch) return SURFACE_TYPES.waterPatch;
-  if (hits.icePatch) return SURFACE_TYPES.icePatch;
-  return SURFACE_TYPES.floor;
+  return SURFACE_PRIORITY.find((type) => type === SURFACE_TYPES.floor || hits[type]);
 }
 
 function updateSurfaceHits(context, physicsScratch) {
@@ -282,6 +285,9 @@ function updateSurfaceHits(context, physicsScratch) {
 function physicsStep(context, dt, feedback) {
   const physicsScratch = scratch(context);
   const factors = physicsScratch.frameFactors;
+  // Ice keeps its historical handling: it affects the velocity update using
+  // the marble position at the start of the substep. Other surfaces are swept
+  // after movement so entry feedback and drag still catch thin patches.
   const overIcePatch = isOverTerrainPatch(
     context.marble,
     context.intro,

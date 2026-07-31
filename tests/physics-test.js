@@ -12,6 +12,7 @@ import {
 } from "../core/physics-collisions.js";
 import {
   SURFACE_TYPES,
+  SURFACE_PRIORITY,
   updatePhysics,
   updatePhysicsInput,
 } from "../core/physics.js";
@@ -430,6 +431,52 @@ function testTerrainFeedbackReportsSurfaceTypes() {
   );
 
   assert.deepEqual(surfaces, [SURFACE_TYPES.roughPatch]);
+}
+
+function testOverlappingTerrainUsesExplicitSurfacePriority() {
+  const marble = { x: 50, y: 50, vx: 4, vy: 0, r: 10 };
+  const surfaces = [];
+
+  updateTestPhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      keyboard: { x: 0, y: 0 },
+      obstacles: [],
+      gooPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      roughPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      waterPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      physics: {
+        accel: 0,
+        baseDragRetention: 1,
+        gooPatchDragRetention: 1,
+        roughPatchDragRetention: 1,
+        waterPatchDragRetention: 1,
+        bounce: 0,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+        settleSpeed: 0,
+        settleTilt: 0,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+      onTerrain: (surfaceType) => surfaces.push(surfaceType),
+    },
+  );
+
+  assert.deepEqual(SURFACE_PRIORITY, [
+    SURFACE_TYPES.gooPatch,
+    SURFACE_TYPES.roughPatch,
+    SURFACE_TYPES.waterPatch,
+    SURFACE_TYPES.icePatch,
+    SURFACE_TYPES.floor,
+  ]);
+  assert.deepEqual(surfaces, [SURFACE_TYPES.gooPatch]);
 }
 
 function testHazardPatchReportsResetFeedback() {
@@ -1124,6 +1171,7 @@ testIcePatchReducesDrag();
 testGooPatchAddsStickyDragAndFeedback();
 testWaterPatchAddsModerateDragAndFeedback();
 testTerrainFeedbackReportsSurfaceTypes();
+testOverlappingTerrainUsesExplicitSurfacePriority();
 testHazardPatchReportsResetFeedback();
 testRoughPatchDragAppliesWhenEnteringPatch();
 testTerrainSweepPreventsThinPatchTunneling();
