@@ -2,7 +2,9 @@ import { copy } from "./copy.js";
 import { SURFACE_TYPES, updatePhysicsInput, updatePhysics } from "./physics.js";
 import { GAME_PHASES } from "./runtime-states.js";
 
-function elapsedMsToFrameDelta(elapsedMs, timing, clamp) {
+export function elapsedMsToFrameDelta(elapsedMs, timing, clamp) {
+  // Long frames intentionally run as capped slow-motion instead of catching up
+  // with a large physics step that can tunnel through collision geometry.
   return clamp(
     elapsedMs / timing.targetFrameMs,
     timing.minFrameDelta,

@@ -4,6 +4,7 @@ const tests = [
   "tests/smoke-test.js",
   "tests/app-boot-test.js",
   "tests/camera-test.js",
+  "tests/game-loop-test.js",
   "tests/physics-test.js",
   "tests/haptics-test.js",
   "tests/goal-controller-test.js",
