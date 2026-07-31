@@ -13,20 +13,54 @@ export function createCameraController({
   viewport,
   world,
 }) {
-  function clampCameraPosition() {
-    const scaledWidth = world.width * camera.scale;
-    const scaledHeight = world.height * camera.scale;
+  const boundsCache = {
+    centerX: 0,
+    centerY: 0,
+    maxX: 0,
+    maxY: 0,
+    minX: 0,
+    minY: 0,
+    scale: null,
+    viewportHeight: null,
+    viewportWidth: null,
+    worldFitsX: false,
+    worldFitsY: false,
+  };
+
+  function updateBoundsCache() {
     const viewportWidth = viewport.width();
     const viewportHeight = viewport.height();
+    if (
+      boundsCache.scale === camera.scale &&
+      boundsCache.viewportWidth === viewportWidth &&
+      boundsCache.viewportHeight === viewportHeight
+    )
+      return;
+
+    const scaledWidth = world.width * camera.scale;
+    const scaledHeight = world.height * camera.scale;
+    boundsCache.scale = camera.scale;
+    boundsCache.viewportWidth = viewportWidth;
+    boundsCache.viewportHeight = viewportHeight;
+    boundsCache.worldFitsX = scaledWidth <= viewportWidth;
+    boundsCache.worldFitsY = scaledHeight <= viewportHeight;
+    boundsCache.centerX = (viewportWidth - scaledWidth) / 2;
+    boundsCache.centerY = (viewportHeight - scaledHeight) / 2;
+    boundsCache.minX = viewportWidth - scaledWidth;
+    boundsCache.minY = viewportHeight - scaledHeight;
+  }
+
+  function clampCameraPosition() {
+    updateBoundsCache();
 
     camera.x =
-      scaledWidth <= viewportWidth
-        ? (viewportWidth - scaledWidth) / 2
-        : clamp(camera.x, viewportWidth - scaledWidth, 0);
+      boundsCache.worldFitsX
+        ? boundsCache.centerX
+        : clamp(camera.x, boundsCache.minX, boundsCache.maxX);
     camera.y =
-      scaledHeight <= viewportHeight
-        ? (viewportHeight - scaledHeight) / 2
-        : clamp(camera.y, viewportHeight - scaledHeight, 0);
+      boundsCache.worldFitsY
+        ? boundsCache.centerY
+        : clamp(camera.y, boundsCache.minY, boundsCache.maxY);
   }
 
   function applyTransform() {
