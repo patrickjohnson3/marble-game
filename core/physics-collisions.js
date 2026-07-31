@@ -4,6 +4,7 @@ const defaultScrapeHapticScale = 0;
 const defaultWallTangentialDragRetention = 1;
 const defaultCollisionResolvePasses = 1;
 const defaultCollisionZeroDistanceEpsilon = 0;
+const defaultCollisionPositionSlop = 0;
 const marbleOverRectContact = {};
 
 export function marbleOverRect(marble, rect, epsilon = 0) {
@@ -165,7 +166,9 @@ export function resolveObstacleCollision(
   let distance = Math.sqrt(contact.distanceSq);
   let nx = contact.dx / (distance || 1);
   let ny = contact.dy / (distance || 1);
-  let overlap = marble.r - distance;
+  const positionSlop =
+    physics.collisionPositionSlop ?? defaultCollisionPositionSlop;
+  let overlap = Math.max(0, marble.r - distance - positionSlop);
 
   if (
     distance <=
@@ -178,12 +181,12 @@ export function resolveObstacleCollision(
     ) {
       nx = contact.insideNx;
       ny = contact.insideNy;
-      overlap = marble.r + contact.insideDistance;
+      overlap = Math.max(0, marble.r + contact.insideDistance - positionSlop);
     } else {
       const insideNormal = axisAlignedInsideNormal(marble, obstacle);
       nx = insideNormal.nx;
       ny = insideNormal.ny;
-      overlap = marble.r + insideNormal.distance;
+      overlap = Math.max(0, marble.r + insideNormal.distance - positionSlop);
     }
   }
 

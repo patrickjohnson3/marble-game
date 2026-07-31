@@ -50,6 +50,7 @@ export const physicsConfig = {
   wallTangentialDragRetention: 0.92,
   collisionDistanceSqEpsilon: 0,
   collisionZeroDistanceEpsilon: 0,
+  collisionPositionSlop: 0,
 };
 
 export const timing = {

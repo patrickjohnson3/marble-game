@@ -135,6 +135,18 @@ function testObstacleBounce() {
   assert.deepEqual(impacts, [8]);
 }
 
+function testCollisionPositionSlopCanLeaveSmallOverlap() {
+  const marble = { x: 90, y: 50, vx: 8, vy: 0, r: 12 };
+  const obstacle = { x: 100, y: 30, w: 40, h: 40 };
+
+  resolveObstacleCollision(marble, obstacle, {
+    bounce: 0.5,
+    collisionPositionSlop: 1,
+  });
+
+  assert.equal(marble.x, 89);
+}
+
 function testObstacleCornerBounceUsesDiagonalNormal() {
   const marble = { x: 92, y: 92, vx: 6, vy: 6, r: 12 };
   const obstacle = { x: 100, y: 100, w: 40, h: 40 };
@@ -1245,6 +1257,7 @@ testCircleRectContactEdgeCases();
 testCircleOrientedRectContactUsesRotatedNormal();
 testMarbleOverRectHonorsEpsilon();
 testObstacleBounce();
+testCollisionPositionSlopCanLeaveSmallOverlap();
 testObstacleCornerBounceUsesDiagonalNormal();
 testOrientedObstacleCollisionResolvesAlongRotatedNormal();
 testGlancingImpactReportsScrapeFeedback();
