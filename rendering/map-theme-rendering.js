@@ -430,16 +430,19 @@ function updateKitchenAnts({
 }) {
   let squishedAnts = 0;
   const marbleSpeed = Math.hypot(marble.vx || 0, marble.vy || 0);
+  const squishDistance = marble.r + kitchenAntRadius;
+  const squishDistanceSq = squishDistance * squishDistance;
 
   for (let i = 0; i < ants.length; i++) {
     const ant = ants[i];
     if (ant.squished) continue;
     if (!dynamicBoundsVisible(antBounds(ant), visibleWorld)) continue;
 
-    const marbleDistance = Math.hypot(ant.x - marble.x, ant.y - marble.y);
+    const marbleDx = ant.x - marble.x;
+    const marbleDy = ant.y - marble.y;
     if (
       marbleSpeed >= kitchenAntSquishMinSpeed &&
-      marbleDistance <= marble.r + kitchenAntRadius
+      marbleDx * marbleDx + marbleDy * marbleDy <= squishDistanceSq
     ) {
       ant.alive = false;
       ant.squished = true;
@@ -454,8 +457,8 @@ function updateKitchenAnts({
     const targetY = target.originY + target.pushY;
     const dx = targetX - ant.x;
     const dy = targetY - ant.y;
-    const distance = Math.hypot(dx, dy);
-    if (distance <= target.radius + kitchenAntMunchDistance) {
+    const munchDistance = target.radius + kitchenAntMunchDistance;
+    if (dx * dx + dy * dy <= munchDistance * munchDistance) {
       target.eaten = Math.min(
         1,
         target.eaten + kitchenAntMunchRate * frameDelta,
