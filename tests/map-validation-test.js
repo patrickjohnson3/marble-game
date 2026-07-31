@@ -136,6 +136,78 @@ function testReachabilityUsesExactSpawnAndGoalSamples() {
   );
 }
 
+function testReachabilityAcceptsOpenMap() {
+  assert.equal(
+    hasReachableGoal({
+      world: { width: 120, height: 120 },
+      obstacles: [],
+      spawn: { x: 20, y: 20, r: 5 },
+      goal: { x: 100, y: 100, r: 12 },
+      cellSize: 10,
+    }),
+    true,
+  );
+}
+
+function testReachabilityRejectsFullyBlockedGoal() {
+  assert.equal(
+    hasReachableGoal({
+      world: { width: 120, height: 120 },
+      obstacles: [
+        { x: 70, y: 0, w: 10, h: 120 },
+        { x: 80, y: 70, w: 40, h: 10 },
+      ],
+      spawn: { x: 20, y: 20, r: 5 },
+      goal: { x: 100, y: 100, r: 12 },
+      cellSize: 10,
+    }),
+    false,
+  );
+}
+
+function testReachabilityRespectsMarbleRadiusInNarrowCorridors() {
+  const world = { width: 120, height: 80 };
+  const obstacles = [
+    { x: 40, y: 0, w: 10, h: 27 },
+    { x: 40, y: 53, w: 10, h: 27 },
+  ];
+  const goal = { x: 100, y: 40, r: 18 };
+
+  assert.equal(
+    hasReachableGoal({
+      world,
+      obstacles,
+      spawn: { x: 20, y: 40, r: 5 },
+      goal,
+      cellSize: 10,
+    }),
+    true,
+  );
+  assert.equal(
+    hasReachableGoal({
+      world,
+      obstacles,
+      spawn: { x: 20, y: 40, r: 14 },
+      goal,
+      cellSize: 10,
+    }),
+    false,
+  );
+}
+
+function testReachabilityHandlesGoalNearCellBoundary() {
+  assert.equal(
+    hasReachableGoal({
+      world: { width: 100, height: 100 },
+      obstacles: [],
+      spawn: { x: 10, y: 10, r: 5 },
+      goal: { x: 89, y: 89, r: 10 },
+      cellSize: 20,
+    }),
+    true,
+  );
+}
+
 testResolveSeededMapConfigAllowsValidationOfMissingVariantElements();
 testMapValidationRejectsBlockedSpawn();
 testMapValidationReportsMalformedConfig();
@@ -146,5 +218,9 @@ testMapValidationReportsInvalidNormalizedObstacles();
 testMapValidationRejectsVariantWorldMismatch();
 testMapValidationRejectsUnreachableGoal();
 testReachabilityUsesExactSpawnAndGoalSamples();
+testReachabilityAcceptsOpenMap();
+testReachabilityRejectsFullyBlockedGoal();
+testReachabilityRespectsMarbleRadiusInNarrowCorridors();
+testReachabilityHandlesGoalNearCellBoundary();
 
 console.log("Map validation tests passed.");
