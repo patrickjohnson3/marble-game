@@ -179,8 +179,11 @@ function renderHockeyRink({ underlay, overlay, world }) {
   );
 }
 
-function renderKitchenFloor({ underlay, overlay, themeState, world }) {
+function renderKitchenStaticFloor({ underlay, world }) {
   appendFloor(underlay, "kitchenFloor", world, { x: 0, y: 0, w: 1, h: 1 });
+}
+
+function renderKitchenDynamicObjects({ overlay, themeState, world }) {
   [
     { x: 0.16, y: 0.49 },
     { x: 0.19, y: 0.52 },
@@ -218,6 +221,11 @@ function renderKitchenFloor({ underlay, overlay, themeState, world }) {
     { x: 0.88, y: 0.67 },
   ].forEach((circle) => appendKitchenCheerio(world, circle, themeState));
   appendKitchenDynamicCanvas(overlay, world, themeState);
+}
+
+function renderKitchenFloor({ underlay, overlay, themeState, world }) {
+  renderKitchenStaticFloor({ underlay, world });
+  renderKitchenDynamicObjects({ overlay, themeState, world });
 }
 
 function renderLivingRoom({ underlay, overlay, world }) {
