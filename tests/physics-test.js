@@ -11,8 +11,10 @@ import {
   resolveObstacleCollision,
 } from "../core/physics-collisions.js";
 import {
+  PRE_MOVE_SURFACE_TYPES,
   SURFACE_TYPES,
   SURFACE_PRIORITY,
+  SWEPT_SURFACE_TYPES,
   physicsSubstepCount,
   updatePhysics,
   updatePhysicsInput,
@@ -333,6 +335,45 @@ function testIcePatchReducesDrag() {
   );
 
   assert.equal(marble.vx, 9);
+}
+
+function testIcePatchUsesPreMoveSurfaceTiming() {
+  const marble = { x: 20, y: 50, vx: 10, vy: 0, r: 10 };
+
+  updateTestPhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      icePatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      obstacles: [],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        baseDragRetention: 0.5,
+        icePatchDragRetention: 0.9,
+        roughPatchDragRetention: 1,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+    },
+  );
+
+  assert.deepEqual(PRE_MOVE_SURFACE_TYPES, [SURFACE_TYPES.icePatch]);
+  assert.deepEqual(SWEPT_SURFACE_TYPES, [
+    SURFACE_TYPES.gooPatch,
+    SURFACE_TYPES.roughPatch,
+    SURFACE_TYPES.waterPatch,
+    SURFACE_TYPES.hazardPatch,
+  ]);
+  assert.equal(marble.vx, 5);
 }
 
 function testWaterPatchAddsModerateDragAndFeedback() {
@@ -1213,6 +1254,7 @@ testNearZeroOrientedContactCanUseInsideNormal();
 testRoughPatchAddsDrag();
 testRoughPatchDragChecksAllPatches();
 testIcePatchReducesDrag();
+testIcePatchUsesPreMoveSurfaceTiming();
 testGooPatchAddsStickyDragAndFeedback();
 testWaterPatchAddsModerateDragAndFeedback();
 testTerrainFeedbackReportsSurfaceTypes();

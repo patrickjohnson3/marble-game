@@ -27,6 +27,13 @@ const SURFACE_FEEDBACK_TYPES = Object.freeze([
   SURFACE_TYPES.roughPatch,
   SURFACE_TYPES.waterPatch,
 ]);
+export const PRE_MOVE_SURFACE_TYPES = Object.freeze([SURFACE_TYPES.icePatch]);
+export const SWEPT_SURFACE_TYPES = Object.freeze([
+  SURFACE_TYPES.gooPatch,
+  SURFACE_TYPES.roughPatch,
+  SURFACE_TYPES.waterPatch,
+  SURFACE_TYPES.hazardPatch,
+]);
 
 function deadZone(value, threshold) {
   return Math.abs(value) < threshold ? 0 : value;
@@ -269,34 +276,16 @@ function updateSurfaceHits(context, physicsScratch) {
   const hits = physicsScratch.surfaceHits;
   const previous = physicsScratch.previousTerrainMarble;
 
-  hits.gooPatch = sweptOverTerrainPatch(
-    previous,
-    context.marble,
-    context.intro,
-    terrainCandidates(context, SURFACE_TYPES.gooPatch),
-    context.physics,
-  );
-  hits.roughPatch = sweptOverTerrainPatch(
-    previous,
-    context.marble,
-    context.intro,
-    terrainCandidates(context, SURFACE_TYPES.roughPatch),
-    context.physics,
-  );
-  hits.waterPatch = sweptOverTerrainPatch(
-    previous,
-    context.marble,
-    context.intro,
-    terrainCandidates(context, SURFACE_TYPES.waterPatch),
-    context.physics,
-  );
-  hits.hazardPatch = sweptOverTerrainPatch(
-    previous,
-    context.marble,
-    context.intro,
-    terrainCandidates(context, SURFACE_TYPES.hazardPatch),
-    context.physics,
-  );
+  for (let i = 0; i < SWEPT_SURFACE_TYPES.length; i++) {
+    const type = SWEPT_SURFACE_TYPES[i];
+    hits[type] = sweptOverTerrainPatch(
+      previous,
+      context.marble,
+      context.intro,
+      terrainCandidates(context, type),
+      context.physics,
+    );
+  }
 
   return hits;
 }
