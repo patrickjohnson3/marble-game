@@ -487,6 +487,7 @@ export function createApp({
     distance,
     midpoint,
     viewport,
+    world,
   });
   const {
     effectsRenderer,

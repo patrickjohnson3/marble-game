@@ -11,8 +11,26 @@ export function createCameraController({
   distance,
   midpoint,
   viewport,
+  world,
 }) {
+  function clampCameraPosition() {
+    const scaledWidth = world.width * camera.scale;
+    const scaledHeight = world.height * camera.scale;
+    const viewportWidth = viewport.width();
+    const viewportHeight = viewport.height();
+
+    camera.x =
+      scaledWidth <= viewportWidth
+        ? (viewportWidth - scaledWidth) / 2
+        : clamp(camera.x, viewportWidth - scaledWidth, 0);
+    camera.y =
+      scaledHeight <= viewportHeight
+        ? (viewportHeight - scaledHeight) / 2
+        : clamp(camera.y, viewportHeight - scaledHeight, 0);
+  }
+
   function applyTransform() {
+    clampCameraPosition();
     const floorStyle = cameraEl.parentElement?.style ?? cameraEl.style;
 
     floorStyle.setProperty?.("--camera-x", camera.x + "px");
