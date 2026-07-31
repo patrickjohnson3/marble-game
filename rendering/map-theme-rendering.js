@@ -61,12 +61,12 @@ function appendKitchenCheerio(parent, world, circle, themeState) {
   themeState.kitchenCheerios.push(state);
 }
 
-function appendFloor(parent, theme, world) {
+function appendFloor(parent, theme, world, rect = {}) {
   appendBox(parent, "mapThemeSurface " + theme + "Surface", world, {
-    x: 0.055,
-    y: 0.055,
-    w: 0.89,
-    h: 0.89,
+    x: rect.x ?? 0.055,
+    y: rect.y ?? 0.055,
+    w: rect.w ?? 0.89,
+    h: rect.h ?? 0.89,
   });
 }
 
@@ -108,7 +108,7 @@ function renderHockeyRink({ underlay, overlay, world }) {
 }
 
 function renderKitchenFloor({ underlay, overlay, themeState, world }) {
-  appendFloor(underlay, "kitchenFloor", world);
+  appendFloor(underlay, "kitchenFloor", world, { x: 0, y: 0, w: 1, h: 1 });
   [
     { x: 0.18, y: 0.31, w: 0.05, h: 0.05 },
     { x: 0.39, y: 0.2, w: 0.05, h: 0.05 },
