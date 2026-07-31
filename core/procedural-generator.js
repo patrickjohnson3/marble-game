@@ -149,7 +149,7 @@ function focusedTerrainElements(
   );
 }
 
-function generateTemplateMapVariant({
+export function generateTemplateMapVariant({
   baseMapConfig,
   difficulty = 1,
   index = 0,

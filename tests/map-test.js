@@ -29,8 +29,12 @@ import { createMapProgression } from "../core/map-progression.js";
 import {
   createSeededRandom,
   generateProceduralMapVariants,
+  generateTemplateMapVariant,
   gridAlignedPosition,
   gridAlignedSize,
+  jitterPatch,
+  jitterPoint,
+  jitterRect,
   limitElementsByBudget,
   outsideClearZones,
   pickRandom,
@@ -163,6 +167,36 @@ function testProceduralRandomHelpersAreDeterministic() {
 
 testProceduralRandomHelpersAreDeterministic();
 
+function testProceduralJitterHelpersStayInSafeBounds() {
+  const highRandom = () => 1;
+  const lowRandom = () => 0;
+
+  assert.deepEqual(jitterPoint({ x: 0, y: 1 }, lowRandom), {
+    x: 0.1,
+    y: 0.9,
+  });
+  assert.deepEqual(jitterPatch({ x: 0, y: 1, w: 1, h: 1 }, highRandom), {
+    x: 0.06,
+    y: 0.86,
+    w: 0.24,
+    h: 0.18,
+  });
+
+  const horizontal = jitterRect({ x: 1, y: 0, w: 1, h: 0.04 }, highRandom);
+  const vertical = jitterRect({ x: 0, y: 1, w: 0.04, h: 1 }, lowRandom);
+
+  assert.equal(horizontal.x, 0.9);
+  assert.equal(horizontal.y, 0.06);
+  assert.equal(horizontal.w, 0.55);
+  assert.equal(horizontal.h, 0.04);
+  assert.equal(vertical.x, 0.06);
+  assert.equal(vertical.y, 0.9);
+  assert.equal(vertical.w, 0.04);
+  assert.equal(vertical.h, 0.55);
+}
+
+testProceduralJitterHelpersStayInSafeBounds();
+
 function testProceduralTemplateConversionSnapsAndClamps() {
   const world = { width: 1000, height: 800 };
   const gridSize = 20;
@@ -244,6 +278,50 @@ function testProceduralClearZonesRejectSpawnAndGoalOverlap() {
 }
 
 testProceduralClearZonesRejectSpawnAndGoalOverlap();
+
+function testGenerateTemplateMapVariantUsesTemplateAndDifficulty() {
+  const template = {
+    id: "controlled-template",
+    terrainFocus: "roughPatch",
+    spawn: { x: 0.2, y: 0.2 },
+    goal: { x: 0.8, y: 0.8 },
+    walls: [{ x: 0.35, y: 0.2, w: 0.08, h: 0.5 }],
+    roughPatches: [{ x: 0.5, y: 0.45, w: 0.12, h: 0.1 }],
+    icePatches: [{ x: 0.15, y: 0.55, w: 0.12, h: 0.1 }],
+    hazardPatches: [{ x: 0.65, y: 0.2, w: 0.1, h: 0.08 }],
+  };
+  const variant = generateTemplateMapVariant({
+    baseMapConfig: resolvedMapConfig,
+    difficulty: 3,
+    index: 4,
+    seed: "controlled-seed",
+    template,
+  });
+
+  assert.equal(variant.id, "generated-3-4");
+  assert.equal(variant.templateId, template.id);
+  assert.equal(variant.goal.r, 84);
+  assert.equal(
+    variant.elements.some((element) => element.type === "roughPatch"),
+    true,
+  );
+  assert.equal(
+    variant.elements.some((element) => element.type === "icePatch"),
+    false,
+  );
+  assert.equal(
+    variant.elements.every(
+      (element) =>
+        element.x % resolvedMapConfig.grid.size === 0 &&
+        element.y % resolvedMapConfig.grid.size === 0 &&
+        element.w % resolvedMapConfig.grid.size === 0 &&
+        element.h % resolvedMapConfig.grid.size === 0,
+    ),
+    true,
+  );
+}
+
+testGenerateTemplateMapVariantUsesTemplateAndDifficulty();
 
 function testProceduralMapGenerationHandlesEmptyCounts() {
   assert.deepEqual(
