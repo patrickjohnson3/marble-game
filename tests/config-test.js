@@ -194,6 +194,12 @@ function testPhysicsAndSettingsRanges() {
     "rough patch drag retention",
   );
   assert.equal(
+    physicsConfig.overspeedRetention >= 0 &&
+      physicsConfig.overspeedRetention <= 1,
+    true,
+    "overspeed retention",
+  );
+  assert.equal(
     physicsConfig.waterPatchDragRetention > 0 &&
       physicsConfig.waterPatchDragRetention <= 1,
     true,

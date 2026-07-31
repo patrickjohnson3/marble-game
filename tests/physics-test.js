@@ -868,7 +868,7 @@ function testRoughPatchDragIsFrameRateIndependent() {
   assertNear(split.marble.vx, once.marble.vx);
 }
 
-function testMaxSpeedEasesDown() {
+function testOverspeedRetentionEasesDown() {
   const marble = { x: 50, y: 50, vx: 20, vy: 0, r: 10 };
 
   updateTestPhysics(
@@ -885,7 +885,7 @@ function testMaxSpeedEasesDown() {
         roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 10,
-        maxSpeedEase: 0.5,
+        overspeedRetention: 0.5,
         maxStepDistance: 100,
         settleSpeed: 0,
         settleTilt: 0,
@@ -901,7 +901,7 @@ function testMaxSpeedEasesDown() {
   assert.equal(marble.vx, 15);
 }
 
-function testMaxSpeedClampIsFrameRateIndependent() {
+function testOverspeedClampIsFrameRateIndependent() {
   function context() {
     return {
       marble: { x: 50, y: 50, vx: 9, vy: 0, r: 10 },
@@ -916,7 +916,7 @@ function testMaxSpeedClampIsFrameRateIndependent() {
         roughPatchDragRetention: 1,
         bounce: 0.5,
         maxSpeed: 10,
-        maxSpeedEase: 0,
+        overspeedRetention: 0,
         maxStepDistance: 100,
         settleSpeed: 0,
         settleTilt: 0,
@@ -960,7 +960,7 @@ function testWallCollisionAppliesTangentialDrag() {
         roughPatchDragRetention: 0.5,
         bounce: 0.5,
         maxSpeed: 100,
-        maxSpeedEase: 0,
+        overspeedRetention: 0,
         maxStepDistance: 100,
         settleSpeed: 0,
         settleTilt: 0,
@@ -1057,7 +1057,7 @@ function testPhysicsSubstepsAreCapped() {
         roughPatchDragRetention: 1,
         bounce: 0,
         maxSpeed: 1000,
-        maxSpeedEase: 0,
+        overspeedRetention: 0,
         maxStepDistance: 1,
         maxPhysicsSubsteps: 10,
         settleSpeed: 0,
@@ -1154,7 +1154,7 @@ function testSubstepsPreventThinObstacleTunneling() {
         roughPatchDragRetention: 1,
         bounce: 0,
         maxSpeed: 100,
-        maxSpeedEase: 0,
+        overspeedRetention: 0,
         maxStepDistance: 5,
         maxPhysicsSubsteps: 20,
         settleSpeed: 0,
@@ -1203,8 +1203,8 @@ testTiltSmoothingIsFrameRateIndependent();
 testVelocityDragIsFrameRateIndependent();
 testAccelerationIsFrameRateIndependent();
 testRoughPatchDragIsFrameRateIndependent();
-testMaxSpeedEasesDown();
-testMaxSpeedClampIsFrameRateIndependent();
+testOverspeedRetentionEasesDown();
+testOverspeedClampIsFrameRateIndependent();
 testWallCollisionAppliesTangentialDrag();
 testWorldBoundCollisionBeforeAdjacentObstacle();
 testMultipleCollisionPassesResolveChainedOverlaps();

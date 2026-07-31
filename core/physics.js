@@ -2,7 +2,7 @@ import { clamp } from "./geometry.js";
 import { MAP_ELEMENT_TYPES } from "./map-elements.js";
 import { handleWallCollisions, marbleOverRect } from "./physics-collisions.js";
 
-const defaultMaxSpeedEase = 0;
+const defaultOverspeedRetention = 0;
 const defaultSettleSpeed = 0;
 const defaultSettleTilt = 0;
 const defaultMaxPhysicsSubsteps = Number.POSITIVE_INFINITY;
@@ -66,7 +66,7 @@ function updateVelocity(
   { marble, tilt, physics },
   dt,
   drag,
-  maxSpeedEaseFactor,
+  overspeedRetentionFactor,
 ) {
   marble.vx += tilt.smoothX * physics.accel * dt;
   marble.vy += tilt.smoothY * physics.accel * dt;
@@ -77,7 +77,7 @@ function updateVelocity(
   let speed = Math.hypot(marble.vx, marble.vy);
   if (speed > physics.maxSpeed) {
     const easedSpeed =
-      physics.maxSpeed + (speed - physics.maxSpeed) * maxSpeedEaseFactor;
+      physics.maxSpeed + (speed - physics.maxSpeed) * overspeedRetentionFactor;
     const scale = easedSpeed / speed;
     marble.vx *= scale;
     marble.vy *= scale;
@@ -118,7 +118,7 @@ function createPhysicsScratch() {
       baseDrag: 1,
       gooPatchDrag: 1,
       icePatchDrag: 1,
-      maxSpeedEase: defaultMaxSpeedEase,
+      overspeedRetention: defaultOverspeedRetention,
       roughPatchDrag: 1,
       waterPatchDrag: 1,
     },
@@ -298,7 +298,7 @@ function physicsStep(context, dt, feedback) {
     context,
     dt,
     overIcePatch ? factors.icePatchDrag : factors.baseDrag,
-    factors.maxSpeedEase,
+    factors.overspeedRetention,
   );
   updatePreviousTerrainMarble(context, physicsScratch);
   updatePosition(context.marble, dt);
@@ -348,8 +348,10 @@ export function updatePhysics(context, dt, feedback) {
     context.physics.waterPatchDragRetention ?? 1,
     stepDt,
   );
-  physicsScratch.frameFactors.maxSpeedEase = Math.pow(
-    context.physics.maxSpeedEase ?? defaultMaxSpeedEase,
+  physicsScratch.frameFactors.overspeedRetention = Math.pow(
+    context.physics.overspeedRetention ??
+      context.physics.maxSpeedEase ??
+      defaultOverspeedRetention,
     stepDt,
   );
 

@@ -41,7 +41,7 @@ export const physicsConfig = {
   settleSpeed: 0.035,
   settleTilt: 0.8,
   tiltCurve: 1.25,
-  maxSpeedEase: 0.35,
+  overspeedRetention: 0.35,
   wallTangentialDragRetention: 0.92,
   collisionDistanceSqEpsilon: 0,
   collisionZeroDistanceEpsilon: 0,
