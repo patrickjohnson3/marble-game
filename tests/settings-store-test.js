@@ -140,6 +140,71 @@ function testUnavailableStorageFallsBackToDefaults() {
   );
 }
 
+function testMalformedJsonFallsBackToDefaults() {
+  assert.deepEqual(
+    loadSettings({
+      storage: storageWith("{bad json"),
+      storageKey: "settings",
+      defaults,
+      controls,
+      clamp,
+    }),
+    defaults,
+  );
+}
+
+function testUnknownSavedSettingsDoNotLeakIntoRuntime() {
+  const settings = loadSettings({
+    storage: storageWith(
+      JSON.stringify({
+        ...defaults,
+        secretDevOnlySetting: true,
+      }),
+    ),
+    storageKey: "settings",
+    defaults,
+    controls,
+    clamp,
+  });
+
+  assert.equal(Object.hasOwn(settings, "secretDevOnlySetting"), false);
+}
+
+function testStorageReadErrorsFallBackToDefaults() {
+  const storage = {
+    getItem() {
+      throw new Error("read blocked");
+    },
+  };
+
+  assert.deepEqual(
+    loadSettings({
+      storage,
+      storageKey: "settings",
+      defaults,
+      controls,
+      clamp,
+    }),
+    defaults,
+  );
+}
+
+function testStorageWriteErrorsAreIgnored() {
+  const storage = {
+    setItem() {
+      throw new Error("write blocked");
+    },
+  };
+
+  assert.doesNotThrow(() =>
+    saveSettings({
+      storage,
+      storageKey: "settings",
+      settings: defaults,
+    }),
+  );
+}
+
 function testFpsSettingPersistsValidChoice() {
   const settings = loadSettings({
     storage: storageWith(
@@ -240,6 +305,10 @@ testTrailMigrationPreservesCurrentSavedTrailChoice();
 testRuntimeSettingsAreIndependentFromPersistedSettings();
 testPersistedSettingsFilterRuntimeOnlyKeys();
 testUnavailableStorageFallsBackToDefaults();
+testMalformedJsonFallsBackToDefaults();
+testUnknownSavedSettingsDoNotLeakIntoRuntime();
+testStorageReadErrorsFallBackToDefaults();
+testStorageWriteErrorsAreIgnored();
 testFpsSettingPersistsValidChoice();
 testStatsSettingPersistsValidChoice();
 testMalformedSavedSettingsFallBackToDefaults();
