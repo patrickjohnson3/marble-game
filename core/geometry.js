@@ -25,17 +25,16 @@ export function expandedCircle(circle, radiusScale) {
   return circleFrom(circle, circle.r * radiusScale);
 }
 
-export function circleRectContact(circle, rect, epsilon = 0) {
+export function circleRectContact(circle, rect, epsilon = 0, target = {}) {
   const closestX = clamp(circle.x, rect.x, rect.x + rect.w);
   const closestY = clamp(circle.y, rect.y, rect.y + rect.h);
   const dx = circle.x - closestX;
   const dy = circle.y - closestY;
   const distanceSq = dx * dx + dy * dy;
 
-  return {
-    intersects: distanceSq <= circle.r * circle.r + epsilon,
-    dx,
-    dy,
-    distanceSq,
-  };
+  target.intersects = distanceSq <= circle.r * circle.r + epsilon;
+  target.dx = dx;
+  target.dy = dy;
+  target.distanceSq = distanceSq;
+  return target;
 }

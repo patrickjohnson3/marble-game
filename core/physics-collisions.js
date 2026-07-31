@@ -3,87 +3,90 @@ import { circleRectContact } from "./geometry.js";
 const defaultScrapeHapticScale = 0;
 const defaultWallTangentialDragRetention = 1;
 const defaultCollisionResolvePasses = 1;
+const marbleOverRectContact = {};
 
 export function marbleOverRect(marble, rect, epsilon = 0) {
-  return circleRectContact(marble, rect, epsilon).intersects;
+  return circleRectContact(marble, rect, epsilon, marbleOverRectContact)
+    .intersects;
 }
 
-function orientedRectCenter(rect) {
-  return {
-    x: rect.x + rect.w / 2,
-    y: rect.y + rect.h / 2,
-  };
-}
+function setClosestAxisNormal(
+  localX,
+  localY,
+  halfWidth,
+  halfHeight,
+  angle,
+  target,
+) {
+  let distance = localX + halfWidth;
+  let normalX = -1;
+  let normalY = 0;
 
-function localPointFromWorld(point, center, angle) {
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  const dx = point.x - center.x;
-  const dy = point.y - center.y;
-
-  return {
-    x: cos * dx + sin * dy,
-    y: -sin * dx + cos * dy,
-  };
-}
-
-function worldVectorFromLocal(vector, angle) {
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-
-  return {
-    x: cos * vector.x - sin * vector.y,
-    y: sin * vector.x + cos * vector.y,
-  };
-}
-
-function closestAxisNormal(localPoint, halfWidth, halfHeight, angle) {
-  const distances = [
-    { distance: localPoint.x + halfWidth, normal: { x: -1, y: 0 } },
-    { distance: halfWidth - localPoint.x, normal: { x: 1, y: 0 } },
-    { distance: localPoint.y + halfHeight, normal: { x: 0, y: -1 } },
-    { distance: halfHeight - localPoint.y, normal: { x: 0, y: 1 } },
-  ];
-  let closest = distances[0];
-
-  for (let i = 1; i < distances.length; i++) {
-    if (distances[i].distance < closest.distance) closest = distances[i];
+  const rightDistance = halfWidth - localX;
+  if (rightDistance < distance) {
+    distance = rightDistance;
+    normalX = 1;
+    normalY = 0;
   }
 
-  return {
-    ...worldVectorFromLocal(closest.normal, angle),
-    distance: closest.distance,
-  };
+  const topDistance = localY + halfHeight;
+  if (topDistance < distance) {
+    distance = topDistance;
+    normalX = 0;
+    normalY = -1;
+  }
+
+  const bottomDistance = halfHeight - localY;
+  if (bottomDistance < distance) {
+    distance = bottomDistance;
+    normalX = 0;
+    normalY = 1;
+  }
+
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  target.insideDistance = distance;
+  target.insideNx = cos * normalX - sin * normalY;
+  target.insideNy = sin * normalX + cos * normalY;
 }
 
-export function circleOrientedRectContact(circle, rect, epsilon = 0) {
+export function circleOrientedRectContact(
+  circle,
+  rect,
+  epsilon = 0,
+  target = {},
+) {
   const angle = rect.angle ?? 0;
-  const center = orientedRectCenter(rect);
+  const centerX = rect.x + rect.w / 2;
+  const centerY = rect.y + rect.h / 2;
   const halfWidth = (rect.hitboxW ?? rect.w) / 2;
   const halfHeight = (rect.hitboxH ?? rect.h) / 2;
-  const localPoint = localPointFromWorld(circle, center, angle);
-  const closestX = Math.max(-halfWidth, Math.min(halfWidth, localPoint.x));
-  const closestY = Math.max(-halfHeight, Math.min(halfHeight, localPoint.y));
-  const localDelta = {
-    x: localPoint.x - closestX,
-    y: localPoint.y - closestY,
-  };
-  const worldDelta = worldVectorFromLocal(localDelta, angle);
-  const distanceSq = worldDelta.x * worldDelta.x + worldDelta.y * worldDelta.y;
-  const insideNormal =
-    distanceSq === 0
-      ? closestAxisNormal(localPoint, halfWidth, halfHeight, angle)
-      : null;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const dx = circle.x - centerX;
+  const dy = circle.y - centerY;
+  const localX = cos * dx + sin * dy;
+  const localY = -sin * dx + cos * dy;
+  const closestX = Math.max(-halfWidth, Math.min(halfWidth, localX));
+  const closestY = Math.max(-halfHeight, Math.min(halfHeight, localY));
+  const localDeltaX = localX - closestX;
+  const localDeltaY = localY - closestY;
+  const worldDeltaX = cos * localDeltaX - sin * localDeltaY;
+  const worldDeltaY = sin * localDeltaX + cos * localDeltaY;
+  const distanceSq = worldDeltaX * worldDeltaX + worldDeltaY * worldDeltaY;
 
-  return {
-    intersects: distanceSq <= circle.r * circle.r + epsilon,
-    dx: worldDelta.x,
-    dy: worldDelta.y,
-    distanceSq,
-    insideDistance: insideNormal?.distance ?? 0,
-    insideNx: insideNormal?.x ?? 0,
-    insideNy: insideNormal?.y ?? 0,
-  };
+  target.intersects = distanceSq <= circle.r * circle.r + epsilon;
+  target.dx = worldDeltaX;
+  target.dy = worldDeltaY;
+  target.distanceSq = distanceSq;
+  if (distanceSq === 0) {
+    setClosestAxisNormal(localX, localY, halfWidth, halfHeight, angle, target);
+  } else {
+    target.insideDistance = 0;
+    target.insideNx = 0;
+    target.insideNy = 0;
+  }
+  return target;
 }
 
 function axisAlignedInsideNormal(marble, obstacle) {
@@ -115,12 +118,12 @@ function axisAlignedInsideNormal(marble, obstacle) {
   return { distance: nearestDistance, nx, ny };
 }
 
-function obstacleContact(marble, obstacle, epsilon) {
+function obstacleContact(marble, obstacle, epsilon, target) {
   if (Number.isFinite(obstacle.angle)) {
-    return circleOrientedRectContact(marble, obstacle, epsilon);
+    return circleOrientedRectContact(marble, obstacle, epsilon, target);
   }
 
-  return circleRectContact(marble, obstacle, epsilon);
+  return circleRectContact(marble, obstacle, epsilon, target);
 }
 
 function collisionFeedback(normalSpeed, tangentSpeed, physics) {
@@ -135,11 +138,13 @@ export function resolveObstacleCollision(
   obstacle,
   physics,
   onImpact = () => {},
+  contactScratch = {},
 ) {
   const contact = obstacleContact(
     marble,
     obstacle,
     physics.collisionDistanceSqEpsilon ?? 0,
+    contactScratch,
   );
 
   if (!contact.intersects) return;
@@ -150,18 +155,19 @@ export function resolveObstacleCollision(
   let overlap = marble.r - distance;
 
   if (distance === 0) {
-    const insideNormal =
-      Number.isFinite(contact.insideNx) && Number.isFinite(contact.insideNy)
-        ? {
-            distance: contact.insideDistance,
-            nx: contact.insideNx,
-            ny: contact.insideNy,
-          }
-        : axisAlignedInsideNormal(marble, obstacle);
-
-    nx = insideNormal.nx;
-    ny = insideNormal.ny;
-    overlap = marble.r + insideNormal.distance;
+    if (
+      Number.isFinite(contact.insideNx) &&
+      Number.isFinite(contact.insideNy)
+    ) {
+      nx = contact.insideNx;
+      ny = contact.insideNy;
+      overlap = marble.r + contact.insideDistance;
+    } else {
+      const insideNormal = axisAlignedInsideNormal(marble, obstacle);
+      nx = insideNormal.nx;
+      ny = insideNormal.ny;
+      overlap = marble.r + insideNormal.distance;
+    }
   }
 
   marble.x += nx * overlap;
@@ -183,6 +189,7 @@ export function handleWallCollisions(
 ) {
   const passes =
     physics.collisionResolvePasses ?? defaultCollisionResolvePasses;
+  const contactScratch = {};
 
   for (let pass = 0; pass < passes; pass++) {
     if (marble.x < bounds.left + marble.r) {
@@ -233,6 +240,7 @@ export function handleWallCollisions(
           collisionObstacles[i],
           physics,
           onImpact,
+          contactScratch,
         );
       }
     }
