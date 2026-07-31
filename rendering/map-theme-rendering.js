@@ -6,6 +6,10 @@ const realWorldThemes = new Set([
   "sandLot",
 ]);
 
+const kitchenCheerioRadiusRatio = 0.00525;
+const kitchenCheerioShovePadding = 18;
+const kitchenCheerioMaxPushRadiusMultiplier = 3.2;
+const kitchenCheerioZeroDistanceEpsilon = 0.001;
 const defaultCheerioSurfaceInfluence = Object.freeze({
   maxPush: 1,
   shove: 0.78,
@@ -56,10 +60,9 @@ function appendCircle(parent, className, world, circle) {
 }
 
 function appendKitchenCheerio(parent, world, circle, themeState) {
-  const radius = 0.00525;
   const element = appendCircle(parent, "kitchenCheerio", world, {
     ...circle,
-    r: radius,
+    r: kitchenCheerioRadiusRatio,
   });
   const state = {
     element,
@@ -67,7 +70,7 @@ function appendKitchenCheerio(parent, world, circle, themeState) {
     originY: circle.y * world.height,
     pushX: 0,
     pushY: 0,
-    radius: radius * world.width,
+    radius: kitchenCheerioRadiusRatio * world.width,
     sweptClosestX: 0,
     sweptClosestY: 0,
     sweptDistance: 0,
@@ -321,7 +324,7 @@ export function updateMapThemeDynamics({
     const { originX, originY, radius, pushX, pushY } = cheerio;
     const currentX = originX + pushX;
     const currentY = originY + pushY;
-    const shoveDistance = marble.r + radius + 18;
+    const shoveDistance = marble.r + radius + kitchenCheerioShovePadding;
     const minX = Math.min(previousMarble.x, marble.x) - shoveDistance;
     const maxX = Math.max(previousMarble.x, marble.x) + shoveDistance;
     const minY = Math.min(previousMarble.y, marble.y) - shoveDistance;
@@ -343,14 +346,19 @@ export function updateMapThemeDynamics({
       currentY,
       mapConfig.elements,
     );
-    const maxPush = marble.r * 3.2 * influence.maxPush;
+    const maxPush =
+      marble.r * kitchenCheerioMaxPushRadiusMultiplier * influence.maxPush;
     if (distance >= shoveDistance) return;
 
     const speed = Math.hypot(marble.vx || 0, marble.vy || 0);
     const nx =
-      distance > 0.001 ? dx / distance : (marble.vx || 1) / Math.max(speed, 1);
+      distance > kitchenCheerioZeroDistanceEpsilon
+        ? dx / distance
+        : (marble.vx || 1) / Math.max(speed, 1);
     const ny =
-      distance > 0.001 ? dy / distance : (marble.vy || 0) / Math.max(speed, 1);
+      distance > kitchenCheerioZeroDistanceEpsilon
+        ? dy / distance
+        : (marble.vy || 0) / Math.max(speed, 1);
     const amount =
       (shoveDistance - distance) * influence.shove + speed * influence.speed;
     const nextPushX = pushX + nx * amount;
