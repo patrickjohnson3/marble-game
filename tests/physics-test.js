@@ -130,6 +130,32 @@ function testCircleOrientedRectContactUsesRotatedNormal() {
   assertNear(contact.dy, normal.y * 8);
 }
 
+function testCircleOrientedRectContactUsesCachedCollisionFields() {
+  const angle = Math.PI / 6;
+  const rect = {
+    x: 0,
+    y: 0,
+    w: 200,
+    h: 60,
+    hitboxW: 40,
+    hitboxH: 20,
+    angle: 0,
+    collisionCenterX: 100,
+    collisionCenterY: 100,
+    collisionHalfWidth: 20,
+    collisionHalfHeight: 10,
+    collisionCos: Math.cos(angle),
+    collisionSin: Math.sin(angle),
+  };
+  const circle = { x: 100, y: 100, r: 5 };
+  const contact = circleOrientedRectContact(circle, rect);
+
+  assert.equal(contact.intersects, true);
+  assert.equal(contact.distanceSq, 0);
+  assert.equal(Number.isFinite(contact.insideNx), true);
+  assert.equal(Number.isFinite(contact.insideNy), true);
+}
+
 function testMarbleOverRectHonorsEpsilon() {
   const marble = { x: 4.9, y: 20, r: 5 };
   const rect = { x: 10, y: 10, w: 20, h: 20 };
@@ -152,6 +178,32 @@ function testObstacleBounce() {
   assert.equal(marble.vx, -4);
   assert.equal(marble.vy, 0);
   assert.deepEqual(impacts, [8]);
+}
+
+function testObstacleCollisionDoesNotBounceWhenMovingAway() {
+  const marble = { x: 90, y: 50, vx: -8, vy: 0, r: 12 };
+  const obstacle = { x: 100, y: 30, w: 40, h: 40 };
+  const impacts = [];
+
+  resolveObstacleCollision(marble, obstacle, { bounce: 0.5 }, (impact) =>
+    impacts.push(impact),
+  );
+
+  assert.equal(marble.x, 88);
+  assert.equal(marble.vx, -8);
+  assert.deepEqual(impacts, []);
+}
+
+function testObstacleCollisionHonorsBounceExtremes() {
+  const stopped = { x: 90, y: 50, vx: 8, vy: 0, r: 12 };
+  const reflected = { x: 90, y: 50, vx: 8, vy: 0, r: 12 };
+  const obstacle = { x: 100, y: 30, w: 40, h: 40 };
+
+  resolveObstacleCollision(stopped, obstacle, { bounce: 0 });
+  resolveObstacleCollision(reflected, obstacle, { bounce: 1 });
+
+  assert.equal(stopped.vx, 0);
+  assert.equal(reflected.vx, -8);
 }
 
 function testCollisionPositionSlopCanLeaveSmallOverlap() {
@@ -1052,6 +1104,50 @@ function testWallCollisionAppliesTangentialDrag() {
   assert.equal(marble.vy, 5);
 }
 
+function testCornerWallCollisionResolvesBothAxes() {
+  const marble = { x: 5, y: 5, vx: -4, vy: -6, r: 10 };
+
+  handleWallCollisions(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: false },
+      obstacles: [],
+      physics: {
+        bounce: 0.5,
+        wallTangentialDragRetention: 1,
+      },
+    },
+    () => {},
+  );
+
+  assert.equal(marble.x, 10);
+  assert.equal(marble.y, 10);
+  assert.equal(marble.vx, 2);
+  assert.equal(marble.vy, 3);
+}
+
+function testWallCollisionsIgnoreObstaclesBeforeIntroRelease() {
+  const marble = { x: 90, y: 50, vx: 8, vy: 0, r: 12 };
+
+  handleWallCollisions(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: false },
+      obstacles: [{ x: 100, y: 30, w: 40, h: 40 }],
+      physics: {
+        bounce: 0.5,
+        collisionResolvePasses: 1,
+      },
+    },
+    () => {},
+  );
+
+  assert.equal(marble.x, 90);
+  assert.equal(marble.vx, 8);
+}
+
 function testWorldBoundCollisionBeforeAdjacentObstacle() {
   const marble = { x: 5, y: 50, vx: 0, vy: 0, r: 10 };
 
@@ -1274,8 +1370,11 @@ testCircleRectContact();
 testCircleShapeHelpers();
 testCircleRectContactEdgeCases();
 testCircleOrientedRectContactUsesRotatedNormal();
+testCircleOrientedRectContactUsesCachedCollisionFields();
 testMarbleOverRectHonorsEpsilon();
 testObstacleBounce();
+testObstacleCollisionDoesNotBounceWhenMovingAway();
+testObstacleCollisionHonorsBounceExtremes();
 testCollisionPositionSlopCanLeaveSmallOverlap();
 testObstacleCornerBounceUsesDiagonalNormal();
 testOrientedObstacleCollisionResolvesAlongRotatedNormal();
@@ -1305,6 +1404,8 @@ testRoughPatchDragIsFrameRateIndependent();
 testOverspeedRetentionEasesDown();
 testOverspeedClampIsFrameRateIndependent();
 testWallCollisionAppliesTangentialDrag();
+testCornerWallCollisionResolvesBothAxes();
+testWallCollisionsIgnoreObstaclesBeforeIntroRelease();
 testWorldBoundCollisionBeforeAdjacentObstacle();
 testMultipleCollisionPassesResolveChainedOverlaps();
 testPhysicsSubstepsAreCapped();
