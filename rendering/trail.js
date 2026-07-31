@@ -10,15 +10,29 @@ export function createTrailRenderer({
   clamp,
 }) {
   const points = [];
+  const pointPool = [];
   const segmentPool = [];
   const svgNamespace = "http://www.w3.org/2000/svg";
+  let firstPointIndex = 0;
 
   function createSegment() {
     return document.createElementNS(svgNamespace, "line");
   }
 
+  function addPoint(x, y, t) {
+    const point = pointPool.pop() ?? { x: 0, y: 0, t: 0 };
+    point.x = x;
+    point.y = y;
+    point.t = t;
+    points.push(point);
+  }
+
   function clear() {
+    for (let i = firstPointIndex; i < points.length; i++) {
+      pointPool.push(points[i]);
+    }
     points.length = 0;
+    firstPointIndex = 0;
     if (trailSegmentsEl.childNodes.length > 0)
       trailSegmentsEl.replaceChildren();
   }
@@ -29,33 +43,45 @@ export function createTrailRenderer({
       return;
     }
 
-    const last = points[points.length - 1];
+    const last =
+      points.length > firstPointIndex ? points[points.length - 1] : null;
     const movedEnough =
       !last ||
       Math.hypot(marble.x - last.x, marble.y - last.y) >= config.minDistance;
     const waitedEnough = !last || now - last.t >= config.minIntervalMs;
 
     if (movedEnough && waitedEnough) {
-      points.push({ x: marble.x, y: marble.y, t: now });
+      addPoint(marble.x, marble.y, now);
     }
 
     const oldest = now - config.durationMs;
-    while (points.length > 0 && points[0].t < oldest) {
-      points.shift();
+    while (
+      firstPointIndex < points.length &&
+      points[firstPointIndex].t < oldest
+    ) {
+      pointPool.push(points[firstPointIndex]);
+      firstPointIndex++;
+    }
+    if (firstPointIndex === points.length) {
+      points.length = 0;
+      firstPointIndex = 0;
+    } else if (firstPointIndex > 64) {
+      points.splice(0, firstPointIndex);
+      firstPointIndex = 0;
     }
 
-    if (points.length < 2) {
+    if (points.length - firstPointIndex < 2) {
       trailSegmentsEl.replaceChildren();
       return;
     }
 
-    const segmentCount = points.length - 1;
-    for (let i = 1; i < points.length; i++) {
+    const segmentCount = points.length - firstPointIndex - 1;
+    for (let i = firstPointIndex + 1; i < points.length; i++) {
       const a = points[i - 1];
       const b = points[i];
       const opacity =
         clamp(1 - (now - b.t) / config.durationMs, 0, 1) * config.maxOpacity;
-      const segmentIndex = i - 1;
+      const segmentIndex = i - firstPointIndex - 1;
       const segment = segmentPool[segmentIndex] ?? createSegment();
       segmentPool[segmentIndex] = segment;
       segment.setAttribute("x1", a.x.toFixed(1));
