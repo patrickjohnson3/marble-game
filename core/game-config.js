@@ -22,6 +22,9 @@ export const hapticTuning = {
 };
 
 export const physicsConfig = {
+  // Motion tuning uses 60fps frame units: dt=1 means one target frame.
+  // Retention values are exponentiated by dt, so they remain stable when the
+  // game loop subdivides frames or renders slightly off cadence.
   accel: 0.115,
   maxTilt: 26,
   smoothing: 0.2,
@@ -41,6 +44,7 @@ export const physicsConfig = {
   settleSpeed: 0.035,
   settleTilt: 0.8,
   tiltCurve: 1.25,
+  // Soft cap: 0 clamps exactly to maxSpeed, values above 0 retain overspeed.
   overspeedRetention: 0.35,
   wallTangentialDragRetention: 0.92,
   collisionDistanceSqEpsilon: 0,
