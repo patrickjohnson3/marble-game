@@ -44,6 +44,7 @@ export const physicsConfig = {
   maxSpeedEase: 0.35,
   wallTangentialDragRetention: 0.92,
   collisionDistanceSqEpsilon: 0,
+  collisionZeroDistanceEpsilon: 0,
 };
 
 export const timing = {

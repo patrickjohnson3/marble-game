@@ -206,6 +206,12 @@ function testPhysicsAndSettingsRanges() {
     "collision distance squared epsilon",
   );
   assert.equal(
+    Number.isFinite(physicsConfig.collisionZeroDistanceEpsilon) &&
+      physicsConfig.collisionZeroDistanceEpsilon >= 0,
+    true,
+    "collision zero distance epsilon",
+  );
+  assert.equal(
     settingsControls.maxSpeed.min <= settingsConfig.maxSpeed,
     true,
     "max speed setting min",

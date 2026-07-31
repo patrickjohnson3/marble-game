@@ -219,6 +219,25 @@ function testDeepOverlapTieBreaksTowardFirstNearestEdge() {
   assert.equal(marble.y, 50);
 }
 
+function testNearZeroOrientedContactCanUseInsideNormal() {
+  const angle = Math.PI / 4;
+  const circle = { x: 100 + 1e-8, y: 100, r: 10 };
+  const rect = {
+    x: 50,
+    y: 50,
+    w: 100,
+    h: 100,
+    hitboxW: 100,
+    hitboxH: 20,
+    angle,
+  };
+  const contact = circleOrientedRectContact(circle, rect, 0, {}, 1e-6);
+
+  assert.equal(contact.intersects, true);
+  assert.equal(Number.isFinite(contact.insideNx), true);
+  assert.equal(Number.isFinite(contact.insideNy), true);
+}
+
 function testRoughPatchAddsDrag() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
 
@@ -1165,6 +1184,7 @@ testOrientedObstacleCollisionResolvesAlongRotatedNormal();
 testGlancingImpactReportsScrapeFeedback();
 testDeepOverlapPushesToNearestEdge();
 testDeepOverlapTieBreaksTowardFirstNearestEdge();
+testNearZeroOrientedContactCanUseInsideNormal();
 testRoughPatchAddsDrag();
 testRoughPatchDragChecksAllPatches();
 testIcePatchReducesDrag();

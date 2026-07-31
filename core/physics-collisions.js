@@ -3,6 +3,7 @@ import { circleRectContact } from "./geometry.js";
 const defaultScrapeHapticScale = 0;
 const defaultWallTangentialDragRetention = 1;
 const defaultCollisionResolvePasses = 1;
+const defaultCollisionZeroDistanceEpsilon = 0;
 const marbleOverRectContact = {};
 
 export function marbleOverRect(marble, rect, epsilon = 0) {
@@ -55,6 +56,7 @@ export function circleOrientedRectContact(
   rect,
   epsilon = 0,
   target = {},
+  zeroDistanceEpsilon = defaultCollisionZeroDistanceEpsilon,
 ) {
   const angle = rect.angle ?? 0;
   const centerX = rect.collisionCenterX ?? rect.x + rect.w / 2;
@@ -79,7 +81,7 @@ export function circleOrientedRectContact(
   target.dx = worldDeltaX;
   target.dy = worldDeltaY;
   target.distanceSq = distanceSq;
-  if (distanceSq === 0) {
+  if (distanceSq <= zeroDistanceEpsilon * zeroDistanceEpsilon) {
     setClosestAxisNormal(localX, localY, halfWidth, halfHeight, angle, target);
   } else {
     target.insideDistance = 0;
@@ -118,9 +120,18 @@ function axisAlignedInsideNormal(marble, obstacle) {
   return { distance: nearestDistance, nx, ny };
 }
 
-function obstacleContact(marble, obstacle, epsilon, target) {
+function obstacleContact(marble, obstacle, physics, target) {
+  const epsilon = physics.collisionDistanceSqEpsilon ?? 0;
+
   if (Number.isFinite(obstacle.angle)) {
-    return circleOrientedRectContact(marble, obstacle, epsilon, target);
+    return circleOrientedRectContact(
+      marble,
+      obstacle,
+      epsilon,
+      target,
+      physics.collisionZeroDistanceEpsilon ??
+        defaultCollisionZeroDistanceEpsilon,
+    );
   }
 
   return circleRectContact(marble, obstacle, epsilon, target);
@@ -143,7 +154,7 @@ export function resolveObstacleCollision(
   const contact = obstacleContact(
     marble,
     obstacle,
-    physics.collisionDistanceSqEpsilon ?? 0,
+    physics,
     contactScratch,
   );
 
@@ -154,7 +165,11 @@ export function resolveObstacleCollision(
   let ny = contact.dy / (distance || 1);
   let overlap = marble.r - distance;
 
-  if (distance === 0) {
+  if (
+    distance <=
+    (physics.collisionZeroDistanceEpsilon ??
+      defaultCollisionZeroDistanceEpsilon)
+  ) {
     if (
       Number.isFinite(contact.insideNx) &&
       Number.isFinite(contact.insideNy)
