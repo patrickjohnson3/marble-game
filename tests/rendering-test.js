@@ -358,13 +358,6 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen floor theme should render fistfuls of scattered cereal",
   );
   assert.equal(
-    underlayChildren.some((child) =>
-      child.className.includes("kitchenCleanerSpill"),
-    ),
-    true,
-    "kitchen floor theme should render a cleaner spill",
-  );
-  assert.equal(
     overlayChildren.some((child) => child.className.includes("themeObject")),
     false,
     "kitchen floor theme should not render decorative blockers",

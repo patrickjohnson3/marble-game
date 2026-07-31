@@ -153,12 +153,6 @@ function renderKitchenFloor({ underlay, overlay, themeState, world }) {
   ].forEach((circle) =>
     appendKitchenCheerio(overlay, world, circle, themeState),
   );
-  appendBox(underlay, "kitchenCleanerSpill", world, {
-    x: 0.2,
-    y: 0.74,
-    w: 0.1,
-    h: 0.08,
-  });
 }
 
 function renderLivingRoom({ underlay, overlay, world }) {
