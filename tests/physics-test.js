@@ -13,6 +13,7 @@ import {
 import {
   SURFACE_TYPES,
   SURFACE_PRIORITY,
+  physicsSubstepCount,
   updatePhysics,
   updatePhysicsInput,
 } from "../core/physics.js";
@@ -1074,6 +1075,30 @@ function testPhysicsSubstepsAreCapped() {
   assert.equal(marble.x, 1050);
 }
 
+function testPhysicsSubstepCountUsesIncomingSpeed() {
+  assert.equal(
+    physicsSubstepCount(0, 1, {
+      maxStepDistance: 5,
+      maxPhysicsSubsteps: 20,
+    }),
+    1,
+  );
+  assert.equal(
+    physicsSubstepCount(40, 1, {
+      maxStepDistance: 5,
+      maxPhysicsSubsteps: 20,
+    }),
+    8,
+  );
+  assert.equal(
+    physicsSubstepCount(1000, 1, {
+      maxStepDistance: 1,
+      maxPhysicsSubsteps: 10,
+    }),
+    10,
+  );
+}
+
 function testInvalidPhysicsStepInputsDoNotPoisonState() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
 
@@ -1209,6 +1234,7 @@ testWallCollisionAppliesTangentialDrag();
 testWorldBoundCollisionBeforeAdjacentObstacle();
 testMultipleCollisionPassesResolveChainedOverlaps();
 testPhysicsSubstepsAreCapped();
+testPhysicsSubstepCountUsesIncomingSpeed();
 testInvalidPhysicsStepInputsDoNotPoisonState();
 testSubstepsPreventThinObstacleTunneling();
 

@@ -103,6 +103,23 @@ function finitePositive(value, fallback) {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+export function physicsSubstepCount(speed, dt, physics) {
+  const maxStepDistance = finitePositive(
+    physics.maxStepDistance,
+    defaultMaxStepDistance,
+  );
+  const maxPhysicsSubsteps = finitePositive(
+    physics.maxPhysicsSubsteps ?? defaultMaxPhysicsSubsteps,
+    defaultMaxPhysicsSubsteps,
+  );
+  // The split count intentionally uses incoming speed only. Acceleration within
+  // the frame is applied inside the substeps so current gameplay tuning stays
+  // stable across fast and slow devices.
+  const uncappedSteps = Math.max(1, Math.ceil((speed * dt) / maxStepDistance));
+
+  return Math.min(uncappedSteps, maxPhysicsSubsteps);
+}
+
 function isOverTerrainPatch(marble, intro, patches, physics) {
   return (
     intro.released &&
@@ -315,17 +332,8 @@ function physicsStep(context, dt, feedback) {
 export function updatePhysics(context, dt, feedback) {
   if (!Number.isFinite(dt) || dt <= 0) return;
 
-  const maxStepDistance = finitePositive(
-    context.physics.maxStepDistance,
-    defaultMaxStepDistance,
-  );
-  const maxPhysicsSubsteps = finitePositive(
-    context.physics.maxPhysicsSubsteps ?? defaultMaxPhysicsSubsteps,
-    defaultMaxPhysicsSubsteps,
-  );
   const speed = Math.hypot(context.marble.vx, context.marble.vy);
-  const uncappedSteps = Math.max(1, Math.ceil((speed * dt) / maxStepDistance));
-  const steps = Math.min(uncappedSteps, maxPhysicsSubsteps);
+  const steps = physicsSubstepCount(speed, dt, context.physics);
   const stepDt = dt / steps;
   const physicsScratch = scratch(context);
   physicsScratch.frameFactors.baseDrag = Math.pow(
