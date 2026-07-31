@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { circleOrientedRectContact } from "../core/physics-collisions.js";
 import { renderGooPatches } from "../rendering/goo-patch-rendering.js";
 import { renderHazardPatches } from "../rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
@@ -423,6 +424,62 @@ function testKitchenCheeriosGiveWayToMarble() {
 }
 
 testKitchenCheeriosGiveWayToMarble();
+
+function testKitchenCheeriosDoNotSlideUnderFork() {
+  const cheerioElement = new FakeElement();
+  const cheerioState = {
+    element: cheerioElement,
+    originX: 0,
+    originY: 0,
+    pushX: 0,
+    pushY: 0,
+    radius: 23,
+    sweptClosestX: 0,
+    sweptClosestY: 0,
+    sweptDistance: 0,
+  };
+  const fork = {
+    type: "obstacle",
+    fixture: "fork",
+    x: 42,
+    y: -40,
+    w: 120,
+    h: 80,
+    hitboxW: 120,
+    hitboxH: 30,
+    angle: -0.42,
+  };
+
+  updateMapThemeDynamics({
+    mapConfig: {
+      theme: "kitchenFloor",
+      elements: [fork],
+    },
+    marble: {
+      x: cheerioState.originX,
+      y: cheerioState.originY,
+      vx: 100,
+      vy: 0,
+      r: 29,
+    },
+    themeState: {
+      kitchenCheerios: [cheerioState],
+    },
+  });
+
+  const contact = circleOrientedRectContact(
+    {
+      x: cheerioState.originX + cheerioState.pushX,
+      y: cheerioState.originY + cheerioState.pushY,
+      r: cheerioState.radius,
+    },
+    fork,
+  );
+
+  assert.equal(contact.intersects, false, "fork should block shoved Cheerios");
+}
+
+testKitchenCheeriosDoNotSlideUnderFork();
 
 function firstKitchenCheerio({ container, overlayContainer }) {
   const themeState = {};

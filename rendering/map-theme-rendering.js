@@ -1,3 +1,6 @@
+import { MAP_ELEMENT_TYPES } from "../core/map-elements.js";
+import { circleOrientedRectContact } from "../core/physics-collisions.js";
+
 const realWorldThemes = new Set([
   "hockeyRink",
   "kitchenFloor",
@@ -21,6 +24,8 @@ const cheerioSurfaceInfluences = Object.freeze({
   roughPatch: Object.freeze({ maxPush: 0.75, shove: 0.55, speed: 0.025 }),
   waterPatch: Object.freeze({ maxPush: 1.18, shove: 0.92, speed: 0.06 }),
 });
+const kitchenCheerioObstacleSeparation = 0.5;
+const cheerioObstacleResolvePasses = 2;
 
 function rectFromRatio(world, rect) {
   return {
@@ -310,6 +315,44 @@ function cheerioSurfaceInfluence(x, y, elements = []) {
   return defaultCheerioSurfaceInfluence;
 }
 
+function resolveCheerioObstacleCollision(cheerioCircle, obstacle, contact) {
+  circleOrientedRectContact(
+    cheerioCircle,
+    obstacle,
+    0,
+    contact,
+    kitchenCheerioZeroDistanceEpsilon,
+  );
+  if (!contact.intersects) return;
+
+  let distance = Math.sqrt(contact.distanceSq);
+  let nx = contact.dx / (distance || 1);
+  let ny = contact.dy / (distance || 1);
+  let overlap = cheerioCircle.r - distance;
+
+  if (distance <= kitchenCheerioZeroDistanceEpsilon) {
+    nx = Number.isFinite(contact.insideNx) ? contact.insideNx : 1;
+    ny = Number.isFinite(contact.insideNy) ? contact.insideNy : 0;
+    overlap = cheerioCircle.r + (contact.insideDistance || 0);
+  }
+
+  const separation = Math.max(0, overlap) + kitchenCheerioObstacleSeparation;
+  cheerioCircle.x += nx * separation;
+  cheerioCircle.y += ny * separation;
+}
+
+function resolveCheerioObstacleCollisions(cheerioCircle, elements = []) {
+  const contact = {};
+
+  for (let pass = 0; pass < cheerioObstacleResolvePasses; pass++) {
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i];
+      if (element.type !== MAP_ELEMENT_TYPES.obstacle) continue;
+      resolveCheerioObstacleCollision(cheerioCircle, element, contact);
+    }
+  }
+}
+
 export function updateMapThemeDynamics({
   mapConfig,
   marble,
@@ -364,9 +407,16 @@ export function updateMapThemeDynamics({
     const nextPushX = pushX + nx * amount;
     const nextPushY = pushY + ny * amount;
     const pushScale = cappedVectorScale(nextPushX, nextPushY, maxPush);
+    const cheerioCircle = {
+      x: originX + nextPushX * pushScale,
+      y: originY + nextPushY * pushScale,
+      r: radius,
+    };
 
-    cheerio.pushX = nextPushX * pushScale;
-    cheerio.pushY = nextPushY * pushScale;
+    resolveCheerioObstacleCollisions(cheerioCircle, mapConfig.elements);
+
+    cheerio.pushX = cheerioCircle.x - originX;
+    cheerio.pushY = cheerioCircle.y - originY;
     cheerio.element.style.setProperty(
       "--push-x",
       cheerio.pushX.toFixed(1) + "px",
