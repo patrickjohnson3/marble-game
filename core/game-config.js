@@ -92,6 +92,7 @@ export const visualConfig = {
     glintVelocityLimit: 1.5,
   },
   effects: {
+    canvasScale: 0.5,
     impactMin: 1.9,
     impactReference: 10,
     impactCooldownMs: 70,

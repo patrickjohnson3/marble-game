@@ -408,72 +408,11 @@ body {
   overflow: visible;
   pointer-events: none;
 }
-.effectParticle {
+.effectsCanvas {
   position: absolute;
   left: 0;
   top: 0;
-  width: var(--size);
-  height: var(--size);
-  border-radius: 50%;
-  opacity: 0;
-  transform: translate(var(--x), var(--y)) translate(-50%, -50%) scale(0.9);
-  animation: effectFade var(--life) ease-out forwards;
-  will-change: transform, opacity;
-}
-.effectParticle.spark {
-  background: radial-gradient(
-    circle,
-    #fff7d0 0 20%,
-    #ffc857cc 42%,
-    #ffffff00 72%
-  );
-  box-shadow: 0 0 7px #ffd16688;
-}
-.effectParticle.dust {
-  background: radial-gradient(
-    circle,
-    #d1d1c8cc 0 26%,
-    #8a898066 58%,
-    #ffffff00 76%
-  );
-  filter: blur(0.4px);
-}
-.effectParticle.celebrate {
-  background: radial-gradient(
-    circle,
-    #ffffff 0 18%,
-    #88f7c5dd 36%,
-    #53d59a00 76%
-  );
-  box-shadow: 0 0 10px #88f7c588;
-}
-.effectParticle.gooSplat {
-  background: radial-gradient(
-    circle,
-    #e6ff83e0 0 18%,
-    #80e93acc 42%,
-    #19771f00 74%
-  );
-  filter: blur(0.3px);
-  box-shadow: 0 0 8px #90ff4d73;
-}
-.effectParticle.waterRipple {
-  background: transparent;
-  border: 3px solid rgba(205, 247, 255, 0.72);
-  box-shadow:
-    inset 0 0 10px #ffffff35,
-    0 0 10px #6adfff55;
-}
-@keyframes effectFade {
-  0% {
-    opacity: var(--opacity);
-    transform: translate(var(--x), var(--y)) translate(-50%, -50%) scale(0.7);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(var(--x) + var(--dx)), calc(var(--y) + var(--dy)))
-      translate(-50%, -50%) scale(1.45);
-  }
+  pointer-events: none;
 }
 #marble {
   position: absolute;

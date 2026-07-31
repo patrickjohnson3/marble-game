@@ -1,33 +1,19 @@
 import assert from "node:assert/strict";
-import { FakeElement } from "./test-dom.js";
+import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-class FakeParticle extends FakeElement {
-  constructor() {
-    super();
-    this.style = {};
-  }
-}
-
 async function testEffectsThrottleAndParticleCap() {
   const originalDocument = globalThis.document;
-  const originalSetTimeout = globalThis.setTimeout;
-  const originalClearTimeout = globalThis.clearTimeout;
   let currentTime = 0;
-  let nextTimer = 1;
-  const clearedTimers = [];
 
   globalThis.document = {
-    createElement() {
-      return new FakeParticle();
+    createElement(tagName) {
+      if (tagName === "canvas") return new FakeCanvasElement();
+      return new FakeElement();
     },
-  };
-  globalThis.setTimeout = () => nextTimer++;
-  globalThis.clearTimeout = (timer) => {
-    clearedTimers.push(timer);
   };
 
   try {
@@ -86,6 +72,7 @@ async function testEffectsThrottleAndParticleCap() {
         waterRippleSizeRange: 10,
         waterRippleLifeMs: 150,
         waterRippleOpacity: 0.4,
+        canvasScale: 0.5,
         goalCompleteParticles: 4,
         goalCompleteDriftMin: 2,
         goalCompleteDriftRange: 0,
@@ -97,50 +84,53 @@ async function testEffectsThrottleAndParticleCap() {
       clamp,
       random: () => 0.5,
       now: () => currentTime,
+      world: { width: 200, height: 200 },
     });
 
+    assert.equal(effectsEl.childNodes.length, 1);
+    assert.equal(effects.canvas.className, "effectsCanvas");
     effects.spawnImpact(5);
-    assert.equal(effectsEl.childNodes.length, 2);
+    assert.equal(effects.activeCount(), 2);
     effects.spawnImpact(5);
-    assert.equal(effectsEl.childNodes.length, 2);
+    assert.equal(effects.activeCount(), 2);
 
     currentTime = 150;
     effects.spawnImpact(5);
-    assert.equal(effectsEl.childNodes.length, 3);
+    assert.equal(effects.activeCount(), 3);
 
     effects.clear();
-    assert.equal(effectsEl.childNodes.length, 0);
-    assert.deepEqual(clearedTimers, [1, 2, 3, 4]);
+    assert.equal(effectsEl.childNodes.length, 1);
+    assert.equal(effects.activeCount(), 0);
     effects.spawnGoalComplete();
-    assert.equal(effectsEl.childNodes.length, 3);
-    assert.equal(effectsEl.childNodes[0].className, "effectParticle celebrate");
+    assert.equal(effects.activeCount(), 3);
+    effects.render(currentTime);
+    assert.equal(
+      effects.canvas.context.calls.some((call) => call[0] === "ellipse"),
+      true,
+    );
 
     effects.clear();
-    assert.equal(effectsEl.childNodes.length, 0);
-    assert.deepEqual(clearedTimers, [1, 2, 3, 4, 5, 6, 7, 8]);
+    assert.equal(effects.activeCount(), 0);
     effects.spawnImpact(5);
-    assert.equal(effectsEl.childNodes.length, 2);
+    assert.equal(effects.activeCount(), 2);
+
+    currentTime = 1000;
+    effects.render(currentTime);
+    assert.equal(effects.activeCount(), 0);
 
     effects.clear();
     currentTime = 300;
     effects.spawnWaterRipple(5);
     effects.spawnWaterRipple(5);
-    assert.equal(effectsEl.childNodes.length, 1);
-    assert.equal(
-      effectsEl.childNodes[0].className,
-      "effectParticle waterRipple",
-    );
+    assert.equal(effects.activeCount(), 1);
 
     effects.clear();
     currentTime = 500;
     effects.spawnGooSplat(5);
     effects.spawnGooSplat(5);
-    assert.equal(effectsEl.childNodes.length, 1);
-    assert.equal(effectsEl.childNodes[0].className, "effectParticle gooSplat");
+    assert.equal(effects.activeCount(), 1);
   } finally {
     globalThis.document = originalDocument;
-    globalThis.setTimeout = originalSetTimeout;
-    globalThis.clearTimeout = originalClearTimeout;
   }
 }
 

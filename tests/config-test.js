@@ -342,6 +342,7 @@ function testHapticAndVisualRanges() {
     visualConfig.effects.maxParticles,
     "effect particle cap",
   );
+  assertPositiveNumber(visualConfig.effects.canvasScale, "effect canvas scale");
   assertPositiveNumber(
     visualConfig.effects.surfaceMinSpeed,
     "effect surface minimum speed",

@@ -147,6 +147,7 @@ function setupRenderers({
     marble,
     config: visualConfig.effects,
     clamp,
+    world,
   });
   const marbleView = createMarbleView({
     marbleEl,
