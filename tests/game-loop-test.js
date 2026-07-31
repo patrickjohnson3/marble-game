@@ -11,7 +11,10 @@ function testElapsedFrameDeltaUsesConfiguredClamp() {
 
   assert.equal(elapsedMsToFrameDelta(1, timing, clamp), timing.minFrameDelta);
   assert.equal(elapsedMsToFrameDelta(16.67, timing, clamp), 1);
-  assert.equal(elapsedMsToFrameDelta(1000, timing, clamp), timing.maxFrameDelta);
+  assert.equal(
+    elapsedMsToFrameDelta(1000, timing, clamp),
+    timing.maxFrameDelta,
+  );
 }
 
 testElapsedFrameDeltaUsesConfiguredClamp();

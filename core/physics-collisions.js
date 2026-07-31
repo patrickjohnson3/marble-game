@@ -16,7 +16,8 @@ function setClosestAxisNormal(
   localY,
   halfWidth,
   halfHeight,
-  angle,
+  cos,
+  sin,
   target,
 ) {
   let distance = localX + halfWidth;
@@ -44,8 +45,6 @@ function setClosestAxisNormal(
     normalY = 1;
   }
 
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
   target.insideDistance = distance;
   target.insideNx = cos * normalX - sin * normalY;
   target.insideNy = sin * normalX + cos * normalY;
@@ -82,7 +81,15 @@ export function circleOrientedRectContact(
   target.dy = worldDeltaY;
   target.distanceSq = distanceSq;
   if (distanceSq <= zeroDistanceEpsilon * zeroDistanceEpsilon) {
-    setClosestAxisNormal(localX, localY, halfWidth, halfHeight, angle, target);
+    setClosestAxisNormal(
+      localX,
+      localY,
+      halfWidth,
+      halfHeight,
+      cos,
+      sin,
+      target,
+    );
   } else {
     target.insideDistance = 0;
     target.insideNx = 0;
@@ -151,12 +158,7 @@ export function resolveObstacleCollision(
   onImpact = () => {},
   contactScratch = {},
 ) {
-  const contact = obstacleContact(
-    marble,
-    obstacle,
-    physics,
-    contactScratch,
-  );
+  const contact = obstacleContact(marble, obstacle, physics, contactScratch);
 
   if (!contact.intersects) return;
 

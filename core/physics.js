@@ -260,7 +260,9 @@ function handleSurfaceFeedback({ marble }, onSurface, surfaceType) {
 }
 
 function surfaceType(hits) {
-  return SURFACE_PRIORITY.find((type) => type === SURFACE_TYPES.floor || hits[type]);
+  return SURFACE_PRIORITY.find(
+    (type) => type === SURFACE_TYPES.floor || hits[type],
+  );
 }
 
 function updateSurfaceHits(context, physicsScratch) {
