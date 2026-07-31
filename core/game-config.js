@@ -66,6 +66,9 @@ export const tuning = {
   neutralSampleCount: 18,
   gestureCooldownFrames: 90,
   motionGravityScale: 3,
+  goalIndicatorDistanceMultiplier: 2.4,
+  hazardRearmDistanceMultiplier: 3,
+  hazardResetImpactFeedback: 12,
 };
 
 export const visualConfig = {

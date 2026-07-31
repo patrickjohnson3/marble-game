@@ -29,6 +29,7 @@ export function createGameLoop({
   spawnTarget = () => null,
   terrainView,
   timing,
+  tuning,
   trailRenderer,
   ui,
   visualConfig,
@@ -91,8 +92,8 @@ export function createGameLoop({
     resetGoalProgress();
     trailRenderer.clear();
     effectsRenderer.clear();
-    effectsRenderer.spawnImpact(12);
-    hapticFeedback.pulseImpact(12);
+    effectsRenderer.spawnImpact(tuning.hazardResetImpactFeedback);
+    hapticFeedback.pulseImpact(tuning.hazardResetImpactFeedback);
     ui.setHint(copy.hints.hazardPatch);
     cameraController.centerOnMarble();
   }
@@ -108,7 +109,7 @@ export function createGameLoop({
     const dy = goal.y - marble.y;
     const distance = Math.hypot(dx, dy);
     ui.setGoalIndicator({
-      visible: distance > goal.r * 2.4,
+      visible: distance > goal.r * tuning.goalIndicatorDistanceMultiplier,
       angle: Math.atan2(dy, dx),
     });
   }
@@ -121,7 +122,9 @@ export function createGameLoop({
       marble.x - spawn.x,
       marble.y - spawn.y,
     );
-    if (distanceFromSpawn > marble.r * 3) hazardArmed = true;
+    if (distanceFromSpawn > marble.r * tuning.hazardRearmDistanceMultiplier) {
+      hazardArmed = true;
+    }
   }
 
   const physicsFeedback = {

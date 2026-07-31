@@ -708,6 +708,7 @@ export function createApp({
     spawnTarget: () => mapState.spawn,
     terrainView,
     timing,
+    tuning,
     trailRenderer,
     ui,
     visualConfig,

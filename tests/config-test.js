@@ -154,6 +154,18 @@ function testTimingAndTuning() {
   assertPositiveNumber(tuning.neutralSampleCount, "neutral sample count");
   assertPositiveNumber(tuning.gestureCooldownFrames, "gesture cooldown");
   assertPositiveNumber(tuning.motionGravityScale, "motion gravity scale");
+  assertPositiveNumber(
+    tuning.goalIndicatorDistanceMultiplier,
+    "goal indicator distance multiplier",
+  );
+  assertPositiveNumber(
+    tuning.hazardRearmDistanceMultiplier,
+    "hazard rearm distance multiplier",
+  );
+  assertPositiveNumber(
+    tuning.hazardResetImpactFeedback,
+    "hazard reset impact feedback",
+  );
 }
 
 function testPhysicsAndSettingsRanges() {
