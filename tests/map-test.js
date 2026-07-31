@@ -579,6 +579,48 @@ function testObstacleVisualsTrimTouchingJoinOverhangs() {
 
 testObstacleVisualsTrimTouchingJoinOverhangs();
 
+function testObstacleNormalizationLeavesNonTouchingRectsUnchanged() {
+  const rects = [
+    { type: "obstacle", x: 0, y: 0, w: 100, h: 20 },
+    { type: "obstacle", x: 200, y: 200, w: 20, h: 100 },
+  ];
+
+  assert.deepEqual(normalizeJoinedObstacleRects(rects), rects);
+}
+
+testObstacleNormalizationLeavesNonTouchingRectsUnchanged();
+
+function testObstacleNormalizationDoesNotMutateInput() {
+  const rects = [
+    { type: "obstacle", x: 0, y: 40, w: 120, h: 20 },
+    { type: "obstacle", x: 100, y: 0, w: 20, h: 80 },
+  ];
+  const original = rects.map((rect) => ({ ...rect }));
+
+  normalizeJoinedObstacleRects(rects);
+
+  assert.deepEqual(rects, original);
+}
+
+testObstacleNormalizationDoesNotMutateInput();
+
+function testObstacleNormalizationTrimsTJoinOverhang() {
+  const [, vertical] = normalizeJoinedObstacleRects([
+    { type: "obstacle", x: 0, y: 40, w: 140, h: 20 },
+    { type: "obstacle", x: 80, y: 0, w: 20, h: 65 },
+  ]);
+
+  assert.deepEqual(vertical, {
+    type: "obstacle",
+    x: 80,
+    y: 0,
+    w: 20,
+    h: 60,
+  });
+}
+
+testObstacleNormalizationTrimsTJoinOverhang();
+
 function testCurrentMapJoinedWallsSurviveNormalization() {
   const obstacles = currentMapObstacles();
 
