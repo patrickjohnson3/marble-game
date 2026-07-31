@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import {
   circleFrom,
   circleRectContact,
+  clamp,
+  distance,
   expandedCircle,
+  midpoint,
 } from "../core/geometry.js";
 import {
   circleOrientedRectContact,
@@ -60,6 +63,13 @@ function testCircleShapeHelpers() {
   assert.deepEqual(circleFrom(source), { x: 12, y: 18, r: 4 });
   assert.deepEqual(circleFrom(source, 9), { x: 12, y: 18, r: 9 });
   assert.deepEqual(expandedCircle(source, 2.5), { x: 12, y: 18, r: 10 });
+  assert.equal(clamp(14, 0, 10), 10);
+  assert.equal(clamp(-4, 0, 10), 0);
+  assert.equal(distance({ x: 0, y: 0 }, { x: 3, y: 4 }), 5);
+  assert.deepEqual(midpoint({ x: 2, y: 4 }, { x: 6, y: 10 }), {
+    x: 4,
+    y: 7,
+  });
 }
 
 function testCircleRectContactEdgeCases() {
@@ -68,6 +78,8 @@ function testCircleRectContactEdgeCases() {
   const corner = circleRectContact({ x: 6, y: 6, r: Math.SQRT2 * 4 }, rect);
   const inside = circleRectContact({ x: 20, y: 20, r: 5 }, rect);
   const nearMiss = circleRectContact({ x: 4.9, y: 20, r: 5 }, rect, 1.1);
+  const target = {};
+  const reused = circleRectContact({ x: 10, y: 20, r: 0 }, rect, 0, target);
 
   assert.deepEqual(edge, {
     intersects: true,
@@ -84,6 +96,13 @@ function testCircleRectContactEdgeCases() {
     distanceSq: 0,
   });
   assert.equal(nearMiss.intersects, true);
+  assert.equal(reused, target);
+  assert.deepEqual(reused, {
+    intersects: true,
+    dx: 0,
+    dy: 0,
+    distanceSq: 0,
+  });
 }
 
 function testCircleOrientedRectContactUsesRotatedNormal() {
