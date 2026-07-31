@@ -20,7 +20,9 @@ export function createUi({
     angleKey: null,
     visible: null,
   };
+  const debugLineBuffer = [];
   const debugUpdateIntervalMs = 250;
+  let lastDebugText = "";
   let lastDebugUpdate = Number.NEGATIVE_INFINITY;
 
   function setHint(message) {
@@ -61,7 +63,11 @@ export function createUi({
     if (!force && now - lastDebugUpdate < debugUpdateIntervalMs) return;
 
     lastDebugUpdate = now;
-    debug.textContent = debugLines(state).join("\n");
+    const nextDebugText = debugLines(state, debugLineBuffer).join("\n");
+    if (lastDebugText === nextDebugText) return;
+
+    lastDebugText = nextDebugText;
+    debug.textContent = nextDebugText;
   }
 
   function resetFpsSample() {
@@ -79,6 +85,7 @@ export function createUi({
   function setStatsEnabled(enabled) {
     debug.hidden = !enabled;
     debug.setAttribute("aria-hidden", String(!enabled));
+    if (!enabled) lastDebugText = "";
     if (enabled) updateDebugPanel({ force: true });
   }
 

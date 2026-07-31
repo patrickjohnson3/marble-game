@@ -1,7 +1,11 @@
-export function debugLines({ game, input, marble, camera, haptics, intro }) {
+export function debugLines(
+  { game, input, marble, camera, haptics, intro },
+  target = [],
+) {
   const { calibration, sensor, tilt } = input;
 
-  return [
+  target.length = 0;
+  target.push(
     "phase: " + game.phase,
     "paused: " + game.paused,
     "sensor: " + sensor.using,
@@ -22,5 +26,6 @@ export function debugLines({ game, input, marble, camera, haptics, intro }) {
     "haptics: " + (haptics.enabled ? "on" : "off"),
     "follow cooldown: " + camera.gestureCooldown.toFixed(1),
     "map released: " + intro.released,
-  ];
+  );
+  return target;
 }
