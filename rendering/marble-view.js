@@ -18,6 +18,14 @@ export function createMarbleView({
     marble.r = Math.max(marbleEl.offsetWidth, marbleEl.offsetHeight) / 2;
   }
 
+  function marbleHasValidLayout() {
+    return (
+      marble.r > 0 &&
+      Number.isFinite(marble.x) &&
+      Number.isFinite(marble.y)
+    );
+  }
+
   function updateLighting() {
     const dx = marble.x - light.x;
     const dy = marble.y - light.y;
@@ -83,6 +91,7 @@ export function createMarbleView({
       scaleY +
       ")";
     updateLighting();
+    marbleEl.classList.toggle("ready", marbleHasValidLayout());
   }
 
   return {

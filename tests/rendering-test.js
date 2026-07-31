@@ -224,6 +224,48 @@ function testGoalIndicatorUpdatesVisibilityAndAngle() {
 
 testGoalIndicatorUpdatesVisibilityAndAngle();
 
+function testMarbleVisibleOnlyAfterValidLayout() {
+  const marbleEl = new FakeElement("marble");
+  const marble = { x: 100, y: 120, vx: 0, vy: 0, r: 0, roll: 0 };
+  const view = createMarbleView({
+    marbleEl,
+    marble,
+    world: { width: 400, height: 400 },
+    mapConfig: {
+      light: {
+        x: 0,
+        y: 0,
+        shadowMinDistance: 1,
+        shadowMaxDistance: 2,
+        shadowMinBlur: 1,
+        shadowMaxBlur: 2,
+        contactShadowY: 1,
+        contactShadowBlur: 1,
+      },
+    },
+    visualConfig: {
+      marble: {
+        glintCenter: 29,
+        glintLightOffset: 11,
+        glintVelocityScale: 0.08,
+        glintVelocityLimit: 1.5,
+        impactScaleX: 0.08,
+        impactScaleY: 0.06,
+      },
+    },
+    clamp: (value, min, max) => Math.min(max, Math.max(min, value)),
+  });
+
+  view.render();
+  assert.equal(marbleEl.classList.contains("ready"), false);
+
+  view.syncRadius();
+  view.render();
+  assert.equal(marbleEl.classList.contains("ready"), true);
+}
+
+testMarbleVisibleOnlyAfterValidLayout();
+
 function testGoalProgressUsesRadialFillRadius() {
   const goalEl = new FakeElement();
   const terrainView = createTerrainView({
