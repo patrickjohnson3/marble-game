@@ -700,6 +700,7 @@ export function createApp({
     goalTarget: () => mapState.goal,
     marble,
     marbleView,
+    perf: state.perf,
     physicsContext: currentPhysicsContext,
     resetGoalProgress: () => {
       mapRuntime.resetGoalProgress();

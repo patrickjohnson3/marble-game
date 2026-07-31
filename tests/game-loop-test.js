@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { elapsedMsToFrameDelta } from "../core/game-loop.js";
+import {
+  elapsedMsToFrameDelta,
+  updateFrameBudgetMetric,
+} from "../core/game-loop.js";
 import { clamp } from "../core/geometry.js";
 
 function testElapsedFrameDeltaUsesConfiguredClamp() {
@@ -18,5 +21,16 @@ function testElapsedFrameDeltaUsesConfiguredClamp() {
 }
 
 testElapsedFrameDeltaUsesConfiguredClamp();
+
+function testFrameBudgetMetricUsesRollingAverage() {
+  const perf = {};
+
+  updateFrameBudgetMetric(perf, "physicsMs", 10);
+  updateFrameBudgetMetric(perf, "physicsMs", 20, 0.5);
+
+  assert.equal(perf.physicsMs, 15);
+}
+
+testFrameBudgetMetricUsesRollingAverage();
 
 console.log("Game loop tests passed.");

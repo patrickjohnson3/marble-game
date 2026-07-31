@@ -1,5 +1,5 @@
 export function debugLines(
-  { game, input, marble, camera, haptics, intro },
+  { game, input, marble, camera, haptics, intro, perf },
   target = [],
 ) {
   const { calibration, sensor, tilt } = input;
@@ -27,5 +27,13 @@ export function debugLines(
     "follow cooldown: " + camera.gestureCooldown.toFixed(1),
     "map released: " + intro.released,
   );
+  if (perf) {
+    target.push(
+      "frame ms: " + perf.frameMs.toFixed(2),
+      "physics ms: " + perf.physicsMs.toFixed(2),
+      "theme ms: " + perf.themeMs.toFixed(2),
+      "render ms: " + perf.renderMs.toFixed(2),
+    );
+  }
   return target;
 }

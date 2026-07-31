@@ -12,6 +12,14 @@ export function elapsedMsToFrameDelta(elapsedMs, timing, clamp) {
   );
 }
 
+export function updateFrameBudgetMetric(perf, key, elapsedMs, alpha = 0.2) {
+  if (!perf || !Number.isFinite(elapsedMs)) return;
+
+  perf[key] = perf[key]
+    ? perf[key] + (elapsedMs - perf[key]) * alpha
+    : elapsedMs;
+}
+
 export function createGameLoop({
   cameraController,
   clamp,
@@ -23,6 +31,7 @@ export function createGameLoop({
   goalTarget = () => null,
   marble,
   marbleView,
+  perf,
   physicsContext,
   scheduleFrame,
   resetGoalProgress = () => {},
@@ -135,6 +144,7 @@ export function createGameLoop({
   };
 
   function tick() {
+    const frameBudgetStart = performance.now();
     frameLoop.beginFrame();
     const currentTime = now();
     const frameDelta = elapsedMsToFrameDelta(
@@ -153,8 +163,14 @@ export function createGameLoop({
     if (active) {
       const context = physicsContext();
       const previousMarble = { x: marble.x, y: marble.y };
+      const physicsBudgetStart = performance.now();
       updatePhysicsInput(context, frameDelta);
       updatePhysics(context, frameDelta, physicsFeedback);
+      updateFrameBudgetMetric(
+        perf,
+        "physicsMs",
+        performance.now() - physicsBudgetStart,
+      );
       marble.roll +=
         (Math.hypot(marble.vx, marble.vy) * frameDelta) / Math.max(marble.r, 1);
       marble.impactSquash = Math.max(
@@ -166,6 +182,7 @@ export function createGameLoop({
       cameraController.updateFollow(frameDelta);
       updateGoalIndicator(context);
       updateHazardArmed();
+      const themeBudgetStart = performance.now();
       const themeEvents = terrainView?.updateMapThemeDynamics(
         marble,
         previousMarble,
@@ -175,11 +192,27 @@ export function createGameLoop({
       if (themeEvents?.squishedAnts > 0) {
         hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);
       }
+      updateFrameBudgetMetric(
+        perf,
+        "themeMs",
+        performance.now() - themeBudgetStart,
+      );
     }
 
+    const renderBudgetStart = performance.now();
     marbleView.render();
     if (!game.paused) trailRenderer.update(currentTime);
     effectsRenderer.render(currentTime);
+    updateFrameBudgetMetric(
+      perf,
+      "renderMs",
+      performance.now() - renderBudgetStart,
+    );
+    updateFrameBudgetMetric(
+      perf,
+      "frameMs",
+      performance.now() - frameBudgetStart,
+    );
     ui.updateFps(currentTime);
     ui.updateDebugPanel();
     frameLoop.markRendered();

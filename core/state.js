@@ -94,6 +94,12 @@ export function createGameState({
       phase: GAME_PHASES.waiting,
       paused: false,
     },
+    perf: {
+      frameMs: 0,
+      physicsMs: 0,
+      renderMs: 0,
+      themeMs: 0,
+    },
     physics: { ...physicsConfig },
   };
 
