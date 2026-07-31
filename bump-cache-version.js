@@ -1,26 +1,22 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { computeRuntimeAssetHash } from "./cache-version.js";
-import { runtimeModuleScripts } from "./runtime-assets.js";
+import {
+  assetVersionPattern,
+  cacheVersionPattern,
+  computeRuntimeAssetHash,
+  runtimeModuleScriptsAssignment,
+  runtimeModuleScriptsPattern,
+} from "./cache-version.js";
 
 const version = computeRuntimeAssetHash();
 const indexPath = "index.html";
 const serviceWorkerPath = "sw.js";
 const html = readFileSync(indexPath, "utf8");
 const serviceWorker = readFileSync(serviceWorkerPath, "utf8");
-const runtimeModuleScriptList = runtimeModuleScripts
-  .map((script) => '        "' + script + '",')
-  .join("\n");
-const nextHtml = html
-  .replace(
-    /const assetVersion = "[^"]+";/,
-    'const assetVersion = "' + version + '";',
-  )
-  .replace(
-    /const runtimeModuleScripts = \[[\s\S]*?\];/,
-    "const runtimeModuleScripts = [\n" + runtimeModuleScriptList + "\n      ];",
-  );
 
-if (nextHtml === html) {
+if (
+  !assetVersionPattern.test(html) ||
+  !runtimeModuleScriptsPattern.test(html)
+) {
   console.error(
     "Could not find assetVersion or runtimeModuleScripts assignment in " +
       indexPath,
@@ -28,17 +24,21 @@ if (nextHtml === html) {
   process.exit(1);
 }
 
-const nextServiceWorker = serviceWorker.replace(
-  /const cacheVersion = "marble-game-[^"]+";/,
-  'const cacheVersion = "marble-game-' + version + '";',
-);
-
-if (nextServiceWorker === serviceWorker) {
+if (!cacheVersionPattern.test(serviceWorker)) {
   console.error(
     "Could not find cacheVersion assignment in " + serviceWorkerPath,
   );
   process.exit(1);
 }
+
+const nextHtml = html
+  .replace(assetVersionPattern, 'const assetVersion = "' + version + '";')
+  .replace(runtimeModuleScriptsPattern, runtimeModuleScriptsAssignment());
+
+const nextServiceWorker = serviceWorker.replace(
+  cacheVersionPattern,
+  'const cacheVersion = "marble-game-' + version + '";',
+);
 
 writeFileSync(indexPath, nextHtml);
 writeFileSync(serviceWorkerPath, nextServiceWorker);

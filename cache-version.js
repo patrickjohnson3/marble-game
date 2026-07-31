@@ -1,23 +1,42 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { runtimeFiles } from "./runtime-assets.js";
+import { runtimeFiles, runtimeModuleScripts } from "./runtime-assets.js";
 
-const assetVersionPattern = /const assetVersion = "[^"]+";/;
-const cacheVersionPattern = /const cacheVersion = "marble-game-[^"]+";/;
+export const assetVersionPattern = /const assetVersion = "[^"]+";/;
+export const cacheVersionPattern = /const cacheVersion = "marble-game-[^"]+";/;
+export const runtimeModuleScriptsPattern =
+  /const runtimeModuleScripts = \[[\s\S]*?\];/;
 
-function normalizedCacheFile(path) {
+export function runtimeModuleScriptsAssignment() {
+  const runtimeModuleScriptList = runtimeModuleScripts
+    .map((script) => '        "' + script + '",')
+    .join("\n");
+
+  return (
+    "const runtimeModuleScripts = [\n" + runtimeModuleScriptList + "\n      ];"
+  );
+}
+
+export function normalizedCacheContent(path, content) {
   if (path === "index.html") {
-    return readFileSync(path, "utf8").replace(
-      assetVersionPattern,
-      'const assetVersion = "__CACHE_VERSION__";',
-    );
+    return content
+      .replace(assetVersionPattern, 'const assetVersion = "__CACHE_VERSION__";')
+      .replace(runtimeModuleScriptsPattern, runtimeModuleScriptsAssignment());
   }
 
   if (path === "sw.js") {
-    return readFileSync(path, "utf8").replace(
+    return content.replace(
       cacheVersionPattern,
       'const cacheVersion = "marble-game-__CACHE_VERSION__";',
     );
+  }
+
+  return content;
+}
+
+function normalizedCacheFile(path) {
+  if (path === "index.html" || path === "sw.js") {
+    return normalizedCacheContent(path, readFileSync(path, "utf8"));
   }
 
   return readFileSync(path);
