@@ -361,11 +361,9 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen floor theme should not render brown accent boxes",
   );
   assert.equal(
-    overlayChildren.filter((child) =>
-      child.className.includes("kitchenCheerio"),
-    ).length,
+    themeState.kitchenCheerios.length,
     34,
-    "kitchen floor theme should render fistfuls of scattered cereal",
+    "kitchen floor theme should seed fistfuls of scattered cereal",
   );
   assert.equal(
     overlayChildren.some((child) =>
@@ -403,12 +401,9 @@ function testKitchenCheeriosGiveWayToMarble() {
     });
   });
 
-  const cheerio = overlayContainer.children[0].children.find((child) =>
-    child.className.includes("kitchenCheerio"),
-  );
-  const cheerioState = themeState.kitchenCheerios.find(
-    (state) => state.element === cheerio,
-  );
+  const cheerioState = themeState.kitchenCheerios[0];
+  const antCanvas = themeState.kitchenAntCanvas;
+  const drawCallsBefore = antCanvas.context.calls.length;
   const marble = {
     x: cheerioState.originX,
     y: cheerioState.originY,
@@ -431,18 +426,16 @@ function testKitchenCheeriosGiveWayToMarble() {
     "nearby Cheerios should be shoved aside",
   );
   assert.equal(
-    cheerio.style.properties["--push-x"].endsWith("px"),
+    antCanvas.context.calls.length > drawCallsBefore,
     true,
-    "Cheerio displacement should be applied as a CSS transform variable",
+    "Cheerio displacement should redraw the kitchen canvas",
   );
 }
 
 testKitchenCheeriosGiveWayToMarble();
 
 function testKitchenCheeriosDoNotSlideUnderFork() {
-  const cheerioElement = new FakeElement();
   const cheerioState = {
-    element: cheerioElement,
     originX: 0,
     originY: 0,
     pushX: 0,
@@ -496,9 +489,7 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
 testKitchenCheeriosDoNotSlideUnderFork();
 
 function testKitchenAntsMunchCheerios() {
-  const cheerioElement = new FakeElement();
   const cheerioState = {
-    element: cheerioElement,
     originX: 100,
     originY: 100,
     pushX: 0,
@@ -539,9 +530,9 @@ function testKitchenAntsMunchCheerios() {
 
   assert.equal(cheerioState.eaten > 0, true, "ants should munch Cheerios");
   assert.equal(
-    Number(cheerioElement.style.properties["--cheerio-scale"]) < 1,
+    antCanvas.context.calls.some((call) => call[0] === "ellipse"),
     true,
-    "munching should shrink the Cheerio visual",
+    "munching should redraw the Cheerio visual",
   );
 }
 
@@ -597,14 +588,9 @@ function firstKitchenCheerio({ container, overlayContainer }) {
     });
   });
 
-  const cheerio = overlayContainer.children[0].children.find((child) =>
-    child.className.includes("kitchenCheerio"),
-  );
-  const state = themeState.kitchenCheerios.find(
-    (candidate) => candidate.element === cheerio,
-  );
+  const state = themeState.kitchenCheerios[0];
 
-  return { cheerio, state, themeState };
+  return { state, themeState };
 }
 
 function shovedDistance({ state }) {

@@ -84,13 +84,8 @@ function appendCircle(parent, className, world, circle) {
   });
 }
 
-function appendKitchenCheerio(parent, world, circle, themeState) {
-  const element = appendCircle(parent, "kitchenCheerio", world, {
-    ...circle,
-    r: kitchenCheerioRadiusRatio,
-  });
+function appendKitchenCheerio(world, circle, themeState) {
   const state = {
-    element,
     originX: circle.x * world.width,
     originY: circle.y * world.height,
     pushX: 0,
@@ -219,9 +214,7 @@ function renderKitchenFloor({ underlay, overlay, themeState, world }) {
     { x: 0.83, y: 0.71 },
     { x: 0.86, y: 0.59 },
     { x: 0.88, y: 0.67 },
-  ].forEach((circle) =>
-    appendKitchenCheerio(overlay, world, circle, themeState),
-  );
+  ].forEach((circle) => appendKitchenCheerio(world, circle, themeState));
   appendKitchenAntCanvas(overlay, world, themeState);
 }
 
@@ -385,14 +378,8 @@ function nearestActiveCheerio(ant, cheerios) {
 }
 
 function updateCheerioMunchVisual(cheerio) {
-  const scale = 1 - cheerio.eaten * (1 - kitchenCheerioMinScale);
-  const opacity = 1 - cheerio.eaten * (1 - kitchenCheerioOpacityFloor);
-
-  cheerio.element.style.setProperty("--cheerio-scale", scale.toFixed(2));
-  cheerio.element.style.opacity = opacity.toFixed(2);
   if (cheerio.eaten >= 1) {
     cheerio.active = false;
-    cheerio.element.style.opacity = "0";
   }
 }
 
@@ -519,6 +506,49 @@ function drawSquishedAnt(context, ant) {
   context.fill();
 }
 
+function drawCheerio(context, cheerio) {
+  if (!cheerio.active) return;
+
+  const x = cheerio.originX + cheerio.pushX;
+  const y = cheerio.originY + cheerio.pushY;
+  const radius =
+    cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
+  const opacity = 1 - cheerio.eaten * (1 - kitchenCheerioOpacityFloor);
+
+  context.globalAlpha = opacity;
+  context.fillStyle = "#d89b3a";
+  context.beginPath();
+  context.ellipse(x, y, radius, radius, 0, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#f2d27a";
+  context.beginPath();
+  context.ellipse(
+    x - radius * 0.12,
+    y - radius * 0.14,
+    radius * 0.55,
+    radius * 0.52,
+    0.2,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+  context.fillStyle = "#c17b27";
+  context.beginPath();
+  context.ellipse(x, y, radius * 0.34, radius * 0.32, -0.2, 0, Math.PI * 2);
+  context.fill();
+  context.globalCompositeOperation = "destination-out";
+  context.beginPath();
+  context.ellipse(x, y, radius * 0.26, radius * 0.24, -0.2, 0, Math.PI * 2);
+  context.fill();
+  context.globalCompositeOperation = "source-over";
+  context.strokeStyle = "#b87324";
+  context.lineWidth = Math.max(1, radius * 0.1);
+  context.beginPath();
+  context.ellipse(x, y, radius * 0.88, radius * 0.86, 0, 0, Math.PI * 2);
+  context.stroke();
+  context.globalAlpha = 1;
+}
+
 function renderKitchenAnts(themeState) {
   const context = themeState.kitchenAntContext;
   const canvas = themeState.kitchenAntCanvas;
@@ -535,6 +565,11 @@ function renderKitchenAnts(themeState) {
     0,
     0,
   );
+
+  const cheerios = themeState.kitchenCheerios ?? [];
+  for (let i = 0; i < cheerios.length; i++) {
+    drawCheerio(context, cheerios[i]);
+  }
 
   const ants = themeState.kitchenAnts ?? [];
   for (let i = 0; i < ants.length; i++) {
@@ -650,14 +685,6 @@ export function updateMapThemeDynamics({
 
     cheerio.pushX = cheerioCircle.x - originX;
     cheerio.pushY = cheerioCircle.y - originY;
-    cheerio.element.style.setProperty(
-      "--push-x",
-      cheerio.pushX.toFixed(1) + "px",
-    );
-    cheerio.element.style.setProperty(
-      "--push-y",
-      cheerio.pushY.toFixed(1) + "px",
-    );
   });
 
   events.squishedAnts = updateKitchenAnts({
