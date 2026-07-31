@@ -57,12 +57,12 @@ export function circleOrientedRectContact(
   target = {},
 ) {
   const angle = rect.angle ?? 0;
-  const centerX = rect.x + rect.w / 2;
-  const centerY = rect.y + rect.h / 2;
-  const halfWidth = (rect.hitboxW ?? rect.w) / 2;
-  const halfHeight = (rect.hitboxH ?? rect.h) / 2;
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
+  const centerX = rect.collisionCenterX ?? rect.x + rect.w / 2;
+  const centerY = rect.collisionCenterY ?? rect.y + rect.h / 2;
+  const halfWidth = rect.collisionHalfWidth ?? (rect.hitboxW ?? rect.w) / 2;
+  const halfHeight = rect.collisionHalfHeight ?? (rect.hitboxH ?? rect.h) / 2;
+  const cos = rect.collisionCos ?? Math.cos(angle);
+  const sin = rect.collisionSin ?? Math.sin(angle);
   const dx = circle.x - centerX;
   const dy = circle.y - centerY;
   const localX = cos * dx + sin * dy;

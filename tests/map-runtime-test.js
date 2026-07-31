@@ -31,6 +31,16 @@ const secondMap = {
   elements: [
     { type: "obstacle", x: 110, y: 120, w: 130, h: 40 },
     { type: "obstacle", x: 210, y: 220, w: 30, h: 140 },
+    {
+      type: "obstacle",
+      x: 300,
+      y: 320,
+      w: 80,
+      h: 40,
+      angle: Math.PI / 4,
+      hitboxW: 70,
+      hitboxH: 30,
+    },
   ],
 };
 
@@ -115,14 +125,23 @@ assert.equal(runtime.state.activeMap, secondMap);
 assert.equal(runtime.state.goal, secondMap.goal);
 assert.equal(runtime.state.spawn, secondMap.spawn);
 assert.equal(runtime.state.world, secondMap.world);
-assert.equal(runtime.state.obstacles.length, 2);
+assert.equal(runtime.state.obstacles.length, 3);
+const angledObstacle = runtime.state.obstacles.find((obstacle) =>
+  Number.isFinite(obstacle.angle),
+);
+assert.equal(angledObstacle.collisionCenterX, 340);
+assert.equal(angledObstacle.collisionCenterY, 340);
+assert.equal(angledObstacle.collisionHalfWidth, 35);
+assert.equal(angledObstacle.collisionHalfHeight, 15);
+assert.equal(Number.isFinite(angledObstacle.collisionCos), true);
+assert.equal(Number.isFinite(angledObstacle.collisionSin), true);
 assert.deepEqual(runtime.state.obstacleBounds, {
   bottom: 360,
   height: 240,
   left: 110,
-  right: 240,
+  right: 380,
   top: 120,
-  width: 130,
+  width: 270,
 });
 assert.deepEqual(terrain(runtime.state, "roughPatch").elements, []);
 assert.equal(terrain(runtime.state, "roughPatch").bounds, null);

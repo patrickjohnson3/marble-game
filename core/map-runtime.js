@@ -6,6 +6,21 @@ import {
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { rectBounds } from "./rect-bounds.js";
 
+function prepareCollisionObstacle(obstacle) {
+  if (!Number.isFinite(obstacle.angle)) return obstacle;
+
+  const angle = obstacle.angle;
+  return {
+    ...obstacle,
+    collisionCenterX: obstacle.x + obstacle.w / 2,
+    collisionCenterY: obstacle.y + obstacle.h / 2,
+    collisionCos: Math.cos(angle),
+    collisionHalfHeight: (obstacle.hitboxH ?? obstacle.h) / 2,
+    collisionHalfWidth: (obstacle.hitboxW ?? obstacle.w) / 2,
+    collisionSin: Math.sin(angle),
+  };
+}
+
 export function createResolvedMapState(
   activeMap,
   { normalizeObstacles = normalizeJoinedObstacleRects } = {},
@@ -26,7 +41,7 @@ export function createResolvedMapState(
   );
   const obstacles = normalizeObstacles(
     elementsByType[MAP_ELEMENT_TYPES.obstacle],
-  );
+  ).map(prepareCollisionObstacle);
   return {
     activeMap,
     elements,
