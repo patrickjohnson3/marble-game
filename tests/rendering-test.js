@@ -538,6 +538,45 @@ function testKitchenAntsMunchCheerios() {
 
 testKitchenAntsMunchCheerios();
 
+function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
+  const container = new FakeElement();
+  const overlayContainer = new FakeElement();
+  const themeState = {};
+
+  withFakeDocument(() => {
+    renderMapTheme({
+      container,
+      overlayContainer,
+      mapConfig: { theme: "kitchenFloor" },
+      themeState,
+      world: { width: 4400, height: 4400 },
+    });
+  });
+
+  const canvas = themeState.kitchenDynamicCanvas;
+  canvas.context.calls.length = 0;
+
+  updateMapThemeDynamics({
+    mapConfig: { theme: "kitchenFloor", elements: [] },
+    marble: { x: 2200, y: 2200, vx: 0, vy: 0, r: 29 },
+    frameDelta: 1,
+    themeState,
+  });
+
+  const clearCalls = canvas.context.calls.filter(
+    (call) => call[0] === "clearRect",
+  );
+  assert.equal(
+    clearCalls.some(
+      (call) => call[3] < canvas.width && call[4] < canvas.height,
+    ),
+    true,
+    "kitchen dynamics should clear dirty regions instead of the full canvas",
+  );
+}
+
+testKitchenDynamicsUseDirtyRedrawsAfterInitialRender();
+
 function testMarbleSquishesKitchenAnts() {
   const antCanvas = new FakeCanvasElement();
   const themeState = {
