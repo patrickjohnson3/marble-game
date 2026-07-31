@@ -4,7 +4,7 @@ import { MAP_ELEMENT_TYPES } from "./map-elements.js";
 import { snapToGrid } from "./map-obstacles.js";
 import { proceduralMapTemplates } from "./procedural-templates.js";
 
-function createSeededRandom(seed) {
+export function createSeededRandom(seed) {
   let state = hashMapSeed(seed) || 1;
 
   return function nextRandom() {
@@ -16,11 +16,11 @@ function createSeededRandom(seed) {
   };
 }
 
-function randomBetween(random, min, max) {
+export function randomBetween(random, min, max) {
   return min + (max - min) * random();
 }
 
-function pickRandom(random, values) {
+export function pickRandom(random, values) {
   if (!Array.isArray(values) || values.length === 0) return null;
   return values[Math.floor(random() * values.length)];
 }
@@ -29,7 +29,7 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function jitterRect(rect, random) {
+export function jitterRect(rect, random) {
   const isHorizontal = rect.w >= rect.h;
   const longAxis = isHorizontal ? "w" : "h";
   const shortAxis = isHorizontal ? "h" : "w";
@@ -48,7 +48,7 @@ function jitterRect(rect, random) {
   return nextRect;
 }
 
-function jitterPatch(rect, random) {
+export function jitterPatch(rect, random) {
   return {
     ...rect,
     x: clamp(rect.x + randomBetween(random, -0.025, 0.025), 0.06, 0.86),
@@ -58,22 +58,22 @@ function jitterPatch(rect, random) {
   };
 }
 
-function jitterPoint(point, random) {
+export function jitterPoint(point, random) {
   return {
     x: clamp(point.x + randomBetween(random, -0.025, 0.025), 0.1, 0.9),
     y: clamp(point.y + randomBetween(random, -0.025, 0.025), 0.1, 0.9),
   };
 }
 
-function gridAlignedSize(value, gridSize) {
+export function gridAlignedSize(value, gridSize) {
   return Math.max(gridSize, snapToGrid(value, gridSize));
 }
 
-function gridAlignedPosition(value, size, max, gridSize) {
+export function gridAlignedPosition(value, size, max, gridSize) {
   return snapToGrid(Math.min(Math.max(0, value), max - size), gridSize);
 }
 
-function templateRectToElement({ rect, type, world, gridSize }) {
+export function templateRectToElement({ rect, type, world, gridSize }) {
   const w = gridAlignedSize(rect.w * world.width, gridSize);
   const h = gridAlignedSize(rect.h * world.height, gridSize);
 
@@ -86,21 +86,21 @@ function templateRectToElement({ rect, type, world, gridSize }) {
   };
 }
 
-function templatePointToWorld(point, world, gridSize) {
+export function templatePointToWorld(point, world, gridSize) {
   return {
     x: snapToGrid(point.x * world.width, gridSize),
     y: snapToGrid(point.y * world.height, gridSize),
   };
 }
 
-function outsideClearZones(element, spawn, goal) {
+export function outsideClearZones(element, spawn, goal) {
   return (
     !circleRectContact(expandedCircle(spawn, 4), element).intersects &&
     !circleRectContact(expandedCircle(goal, 1.45), element).intersects
   );
 }
 
-function proceduralElementBudget(difficulty) {
+export function proceduralElementBudget(difficulty) {
   const level = Math.min(Math.max(Math.round(difficulty), 1), 3);
 
   return {
@@ -111,7 +111,7 @@ function proceduralElementBudget(difficulty) {
   };
 }
 
-function limitElementsByBudget(elements, difficulty) {
+export function limitElementsByBudget(elements, difficulty) {
   const budget = proceduralElementBudget(difficulty);
   const counts = {
     [MAP_ELEMENT_TYPES.hazardPatch]: 0,

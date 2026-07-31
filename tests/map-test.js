@@ -25,7 +25,19 @@ import {
 } from "../core/map-variants.js";
 import { validateMapConfig } from "../core/map-validation.js";
 import { createMapProgression } from "../core/map-progression.js";
-import { generateProceduralMapVariants } from "../core/procedural-generator.js";
+import {
+  createSeededRandom,
+  generateProceduralMapVariants,
+  gridAlignedPosition,
+  gridAlignedSize,
+  limitElementsByBudget,
+  outsideClearZones,
+  pickRandom,
+  proceduralElementBudget,
+  randomBetween,
+  templatePointToWorld,
+  templateRectToElement,
+} from "../core/procedural-generator.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import {
@@ -124,6 +136,102 @@ function testProceduralMapGenerationReturnsValidSeededVariants() {
 }
 
 testProceduralMapGenerationReturnsValidSeededVariants();
+
+function testProceduralRandomHelpersAreDeterministic() {
+  const first = createSeededRandom("same-seed");
+  const second = createSeededRandom("same-seed");
+  const fixed = () => 0.5;
+
+  assert.deepEqual([first(), first(), first()], [second(), second(), second()]);
+  assert.equal(randomBetween(fixed, 10, 20), 15);
+  assert.equal(pickRandom(fixed, ["a", "b", "c"]), "b");
+  assert.equal(pickRandom(fixed, []), null);
+  assert.equal(pickRandom(fixed, null), null);
+}
+
+testProceduralRandomHelpersAreDeterministic();
+
+function testProceduralTemplateConversionSnapsAndClamps() {
+  const world = { width: 1000, height: 800 };
+  const gridSize = 20;
+
+  assert.equal(gridAlignedSize(9, gridSize), gridSize);
+  assert.equal(gridAlignedSize(31, gridSize), 40);
+  assert.equal(gridAlignedPosition(997, 100, 1000, gridSize), 900);
+  assert.deepEqual(templatePointToWorld({ x: 0.503, y: 0.747 }, world, 20), {
+    x: 500,
+    y: 600,
+  });
+  assert.deepEqual(
+    templateRectToElement({
+      rect: { x: 0.973, y: 0.975, w: 0.021, h: 0.021 },
+      type: "obstacle",
+      world,
+      gridSize,
+    }),
+    { type: "obstacle", x: 980, y: 780, w: 20, h: 20 },
+  );
+}
+
+testProceduralTemplateConversionSnapsAndClamps();
+
+function testProceduralElementBudgetsClampDifficultyAndKeepUnknownTypes() {
+  assert.deepEqual(proceduralElementBudget(-10), {
+    hazardPatch: 1,
+    icePatch: 0,
+    obstacle: 7,
+    roughPatch: 1,
+  });
+  assert.deepEqual(proceduralElementBudget(99), {
+    hazardPatch: 2,
+    icePatch: 1,
+    obstacle: 9,
+    roughPatch: 2,
+  });
+
+  const elements = [
+    ...Array.from({ length: 12 }, (_, index) => ({
+      type: "obstacle",
+      x: index,
+      y: 0,
+      w: 10,
+      h: 10,
+    })),
+    { type: "decorativeFork", x: 0, y: 0, w: 10, h: 10 },
+  ];
+  const limited = limitElementsByBudget(elements, 1);
+
+  assert.equal(
+    limited.filter((element) => element.type === "obstacle").length,
+    7,
+  );
+  assert.equal(
+    limited.some((element) => element.type === "decorativeFork"),
+    true,
+  );
+}
+
+testProceduralElementBudgetsClampDifficultyAndKeepUnknownTypes();
+
+function testProceduralClearZonesRejectSpawnAndGoalOverlap() {
+  const spawn = { x: 100, y: 100, r: 20 };
+  const goal = { x: 400, y: 400, r: 50 };
+
+  assert.equal(
+    outsideClearZones({ x: 170, y: 90, w: 40, h: 20 }, spawn, goal),
+    false,
+  );
+  assert.equal(
+    outsideClearZones({ x: 465, y: 390, w: 40, h: 20 }, spawn, goal),
+    false,
+  );
+  assert.equal(
+    outsideClearZones({ x: 250, y: 250, w: 40, h: 20 }, spawn, goal),
+    true,
+  );
+}
+
+testProceduralClearZonesRejectSpawnAndGoalOverlap();
 
 function testProceduralMapGenerationHandlesEmptyCounts() {
   assert.deepEqual(
