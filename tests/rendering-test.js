@@ -357,8 +357,8 @@ function testKitchenThemeRendersDatedFloorDetails() {
     underlayChildren.some((child) =>
       child.className.includes("kitchenTileAccent"),
     ),
-    true,
-    "kitchen floor theme should render accent tiles",
+    false,
+    "kitchen floor theme should not render brown accent boxes",
   );
   assert.equal(
     overlayChildren.filter((child) =>

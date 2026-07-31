@@ -99,7 +99,6 @@ body {
 .goalCrease,
 .themeRug,
 .kitchenCheerio,
-.kitchenTileAccent,
 .parkingStripe,
 .parkingDriveLine,
 .themeOil,
@@ -236,13 +235,6 @@ body {
     linear-gradient(90deg, #3b2a1518, transparent 18% 82%, #3b2a1518);
   mix-blend-mode: soft-light;
   pointer-events: none;
-}
-.kitchenTileAccent {
-  background:
-    linear-gradient(135deg, #ffffff30, transparent 42%),
-    linear-gradient(135deg, #d5a855, #8d6c32);
-  border: 2px solid #6f57274d;
-  box-shadow: inset 0 0 0 3px #fff0b030;
 }
 .kitchenForkSprite {
   position: absolute;

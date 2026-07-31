@@ -185,12 +185,6 @@ function renderHockeyRink({ underlay, overlay, world }) {
 function renderKitchenFloor({ underlay, overlay, themeState, world }) {
   appendFloor(underlay, "kitchenFloor", world, { x: 0, y: 0, w: 1, h: 1 });
   [
-    { x: 0.18, y: 0.31, w: 0.05, h: 0.05 },
-    { x: 0.39, y: 0.2, w: 0.05, h: 0.05 },
-    { x: 0.56, y: 0.58, w: 0.05, h: 0.05 },
-    { x: 0.76, y: 0.73, w: 0.05, h: 0.05 },
-  ].forEach((rect) => appendBox(underlay, "kitchenTileAccent", world, rect));
-  [
     { x: 0.16, y: 0.49 },
     { x: 0.19, y: 0.52 },
     { x: 0.22, y: 0.48 },
