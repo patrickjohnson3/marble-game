@@ -53,14 +53,12 @@ export function createCameraController({
   function clampCameraPosition() {
     updateBoundsCache();
 
-    camera.x =
-      boundsCache.worldFitsX
-        ? boundsCache.centerX
-        : clamp(camera.x, boundsCache.minX, boundsCache.maxX);
-    camera.y =
-      boundsCache.worldFitsY
-        ? boundsCache.centerY
-        : clamp(camera.y, boundsCache.minY, boundsCache.maxY);
+    camera.x = boundsCache.worldFitsX
+      ? boundsCache.centerX
+      : clamp(camera.x, boundsCache.minX, boundsCache.maxX);
+    camera.y = boundsCache.worldFitsY
+      ? boundsCache.centerY
+      : clamp(camera.y, boundsCache.minY, boundsCache.maxY);
   }
 
   function applyTransform() {
