@@ -8,7 +8,9 @@ Live version: [https://patrickjohnson3.github.io/marble-game/](https://patrickjo
 
 - Phone tilt controls with desktop keyboard fallback.
 - Fullscreen mobile play with wake-lock support.
-- Large scrollable maps with walls, rough patches, and ice patches.
+- Large scrollable maps with real-world themes and obstacle layouts.
+- Terrain surfaces including ice, rough ground, water, and sticky goo.
+- Kitchen-floor objects including a fork obstacle and pushable Cheerios.
 - Goal zones that advance to the next map after a hold timer.
 - Haptic feedback for impacts, terrain, and goals where supported.
 - Settings modal for calibration, fullscreen, haptics, FPS, and stats.
