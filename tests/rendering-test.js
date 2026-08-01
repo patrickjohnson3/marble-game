@@ -748,6 +748,50 @@ function testMarbleSquishesKitchenAnts() {
 
 testMarbleSquishesKitchenAnts();
 
+function testMarbleGetsFeedbackOnSquishedKitchenAnts() {
+  const antCanvas = new FakeCanvasElement();
+  const themeState = {
+    kitchenAntFrameIndex: 30,
+    kitchenCheerios: [],
+    kitchenAnts: [
+      {
+        x: 100,
+        y: 100,
+        angle: 0,
+        alive: false,
+        squished: true,
+        lastSplatFeedbackFrame: 0,
+        targetIndex: -1,
+        wobble: 0,
+        lastBounds: null,
+      },
+    ],
+    kitchenDynamicCanvas: antCanvas,
+    kitchenDynamicContext: antCanvas.context,
+    kitchenDynamicWorld: { width: 200, height: 200 },
+    kitchenDynamicRenderScale: 0.35,
+  };
+
+  const events = updateMapThemeDynamics({
+    mapConfig: { theme: "kitchenFloor", elements: [] },
+    marble: { x: 100, y: 100, vx: 1, vy: 0, r: 29 },
+    themeState,
+  });
+
+  assert.equal(
+    events.splatHits,
+    1,
+    "rolling over a squished ant should produce splat feedback",
+  );
+  assert.equal(
+    events.squishedAnts,
+    0,
+    "dead-ant feedback should not count as a fresh squish",
+  );
+}
+
+testMarbleGetsFeedbackOnSquishedKitchenAnts();
+
 function firstKitchenCheerio({ container, overlayContainer }) {
   const themeState = {};
 

@@ -34,6 +34,8 @@ const kitchenAntSpeed = 0.9;
 const kitchenAntMunchDistance = 20;
 const kitchenAntMunchRate = 0.006;
 const kitchenAntSquishMinSpeed = 1.2;
+const kitchenAntSplatMinSpeed = 0.7;
+const kitchenAntSplatFeedbackCooldownFrames = 24;
 const kitchenCheerioMinScale = 0.45;
 const kitchenCheerioOpacityFloor = 0.18;
 const kitchenCheerioSpriteUrl = "assets/sprites/cheerio.png";
@@ -142,6 +144,7 @@ function appendKitchenDynamicCanvas(parent, world, themeState) {
     angle: (index % 2) * Math.PI,
     alive: true,
     squished: false,
+    lastSplatFeedbackFrame: Number.NEGATIVE_INFINITY,
     needsRedraw: true,
     targetIndex: -1,
     wobble: index * 1.7,
@@ -515,9 +518,11 @@ function updateKitchenAnts({
   ants,
   cheerios,
   frameDelta,
+  frameIndex,
   marble,
   visibleWorld,
 }) {
+  let splatHits = 0;
   let squishedAnts = 0;
   const marbleSpeed = Math.hypot(marble.vx || 0, marble.vy || 0);
   const squishDistance = marble.r + kitchenAntRadius;
@@ -525,17 +530,29 @@ function updateKitchenAnts({
 
   for (let i = 0; i < ants.length; i++) {
     const ant = ants[i];
-    if (ant.squished) continue;
     if (!dynamicBoundsVisible(antBounds(ant), visibleWorld)) continue;
 
     const marbleDx = ant.x - marble.x;
     const marbleDy = ant.y - marble.y;
-    if (
-      marbleSpeed >= kitchenAntSquishMinSpeed &&
-      marbleDx * marbleDx + marbleDy * marbleDy <= squishDistanceSq
-    ) {
+    const overlapsMarble =
+      marbleDx * marbleDx + marbleDy * marbleDy <= squishDistanceSq;
+    if (ant.squished) {
+      if (
+        overlapsMarble &&
+        marbleSpeed >= kitchenAntSplatMinSpeed &&
+        frameIndex - (ant.lastSplatFeedbackFrame ?? Number.NEGATIVE_INFINITY) >=
+          kitchenAntSplatFeedbackCooldownFrames
+      ) {
+        ant.lastSplatFeedbackFrame = frameIndex;
+        splatHits += 1;
+      }
+      continue;
+    }
+
+    if (marbleSpeed >= kitchenAntSquishMinSpeed && overlapsMarble) {
       ant.alive = false;
       ant.squished = true;
+      ant.lastSplatFeedbackFrame = frameIndex;
       ant.needsRedraw = true;
       squishedAnts += 1;
       continue;
@@ -564,7 +581,7 @@ function updateKitchenAnts({
     ant.y += Math.sin(ant.angle) * kitchenAntSpeed * frameDelta;
   }
 
-  return squishedAnts;
+  return { splatHits, squishedAnts };
 }
 
 function drawAnt(context, ant) {
@@ -987,7 +1004,7 @@ export function updateMapThemeDynamics({
   themeState = {},
   visibleWorld,
 }) {
-  const events = { squishedAnts: 0 };
+  const events = { splatHits: 0, squishedAnts: 0 };
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
   const cheerios = themeState?.kitchenCheerios ?? [];
@@ -1069,13 +1086,17 @@ export function updateMapThemeDynamics({
     cheerio.pushY = cheerioCircle.y - originY;
   });
 
-  events.squishedAnts = updateKitchenAnts({
+  const antEvents = updateKitchenAnts({
     ants: themeState?.kitchenAnts ?? [],
     cheerios,
     frameDelta,
+    frameIndex: themeState.kitchenAntFrameIndex ?? 0,
     marble,
     visibleWorld,
   });
+  events.splatHits = antEvents.splatHits;
+  events.squishedAnts = antEvents.squishedAnts;
+  themeState.kitchenAntFrameIndex = (themeState.kitchenAntFrameIndex ?? 0) + 1;
   renderKitchenDynamics(themeState);
   return events;
 }

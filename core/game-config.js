@@ -72,6 +72,7 @@ export const tuning = {
   hazardRearmDistanceMultiplier: 3,
   hazardResetImpactFeedback: 12,
   antSquishImpactFeedback: 4.5,
+  antSplatImpactFeedback: 2.1,
 };
 
 export const visualConfig = {

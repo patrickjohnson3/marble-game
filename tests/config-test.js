@@ -170,6 +170,10 @@ function testTimingAndTuning() {
     tuning.antSquishImpactFeedback,
     "ant squish impact feedback",
   );
+  assertPositiveNumber(
+    tuning.antSplatImpactFeedback,
+    "ant splat impact feedback",
+  );
 }
 
 function testPhysicsAndSettingsRanges() {

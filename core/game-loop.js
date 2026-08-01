@@ -191,6 +191,8 @@ export function createGameLoop({
       );
       if (themeEvents?.squishedAnts > 0) {
         hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);
+      } else if (themeEvents?.splatHits > 0) {
+        hapticFeedback.pulseImpact(tuning.antSplatImpactFeedback);
       }
       updateFrameBudgetMetric(
         perf,
