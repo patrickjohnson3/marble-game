@@ -153,6 +153,10 @@ function isSpongeFixture(rect) {
   return rect.fixture === "sponge";
 }
 
+function isSpoonFixture(rect) {
+  return rect.fixture === "spoon";
+}
+
 function appendKitchenFixtureSprite(
   layer,
   parts,
@@ -196,19 +200,25 @@ function appendKitchenSpongeSprite(layer, spongeParts) {
   );
 }
 
+function appendKitchenSpoonSprite(layer, spoonParts) {
+  appendKitchenFixtureSprite(layer, spoonParts, "kitchenSpoonSprite", 620, 150);
+}
+
 function renderKitchenObstacleWalls(container, obstacles) {
   const layer = document.createElement("div");
   const forkParts = obstacles.filter(isForkFixture);
   const spongeParts = obstacles.filter(isSpongeFixture);
+  const spoonParts = obstacles.filter(isSpoonFixture);
 
   layer.className = "kitchenObstacleLayer";
   layer.setAttribute("aria-hidden", "true");
   layer.setAttribute(
     "data-fixtures",
-    String(forkParts.length + spongeParts.length),
+    String(forkParts.length + spongeParts.length + spoonParts.length),
   );
   appendKitchenForkSprite(layer, forkParts);
   appendKitchenSpongeSprite(layer, spongeParts);
+  appendKitchenSpoonSprite(layer, spoonParts);
   container.replaceChildren(layer);
 }
 

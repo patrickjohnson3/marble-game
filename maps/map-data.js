@@ -148,6 +148,17 @@ const kitchenFloorElements = [
   },
   {
     type: "obstacle",
+    fixture: "spoon",
+    x: 1240,
+    y: 1090,
+    w: 360,
+    h: 90,
+    hitboxW: 310,
+    hitboxH: 54,
+    angle: 0.34,
+  },
+  {
+    type: "obstacle",
     fixture: "fork",
     x: 960,
     y: 1450,
