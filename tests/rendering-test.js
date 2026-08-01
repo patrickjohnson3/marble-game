@@ -1205,7 +1205,12 @@ try {
   assert.equal(
     waterPatchCanvas.context.calls.some((call) => call[0] === "ellipse"),
     true,
-    "water patch canvas should draw a rounded pool and ripples",
+    "water patch canvas should draw reflections, droplets, and ripples",
+  );
+  assert.equal(
+    waterPatchCanvas.context.calls.some((call) => call[0] === "lineTo"),
+    true,
+    "water patch canvas should draw an irregular puddle edge",
   );
 
   renderObstacleWalls(

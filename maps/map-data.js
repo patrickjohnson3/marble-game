@@ -134,7 +134,7 @@ const hockeyRinkElements = [
 
 const kitchenFloorElements = [
   { type: "gooPatch", x: 620, y: 900, w: 280, h: 230 },
-  { type: "waterPatch", x: 1310, y: 760, w: 230, h: 145 },
+  { type: "waterPatch", x: 1030, y: 640, w: 560, h: 380 },
   {
     type: "obstacle",
     fixture: "fork",
