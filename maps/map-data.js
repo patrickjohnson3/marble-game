@@ -170,6 +170,44 @@ const kitchenFloorElements = [
   },
 ];
 
+const kitchenBreakfastElements = [
+  { type: "waterPatch", x: 690, y: 1180, w: 520, h: 330 },
+  { type: "gooPatch", x: 1370, y: 720, w: 250, h: 210 },
+  {
+    type: "obstacle",
+    fixture: "fork",
+    x: 340,
+    y: 760,
+    w: 420,
+    h: 360,
+    hitboxW: 360,
+    hitboxH: 60,
+    angle: 0.52,
+  },
+  {
+    type: "obstacle",
+    fixture: "spoon",
+    x: 1300,
+    y: 1460,
+    w: 340,
+    h: 90,
+    hitboxW: 290,
+    hitboxH: 52,
+    angle: -0.26,
+  },
+  {
+    type: "obstacle",
+    fixture: "sponge",
+    x: 330,
+    y: 1520,
+    w: 280,
+    h: 130,
+    hitboxW: 240,
+    hitboxH: 110,
+    angle: -0.18,
+  },
+];
+
 const livingRoomElements = [
   { type: "obstacle", x: 220, y: 360, w: 700, h: 150 },
   { type: "obstacle", x: 1540, y: 300, w: 110, h: 560 },
@@ -192,6 +230,19 @@ const parkingLotElements = [
   { type: "hazardPatch", x: 920, y: 820, w: 260, h: 190 },
   { type: "hazardPatch", x: 1320, y: 1240, w: 220, h: 180 },
   { type: "icePatch", x: 520, y: 1220, w: 260, h: 210 },
+  { type: "roughPatch", x: 1480, y: 420, w: 300, h: 230 },
+];
+
+const parkingLotPuddlesElements = [
+  { type: "obstacle", x: 360, y: 300, w: 430, h: 150 },
+  { type: "obstacle", x: 1060, y: 380, w: 420, h: 140 },
+  { type: "obstacle", x: 280, y: 840, w: 150, h: 430 },
+  { type: "obstacle", x: 1660, y: 760, w: 150, h: 430 },
+  { type: "obstacle", x: 760, y: 1440, w: 460, h: 120 },
+  { type: "obstacle", x: 1380, y: 1540, w: 420, h: 130 },
+  { type: "waterPatch", x: 560, y: 660, w: 360, h: 230 },
+  { type: "waterPatch", x: 1220, y: 1120, w: 410, h: 260 },
+  { type: "hazardPatch", x: 960, y: 860, w: 250, h: 180 },
   { type: "roughPatch", x: 1480, y: 420, w: 300, h: 230 },
 ];
 
@@ -350,6 +401,24 @@ export const authoredMapVariants = [
     spawn: scaleMapPoint({ x: 300, y: 340, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 1840, r: 95, holdMs: 5000 }),
     elements: trimScaledObstacleJoinOverhangs(sandLotElements),
+  },
+  {
+    id: "kitchen-breakfast-spill",
+    name: "kitchen breakfast spill",
+    theme: "kitchenFloor",
+    difficulty: 2,
+    spawn: scaleMapPoint({ x: 320, y: 1840, r: 29 }),
+    goal: scaleMapPoint({ x: 1840, y: 360, r: 95, holdMs: 5000 }),
+    elements: trimScaledObstacleJoinOverhangs(kitchenBreakfastElements),
+  },
+  {
+    id: "parking-lot-puddles",
+    name: "parking lot puddles",
+    theme: "parkingLot",
+    difficulty: 3,
+    spawn: scaleMapPoint({ x: 280, y: 1860, r: 29 }),
+    goal: scaleMapPoint({ x: 1880, y: 320, r: 95, holdMs: 5000 }),
+    elements: trimScaledObstacleJoinOverhangs(parkingLotPuddlesElements),
   },
   {
     id: "hockey-rink",
