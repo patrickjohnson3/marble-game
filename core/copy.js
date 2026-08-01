@@ -3,7 +3,7 @@ export const copy = {
   title: "marble tilt",
   initialHint: "click or tap start. tilt or use arrows/WASD.",
   hints: {
-    mapOpen: "map open. pinch to zoom and explore.",
+    mapOpen: "",
     noMotionSensor:
       "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
     neutralSet: "neutral set. tilt from your normal holding angle.",
