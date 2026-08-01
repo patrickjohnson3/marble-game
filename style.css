@@ -100,6 +100,7 @@ body {
 .themeRug,
 .parkingStripe,
 .parkingDriveLine,
+.parkingTireMark,
 .themeOil,
 .sandTrack {
   position: absolute;
@@ -165,6 +166,8 @@ body {
 .hockeyRinkSurface {
   border-radius: 32px;
   background:
+    radial-gradient(circle at 18% 22%, #ffffff38 0 2px, transparent 3px),
+    radial-gradient(circle at 76% 70%, #68c7ff22 0 18px, transparent 19px),
     linear-gradient(
       90deg,
       transparent 49.6%,
@@ -180,6 +183,28 @@ body {
     160px 160px,
     100% 100%;
   box-shadow: inset 0 0 0 10px #ffffff4a;
+}
+.hockeyStick {
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, transparent 83%, #2a1710 84% 100%),
+    linear-gradient(180deg, #d5a05d, #6f3c20);
+  box-shadow:
+    0 8px 18px #0007,
+    inset 0 1px 0 #fff6;
+  transform: rotate(var(--theme-angle, 0rad));
+}
+.hockeyPuck {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 34% 28%,
+    #5e6570,
+    #111318 58%,
+    #050607 100%
+  );
+  box-shadow:
+    0 8px 14px #0009,
+    inset 0 2px 2px #ffffff2e;
 }
 .rinkLine {
   border-radius: 999px;
@@ -272,6 +297,7 @@ body {
 }
 .livingRoomSurface {
   background:
+    radial-gradient(ellipse at 70% 24%, #ffe6c21c 0 9%, transparent 10%),
     repeating-linear-gradient(90deg, #5b3723 0 84px, #6b422a 84px 168px),
     linear-gradient(#00000018, transparent);
   box-shadow: inset 0 0 0 6px #ffffff18;
@@ -297,6 +323,23 @@ body {
   border-radius: 14px;
   background: linear-gradient(135deg, #d8a66e, #6a3f24);
   box-shadow: 0 10px 22px #0008;
+}
+.toyBlock {
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 32% 30%, #ffffff80 0 9%, transparent 10%),
+    linear-gradient(135deg, #ffd166, #ef476f);
+  box-shadow:
+    0 8px 16px #0007,
+    inset 0 0 0 4px #ffffff33;
+}
+.sock {
+  border-radius: 999px 999px 999px 18px;
+  background:
+    linear-gradient(90deg, #ffffff 0 18%, #7bc6ff 18% 30%, #ffffff 30%),
+    linear-gradient(135deg, #f7f7f1, #b7c0c8);
+  box-shadow: 0 8px 16px #0006;
+  transform: rotate(-0.32rad);
 }
 .parkingLotSurface {
   background:
@@ -331,8 +374,27 @@ body {
     transparent 68%
   );
 }
+.parkingTireMark {
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(90deg, #08090b99 0 16px, #08090b40 16px 28px),
+    #0d0f12a0;
+  filter: blur(0.4px);
+  transform: rotate(var(--theme-angle, 0rad));
+}
+.trafficCone {
+  clip-path: polygon(50% 0, 100% 84%, 0 84%);
+  background: linear-gradient(
+    #fffb 0 11%,
+    #f77f00 12% 44%,
+    #fffb 45% 57%,
+    #f77f00 58% 100%
+  );
+  filter: drop-shadow(0 9px 10px #0008);
+}
 .sandLotSurface {
   background:
+    radial-gradient(ellipse at 58% 34%, #ffeaa033 0 8%, transparent 9%),
     radial-gradient(circle at 20% 24%, #fff2b820 0 5px, transparent 6px),
     radial-gradient(circle at 76% 62%, #8b6b3425 0 7px, transparent 8px),
     linear-gradient(135deg, #d6b46f, #9b7840);
@@ -358,6 +420,23 @@ body {
     linear-gradient(90deg, transparent 46%, #5a351b80 47% 53%, transparent 54%),
     linear-gradient(#af7138, #6c3d1d);
   box-shadow: inset 0 0 0 4px #3e241466;
+}
+.sandBucket {
+  border-radius: 8px 8px 16px 16px;
+  background:
+    linear-gradient(90deg, transparent 18%, #ffffff66 19% 24%, transparent 25%),
+    linear-gradient(135deg, #ffcf5a, #f06c47);
+  box-shadow:
+    0 8px 16px #0006,
+    inset 0 -8px 0 #9b3d2d33;
+}
+.sandShovel {
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, #7a4c25 0 74%, transparent 75%),
+    radial-gradient(ellipse at 92% 50%, #ef476f 0 34%, transparent 35%);
+  filter: drop-shadow(0 8px 8px #0006);
+  transform: rotate(var(--theme-angle, 0rad));
 }
 #goal {
   position: absolute;

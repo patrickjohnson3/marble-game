@@ -368,6 +368,39 @@ function testMapThemeRendersRealWorldVisualMarkers() {
     true,
     "hockey rink theme should render goal creases",
   );
+  assert.equal(
+    overlayContainer.children[0].children.some((child) =>
+      child.className.includes("hockeyStick"),
+    ),
+    true,
+    "hockey rink theme should render map-specific gear",
+  );
+
+  [
+    ["livingRoom", "toyBlock"],
+    ["parkingLot", "trafficCone"],
+    ["sandLot", "sandBucket"],
+  ].forEach(([theme, expectedClass]) => {
+    const themedContainer = new FakeElement();
+    const themedOverlayContainer = new FakeElement();
+
+    withFakeDocument(() => {
+      renderMapTheme({
+        container: themedContainer,
+        overlayContainer: themedOverlayContainer,
+        mapConfig: { theme },
+        world: { width: 4400, height: 4400 },
+      });
+    });
+
+    assert.equal(
+      themedOverlayContainer.children[0].children.some((child) =>
+        child.className.includes(expectedClass),
+      ),
+      true,
+      theme + " should render map-specific object cues",
+    );
+  });
 }
 
 testMapThemeRendersRealWorldVisualMarkers();

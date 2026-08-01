@@ -308,6 +308,20 @@ function renderHockeyRink({ underlay, overlay, world }) {
   [0.105, 0.855].forEach((y) =>
     appendBox(overlay, "goalCrease", world, { x: 0.42, y, w: 0.16, h: 0.055 }),
   );
+  [
+    { x: 0.18, y: 0.58, w: 0.24, h: 0.018, angle: 0.38 },
+    { x: 0.62, y: 0.32, w: 0.22, h: 0.018, angle: -0.42 },
+  ].forEach((stick) =>
+    appendBox(overlay, "themeObject hockeyStick", world, stick, {
+      angle: stick.angle,
+    }),
+  );
+  [
+    { x: 0.26, y: 0.61, r: 0.018 },
+    { x: 0.71, y: 0.29, r: 0.016 },
+  ].forEach((puck) =>
+    appendCircle(overlay, "themeObject hockeyPuck", world, puck),
+  );
 }
 
 function renderKitchenStaticFloor({ underlay, world }) {
@@ -391,6 +405,17 @@ function renderLivingRoom({ underlay, overlay, world }) {
     w: 0.18,
     h: 0.08,
   });
+  [
+    { x: 0.22, y: 0.62, w: 0.045, h: 0.045 },
+    { x: 0.63, y: 0.38, w: 0.04, h: 0.04 },
+    { x: 0.74, y: 0.82, w: 0.05, h: 0.05 },
+  ].forEach((rect) => appendBox(overlay, "themeObject toyBlock", world, rect));
+  appendBox(overlay, "themeObject sock", world, {
+    x: 0.54,
+    y: 0.73,
+    w: 0.09,
+    h: 0.045,
+  });
 }
 
 function renderParkingLot({ underlay, overlay, world }) {
@@ -425,6 +450,19 @@ function renderParkingLot({ underlay, overlay, world }) {
     w: 0.13,
     h: 0.09,
   });
+  [
+    { x: 0.16, y: 0.78, w: 0.2, h: 0.025, angle: -0.08 },
+    { x: 0.52, y: 0.58, w: 0.24, h: 0.025, angle: 0.14 },
+  ].forEach((mark) =>
+    appendBox(underlay, "parkingTireMark", world, mark, { angle: mark.angle }),
+  );
+  [
+    { x: 0.28, y: 0.84, w: 0.04, h: 0.06 },
+    { x: 0.6, y: 0.47, w: 0.04, h: 0.06 },
+    { x: 0.84, y: 0.26, w: 0.04, h: 0.06 },
+  ].forEach((rect) =>
+    appendBox(overlay, "themeObject trafficCone", world, rect),
+  );
 }
 
 function renderSandLot({ underlay, overlay, world }) {
@@ -449,6 +487,25 @@ function renderSandLot({ underlay, overlay, world }) {
     { x: 0.62, y: 0.18, w: 0.055, h: 0.038 },
     { x: 0.73, y: 0.6, w: 0.06, h: 0.04 },
   ].forEach((rect) => appendBox(overlay, "themeObject sandCrate", world, rect));
+  [
+    { x: 0.36, y: 0.25, w: 0.07, h: 0.055 },
+    { x: 0.58, y: 0.77, w: 0.075, h: 0.058 },
+  ].forEach((rect) =>
+    appendBox(overlay, "themeObject sandBucket", world, rect),
+  );
+  appendBox(
+    overlay,
+    "themeObject sandShovel",
+    world,
+    {
+      x: 0.15,
+      y: 0.68,
+      w: 0.16,
+      h: 0.035,
+      angle: -0.38,
+    },
+    { angle: -0.38 },
+  );
 }
 
 const renderers = {
