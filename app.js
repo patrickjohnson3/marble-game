@@ -566,6 +566,7 @@ export function createApp({
     intro.released = true;
     mapRenderer.openMap();
     introSequence.hideMessage();
+    ui.setLevelLabel("");
     ui.setHint(copy.hints.mapOpen);
   }
 
@@ -606,7 +607,7 @@ export function createApp({
     getCurrentMap: () => mapState.activeMap,
     applyMap: (nextMap) => {
       setCurrentMap(nextMap);
-      ui.setLevelLabel(mapLevelLabel(nextMap));
+      ui.setLevelLabel(intro.released ? "" : mapLevelLabel(nextMap));
     },
     resetForNextMap,
     terrainView,
@@ -618,6 +619,7 @@ export function createApp({
     mapRuntime.resetGoalProgress();
     terrainView.updateGoalProgress(0);
     resetForNextMap();
+    ui.setLevelLabel("");
     ui.setHint(copy.hints.mapOpen);
     gameController.closeSettings();
     requestRender();
