@@ -11,6 +11,7 @@ export function bindSettingsPanel({
   onRetryMap,
   onSetNeutral,
   onFpsChanged,
+  onHitboxOverlayChanged = () => {},
   onStatsChanged,
   requestRender,
   fullscreenManagedByPwa = false,
@@ -28,6 +29,7 @@ export function bindSettingsPanel({
     trailSetting,
     fullscreenSetting,
     goalIndicatorSetting,
+    hitboxOverlaySetting,
     fpsSetting,
     statsSetting,
   } = els;
@@ -41,6 +43,7 @@ export function bindSettingsPanel({
   fullscreenSetting.checked = settings.fullscreenEnabled;
   fullscreenSetting.disabled = fullscreenManagedByPwa;
   goalIndicatorSetting.checked = settings.goalIndicatorEnabled;
+  hitboxOverlaySetting.checked = settings.hitboxOverlayEnabled;
   fpsSetting.checked = settings.fpsEnabled;
   statsSetting.checked = settings.statsEnabled;
 
@@ -78,6 +81,14 @@ export function bindSettingsPanel({
   bindCheckboxSetting(goalIndicatorSetting, "goalIndicatorEnabled", () => {
     requestRender();
   });
+  bindCheckboxSetting(
+    hitboxOverlaySetting,
+    "hitboxOverlayEnabled",
+    (enabled) => {
+      onHitboxOverlayChanged(enabled);
+      requestRender();
+    },
+  );
   bindCheckboxSetting(fpsSetting, "fpsEnabled", (enabled) => {
     onFpsChanged(enabled);
     requestRender();

@@ -138,6 +138,40 @@ function drawObstacleOutline(context, obstacles) {
   context.restore();
 }
 
+function hitboxCorners(rect) {
+  const width = rect.hitboxW ?? rect.w;
+  const height = rect.hitboxH ?? rect.h;
+  const halfWidth = width / 2;
+  const halfHeight = height / 2;
+  const centerX = rect.x + rect.w / 2;
+  const centerY = rect.y + rect.h / 2;
+  const angle = rect.angle ?? 0;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  return [
+    { x: -halfWidth, y: -halfHeight },
+    { x: halfWidth, y: -halfHeight },
+    { x: halfWidth, y: halfHeight },
+    { x: -halfWidth, y: halfHeight },
+  ].map((point) => ({
+    x: centerX + point.x * cos - point.y * sin,
+    y: centerY + point.x * sin + point.y * cos,
+  }));
+}
+
+function drawHitbox(context, rect) {
+  const corners = hitboxCorners(rect);
+
+  context.beginPath();
+  context.moveTo(corners[0].x, corners[0].y);
+  for (let i = 1; i < corners.length; i++) {
+    context.lineTo(corners[i].x, corners[i].y);
+  }
+  context.lineTo(corners[0].x, corners[0].y);
+  context.stroke();
+}
+
 function applyRectStyle(element, rect) {
   element.style.left = rect.x + "px";
   element.style.top = rect.y + "px";
@@ -220,6 +254,35 @@ function renderKitchenObstacleWalls(container, obstacles) {
   appendKitchenSpongeSprite(layer, spongeParts);
   appendKitchenSpoonSprite(layer, spoonParts);
   container.replaceChildren(layer);
+}
+
+export function renderObstacleHitboxes(
+  container,
+  obstacles,
+  { bounds, padding = 0 } = {},
+) {
+  if (obstacles.length === 0) {
+    container.replaceChildren();
+    return;
+  }
+
+  const { canvas, context } = createCanvas(
+    "hitboxCanvas",
+    obstacles,
+    padding,
+    bounds,
+  );
+
+  canvas.setAttribute("data-hitboxes", String(obstacles.length));
+  if (context) {
+    context.save();
+    context.strokeStyle = "rgba(143, 247, 197, .9)";
+    context.lineWidth = 3;
+    context.setLineDash?.([16, 10]);
+    obstacles.forEach((obstacle) => drawHitbox(context, obstacle));
+    context.restore();
+  }
+  container.replaceChildren(canvas);
 }
 
 export function renderObstacleWalls(

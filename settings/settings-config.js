@@ -44,6 +44,10 @@ export const settingsSchema = Object.freeze({
     defaultValue: false,
     type: "boolean",
   }),
+  hitboxOverlayEnabled: Object.freeze({
+    defaultValue: false,
+    type: "boolean",
+  }),
   fpsEnabled: Object.freeze({
     defaultValue: false,
     type: "boolean",

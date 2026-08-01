@@ -269,6 +269,11 @@ function testPhysicsAndSettingsRanges() {
     false,
     "goal indicator defaults off",
   );
+  assert.equal(
+    settingsConfig.hitboxOverlayEnabled,
+    false,
+    "hitbox overlay defaults off",
+  );
   assert.equal(settingsConfig.fpsEnabled, false, "fps defaults off");
   assert.equal(settingsConfig.statsEnabled, false, "stats defaults off");
   assertPositiveNumber(

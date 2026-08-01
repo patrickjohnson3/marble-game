@@ -3,6 +3,7 @@ export function createTerrainView({
   mapThemeOverlayEl,
   terrainContainers = {},
   obstaclesEl,
+  hitboxesEl,
   goalEl,
   goal,
   mapConfig,
@@ -14,7 +15,9 @@ export function createTerrainView({
   renderMapTheme: drawMapTheme = () => {},
   updateMapThemeDynamics: updateThemeDynamics = () => {},
   renderObstacleWalls,
+  renderObstacleHitboxes,
   goalFillEdgePercent = 70.8,
+  hitboxOverlayEnabled = false,
 }) {
   let currentGoal = goal;
   let currentMapConfig = mapConfig;
@@ -22,7 +25,13 @@ export function createTerrainView({
   let currentObstacles = obstacles;
   let currentObstacleBounds = obstacleBounds;
   let currentWorld = world;
+  let currentHitboxOverlayEnabled = hitboxOverlayEnabled;
   const themeState = {};
+
+  function setHitboxOverlayEnabled(enabled) {
+    currentHitboxOverlayEnabled = Boolean(enabled);
+    hitboxesEl?.classList.toggle("show", currentHitboxOverlayEnabled);
+  }
 
   function renderMapTheme() {
     drawMapTheme({
@@ -41,6 +50,13 @@ export function createTerrainView({
       currentObstacleBounds,
       currentMapConfig,
     );
+  }
+
+  function renderHitboxes() {
+    renderObstacleHitboxes?.(hitboxesEl, currentObstacles, {
+      bounds: currentObstacleBounds,
+    });
+    setHitboxOverlayEnabled(currentHitboxOverlayEnabled);
   }
 
   function renderTerrainPatches() {
@@ -66,6 +82,7 @@ export function createTerrainView({
     renderGoal();
     renderTerrainPatches();
     renderObstacles();
+    renderHitboxes();
   }
 
   function setTerrain({
@@ -119,6 +136,7 @@ export function createTerrainView({
     renderTerrain,
     renderTerrainPatches,
     setTerrain,
+    setHitboxOverlayEnabled,
     updateGoalProgress,
     updateMapThemeDynamics,
   };

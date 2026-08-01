@@ -39,7 +39,10 @@ import {
   updateMapThemeDynamics,
 } from "./rendering/map-theme-rendering.js";
 import { createMarbleView } from "./rendering/marble-view.js";
-import { renderObstacleWalls } from "./rendering/obstacle-rendering.js";
+import {
+  renderObstacleHitboxes,
+  renderObstacleWalls,
+} from "./rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "./rendering/rough-patch-rendering.js";
 import { renderWaterPatches } from "./rendering/water-patch-rendering.js";
 import { createTrailRenderer } from "./rendering/trail.js";
@@ -105,6 +108,7 @@ function setupRenderers({
     roughPatches: roughPatchesEl,
     waterPatches: waterPatchesEl,
     obstacles: obstaclesEl,
+    hitboxes: hitboxesEl,
     goal: goalEl,
     trail: trailEl,
     trailSegments: trailSegmentsEl,
@@ -169,6 +173,7 @@ function setupRenderers({
       [MAP_ELEMENT_TYPES.waterPatch]: waterPatchesEl,
     },
     obstaclesEl,
+    hitboxesEl,
     goalEl,
     goal: mapState.goal,
     mapConfig: mapState.activeMap,
@@ -197,7 +202,9 @@ function setupRenderers({
         mapConfig: renderedMapConfig,
         padding: visualConfig.map.obstacleCanvasPadding,
       }),
+    renderObstacleHitboxes,
     goalFillEdgePercent: visualConfig.map.goalFillEdgePercent,
+    hitboxOverlayEnabled: settings.hitboxOverlayEnabled,
   });
   const mapRenderer = createMapRenderer({
     worldEl,
@@ -422,6 +429,19 @@ function mapLevelLabel(mapConfig) {
   return mapConfig.name ? level + ": " + mapConfig.name : level;
 }
 
+function mapObjectSummary(mapConfig) {
+  const themeObjects = {
+    hockeyRink: "objects: sticks, pucks, creases, rink markings.",
+    kitchenFloor:
+      "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
+    livingRoom: "objects: sofa, shelves, coffee table, rug, blocks, sock.",
+    parkingLot: "objects: cars, cones, oil stains, tire marks, parking lines.",
+    sandLot: "objects: rocks, crates, buckets, shovel, tire tracks.",
+  };
+
+  return themeObjects[mapConfig?.theme] ?? "objects: walls, patches, goal.";
+}
+
 export function createApp({
   document: documentRef = document,
   window: windowRef = window,
@@ -437,6 +457,7 @@ export function createApp({
     fpsCounter,
     hint,
     debug,
+    mapObjectsStatus,
   } = els;
 
   const mapRuntime = createMapRuntime({
@@ -475,6 +496,7 @@ export function createApp({
     hint,
     fpsCounter,
     debug,
+    mapObjectsStatus,
     pwaStatus: els.pwaStatus,
     settings,
     settingsOverlay,
@@ -504,6 +526,7 @@ export function createApp({
     ui.setPwaStatus([displayStatus, pwaUpdateStatus].filter(Boolean).join(" "));
   }
   updatePwaStatus();
+  ui.setMapObjects(mapObjectSummary(mapState.activeMap));
 
   const hapticFeedback = setupFeedback(haptics);
   const cameraController = createCameraController({
@@ -581,6 +604,7 @@ export function createApp({
       obstacleBounds: mapState.obstacleBounds,
       world: mapState.world,
     });
+    ui.setMapObjects(mapObjectSummary(mapState.activeMap));
   }
 
   function resetForNextMap() {
@@ -726,6 +750,7 @@ export function createApp({
     onRetryMap: retryCurrentMap,
     onSetNeutral: sensorController.setNeutralNow,
     onFpsChanged: ui.setFpsEnabled,
+    onHitboxOverlayChanged: terrainView.setHitboxOverlayEnabled,
     onStatsChanged: ui.setStatsEnabled,
     requestRender,
     fullscreenManagedByPwa,

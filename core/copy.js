@@ -48,6 +48,7 @@ export const copy = {
       trailSetting: "trail",
       fullscreenSetting: "fullscreen",
       goalIndicatorSetting: "goal arrow",
+      hitboxOverlaySetting: "hitboxes",
       fpsSetting: "fps",
       statsSetting: "stats",
     },

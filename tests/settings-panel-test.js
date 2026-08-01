@@ -24,6 +24,7 @@ function createPanelHarness() {
   let applyCount = 0;
   let fullscreenChangeCount = 0;
   let fpsChangeCount = 0;
+  let hitboxChangeCount = 0;
   let statsChangeCount = 0;
   let saveCount = 0;
   let renderCount = 0;
@@ -35,12 +36,14 @@ function createPanelHarness() {
     trailEnabled: false,
     fullscreenEnabled: true,
     goalIndicatorEnabled: false,
+    hitboxOverlayEnabled: false,
     fpsEnabled: false,
     statsEnabled: false,
   };
   const fpsSetting = fakeControl();
   const fullscreenSetting = fakeControl();
   const goalIndicatorSetting = fakeControl();
+  const hitboxOverlaySetting = fakeControl();
   const statsSetting = fakeControl();
 
   bindSettingsPanel({
@@ -57,6 +60,7 @@ function createPanelHarness() {
       trailSetting: fakeControl(),
       fullscreenSetting,
       goalIndicatorSetting,
+      hitboxOverlaySetting,
       fpsSetting,
       statsSetting,
     },
@@ -88,6 +92,9 @@ function createPanelHarness() {
     onFpsChanged() {
       fpsChangeCount++;
     },
+    onHitboxOverlayChanged() {
+      hitboxChangeCount++;
+    },
     onStatsChanged() {
       statsChangeCount++;
     },
@@ -102,6 +109,7 @@ function createPanelHarness() {
       applyCount,
       fullscreenChangeCount,
       fpsChangeCount,
+      hitboxChangeCount,
       statsChangeCount,
       saveCount,
       renderCount,
@@ -110,6 +118,7 @@ function createPanelHarness() {
     fpsSetting,
     fullscreenSetting,
     goalIndicatorSetting,
+    hitboxOverlaySetting,
     statsSetting,
     settings,
   };
@@ -126,6 +135,7 @@ function testFpsTogglePersistsAndRenders() {
     applyCount: 0,
     fullscreenChangeCount: 0,
     fpsChangeCount: 1,
+    hitboxChangeCount: 0,
     statsChangeCount: 0,
     saveCount: 1,
     renderCount: 1,
@@ -146,6 +156,7 @@ function testStatsTogglePersistsAndRenders() {
     applyCount: 0,
     fullscreenChangeCount: 0,
     fpsChangeCount: 0,
+    hitboxChangeCount: 0,
     statsChangeCount: 1,
     saveCount: 1,
     renderCount: 1,
@@ -166,6 +177,7 @@ function testGoalIndicatorTogglePersistsAndRenders() {
     applyCount: 0,
     fullscreenChangeCount: 0,
     fpsChangeCount: 0,
+    hitboxChangeCount: 0,
     statsChangeCount: 0,
     saveCount: 1,
     renderCount: 1,
@@ -174,6 +186,27 @@ function testGoalIndicatorTogglePersistsAndRenders() {
 }
 
 testGoalIndicatorTogglePersistsAndRenders();
+
+function testHitboxOverlayTogglePersistsAndRenders() {
+  const { counts, hitboxOverlaySetting, settings } = createPanelHarness();
+
+  hitboxOverlaySetting.checked = true;
+  hitboxOverlaySetting.listeners.change();
+
+  assert.equal(settings.hitboxOverlayEnabled, true);
+  assert.deepEqual(counts(), {
+    applyCount: 0,
+    fullscreenChangeCount: 0,
+    fpsChangeCount: 0,
+    hitboxChangeCount: 1,
+    statsChangeCount: 0,
+    saveCount: 1,
+    renderCount: 1,
+    retryCount: 0,
+  });
+}
+
+testHitboxOverlayTogglePersistsAndRenders();
 
 function testInstalledPwaDisablesFullscreenToggle() {
   let fullscreenChangeCount = 0;
@@ -185,6 +218,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
     trailEnabled: false,
     fullscreenEnabled: true,
     goalIndicatorEnabled: false,
+    hitboxOverlayEnabled: false,
     fpsEnabled: false,
     statsEnabled: false,
   };
@@ -204,6 +238,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
       trailSetting: fakeControl(),
       fullscreenSetting,
       goalIndicatorSetting: fakeControl(),
+      hitboxOverlaySetting: fakeControl(),
       fpsSetting: fakeControl(),
       statsSetting: fakeControl(),
     },
@@ -229,6 +264,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
     onRetryMap() {},
     onSetNeutral() {},
     onFpsChanged() {},
+    onHitboxOverlayChanged() {},
     onStatsChanged() {},
     requestRender() {},
     fullscreenManagedByPwa: true,

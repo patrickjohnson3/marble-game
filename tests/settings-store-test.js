@@ -31,6 +31,7 @@ const defaults = {
   trailDefaultVersion: 2,
   fullscreenEnabled: true,
   goalIndicatorEnabled: false,
+  hitboxOverlayEnabled: false,
   fpsEnabled: false,
   statsEnabled: false,
 };
@@ -266,6 +267,7 @@ function testMalformedSavedSettingsFallBackToDefaults() {
   assert.equal(settings.trailEnabled, false);
   assert.equal(settings.fullscreenEnabled, defaults.fullscreenEnabled);
   assert.equal(settings.goalIndicatorEnabled, defaults.goalIndicatorEnabled);
+  assert.equal(settings.hitboxOverlayEnabled, defaults.hitboxOverlayEnabled);
   assert.equal(settings.fpsEnabled, true);
   assert.equal(settings.statsEnabled, false);
 }

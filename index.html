@@ -36,7 +36,7 @@
       }
     </style>
     <script>
-      const assetVersion = "adacd3af60166e85";
+      const assetVersion = "aa4f59099a1949df";
       const runtimeModuleScripts = [
         "boot.js",
         "core/camera.js",
@@ -139,6 +139,7 @@
         <div id="roughPatches"></div>
         <div id="waterPatches"></div>
         <div id="obstacles"></div>
+        <div id="hitboxes"></div>
         <div id="mapThemeOverlay"></div>
         <div id="goal" aria-hidden="true"></div>
         <svg id="trail" aria-hidden="true"><g id="trailSegments"></g></svg>
@@ -183,6 +184,7 @@
           <button id="closeSettings" aria-label=""></button>
         </div>
         <div id="pwaStatus" class="settingsStatus" aria-live="polite"></div>
+        <div id="mapObjectsStatus" class="settingsStatus"></div>
         <button id="retryMap" class="secondary"></button>
         <button id="neutral" class="secondary"></button>
         <label class="settingRow" for="speedSetting">
@@ -208,6 +210,10 @@
         <label class="settingRow checkboxRow" for="goalIndicatorSetting">
           <span></span>
           <input id="goalIndicatorSetting" type="checkbox" />
+        </label>
+        <label class="settingRow checkboxRow" for="hitboxOverlaySetting">
+          <span></span>
+          <input id="hitboxOverlaySetting" type="checkbox" />
         </label>
         <label class="settingRow checkboxRow" for="fpsSetting">
           <span></span>

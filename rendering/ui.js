@@ -5,6 +5,7 @@ export function createUi({
   levelLabel,
   fpsCounter,
   debug,
+  mapObjectsStatus,
   pwaStatus,
   settings,
   settingsOverlay,
@@ -39,6 +40,13 @@ export function createUi({
 
     pwaStatus.textContent = message;
     pwaStatus.hidden = !message;
+  }
+
+  function setMapObjects(message) {
+    if (!mapObjectsStatus) return;
+
+    mapObjectsStatus.textContent = message;
+    mapObjectsStatus.hidden = !message;
   }
 
   function setGoalIndicator({ visible, angle = 0 }) {
@@ -143,6 +151,7 @@ export function createUi({
     setStatsEnabled,
     setHint,
     setLevelLabel,
+    setMapObjects,
     setPwaStatus,
     setStartControls,
     updateDebugPanel,

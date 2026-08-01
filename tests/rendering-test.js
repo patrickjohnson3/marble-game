@@ -7,7 +7,10 @@ import {
   renderMapTheme,
   updateMapThemeDynamics,
 } from "../rendering/map-theme-rendering.js";
-import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
+import {
+  renderObstacleHitboxes,
+  renderObstacleWalls,
+} from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import { renderWaterPatches } from "../rendering/water-patch-rendering.js";
 import { renderOuterWalls } from "../rendering/wall-rendering.js";
@@ -238,6 +241,29 @@ function testPwaStatusUpdatesSettingsStatus() {
 }
 
 testPwaStatusUpdatesSettingsStatus();
+
+function testMapObjectStatusUpdatesSettingsStatus() {
+  const mapObjectsStatus = new FakeElement();
+  const ui = createUi({
+    hint: new FakeElement(),
+    fpsCounter: new FakeElement(),
+    debug: new FakeElement(),
+    mapObjectsStatus,
+    settings: { fpsEnabled: false, statsEnabled: false },
+    settingsOverlay: new FakeElement(),
+    debugLines: () => [],
+    state: {},
+  });
+
+  ui.setMapObjects("objects: fork, spoon, Cheerios.");
+  assert.equal(mapObjectsStatus.textContent, "objects: fork, spoon, Cheerios.");
+  assert.equal(mapObjectsStatus.hidden, false);
+
+  ui.setMapObjects("");
+  assert.equal(mapObjectsStatus.hidden, true);
+}
+
+testMapObjectStatusUpdatesSettingsStatus();
 
 function testGoalIndicatorUpdatesVisibilityAndAngle() {
   const goalIndicator = new FakeElement();
@@ -1051,6 +1077,39 @@ function testKitchenObstaclesRenderAsFixtures() {
 }
 
 testKitchenObstaclesRenderAsFixtures();
+
+function testObstacleHitboxesRenderDebugCanvas() {
+  const container = new FakeElement();
+
+  withFakeDocument(() => {
+    renderObstacleHitboxes(container, [
+      {
+        x: 100,
+        y: 80,
+        w: 200,
+        h: 80,
+        hitboxW: 160,
+        hitboxH: 42,
+        angle: 0.4,
+      },
+    ]);
+  });
+
+  const canvas = container.children[0];
+  assert.equal(
+    canvas.classList.contains("hitboxCanvas"),
+    true,
+    "debug hitboxes should render to their own canvas layer",
+  );
+  assert.equal(canvas.attributes["data-hitboxes"], "1");
+  assert.equal(
+    canvas.context.calls.some((call) => call[0] === "lineTo"),
+    true,
+    "debug hitboxes should draw oriented outlines",
+  );
+}
+
+testObstacleHitboxesRenderDebugCanvas();
 
 function testTerrainViewRedrawsWhenTerrainIsSet() {
   let obstacleRenderCount = 0;

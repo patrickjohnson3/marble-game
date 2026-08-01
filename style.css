@@ -65,6 +65,7 @@ body {
 }
 .wallCanvas,
 .obstacleCanvas,
+.hitboxCanvas,
 .kitchenObstacleLayer {
   position: absolute;
   overflow: visible;
@@ -91,6 +92,18 @@ body {
 .obstacleCanvas,
 .kitchenObstacleLayer {
   z-index: 2;
+}
+#hitboxes {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.hitboxCanvas {
+  opacity: 0;
+}
+#hitboxes.show .hitboxCanvas {
+  opacity: 1;
 }
 .mapThemeSurface,
 .themeObject,
