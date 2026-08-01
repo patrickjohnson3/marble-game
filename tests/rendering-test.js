@@ -38,6 +38,27 @@ function withFakeDocument(callback) {
   }
 }
 
+function withFakeImage(callback) {
+  const originalImage = globalThis.Image;
+
+  globalThis.Image = class {
+    constructor() {
+      this.complete = true;
+      this.naturalWidth = 252;
+      this.src = "";
+    }
+  };
+  try {
+    callback();
+  } finally {
+    if (originalImage === undefined) {
+      delete globalThis.Image;
+    } else {
+      globalThis.Image = originalImage;
+    }
+  }
+}
+
 function testRenderOuterWallsKeepsPositiveInterior() {
   const container = new FakeElement();
 
@@ -356,13 +377,15 @@ function testKitchenThemeRendersDatedFloorDetails() {
   const overlayContainer = new FakeElement();
   const themeState = {};
 
-  withFakeDocument(() => {
-    renderMapTheme({
-      container,
-      overlayContainer,
-      mapConfig: { theme: "kitchenFloor" },
-      themeState,
-      world: { width: 4400, height: 4400 },
+  withFakeImage(() => {
+    withFakeDocument(() => {
+      renderMapTheme({
+        container,
+        overlayContainer,
+        mapConfig: { theme: "kitchenFloor" },
+        themeState,
+        world: { width: 4400, height: 4400 },
+      });
     });
   });
 
@@ -399,6 +422,14 @@ function testKitchenThemeRendersDatedFloorDetails() {
     ),
     true,
     "kitchen floor theme should render ants on one canvas layer",
+  );
+  const dynamicCanvas = overlayChildren.find((child) =>
+    child.className.includes("kitchenDynamicCanvas"),
+  );
+  assert.equal(
+    dynamicCanvas.context.calls.some((call) => call[0] === "drawImage"),
+    true,
+    "kitchen Cheerios should render from the textured sprite",
   );
   assert.equal(
     themeState.kitchenAnts.length,

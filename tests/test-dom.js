@@ -149,6 +149,10 @@ class FakeCanvasContext {
     this.calls.push(["fillRect", x, y, w, h]);
   }
 
+  drawImage(image, x, y, w, h) {
+    this.calls.push(["drawImage", image.src, x, y, w, h]);
+  }
+
   lineTo(x, y) {
     this.calls.push(["lineTo", x, y]);
   }

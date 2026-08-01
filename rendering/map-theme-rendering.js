@@ -35,6 +35,7 @@ const kitchenAntMunchRate = 0.006;
 const kitchenAntSquishMinSpeed = 1.2;
 const kitchenCheerioMinScale = 0.45;
 const kitchenCheerioOpacityFloor = 0.18;
+const kitchenCheerioSpriteUrl = "assets/sprites/cheerio.png";
 const kitchenDynamicDirtyPadding = 18;
 const kitchenAntSpawnPoints = Object.freeze([
   Object.freeze({ x: 0.04, y: 0.24 }),
@@ -48,6 +49,18 @@ const kitchenAntSpawnPoints = Object.freeze([
   Object.freeze({ x: 0.86, y: 0.92 }),
   Object.freeze({ x: 0.47, y: 0.02 }),
 ]);
+let kitchenCheerioSprite = null;
+
+function getKitchenCheerioSprite() {
+  if (kitchenCheerioSprite || typeof globalThis.Image !== "function") {
+    return kitchenCheerioSprite;
+  }
+
+  kitchenCheerioSprite = new globalThis.Image();
+  kitchenCheerioSprite.decoding = "async";
+  kitchenCheerioSprite.src = kitchenCheerioSpriteUrl;
+  return kitchenCheerioSprite;
+}
 
 function rectFromRatio(world, rect) {
   return {
@@ -131,6 +144,21 @@ function appendKitchenDynamicCanvas(parent, world, themeState) {
     targetIndex: -1,
     wobble: index * 1.7,
   }));
+  const cheerioSprite = getKitchenCheerioSprite();
+  if (
+    cheerioSprite &&
+    !cheerioSprite.complete &&
+    cheerioSprite.addEventListener
+  ) {
+    cheerioSprite.addEventListener(
+      "load",
+      () => {
+        themeState.kitchenDynamicNeedsFullRedraw = true;
+        renderKitchenDynamics(themeState);
+      },
+      { once: true },
+    );
+  }
   renderKitchenDynamics(themeState);
 }
 
@@ -724,16 +752,7 @@ function storeDynamicBounds(entries) {
   }
 }
 
-function drawCheerio(context, cheerio) {
-  if (!cheerio.active) return;
-
-  const x = cheerio.originX + cheerio.pushX;
-  const y = cheerio.originY + cheerio.pushY;
-  const radius =
-    cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
-  const opacity = 1 - cheerio.eaten * (1 - kitchenCheerioOpacityFloor);
-
-  context.globalAlpha = opacity;
+function drawFallbackCheerio(context, x, y, radius) {
   context.fillStyle = "#d89b3a";
   context.beginPath();
   context.ellipse(x, y, radius, radius, 0, 0, Math.PI * 2);
@@ -764,6 +783,33 @@ function drawCheerio(context, cheerio) {
   context.beginPath();
   context.ellipse(x, y, radius * 0.88, radius * 0.86, 0, 0, Math.PI * 2);
   context.stroke();
+}
+
+function drawCheerioSprite(context, sprite, x, y, radius, opacity) {
+  if (!sprite?.complete || sprite.naturalWidth <= 0) return false;
+
+  const size = radius * 2;
+  context.save();
+  context.globalAlpha = opacity;
+  context.drawImage(sprite, x - radius, y - radius, size, size);
+  context.restore();
+  return true;
+}
+
+function drawCheerio(context, cheerio) {
+  if (!cheerio.active) return;
+
+  const x = cheerio.originX + cheerio.pushX;
+  const y = cheerio.originY + cheerio.pushY;
+  const radius =
+    cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
+  const opacity = 1 - cheerio.eaten * (1 - kitchenCheerioOpacityFloor);
+  const sprite = getKitchenCheerioSprite();
+
+  if (drawCheerioSprite(context, sprite, x, y, radius, opacity)) return;
+
+  context.globalAlpha = opacity;
+  drawFallbackCheerio(context, x, y, radius);
   context.globalAlpha = 1;
 }
 
