@@ -194,6 +194,8 @@ export function createGameLoop({
         hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);
       } else if (themeEvents?.splatHits > 0) {
         hapticFeedback.pulseImpact(tuning.antSplatImpactFeedback);
+      } else if (themeEvents?.cerealHits > 0) {
+        hapticFeedback.pulseImpact(tuning.cerealBumpImpactFeedback);
       }
       updateFrameBudgetMetric(
         perf,

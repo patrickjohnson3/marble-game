@@ -40,6 +40,9 @@ const kitchenCheerioMinScale = 0.45;
 const kitchenCheerioOpacityFloor = 0.18;
 const kitchenCheerioSpriteUrl = "assets/sprites/cheerio.png";
 const kitchenDynamicDirtyPadding = 18;
+const kitchenCrumbRadiusRatio = 0.0032;
+const kitchenCerealHitMinSpeed = 0.8;
+const kitchenCerealHitFeedbackCooldownFrames = 20;
 const kitchenAntSpawnPoints = Object.freeze([
   Object.freeze({ x: 0.04, y: 0.24 }),
   Object.freeze({ x: 0.08, y: 0.82 }),
@@ -102,21 +105,36 @@ function appendCircle(parent, className, world, circle) {
   });
 }
 
-function appendKitchenCheerio(world, circle, themeState) {
+function appendKitchenCereal(world, circle, themeState, options = {}) {
   const state = {
+    kind: options.kind ?? "cheerio",
     originX: circle.x * world.width,
     originY: circle.y * world.height,
     pushX: 0,
     pushY: 0,
-    radius: kitchenCheerioRadiusRatio * world.width,
+    radius: (options.radiusRatio ?? kitchenCheerioRadiusRatio) * world.width,
     eaten: 0,
     active: true,
+    rotation: options.rotation ?? 0,
+    lastHitFeedbackFrame: Number.NEGATIVE_INFINITY,
     sweptClosestX: 0,
     sweptClosestY: 0,
     sweptDistance: 0,
   };
 
   themeState.kitchenCheerios.push(state);
+}
+
+function appendKitchenCheerio(world, circle, themeState) {
+  appendKitchenCereal(world, circle, themeState);
+}
+
+function appendKitchenCrumb(world, circle, themeState) {
+  appendKitchenCereal(world, circle, themeState, {
+    kind: "crumb",
+    radiusRatio: circle.radiusRatio ?? kitchenCrumbRadiusRatio,
+    rotation: circle.rotation ?? 0,
+  });
 }
 
 function appendKitchenDynamicCanvas(parent, world, themeState) {
@@ -233,6 +251,26 @@ function appendKitchenFloorCanvas(parent, world) {
       context.fill();
     }
   }
+
+  [
+    { x: 0.18, y: 0.58, rx: 30, ry: 8, angle: 0.22 },
+    { x: 0.32, y: 0.72, rx: 42, ry: 10, angle: -0.18 },
+    { x: 0.64, y: 0.44, rx: 28, ry: 7, angle: 0.35 },
+    { x: 0.78, y: 0.68, rx: 36, ry: 9, angle: -0.28 },
+  ].forEach((smudge) => {
+    context.fillStyle = "#7b633026";
+    context.beginPath();
+    context.ellipse(
+      smudge.x * world.width,
+      smudge.y * world.height,
+      smudge.rx,
+      smudge.ry,
+      smudge.angle,
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
+  });
 }
 
 function renderHockeyRink({ underlay, overlay, world }) {
@@ -313,6 +351,20 @@ function renderKitchenDynamicObjects({ overlay, themeState, world }) {
     { x: 0.86, y: 0.59 },
     { x: 0.88, y: 0.67 },
   ].forEach((circle) => appendKitchenCheerio(world, circle, themeState));
+  [
+    { x: 0.2, y: 0.5, rotation: 0.3 },
+    { x: 0.25, y: 0.49, rotation: -0.4 },
+    { x: 0.29, y: 0.55, rotation: 0.8 },
+    { x: 0.36, y: 0.53, rotation: -0.1 },
+    { x: 0.41, y: 0.59, rotation: 0.55 },
+    { x: 0.62, y: 0.35, rotation: -0.65 },
+    { x: 0.67, y: 0.39, rotation: 0.18 },
+    { x: 0.48, y: 0.73, rotation: -0.75 },
+    { x: 0.56, y: 0.76, rotation: 0.42 },
+    { x: 0.66, y: 0.79, rotation: -0.22 },
+    { x: 0.76, y: 0.82, rotation: 0.66 },
+    { x: 0.83, y: 0.65, rotation: -0.3 },
+  ].forEach((circle) => appendKitchenCrumb(world, circle, themeState));
   appendKitchenDynamicCanvas(overlay, world, themeState);
 }
 
@@ -880,6 +932,35 @@ function drawFallbackCheerio(context, x, y, radius) {
   context.stroke();
 }
 
+function drawCerealCrumb(context, crumb, x, y, radius, opacity) {
+  context.save();
+  context.globalAlpha = opacity;
+  context.translate?.(x, y);
+  context.rotate?.(crumb.rotation ?? 0);
+  context.fillStyle = "#d69a3b";
+  context.beginPath();
+  context.ellipse(0, 0, radius * 1.15, radius * 0.72, 0, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#f0c76e";
+  context.beginPath();
+  context.ellipse(
+    -radius * 0.18,
+    -radius * 0.12,
+    radius * 0.62,
+    radius * 0.38,
+    -0.24,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+  context.strokeStyle = "#9b621f";
+  context.lineWidth = Math.max(1, radius * 0.14);
+  context.beginPath();
+  context.ellipse(0, 0, radius * 1.12, radius * 0.7, 0, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+}
+
 function drawCheerioSprite(context, sprite, x, y, radius, opacity) {
   if (!sprite?.complete || sprite.naturalWidth <= 0) return false;
 
@@ -900,6 +981,11 @@ function drawCheerio(context, cheerio) {
     cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
   const opacity = 1 - cheerio.eaten * (1 - kitchenCheerioOpacityFloor);
   const sprite = getKitchenCheerioSprite();
+
+  if (cheerio.kind === "crumb") {
+    drawCerealCrumb(context, cheerio, x, y, radius, opacity);
+    return;
+  }
 
   if (drawCheerioSprite(context, sprite, x, y, radius, opacity)) return;
 
@@ -1008,6 +1094,7 @@ export function updateMapThemeDynamics({
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
   const cheerios = themeState?.kitchenCheerios ?? [];
+  const frameIndex = themeState.kitchenAntFrameIndex ?? 0;
   const cacheValid =
     themeState.kitchenElementCacheSource === mapConfig.elements &&
     themeState.kitchenObstacles &&
@@ -1084,13 +1171,21 @@ export function updateMapThemeDynamics({
 
     cheerio.pushX = cheerioCircle.x - originX;
     cheerio.pushY = cheerioCircle.y - originY;
+    if (
+      speed >= kitchenCerealHitMinSpeed &&
+      frameIndex - cheerio.lastHitFeedbackFrame >=
+        kitchenCerealHitFeedbackCooldownFrames
+    ) {
+      cheerio.lastHitFeedbackFrame = frameIndex;
+      events.cerealHits = (events.cerealHits ?? 0) + 1;
+    }
   });
 
   const antEvents = updateKitchenAnts({
     ants: themeState?.kitchenAnts ?? [],
     cheerios,
     frameDelta,
-    frameIndex: themeState.kitchenAntFrameIndex ?? 0,
+    frameIndex,
     marble,
     visibleWorld,
   });

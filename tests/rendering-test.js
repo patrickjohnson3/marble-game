@@ -413,8 +413,14 @@ function testKitchenThemeRendersDatedFloorDetails() {
   );
   assert.equal(
     themeState.kitchenCheerios.length,
-    34,
+    46,
     "kitchen floor theme should seed fistfuls of scattered cereal",
+  );
+  assert.equal(
+    themeState.kitchenCheerios.filter((cereal) => cereal.kind === "crumb")
+      .length,
+    12,
+    "kitchen floor theme should mix loose cereal crumbs into the pushable clutter",
   );
   assert.equal(
     overlayChildren.some((child) =>
