@@ -137,6 +137,17 @@ const kitchenFloorElements = [
   { type: "waterPatch", x: 1030, y: 640, w: 560, h: 380 },
   {
     type: "obstacle",
+    fixture: "sponge",
+    x: 260,
+    y: 1170,
+    w: 300,
+    h: 140,
+    hitboxW: 260,
+    hitboxH: 120,
+    angle: 0.16,
+  },
+  {
+    type: "obstacle",
     fixture: "fork",
     x: 960,
     y: 1450,

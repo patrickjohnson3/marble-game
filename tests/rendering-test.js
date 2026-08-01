@@ -924,6 +924,16 @@ function testKitchenObstaclesRenderAsFixtures() {
           hitboxH: 62,
           angle: -0.42,
         },
+        {
+          fixture: "sponge",
+          x: 520,
+          y: 2340,
+          w: 600,
+          h: 140,
+          hitboxW: 520,
+          hitboxH: 120,
+          angle: 0.16,
+        },
         { x: 1040, y: 2760, w: 440, h: 440 },
         { x: 2920, y: 2640, w: 520, h: 520 },
       ],
@@ -954,13 +964,26 @@ function testKitchenObstaclesRenderAsFixtures() {
     "fork sprite should be large enough to read visually",
   );
   assert.equal(
-    forkSprite.style.properties["--fork-angle"],
+    forkSprite.style.properties["--fixture-angle"],
     "-0.42rad",
     "fork sprite should rotate with the oriented hitbox",
   );
+  const spongeSprite = layer.children.find((child) =>
+    child.className.includes("kitchenSpongeSprite"),
+  );
+  assert.equal(
+    spongeSprite.style.width,
+    "520px",
+    "sponge sprite should match its readable blocker scale",
+  );
+  assert.equal(
+    spongeSprite.style.properties["--fixture-angle"],
+    "0.16rad",
+    "sponge sprite should rotate with the oriented hitbox",
+  );
   assert.equal(
     layer.children.length,
-    1,
+    2,
     "anonymous kitchen obstacles should not render as generic brown blocks",
   );
 }

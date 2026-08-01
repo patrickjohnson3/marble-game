@@ -149,36 +149,66 @@ function isForkFixture(rect) {
   return rect.fixture === "fork";
 }
 
-function appendKitchenForkSprite(layer, forkParts) {
-  if (forkParts.length === 0) return;
+function isSpongeFixture(rect) {
+  return rect.fixture === "sponge";
+}
+
+function appendKitchenFixtureSprite(
+  layer,
+  parts,
+  className,
+  minWidth,
+  minHeight,
+) {
+  if (parts.length === 0) return null;
 
   const sprite = document.createElement("div");
-  const bounds = rectBounds(forkParts);
-  const fork = forkParts[0];
-  const visualWidth = Math.max(fork.hitboxW ?? bounds.width, 760);
-  const visualHeight = Math.max((fork.hitboxH ?? bounds.height) * 2.1, 110);
+  const bounds = rectBounds(parts);
+  const fixture = parts[0];
+  const visualWidth = Math.max(fixture.hitboxW ?? bounds.width, minWidth);
+  const visualHeight = Math.max(fixture.hitboxH ?? bounds.height, minHeight);
 
-  sprite.className = "kitchenForkSprite";
+  sprite.className = className;
   applyRectStyle(sprite, {
     x: bounds.left + bounds.width / 2 - visualWidth / 2,
     y: bounds.top + bounds.height / 2 - visualHeight / 2,
     w: visualWidth,
     h: visualHeight,
   });
-  if (Number.isFinite(fork.angle)) {
-    sprite.style.setProperty("--fork-angle", fork.angle + "rad");
+  if (Number.isFinite(fixture.angle)) {
+    sprite.style.setProperty("--fixture-angle", fixture.angle + "rad");
   }
   layer.appendChild(sprite);
+  return sprite;
+}
+
+function appendKitchenForkSprite(layer, forkParts) {
+  appendKitchenFixtureSprite(layer, forkParts, "kitchenForkSprite", 760, 110);
+}
+
+function appendKitchenSpongeSprite(layer, spongeParts) {
+  appendKitchenFixtureSprite(
+    layer,
+    spongeParts,
+    "kitchenSpongeSprite",
+    500,
+    145,
+  );
 }
 
 function renderKitchenObstacleWalls(container, obstacles) {
   const layer = document.createElement("div");
   const forkParts = obstacles.filter(isForkFixture);
+  const spongeParts = obstacles.filter(isSpongeFixture);
 
   layer.className = "kitchenObstacleLayer";
   layer.setAttribute("aria-hidden", "true");
-  layer.setAttribute("data-fixtures", String(forkParts.length));
+  layer.setAttribute(
+    "data-fixtures",
+    String(forkParts.length + spongeParts.length),
+  );
   appendKitchenForkSprite(layer, forkParts);
+  appendKitchenSpongeSprite(layer, spongeParts);
   container.replaceChildren(layer);
 }
 
