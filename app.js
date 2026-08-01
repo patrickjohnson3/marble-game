@@ -751,6 +751,7 @@ export function createApp({
       terrainView.updateGoalProgress(0);
     },
     scheduleFrame,
+    settings,
     spawnTarget: () => mapState.spawn,
     terrainView,
     timing,

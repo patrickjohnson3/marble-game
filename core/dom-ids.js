@@ -33,6 +33,7 @@ export const domIds = {
   hapticsSetting: "hapticsSetting",
   trailSetting: "trailSetting",
   fullscreenSetting: "fullscreenSetting",
+  goalIndicatorSetting: "goalIndicatorSetting",
   fpsSetting: "fpsSetting",
   statsSetting: "statsSetting",
   hint: "hint",

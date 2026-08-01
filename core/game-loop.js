@@ -35,6 +35,7 @@ export function createGameLoop({
   physicsContext,
   scheduleFrame,
   resetGoalProgress = () => {},
+  settings = { goalIndicatorEnabled: false },
   spawnTarget = () => null,
   terrainView,
   timing,
@@ -109,7 +110,7 @@ export function createGameLoop({
 
   function updateGoalIndicator(context) {
     const goal = goalTarget();
-    if (!context.intro.released || !goal) {
+    if (!settings.goalIndicatorEnabled || !context.intro.released || !goal) {
       ui.setGoalIndicator({ visible: false });
       return;
     }

@@ -27,6 +27,7 @@ export function bindSettingsPanel({
     hapticsSetting,
     trailSetting,
     fullscreenSetting,
+    goalIndicatorSetting,
     fpsSetting,
     statsSetting,
   } = els;
@@ -39,6 +40,7 @@ export function bindSettingsPanel({
   trailSetting.checked = settings.trailEnabled;
   fullscreenSetting.checked = settings.fullscreenEnabled;
   fullscreenSetting.disabled = fullscreenManagedByPwa;
+  goalIndicatorSetting.checked = settings.goalIndicatorEnabled;
   fpsSetting.checked = settings.fpsEnabled;
   statsSetting.checked = settings.statsEnabled;
 
@@ -72,6 +74,9 @@ export function bindSettingsPanel({
   bindCheckboxSetting(trailSetting, "trailEnabled");
   bindCheckboxSetting(fullscreenSetting, "fullscreenEnabled", () => {
     applyFullscreenSetting();
+  });
+  bindCheckboxSetting(goalIndicatorSetting, "goalIndicatorEnabled", () => {
+    requestRender();
   });
   bindCheckboxSetting(fpsSetting, "fpsEnabled", (enabled) => {
     onFpsChanged(enabled);

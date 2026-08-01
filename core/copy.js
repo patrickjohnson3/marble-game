@@ -47,6 +47,7 @@ export const copy = {
       hapticsSetting: "haptics",
       trailSetting: "trail",
       fullscreenSetting: "fullscreen",
+      goalIndicatorSetting: "goal arrow",
       fpsSetting: "fps",
       statsSetting: "stats",
     },

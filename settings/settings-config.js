@@ -40,6 +40,10 @@ export const settingsSchema = Object.freeze({
     defaultValue: appConfig.fullscreenOnStart,
     type: "boolean",
   }),
+  goalIndicatorEnabled: Object.freeze({
+    defaultValue: false,
+    type: "boolean",
+  }),
   fpsEnabled: Object.freeze({
     defaultValue: false,
     type: "boolean",

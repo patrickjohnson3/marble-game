@@ -34,11 +34,13 @@ function createPanelHarness() {
     hapticsEnabled: true,
     trailEnabled: false,
     fullscreenEnabled: true,
+    goalIndicatorEnabled: false,
     fpsEnabled: false,
     statsEnabled: false,
   };
   const fpsSetting = fakeControl();
   const fullscreenSetting = fakeControl();
+  const goalIndicatorSetting = fakeControl();
   const statsSetting = fakeControl();
 
   bindSettingsPanel({
@@ -54,6 +56,7 @@ function createPanelHarness() {
       hapticsSetting: fakeControl(),
       trailSetting: fakeControl(),
       fullscreenSetting,
+      goalIndicatorSetting,
       fpsSetting,
       statsSetting,
     },
@@ -106,6 +109,7 @@ function createPanelHarness() {
     }),
     fpsSetting,
     fullscreenSetting,
+    goalIndicatorSetting,
     statsSetting,
     settings,
   };
@@ -151,6 +155,26 @@ function testStatsTogglePersistsAndRenders() {
 
 testStatsTogglePersistsAndRenders();
 
+function testGoalIndicatorTogglePersistsAndRenders() {
+  const { counts, goalIndicatorSetting, settings } = createPanelHarness();
+
+  goalIndicatorSetting.checked = true;
+  goalIndicatorSetting.listeners.change();
+
+  assert.equal(settings.goalIndicatorEnabled, true);
+  assert.deepEqual(counts(), {
+    applyCount: 0,
+    fullscreenChangeCount: 0,
+    fpsChangeCount: 0,
+    statsChangeCount: 0,
+    saveCount: 1,
+    renderCount: 1,
+    retryCount: 0,
+  });
+}
+
+testGoalIndicatorTogglePersistsAndRenders();
+
 function testInstalledPwaDisablesFullscreenToggle() {
   let fullscreenChangeCount = 0;
   let saveCount = 0;
@@ -160,6 +184,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
     hapticsEnabled: true,
     trailEnabled: false,
     fullscreenEnabled: true,
+    goalIndicatorEnabled: false,
     fpsEnabled: false,
     statsEnabled: false,
   };
@@ -178,6 +203,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
       hapticsSetting: fakeControl(),
       trailSetting: fakeControl(),
       fullscreenSetting,
+      goalIndicatorSetting: fakeControl(),
       fpsSetting: fakeControl(),
       statsSetting: fakeControl(),
     },

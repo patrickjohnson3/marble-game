@@ -264,6 +264,11 @@ function testPhysicsAndSettingsRanges() {
     "accel setting max",
   );
   assert.equal(settingsConfig.trailEnabled, false, "trail defaults off");
+  assert.equal(
+    settingsConfig.goalIndicatorEnabled,
+    false,
+    "goal indicator defaults off",
+  );
   assert.equal(settingsConfig.fpsEnabled, false, "fps defaults off");
   assert.equal(settingsConfig.statsEnabled, false, "stats defaults off");
   assertPositiveNumber(

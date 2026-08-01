@@ -214,6 +214,7 @@ export function createFakeDocument() {
       "hapticsSetting",
       "trailSetting",
       "fullscreenSetting",
+      "goalIndicatorSetting",
       "fpsSetting",
       "statsSetting",
     ].map((id) => [id, new FakeElement()]),
