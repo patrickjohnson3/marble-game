@@ -717,6 +717,7 @@ function testMarbleSquishesKitchenAnts() {
         squished: false,
         targetIndex: -1,
         wobble: 0,
+        lastBounds: null,
       },
     ],
     kitchenDynamicCanvas: antCanvas,
@@ -724,6 +725,7 @@ function testMarbleSquishesKitchenAnts() {
     kitchenDynamicWorld: { width: 200, height: 200 },
     kitchenDynamicRenderScale: 0.35,
   };
+  antCanvas.context.calls.length = 0;
 
   const events = updateMapThemeDynamics({
     mapConfig: { theme: "kitchenFloor", elements: [] },
@@ -736,6 +738,11 @@ function testMarbleSquishesKitchenAnts() {
     themeState.kitchenAnts[0].squished,
     true,
     "squished ants should stay as splats",
+  );
+  assert.equal(
+    antCanvas.context.calls.some((call) => call[0] === "ellipse"),
+    true,
+    "squishing an ant should redraw the goo splat immediately",
   );
 }
 

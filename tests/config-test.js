@@ -166,6 +166,10 @@ function testTimingAndTuning() {
     tuning.hazardResetImpactFeedback,
     "hazard reset impact feedback",
   );
+  assertPositiveNumber(
+    tuning.antSquishImpactFeedback,
+    "ant squish impact feedback",
+  );
 }
 
 function testPhysicsAndSettingsRanges() {
