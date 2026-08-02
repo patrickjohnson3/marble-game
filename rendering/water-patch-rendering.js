@@ -36,27 +36,35 @@ function waterPoint(patch, point) {
   };
 }
 
+function insetPuddlePoint(point, centerX, centerY, insetScale) {
+  return {
+    x: point.x + (centerX - point.x) * insetScale,
+    y: point.y + (centerY - point.y) * insetScale,
+  };
+}
+
 function addPuddlePath(context, patch, inset = 0) {
   const centerX = patch.x + patch.w * 0.5;
   const centerY = patch.y + patch.h * 0.52;
-  const first = waterPoint(patch, puddleOutline[0]);
   const insetScale = Math.max(0, Math.min(0.9, inset));
+  const points = puddleOutline.map((point) =>
+    insetPuddlePoint(waterPoint(patch, point), centerX, centerY, insetScale),
+  );
+  const first = points[0];
 
-  context.moveTo(
-    first.x + (centerX - first.x) * insetScale,
-    first.y + (centerY - first.y) * insetScale,
-  );
-  for (let i = 1; i < puddleOutline.length; i++) {
-    const point = waterPoint(patch, puddleOutline[i]);
-    context.lineTo(
-      point.x + (centerX - point.x) * insetScale,
-      point.y + (centerY - point.y) * insetScale,
-    );
+  context.moveTo(first.x, first.y);
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+    const next = points[(i + 1) % points.length];
+    const midX = (point.x + next.x) / 2;
+    const midY = (point.y + next.y) / 2;
+    if (context.quadraticCurveTo) {
+      context.quadraticCurveTo(point.x, point.y, midX, midY);
+    } else {
+      context.lineTo(midX, midY);
+    }
   }
-  context.lineTo(
-    first.x + (centerX - first.x) * insetScale,
-    first.y + (centerY - first.y) * insetScale,
-  );
+  context.lineTo(first.x, first.y);
 }
 
 function drawPuddleShape(context, patch, inset = 0) {
