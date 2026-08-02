@@ -185,6 +185,20 @@ function drawReflection(context, patch) {
   context.restore();
 }
 
+function drawWetEdge(context, patch) {
+  context.save();
+  context.strokeStyle = "rgba(25,44,40,.28)";
+  context.lineWidth = Math.max(3, Math.min(patch.w, patch.h) * 0.025);
+  drawPuddleShape(context, patch, 0.01);
+  context.stroke();
+
+  context.strokeStyle = "rgba(250,255,255,.42)";
+  context.lineWidth = Math.max(1, Math.min(patch.w, patch.h) * 0.006);
+  drawPuddleShape(context, patch, 0.035);
+  context.stroke();
+  context.restore();
+}
+
 function drawWaterPatch(context, patch) {
   const gradient = context.createLinearGradient(
     patch.x,
@@ -206,6 +220,7 @@ function drawWaterPatch(context, patch) {
 
   drawTileWaterLines(context, patch);
   drawReflection(context, patch);
+  drawWetEdge(context, patch);
 
   context.save();
   drawPuddleShape(context, patch, 0.02);
@@ -228,13 +243,9 @@ function drawWaterPatch(context, patch) {
   context.restore();
 
   context.save();
-  context.strokeStyle = "rgba(245,255,255,.45)";
-  context.lineWidth = 1.5;
+  context.strokeStyle = "rgba(245,255,255,.22)";
+  context.lineWidth = 1.2;
   drawPuddleShape(context, patch);
-  context.stroke();
-  context.strokeStyle = "rgba(38,62,58,.2)";
-  context.lineWidth = 3;
-  drawPuddleShape(context, patch, -0.015);
   context.stroke();
   context.restore();
 }
