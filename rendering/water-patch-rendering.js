@@ -192,12 +192,12 @@ function drawWaterPatch(context, patch) {
     patch.x + patch.w,
     patch.y + patch.h,
   );
-  gradient.addColorStop(0, "rgba(255,255,255,.26)");
-  gradient.addColorStop(0.42, "rgba(194,236,228,.22)");
-  gradient.addColorStop(1, "rgba(76,120,112,.18)");
+  gradient.addColorStop(0, "rgba(255,255,255,.18)");
+  gradient.addColorStop(0.48, "rgba(228,248,244,.12)");
+  gradient.addColorStop(1, "rgba(80,106,100,.1)");
 
   context.save();
-  context.shadowColor = "rgba(24,46,44,.22)";
+  context.shadowColor = "rgba(24,46,44,.16)";
   context.shadowBlur = 5;
   context.fillStyle = gradient;
   drawPuddleShape(context, patch);
