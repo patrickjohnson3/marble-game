@@ -72,26 +72,6 @@ function drawPuddleShape(context, patch, inset = 0) {
   addPuddlePath(context, patch, inset);
 }
 
-function drawWaterRipple(context, patch, xRatio, yRatio, radiusRatio, alpha) {
-  const radius = Math.min(patch.w, patch.h) * radiusRatio;
-
-  context.save();
-  context.strokeStyle = "rgba(220,248,255," + alpha + ")";
-  context.lineWidth = Math.max(2, radius * 0.08);
-  context.beginPath();
-  context.ellipse(
-    patch.x + patch.w * xRatio,
-    patch.y + patch.h * yRatio,
-    radius,
-    radius * 0.46,
-    -0.18,
-    0,
-    Math.PI * 2,
-  );
-  context.stroke();
-  context.restore();
-}
-
 function drawDroplet(context, patch, droplet) {
   context.ellipse(
     patch.x + patch.w * droplet.x,
@@ -267,14 +247,6 @@ function drawWaterPatch(context, patch) {
   drawTileWaterLines(context, patch);
   drawReflection(context, patch);
   drawWetEdge(context, patch);
-
-  context.save();
-  drawPuddleShape(context, patch, 0.02);
-  context.clip();
-
-  drawWaterRipple(context, patch, 0.51, 0.56, 0.18, 0.16);
-  drawWaterRipple(context, patch, 0.68, 0.45, 0.12, 0.13);
-  context.restore();
 
   context.save();
   context.fillStyle = "rgba(220,252,255,.16)";
