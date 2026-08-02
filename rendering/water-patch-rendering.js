@@ -104,6 +104,26 @@ function drawDroplet(context, patch, droplet) {
   );
 }
 
+function drawRefractedLine(
+  context,
+  startX,
+  startY,
+  controlX,
+  controlY,
+  endX,
+  endY,
+) {
+  context.beginPath();
+  context.moveTo(startX, startY);
+  if (context.quadraticCurveTo) {
+    context.quadraticCurveTo(controlX, controlY, endX, endY);
+  } else {
+    context.lineTo(controlX, controlY);
+    context.lineTo(endX, endY);
+  }
+  context.stroke();
+}
+
 function drawTileWaterLines(context, patch) {
   const left = Math.ceil(patch.x / kitchenTileSize) * kitchenTileSize;
   const right = patch.x + patch.w;
@@ -114,32 +134,58 @@ function drawTileWaterLines(context, patch) {
   drawPuddleShape(context, patch, 0.04);
   context.clip();
   context.lineCap = "round";
-  context.lineWidth = 2;
+  context.lineWidth = Math.max(1.4, Math.min(patch.w, patch.h) * 0.006);
+  context.shadowColor = "rgba(255,255,255,.14)";
+  context.shadowBlur = 2;
 
   for (let x = left; x <= right; x += kitchenTileSize) {
-    context.strokeStyle = "rgba(255,255,255,.2)";
-    context.beginPath();
-    context.moveTo(x - 1, patch.y + patch.h * 0.18);
-    context.lineTo(x - 1, patch.y + patch.h * 0.84);
-    context.stroke();
-    context.strokeStyle = "rgba(55,72,62,.12)";
-    context.beginPath();
-    context.moveTo(x + 2, patch.y + patch.h * 0.16);
-    context.lineTo(x + 2, patch.y + patch.h * 0.86);
-    context.stroke();
+    const wave = Math.sin(((x - patch.x) / Math.max(1, patch.w)) * Math.PI * 2);
+    const bend = patch.w * 0.018 * wave;
+    context.strokeStyle = "rgba(255,255,255,.18)";
+    drawRefractedLine(
+      context,
+      x - 1,
+      patch.y + patch.h * 0.18,
+      x + bend,
+      patch.y + patch.h * 0.52,
+      x - bend * 0.35,
+      patch.y + patch.h * 0.84,
+    );
+    context.strokeStyle = "rgba(47,64,57,.09)";
+    drawRefractedLine(
+      context,
+      x + 3,
+      patch.y + patch.h * 0.16,
+      x + bend + 3,
+      patch.y + patch.h * 0.54,
+      x - bend * 0.35 + 3,
+      patch.y + patch.h * 0.86,
+    );
   }
 
   for (let y = top; y <= bottom; y += kitchenTileSize) {
-    context.strokeStyle = "rgba(255,255,255,.18)";
-    context.beginPath();
-    context.moveTo(patch.x + patch.w * 0.08, y - 1);
-    context.lineTo(patch.x + patch.w * 0.92, y - 1);
-    context.stroke();
-    context.strokeStyle = "rgba(55,72,62,.1)";
-    context.beginPath();
-    context.moveTo(patch.x + patch.w * 0.08, y + 2);
-    context.lineTo(patch.x + patch.w * 0.92, y + 2);
-    context.stroke();
+    const wave = Math.cos(((y - patch.y) / Math.max(1, patch.h)) * Math.PI * 2);
+    const bend = patch.h * 0.02 * wave;
+    context.strokeStyle = "rgba(255,255,255,.16)";
+    drawRefractedLine(
+      context,
+      patch.x + patch.w * 0.08,
+      y - 1,
+      patch.x + patch.w * 0.5,
+      y + bend,
+      patch.x + patch.w * 0.92,
+      y - bend * 0.3,
+    );
+    context.strokeStyle = "rgba(47,64,57,.08)";
+    drawRefractedLine(
+      context,
+      patch.x + patch.w * 0.08,
+      y + 3,
+      patch.x + patch.w * 0.5,
+      y + bend + 3,
+      patch.x + patch.w * 0.92,
+      y - bend * 0.3 + 3,
+    );
   }
 
   context.restore();
