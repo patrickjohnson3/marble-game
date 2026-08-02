@@ -20,13 +20,110 @@ const puddleOutline = Object.freeze([
   Object.freeze({ x: 0.1, y: 0.69 }),
 ]);
 const puddleDroplets = Object.freeze([
-  Object.freeze({ x: 0.12, y: 0.28, rx: 0.026, ry: 0.018, angle: -0.4 }),
-  Object.freeze({ x: 0.23, y: 0.18, rx: 0.015, ry: 0.011, angle: 0.2 }),
-  Object.freeze({ x: 0.79, y: 0.18, rx: 0.02, ry: 0.014, angle: 0.3 }),
-  Object.freeze({ x: 0.91, y: 0.28, rx: 0.013, ry: 0.01, angle: -0.1 }),
-  Object.freeze({ x: 0.95, y: 0.67, rx: 0.018, ry: 0.012, angle: 0.4 }),
-  Object.freeze({ x: 0.72, y: 0.88, rx: 0.017, ry: 0.011, angle: -0.3 }),
-  Object.freeze({ x: 0.16, y: 0.86, rx: 0.014, ry: 0.01, angle: 0.1 }),
+  Object.freeze({
+    x: 0.07,
+    y: 0.31,
+    rx: 0.018,
+    ry: 0.011,
+    angle: -0.5,
+    alpha: 0.15,
+  }),
+  Object.freeze({
+    x: 0.12,
+    y: 0.24,
+    rx: 0.026,
+    ry: 0.016,
+    angle: -0.4,
+    alpha: 0.18,
+  }),
+  Object.freeze({
+    x: 0.22,
+    y: 0.15,
+    rx: 0.014,
+    ry: 0.009,
+    angle: 0.2,
+    alpha: 0.13,
+  }),
+  Object.freeze({
+    x: 0.34,
+    y: 0.18,
+    rx: 0.01,
+    ry: 0.007,
+    angle: -0.1,
+    alpha: 0.12,
+  }),
+  Object.freeze({
+    x: 0.79,
+    y: 0.15,
+    rx: 0.02,
+    ry: 0.012,
+    angle: 0.3,
+    alpha: 0.15,
+  }),
+  Object.freeze({
+    x: 0.91,
+    y: 0.27,
+    rx: 0.012,
+    ry: 0.008,
+    angle: -0.1,
+    alpha: 0.13,
+  }),
+  Object.freeze({
+    x: 0.98,
+    y: 0.43,
+    rx: 0.009,
+    ry: 0.007,
+    angle: 0.15,
+    alpha: 0.11,
+  }),
+  Object.freeze({
+    x: 0.96,
+    y: 0.67,
+    rx: 0.018,
+    ry: 0.011,
+    angle: 0.4,
+    alpha: 0.16,
+  }),
+  Object.freeze({
+    x: 0.82,
+    y: 0.82,
+    rx: 0.01,
+    ry: 0.007,
+    angle: 0.25,
+    alpha: 0.12,
+  }),
+  Object.freeze({
+    x: 0.72,
+    y: 0.9,
+    rx: 0.017,
+    ry: 0.01,
+    angle: -0.3,
+    alpha: 0.15,
+  }),
+  Object.freeze({
+    x: 0.48,
+    y: 0.88,
+    rx: 0.012,
+    ry: 0.008,
+    angle: 0.45,
+    alpha: 0.12,
+  }),
+  Object.freeze({
+    x: 0.16,
+    y: 0.86,
+    rx: 0.014,
+    ry: 0.009,
+    angle: 0.1,
+    alpha: 0.14,
+  }),
+  Object.freeze({
+    x: 0.05,
+    y: 0.67,
+    rx: 0.011,
+    ry: 0.008,
+    angle: -0.25,
+    alpha: 0.12,
+  }),
 ]);
 
 function waterPoint(patch, point) {
@@ -249,10 +346,10 @@ function drawWaterPatch(context, patch) {
   drawWetEdge(context, patch);
 
   context.save();
-  context.fillStyle = "rgba(220,252,255,.16)";
-  context.strokeStyle = "rgba(255,255,255,.34)";
   context.lineWidth = 1.2;
   puddleDroplets.forEach((droplet) => {
+    context.fillStyle = "rgba(220,252,255," + droplet.alpha + ")";
+    context.strokeStyle = "rgba(255,255,255," + (droplet.alpha + 0.14) + ")";
     context.beginPath();
     drawDroplet(context, patch, droplet);
     context.fill();
