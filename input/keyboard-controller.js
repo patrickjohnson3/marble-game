@@ -42,6 +42,11 @@ export function createKeyboardController({
     const key = e.key.toLowerCase();
     if (game.paused) return;
 
+    if (movementKeys.has(key) && game.phase === GAME_PHASES.waiting) {
+      e.preventDefault();
+      return;
+    }
+
     if (key === "arrowleft" || key === "a") keyboard.x = -1;
     if (key === "arrowright" || key === "d") keyboard.x = 1;
     if (key === "arrowup" || key === "w") keyboard.y = -1;

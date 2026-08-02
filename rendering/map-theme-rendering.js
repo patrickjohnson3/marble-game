@@ -27,7 +27,7 @@ const cheerioSurfaceInfluences = Object.freeze({
 const kitchenCheerioObstacleSeparation = 0.5;
 const cheerioObstacleResolvePasses = 2;
 const kitchenFloorCanvasScale = 0.4;
-const kitchenDynamicCanvasScale = 0.35;
+const kitchenDynamicCanvasScale = 0.5;
 const kitchenAntRadius = 7;
 const kitchenAntDrawRadius = 18;
 const kitchenAntSpeed = 0.9;
@@ -153,6 +153,10 @@ function appendKitchenDynamicCanvas(parent, world, themeState) {
 
   themeState.kitchenDynamicCanvas = canvas;
   themeState.kitchenDynamicContext = canvas.getContext("2d");
+  if (themeState.kitchenDynamicContext) {
+    themeState.kitchenDynamicContext.imageSmoothingEnabled = true;
+    themeState.kitchenDynamicContext.imageSmoothingQuality = "high";
+  }
   themeState.kitchenDynamicWorld = world;
   themeState.kitchenDynamicRenderScale = kitchenDynamicCanvasScale;
   themeState.kitchenDynamicNeedsFullRedraw = true;

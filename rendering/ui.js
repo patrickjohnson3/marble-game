@@ -33,6 +33,7 @@ export function createUi({
 
   function setLevelLabel(message) {
     levelLabel.textContent = message;
+    levelLabel.hidden = !message;
   }
 
   function setPwaStatus(message) {

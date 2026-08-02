@@ -242,6 +242,29 @@ function testPwaStatusUpdatesSettingsStatus() {
 
 testPwaStatusUpdatesSettingsStatus();
 
+function testLevelLabelHidesWhenEmpty() {
+  const levelLabel = new FakeElement();
+  const ui = createUi({
+    hint: new FakeElement(),
+    levelLabel,
+    fpsCounter: new FakeElement(),
+    debug: new FakeElement(),
+    settings: { fpsEnabled: false, statsEnabled: false },
+    settingsOverlay: new FakeElement(),
+    debugLines: () => [],
+    state: {},
+  });
+
+  ui.setLevelLabel("level 1: kitchen floor");
+  assert.equal(levelLabel.hidden, false);
+  assert.equal(levelLabel.textContent, "level 1: kitchen floor");
+
+  ui.setLevelLabel("");
+  assert.equal(levelLabel.hidden, true);
+}
+
+testLevelLabelHidesWhenEmpty();
+
 function testMapObjectStatusUpdatesSettingsStatus() {
   const mapObjectsStatus = new FakeElement();
   const ui = createUi({

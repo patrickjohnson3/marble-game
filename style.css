@@ -684,17 +684,12 @@ body {
   pointer-events: none;
 }
 #levelLabel,
-#hint,
 #fpsCounter,
 #debug {
   border-radius: 14px;
   background: #0005;
   padding: 10px 12px;
   backdrop-filter: blur(8px);
-}
-#hint {
-  font-size: 15px;
-  text-align: center;
 }
 #levelLabel {
   justify-self: start;
@@ -704,6 +699,9 @@ body {
   letter-spacing: 0;
   text-transform: uppercase;
   opacity: 0.86;
+}
+#levelLabel:empty {
+  display: none;
 }
 #fpsCounter {
   justify-self: start;
