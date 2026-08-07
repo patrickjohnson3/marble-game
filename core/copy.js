@@ -13,7 +13,7 @@ export const copy = {
     icePatch: "ice: slippery.",
     gooPatch: "green goo: sticky.",
     roughPatch: "rough patch: heavy drag.",
-    waterPatch: "water: slower with ripples.",
+    waterPatch: "water: shallow drag, ripples on contact.",
     hazardPatch: "hazard. back to start.",
     goalNoNextMap: "goal reached. no next map available.",
   },
