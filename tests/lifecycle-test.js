@@ -50,7 +50,6 @@ function createLifecycleHarness() {
       pausedBySettings = false;
       controller.resume();
     },
-    tick() {},
   };
 
   function releaseMap() {
@@ -117,8 +116,6 @@ async function testStartRequestsFullscreenFromClickPath() {
       centerOnMarble() {},
       resetGesture() {},
     },
-    calibration: state.input.calibration,
-    controlsEl: { hidden: false },
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     game: state.game,
@@ -150,10 +147,6 @@ async function testStartRequestsFullscreenFromClickPath() {
       },
     },
     settings: { fullscreenEnabled: true },
-    startBtn: {
-      disabled: false,
-      textContent: "",
-    },
     tilt: state.input.tilt,
     timing,
     trailRenderer: { clear() {} },
@@ -172,7 +165,6 @@ async function testStartRequestsFullscreenFromClickPath() {
       return Promise.resolve(true);
     },
     keepDisplayAwake() {},
-    tick() {},
   });
 
   await lifecycle.gameController.start();
@@ -203,8 +195,6 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       centerOnMarble() {},
       resetGesture() {},
     },
-    calibration: state.input.calibration,
-    controlsEl: { hidden: false },
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     game: state.game,
@@ -232,10 +222,6 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       schedule() {},
     },
     settings: { fullscreenEnabled: true },
-    startBtn: {
-      disabled: false,
-      textContent: "",
-    },
     tilt: state.input.tilt,
     timing,
     trailRenderer: { clear() {} },
@@ -262,7 +248,6 @@ async function testStartContinuesWhenMotionPermissionStalls() {
       return 1;
     },
     clearTimeoutFn() {},
-    tick() {},
   });
 
   const startPromise = lifecycle.gameController.start();
@@ -305,8 +290,6 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       centerOnMarble() {},
       resetGesture() {},
     },
-    calibration: state.input.calibration,
-    controlsEl,
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     game: state.game,
@@ -334,7 +317,6 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       schedule() {},
     },
     settings: { fullscreenEnabled: true },
-    startBtn,
     tilt: state.input.tilt,
     timing,
     trailRenderer: { clear() {} },
@@ -359,7 +341,6 @@ async function testStartRestoresControlsWhenMotionPermissionDenied() {
       return Promise.resolve(false);
     },
     keepDisplayAwake() {},
-    tick() {},
   });
 
   await lifecycle.gameController.start();
@@ -390,8 +371,6 @@ function testResumeResetsFrameClock() {
       centerOnMarble() {},
       resetGesture() {},
     },
-    calibration: state.input.calibration,
-    controlsEl: { hidden: false },
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     game: state.game,
@@ -419,10 +398,6 @@ function testResumeResetsFrameClock() {
       schedule() {},
     },
     settings: { fullscreenEnabled: true },
-    startBtn: {
-      disabled: false,
-      textContent: "",
-    },
     tilt: state.input.tilt,
     timing,
     trailRenderer: { clear() {} },
@@ -435,7 +410,6 @@ function testResumeResetsFrameClock() {
     resetFrameClock() {
       resetClockCalls++;
     },
-    tick() {},
   });
 
   assert.equal(lifecycle.gameController.pause(), true);

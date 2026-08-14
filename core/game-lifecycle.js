@@ -33,7 +33,6 @@ export function createLifecycleController({
   resetFrameClock = () => {},
   setTimeoutFn = setTimeout,
   clearTimeoutFn = clearTimeout,
-  tick,
 }) {
   let settingsPausedGame = false;
 
@@ -164,7 +163,6 @@ export function createLifecycleController({
     resume: resumeGame,
     openSettings,
     closeSettings: closeSettingsModal,
-    tick,
   };
 
   return {

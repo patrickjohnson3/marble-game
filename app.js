@@ -53,7 +53,6 @@ import { createKeyboardController } from "./input/keyboard-controller.js";
 import { createSensorController } from "./input/sensor-controller.js";
 import { createSensorWatchdog } from "./input/sensor-watchdog.js";
 import {
-  exitFullscreenMode,
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
   requestWakeLock,
@@ -677,92 +676,8 @@ export function createApp({
       }),
   });
 
-  let gameLoop;
-  let inputManager;
-  const lifecycle = createLifecycleController({
-    cameraController,
-    calibration,
-    controlsEl,
-    effectsRenderer,
-    frameLoop,
-    game,
-    haptics,
-    intro,
-    introSequenceState,
-    introSequence,
-    keyboard,
-    mapRenderer,
-    marble,
-    resetMap: () => setCurrentMap(resolvedMapConfig),
-    resetCalibration: sensorController.resetCalibration,
-    scheduleFrame,
-    sensor,
-    sensorWatchdog,
-    settings,
-    startBtn,
-    tilt,
-    timing,
-    trailRenderer,
-    ui,
-    getSpawn: () => mapState.spawn,
-    enableMotion: () => inputManager.enableMotion(),
-    requestFullscreen: (options) =>
-      requestFullscreenMode({
-        ...options,
-        documentRef,
-        navigatorRef: windowRef.navigator,
-        windowRef,
-      }),
-    exitFullscreen: () => exitFullscreenMode({ documentRef }),
-    requestMotionPermission: () =>
-      requestMotionPermissionIfNeeded({ windowRef }),
-    keepDisplayAwake: () =>
-      requestWakeLock({ documentRef, navigatorRef: windowRef.navigator }),
-    resetFrameClock: () => gameLoop.resetClock(),
-    tick: () => gameLoop.tick(),
-  });
-  const { gameController } = lifecycle;
-  const keyboardController = createKeyboardController({
-    calibration,
-    game,
-    introSequence,
-    keyboard,
-    scheduleFrame,
-    sensor,
-    tilt,
-    closeSettings: gameController.closeSettings,
-  });
-  frameLoop.setTick(gameController.tick);
-  inputManager = setupInput({
-    els,
-    sensorController,
-    keyboardController,
-    cameraController,
-    gameController,
-  });
-
-  bindSettingsPanel({
-    els,
-    settings,
-    controls: settingsControls,
-    applyRangeConfig,
-    applySettings,
-    applyFullscreenSetting,
-    saveSettings,
-    onOpenSettings: gameController.openSettings,
-    onCloseSettings: gameController.closeSettings,
-    onRetryMap: retryCurrentMap,
-    onSetNeutral: sensorController.setNeutralNow,
-    onFpsChanged: ui.setFpsEnabled,
-    onHitboxOverlayChanged: terrainView.setHitboxOverlayEnabled,
-    onStatsChanged: ui.setStatsEnabled,
-    requestRender,
-    fullscreenManagedByPwa,
-  });
-
   const currentPhysicsContext = createCurrentPhysicsContext(state, mapState);
-
-  gameLoop = createGameLoop({
+  const gameLoop = createGameLoop({
     cameraController,
     clamp,
     effectsRenderer,
@@ -788,6 +703,83 @@ export function createApp({
     trailRenderer,
     ui,
     visualConfig,
+  });
+  frameLoop.setTick(gameLoop.tick);
+
+  let inputManager;
+  const lifecycle = createLifecycleController({
+    cameraController,
+    effectsRenderer,
+    frameLoop,
+    game,
+    haptics,
+    intro,
+    introSequenceState,
+    introSequence,
+    keyboard,
+    mapRenderer,
+    marble,
+    resetMap: () => setCurrentMap(resolvedMapConfig),
+    resetCalibration: sensorController.resetCalibration,
+    scheduleFrame,
+    sensor,
+    sensorWatchdog,
+    settings,
+    tilt,
+    timing,
+    trailRenderer,
+    ui,
+    getSpawn: () => mapState.spawn,
+    enableMotion: () => inputManager.enableMotion(),
+    requestFullscreen: (options) =>
+      requestFullscreenMode({
+        ...options,
+        documentRef,
+        navigatorRef: windowRef.navigator,
+        windowRef,
+      }),
+    requestMotionPermission: () =>
+      requestMotionPermissionIfNeeded({ windowRef }),
+    keepDisplayAwake: () =>
+      requestWakeLock({ documentRef, navigatorRef: windowRef.navigator }),
+    resetFrameClock: gameLoop.resetClock,
+  });
+  const { gameController } = lifecycle;
+  const keyboardController = createKeyboardController({
+    calibration,
+    game,
+    introSequence,
+    keyboard,
+    scheduleFrame,
+    sensor,
+    tilt,
+    closeSettings: gameController.closeSettings,
+  });
+  inputManager = setupInput({
+    els,
+    sensorController,
+    keyboardController,
+    cameraController,
+    gameController,
+  });
+
+  bindSettingsPanel({
+    els,
+    settings,
+    controls: settingsControls,
+    applyRangeConfig,
+    applySettings,
+    applyFullscreenSetting,
+    saveSettings,
+    onOpenSettings: gameController.openSettings,
+    onCloseSettings: gameController.closeSettings,
+    onRetryMap: retryCurrentMap,
+    onSetNeutral: sensorController.setNeutralNow,
+    onFpsChanged: ui.setFpsEnabled,
+    onHitboxOverlayChanged: terrainView.setHitboxOverlayEnabled,
+    onStatsChanged: ui.setStatsEnabled,
+    requestRender,
+    fullscreenManagedByPwa,
   });
 
   try {
