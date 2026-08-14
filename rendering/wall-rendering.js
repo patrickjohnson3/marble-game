@@ -122,9 +122,40 @@ function wallFrameGeometry(walls) {
   };
 }
 
-function drawWallFrame(context, frame) {
-  const width = frame.right - frame.left;
-  const height = frame.bottom - frame.top;
+function wallFrameStrips(frame) {
+  return [
+    {
+      edge: "top",
+      x: frame.left,
+      y: frame.top,
+      w: frame.right - frame.left,
+      h: frame.innerTop - frame.top,
+    },
+    {
+      edge: "bottom",
+      x: frame.left,
+      y: frame.innerBottom,
+      w: frame.right - frame.left,
+      h: frame.bottom - frame.innerBottom,
+    },
+    {
+      edge: "left",
+      x: frame.left,
+      y: frame.innerTop,
+      w: frame.innerLeft - frame.left,
+      h: frame.innerBottom - frame.innerTop,
+    },
+    {
+      edge: "right",
+      x: frame.innerRight,
+      y: frame.innerTop,
+      w: frame.right - frame.innerRight,
+      h: frame.innerBottom - frame.innerTop,
+    },
+  ].filter((strip) => strip.w > 0 && strip.h > 0);
+}
+
+function drawWallStrip(context, frame, strip) {
   const fill = context.createLinearGradient(
     frame.left,
     frame.top,
@@ -137,23 +168,19 @@ function drawWallFrame(context, frame) {
   fill.addColorStop(1, "#a9b7cc");
 
   context.save();
-  context.shadowColor = "rgba(0,0,0,.44)";
-  context.shadowBlur = 12;
-  context.shadowOffsetY = 8;
   context.fillStyle = fill;
-  context.fillRect(frame.left, frame.top, width, height);
-  context.clearRect(
-    frame.innerLeft,
-    frame.innerTop,
-    frame.innerRight - frame.innerLeft,
-    frame.innerBottom - frame.innerTop,
-  );
+  context.fillRect(strip.x, strip.y, strip.w, strip.h);
   context.restore();
 
   context.save();
   context.strokeStyle = "rgba(255,255,255,.67)";
   context.lineWidth = 3;
-  context.strokeRect(frame.left, frame.top, width, height);
+  context.strokeRect(
+    frame.left,
+    frame.top,
+    frame.right - frame.left,
+    frame.bottom - frame.top,
+  );
   context.strokeRect(
     frame.innerLeft,
     frame.innerTop,
@@ -174,9 +201,13 @@ export function renderOuterWalls(container, walls) {
     return;
   }
 
-  const { canvas, context } = createCanvas("wallCanvas", walls);
-  if (context) drawWallFrame(context, frame);
-  container.replaceChildren(canvas);
+  const canvases = wallFrameStrips(frame).map((strip) => {
+    const { canvas, context } = createCanvas("wallCanvas", [strip]);
+    canvas.setAttribute("data-wall-edge", strip.edge);
+    if (context) drawWallStrip(context, frame, strip);
+    return canvas;
+  });
+  container.replaceChildren(...canvases);
 }
 
 export { createCanvas, drawRoundedRect, rectBounds, renderPatchCanvas };

@@ -107,12 +107,18 @@ function testRenderOuterWallsKeepsPositiveInterior() {
     ]);
   });
 
-  const canvas = container.children[0];
-  const clearCall = canvas.context.calls.find(
-    (call) => call[0] === "clearRect",
+  assert.equal(container.children.length, 4);
+  assert.deepEqual(
+    container.children.map((canvas) => canvas.attributes["data-wall-edge"]),
+    ["top", "bottom", "left", "right"],
   );
-
-  assert.deepEqual(clearCall, ["clearRect", 0, 0, 2200, 2200]);
+  assert.equal(
+    container.children.some((canvas) =>
+      canvas.context.calls.some((call) => call[0] === "clearRect"),
+    ),
+    false,
+    "wall edges should not allocate and clear the transparent map interior",
+  );
 }
 
 testRenderOuterWallsKeepsPositiveInterior();
@@ -175,7 +181,7 @@ function testRenderOuterWallsUsesFrameGeometry() {
     ]);
   });
 
-  assert.equal(container.children.length, 1);
+  assert.equal(container.children.length, 4);
 }
 
 testRenderOuterWallsUsesFrameGeometry();
@@ -1498,7 +1504,9 @@ try {
     { x: -10, y: 0, w: 10, h: 100 },
     { x: 100, y: 0, w: 10, h: 100 },
   ]);
-  const wallCanvas = wallsContainer.children[0];
+  const wallCanvases = wallsContainer.children;
+  const wallCanvas = wallCanvases[0];
+  assert.equal(wallCanvases.length, 4, "wall frame should use narrow edges");
   assert.equal(
     wallCanvas.classList.contains("wallCanvas"),
     true,
@@ -1510,9 +1518,11 @@ try {
     "wall canvas should draw fill",
   );
   assert.equal(
-    wallCanvas.context.calls.some((call) => call[0] === "clearRect"),
-    true,
-    "wall canvas should clear interior",
+    wallCanvases.some((canvas) =>
+      canvas.context.calls.some((call) => call[0] === "clearRect"),
+    ),
+    false,
+    "wall canvases should not cover the transparent interior",
   );
 
   const container = new FakeElement();

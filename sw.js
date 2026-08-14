@@ -1,6 +1,6 @@
 import { runtimeFiles, runtimeModuleScripts } from "./runtime-assets.js";
 
-const cacheVersion = "marble-game-cc26b86ef752a5bb";
+const cacheVersion = "marble-game-918e3e86440df3ef";
 const assetVersion = cacheVersion.slice("marble-game-".length);
 const versionedFiles = [...runtimeModuleScripts, "style.css"].map(
   (file) => file + "?v=" + assetVersion,
