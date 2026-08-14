@@ -6,7 +6,7 @@ export const mapValidationMessages = Object.freeze({
   goalHoldPositive: "goal hold time must be positive",
   goalInsideWorld: "goal must fit inside world bounds",
   goalObstacleOverlap: "goal must not overlap obstacles",
-  goalReachable: "goal must be reachable from spawn",
+  goalReachable: "goal must appear reachable from spawn",
   gridPositive: "grid size must be positive",
   normalizedObstaclesArray: "normalized obstacles must be an array",
   spawnRequired: "spawn is required",

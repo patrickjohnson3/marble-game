@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { validateMapConfig } from "../core/map-validation.js";
 import { resolveSeededMapConfig } from "../core/map-variants.js";
-import { hasReachableGoal } from "../core/map-reachability.js";
+import { hasLikelyReachableGoal } from "../core/map-reachability.js";
 import { mapValidationMessages } from "../core/map-validation-messages.js";
 import {
   blockedSpawnConfig,
@@ -234,7 +234,7 @@ function testMapValidationRejectsUnreachableGoal() {
 
 function testReachabilityUsesExactSpawnAndGoalSamples() {
   assert.equal(
-    hasReachableGoal({
+    hasLikelyReachableGoal({
       world: { width: 100, height: 40 },
       obstacles: [{ x: 14, y: 8, w: 2, h: 4 }],
       spawn: { x: 6, y: 10, r: 5 },
@@ -247,7 +247,7 @@ function testReachabilityUsesExactSpawnAndGoalSamples() {
 
 function testReachabilityAcceptsOpenMap() {
   assert.equal(
-    hasReachableGoal({
+    hasLikelyReachableGoal({
       world: { width: 120, height: 120 },
       obstacles: [],
       spawn: { x: 20, y: 20, r: 5 },
@@ -260,7 +260,7 @@ function testReachabilityAcceptsOpenMap() {
 
 function testReachabilityRejectsFullyBlockedGoal() {
   assert.equal(
-    hasReachableGoal({
+    hasLikelyReachableGoal({
       world: { width: 120, height: 120 },
       obstacles: [
         { x: 70, y: 0, w: 10, h: 120 },
@@ -283,7 +283,7 @@ function testReachabilityRespectsMarbleRadiusInNarrowCorridors() {
   const goal = { x: 100, y: 40, r: 18 };
 
   assert.equal(
-    hasReachableGoal({
+    hasLikelyReachableGoal({
       world,
       obstacles,
       spawn: { x: 20, y: 40, r: 5 },
@@ -293,7 +293,7 @@ function testReachabilityRespectsMarbleRadiusInNarrowCorridors() {
     true,
   );
   assert.equal(
-    hasReachableGoal({
+    hasLikelyReachableGoal({
       world,
       obstacles,
       spawn: { x: 20, y: 40, r: 14 },
@@ -306,7 +306,7 @@ function testReachabilityRespectsMarbleRadiusInNarrowCorridors() {
 
 function testReachabilityHandlesGoalNearCellBoundary() {
   assert.equal(
-    hasReachableGoal({
+    hasLikelyReachableGoal({
       world: { width: 100, height: 100 },
       obstacles: [],
       spawn: { x: 10, y: 10, r: 5 },

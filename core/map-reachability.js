@@ -1,7 +1,13 @@
 import { clamp } from "./geometry.js";
 import { circleObstacleContact } from "./physics-collisions.js";
 
-export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
+export function hasLikelyReachableGoal({
+  world,
+  obstacles,
+  spawn,
+  goal,
+  cellSize,
+}) {
   const radius = spawn.r;
   const columns = Math.ceil(world.width / cellSize);
   const rows = Math.ceil(world.height / cellSize);

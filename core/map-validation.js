@@ -5,7 +5,7 @@ import {
 } from "./map-elements.js";
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { circleObstacleContact } from "./physics-collisions.js";
-import { hasReachableGoal } from "./map-reachability.js";
+import { hasLikelyReachableGoal } from "./map-reachability.js";
 import { mapValidationMessages } from "./map-validation-messages.js";
 
 function isMultipleOf(value, size) {
@@ -290,7 +290,7 @@ function validateReachableGoal({
   }
 
   if (
-    !hasReachableGoal({
+    !hasLikelyReachableGoal({
       world,
       obstacles: checkedObstacles,
       spawn: checkedSpawn,
