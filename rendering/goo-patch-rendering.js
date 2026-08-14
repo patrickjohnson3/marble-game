@@ -11,11 +11,11 @@ function gooNoise(x, y, salt = 0) {
 
 function drawGooBubble(context, x, y, radius, alpha) {
   context.save();
-  context.fillStyle = "rgba(208,255,93," + alpha + ")";
+  context.fillStyle = "rgba(178,218,105," + alpha * 0.8 + ")";
   context.beginPath();
   context.ellipse(x, y, radius, radius * 0.78, 0, 0, Math.PI * 2);
   context.fill();
-  context.strokeStyle = "rgba(37,96,20,.28)";
+  context.strokeStyle = "rgba(33,82,30,.24)";
   context.lineWidth = Math.max(1, radius * 0.12);
   context.stroke();
   context.restore();
@@ -33,13 +33,13 @@ function drawGooPatch(context, patch) {
   const radiusX = patch.w * 0.5;
   const radiusY = patch.h * 0.47;
 
-  gradient.addColorStop(0, "rgba(196,255,55,.86)");
-  gradient.addColorStop(0.42, "rgba(84,203,42,.8)");
-  gradient.addColorStop(1, "rgba(28,116,37,.82)");
+  gradient.addColorStop(0, "rgba(142,199,74,.68)");
+  gradient.addColorStop(0.42, "rgba(70,153,58,.7)");
+  gradient.addColorStop(1, "rgba(35,100,48,.74)");
 
   context.save();
-  context.shadowColor = "rgba(124,255,60,.26)";
-  context.shadowBlur = 18;
+  context.shadowColor = "rgba(70,160,64,.16)";
+  context.shadowBlur = 12;
   context.fillStyle = gradient;
   context.beginPath();
   context.ellipse(centerX, centerY, radiusX, radiusY, 0.1, 0, Math.PI * 2);
@@ -51,7 +51,7 @@ function drawGooPatch(context, patch) {
   context.ellipse(centerX, centerY, radiusX, radiusY, 0.1, 0, Math.PI * 2);
   context.clip();
 
-  context.strokeStyle = "rgba(225,255,120,.38)";
+  context.strokeStyle = "rgba(202,229,141,.28)";
   context.lineWidth = Math.max(5, Math.min(patch.w, patch.h) * 0.035);
   context.lineCap = "round";
   [
@@ -86,7 +86,7 @@ function drawGooPatch(context, patch) {
   context.restore();
 
   context.save();
-  context.strokeStyle = "rgba(229,255,131,.56)";
+  context.strokeStyle = "rgba(172,215,115,.38)";
   context.lineWidth = 2;
   context.beginPath();
   context.ellipse(centerX, centerY, radiusX, radiusY, 0.1, 0, Math.PI * 2);

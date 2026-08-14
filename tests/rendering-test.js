@@ -1486,6 +1486,14 @@ try {
     true,
     "goo patch canvas should draw a blob and bubbles",
   );
+  assert.equal(
+    gooPatchCanvas.context.calls.some(
+      (call) =>
+        call[0] === "addColorStop" && call[2] === "rgba(142,199,74,.68)",
+    ),
+    true,
+    "goo should use a subdued translucent highlight",
+  );
 
   renderHazardPatches(hazardPatchContainer, [{ x: 30, y: 40, w: 100, h: 70 }], {
     padding: 18,
