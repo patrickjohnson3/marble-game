@@ -31,5 +31,4 @@ export const mapValidationMessages = Object.freeze({
     "element " + index + " " + key + " must align to grid",
   normalizedObstacleObject: (index) =>
     "normalized obstacle " + index + " must be an object",
-  variantWorldMatch: (id) => "variant " + id + " world must match base world",
 });

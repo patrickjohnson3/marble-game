@@ -11,6 +11,7 @@ export function createCameraController({
   viewport,
   world,
 }) {
+  let currentWorld = world;
   const boundsCache = {
     centerX: 0,
     centerY: 0,
@@ -35,8 +36,8 @@ export function createCameraController({
     )
       return;
 
-    const scaledWidth = world.width * camera.scale;
-    const scaledHeight = world.height * camera.scale;
+    const scaledWidth = currentWorld.width * camera.scale;
+    const scaledHeight = currentWorld.height * camera.scale;
     boundsCache.scale = camera.scale;
     boundsCache.viewportWidth = viewportWidth;
     boundsCache.viewportHeight = viewportHeight;
@@ -83,6 +84,12 @@ export function createCameraController({
     applyTransform();
   }
 
+  function setWorld(nextWorld) {
+    currentWorld = nextWorld;
+    boundsCache.scale = null;
+    applyTransform();
+  }
+
   function updateFollow(dt) {
     if (!intro.released) return;
 
@@ -116,6 +123,7 @@ export function createCameraController({
     onPointerEnd: gestures.onPointerEnd,
     onPointerMove: gestures.onPointerMove,
     resetGesture: gestures.resetGesture,
+    setWorld,
     updateFollow,
   };
 }

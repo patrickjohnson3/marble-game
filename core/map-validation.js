@@ -7,14 +7,9 @@ import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { circleObstacleContact } from "./physics-collisions.js";
 import { hasReachableGoal } from "./map-reachability.js";
 import { mapValidationMessages } from "./map-validation-messages.js";
-import { validMapVariants } from "./map-variants.js";
 
 function isMultipleOf(value, size) {
   return Math.abs(value / size - Math.round(value / size)) < 0.000001;
-}
-
-function sameWorldSize(a, b) {
-  return a?.width === b?.width && a?.height === b?.height;
 }
 
 function reachabilityCellSize({ gridSize, spawn, tuning = {} }) {
@@ -174,11 +169,6 @@ function validateWorldAndGrid(config, { errors, gridSize, world }) {
   if (!Number.isFinite(world.height) || world.height <= 0) {
     errors.push(mapValidationMessages.worldHeightPositive);
   }
-  validMapVariants(config?.variants).forEach((variant) => {
-    if (variant.world && !sameWorldSize(variant.world, world)) {
-      errors.push(mapValidationMessages.variantWorldMatch(variant.id));
-    }
-  });
   if (gridSize !== undefined) {
     if (!Number.isFinite(gridSize) || gridSize <= 0) {
       errors.push(mapValidationMessages.gridPositive);

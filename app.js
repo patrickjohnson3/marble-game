@@ -595,6 +595,9 @@ export function createApp({
       mapConfig: mapState.activeMap,
       world: mapState.world,
     });
+    cameraController.setWorld(mapState.world);
+    effectsRenderer.setWorld(mapState.world);
+    marbleView.setWorld(mapState.world);
     mapRenderer.setWorld(mapState.world);
     terrainView.setTerrain({
       goal: mapState.goal,

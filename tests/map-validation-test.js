@@ -217,12 +217,11 @@ function testMapValidationUsesNormalizedObstacleOverrideForSpawnAndGoal() {
   );
 }
 
-function testMapValidationRejectsVariantWorldMismatch() {
-  assert.ok(
-    validateMapConfig(variantWorldMismatchConfig).includes(
-      mapValidationMessages.variantWorldMatch("other-size"),
-    ),
-  );
+function testMapValidationAllowsVariantWorldSizes() {
+  const resolved = resolveSeededMapConfig(variantWorldMismatchConfig);
+
+  assert.deepEqual(resolved.world, { width: 120, height: 100 });
+  assert.deepEqual(validateMapConfig(resolved), []);
 }
 
 function testMapValidationRejectsUnreachableGoal() {
@@ -331,7 +330,7 @@ testMapValidationUsesNarrowRotatedHitboxForGoalOverlap();
 testMapValidationDetectsRotatedHitboxOutsideVisualBounds();
 testMapValidationReportsInvalidNormalizedObstacles();
 testMapValidationUsesNormalizedObstacleOverrideForSpawnAndGoal();
-testMapValidationRejectsVariantWorldMismatch();
+testMapValidationAllowsVariantWorldSizes();
 testMapValidationRejectsUnreachableGoal();
 testReachabilityUsesExactSpawnAndGoalSamples();
 testReachabilityAcceptsOpenMap();

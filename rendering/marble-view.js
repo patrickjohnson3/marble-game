@@ -8,7 +8,7 @@ export function createMarbleView({
   visualConfig,
 }) {
   const light = mapConfig.light;
-  const worldDiagonal = Math.hypot(world.width, world.height);
+  let worldDiagonal = Math.hypot(world.width, world.height);
   const contactShadowY = light.contactShadowY.toFixed(1) + "px";
   const contactShadowBlur = light.contactShadowBlur.toFixed(1) + "px";
   const lastStyle = {
@@ -34,6 +34,10 @@ export function createMarbleView({
 
   function syncRadius() {
     marble.r = Math.max(marbleEl.offsetWidth, marbleEl.offsetHeight) / 2;
+  }
+
+  function setWorld(nextWorld) {
+    worldDiagonal = Math.hypot(nextWorld.width, nextWorld.height);
   }
 
   function marbleHasValidLayout() {
@@ -123,6 +127,7 @@ export function createMarbleView({
 
   return {
     render,
+    setWorld,
     syncRadius,
   };
 }

@@ -387,6 +387,14 @@ function testMarbleVisibleOnlyAfterValidLayout() {
   view.syncRadius();
   view.render();
   assert.equal(marbleEl.classList.contains("ready"), true);
+
+  const originalShadowBlur = marbleEl.style.properties["--marble-shadow-blur"];
+  view.setWorld({ width: 800, height: 800 });
+  view.render();
+  assert.notEqual(
+    marbleEl.style.properties["--marble-shadow-blur"],
+    originalShadowBlur,
+  );
 }
 
 testMarbleVisibleOnlyAfterValidLayout();

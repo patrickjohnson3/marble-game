@@ -104,11 +104,24 @@ function testSmallScaledWorldCentersInViewport() {
   assert.equal(camera.y, 50);
 }
 
+function testWorldSizeCanChange() {
+  const { camera, controller } = createController({
+    marble: { x: 980, y: 980, vx: 0, vy: 0 },
+  });
+
+  controller.setWorld({ width: 2000, height: 1600 });
+  controller.centerOnMarble();
+
+  assert.equal(camera.x, -830);
+  assert.equal(camera.y, -830);
+}
+
 testFollowPreservesSmoothFollow();
 testFollowWaitsForGestureCooldown();
 testGesturePansCameraAndStartsCooldown();
 testCenterClampsToWorldEdges();
 testFollowClampsToFarWorldEdges();
 testSmallScaledWorldCentersInViewport();
+testWorldSizeCanChange();
 
 console.log("Camera tests passed.");

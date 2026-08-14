@@ -89,6 +89,11 @@ async function testEffectsThrottleAndParticleCap() {
 
     assert.equal(effectsEl.childNodes.length, 1);
     assert.equal(effects.canvas.className, "effectsCanvas");
+    effects.setWorld({ width: 300, height: 120 });
+    assert.equal(effects.canvas.width, 150);
+    assert.equal(effects.canvas.height, 60);
+    assert.equal(effects.canvas.style.width, "300px");
+    assert.equal(effects.canvas.style.height, "120px");
     effects.render(currentTime);
     effects.render(currentTime);
     assert.equal(

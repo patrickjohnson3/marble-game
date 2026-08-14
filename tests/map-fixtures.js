@@ -56,7 +56,15 @@ export const emptyElementMapConfig = mapConfig();
 
 export const variantWorldMismatchConfig = {
   ...emptyElementMapConfig,
-  variants: [{ id: "other-size", world: { width: 120, height: 100 } }],
+  seed: "other-size",
+  variants: [
+    {
+      id: "other-size",
+      world: { width: 120, height: 100 },
+      elements: [],
+      goal: goal(),
+    },
+  ],
 };
 
 export const unreachableGoalConfig = {

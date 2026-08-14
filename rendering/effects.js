@@ -275,6 +275,11 @@ export function createEffectsRenderer({
     lastWaterRippleAt = Number.NEGATIVE_INFINITY;
   }
 
+  function setWorld(nextWorld) {
+    clear();
+    configureCanvas(canvas, nextWorld, canvasScale);
+  }
+
   function render(currentTime = now()) {
     if (!context || (activeParticles.length === 0 && !canvasDirty)) return;
 
@@ -305,6 +310,7 @@ export function createEffectsRenderer({
     canvas,
     clear,
     render,
+    setWorld,
     spawnGooSplat,
     spawnGoalComplete,
     spawnImpact,
