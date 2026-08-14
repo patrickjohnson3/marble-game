@@ -25,7 +25,7 @@ export const copy = {
     ready: "offline app ready.",
     unsupported: "offline app unavailable in this browser.",
     updateInstalling: "downloading app update...",
-    updateReady: "update ready. close and reopen the app.",
+    updateReady: "app update installed. reloading...",
   },
   intro: {
     countdown: "map opens in",

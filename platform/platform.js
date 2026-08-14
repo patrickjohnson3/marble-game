@@ -208,11 +208,19 @@ export function registerServiceWorker({
   }
 
   let updateReadyNotified = false;
+  let updateReloadStarted = false;
   function notifyUpdateReady() {
     if (updateReadyNotified) return;
     updateReadyNotified = true;
     notifyServiceWorkerUpdate(onUpdateReady);
     notifyServiceWorkerStatus(onStatusChange, "update-ready");
+  }
+
+  function reloadForActiveUpdate() {
+    if (updateReloadStarted) return;
+    updateReloadStarted = true;
+    notifyUpdateReady();
+    windowRef.location?.reload?.();
   }
 
   windowRef.addEventListener("load", () => {
@@ -221,7 +229,7 @@ export function registerServiceWorker({
     if (hadController && navigatorRef.serviceWorker.addEventListener) {
       navigatorRef.serviceWorker.addEventListener(
         "controllerchange",
-        notifyUpdateReady,
+        reloadForActiveUpdate,
         { once: true },
       );
     }
