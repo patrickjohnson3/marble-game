@@ -9,7 +9,7 @@ import { renderHazardPatches } from "../rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
 import {
   renderMapTheme,
-  updateMapThemeDynamics,
+  renderMapThemeDynamics,
 } from "../rendering/map-theme-rendering.js";
 import {
   renderObstacleHitboxes,
@@ -71,6 +71,28 @@ function kitchenDynamicsWith(overrides = {}) {
     ...createKitchenDynamicsState(),
     ...overrides,
   });
+}
+
+function updateAndRenderMapThemeDynamics({
+  dynamics,
+  mapConfig,
+  marble,
+  previousMarble = marble,
+  frameDelta = 1,
+  themeState = {},
+}) {
+  const events = dynamics.update({
+    mapConfig,
+    marble,
+    previousMarble,
+    frameDelta,
+  });
+  renderMapThemeDynamics({
+    dynamicsState: dynamics.state,
+    mapConfig,
+    themeState,
+  });
+  return events;
 }
 
 function testRenderOuterWallsKeepsPositiveInterior() {
@@ -589,7 +611,7 @@ function testKitchenCheeriosGiveWayToMarble() {
     r: 29,
   };
 
-  updateMapThemeDynamics({
+  updateAndRenderMapThemeDynamics({
     container,
     overlayContainer,
     dynamics,
@@ -640,7 +662,7 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
   };
   const dynamics = kitchenDynamicsWith({ cheerios: [cheerioState] });
 
-  updateMapThemeDynamics({
+  updateAndRenderMapThemeDynamics({
     dynamics,
     mapConfig: {
       theme: "kitchenFloor",
@@ -708,7 +730,7 @@ function testKitchenAntsMunchCheerios() {
     kitchenDynamicRenderCache: new Map(),
   };
 
-  updateMapThemeDynamics({
+  updateAndRenderMapThemeDynamics({
     dynamics,
     mapConfig: { theme: "kitchenFloor", elements: [] },
     marble: { x: 300, y: 300, vx: 0, vy: 0, r: 29 },
@@ -749,7 +771,7 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
   const canvas = themeState.kitchenDynamicCanvas;
   canvas.context.calls.length = 0;
 
-  updateMapThemeDynamics({
+  updateAndRenderMapThemeDynamics({
     dynamics,
     mapConfig,
     marble: { x: 2200, y: 2200, vx: 0, vy: 0, r: 29 },
@@ -811,7 +833,7 @@ function testKitchenDynamicsContinueOutsideCameraView() {
     kitchenDynamicRenderCache: new Map(),
   };
 
-  updateMapThemeDynamics({
+  updateAndRenderMapThemeDynamics({
     dynamics,
     mapConfig: { theme: "kitchenFloor", elements: [] },
     marble: { x: 1000, y: 1000, vx: 3, vy: 0, r: 29 },
@@ -859,7 +881,7 @@ function testMarbleSquishesKitchenAnts() {
   };
   antCanvas.context.calls.length = 0;
 
-  const events = updateMapThemeDynamics({
+  const events = updateAndRenderMapThemeDynamics({
     dynamics,
     mapConfig: { theme: "kitchenFloor", elements: [] },
     marble: { x: 100, y: 100, vx: 3, vy: 0, r: 29 },
@@ -908,7 +930,7 @@ function testMarbleGetsFeedbackOnSquishedKitchenAnts() {
     kitchenDynamicRenderCache: new Map(),
   };
 
-  const events = updateMapThemeDynamics({
+  const events = updateAndRenderMapThemeDynamics({
     dynamics,
     mapConfig: { theme: "kitchenFloor", elements: [] },
     marble: { x: 100, y: 100, vx: 1, vy: 0, r: 29 },
@@ -981,7 +1003,7 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
   };
   const marble = { ...origin, vx: 24, vy: 0, r: 29 };
 
-  updateMapThemeDynamics({
+  updateAndRenderMapThemeDynamics({
     container: waterContainer,
     dynamics: waterCheerio.dynamics,
     overlayContainer: waterOverlay,
@@ -992,7 +1014,7 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
     marble,
     themeState: waterCheerio.themeState,
   });
-  updateMapThemeDynamics({
+  updateAndRenderMapThemeDynamics({
     container: gooContainer,
     dynamics: gooCheerio.dynamics,
     overlayContainer: gooOverlay,
@@ -1032,7 +1054,7 @@ function testKitchenCheerioUsesActualPreviousMarblePosition() {
     r: 29,
   };
 
-  updateMapThemeDynamics({
+  updateAndRenderMapThemeDynamics({
     container,
     dynamics,
     overlayContainer,

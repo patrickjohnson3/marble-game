@@ -381,8 +381,7 @@ export const authoredMapVariants = [
     id: "living-room",
     name: "living room",
     theme: "livingRoom",
-    objectSummary:
-      "objects: sofa, shelves, coffee table, rug, blocks, sock.",
+    objectSummary: "objects: sofa, shelves, coffee table, rug, blocks, sock.",
     difficulty: 2,
     spawn: scaleMapPoint({ x: 360, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1820, y: 440, r: 95, holdMs: 5000 }),

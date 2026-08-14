@@ -811,24 +811,14 @@ function renderKitchenDynamics(themeState, dynamicsState) {
   storeDynamicBounds(entries, renderCache);
 }
 
-export function updateMapThemeDynamics({
-  dynamics,
+export function renderMapThemeDynamics({
+  dynamicsState,
   mapConfig,
-  marble,
-  previousMarble = marble,
-  frameDelta = 1,
   themeState = {},
 }) {
-  const events = dynamics.update({
-    mapConfig,
-    marble,
-    previousMarble,
-    frameDelta,
-  });
   if (mapConfig?.theme === "kitchenFloor") {
-    renderKitchenDynamics(themeState, dynamics.state);
+    renderKitchenDynamics(themeState, dynamicsState);
   }
-  return events;
 }
 
 export function renderMapTheme({

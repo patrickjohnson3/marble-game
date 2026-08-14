@@ -37,7 +37,7 @@ import {
 } from "./rendering/map-renderer.js";
 import {
   renderMapTheme,
-  updateMapThemeDynamics,
+  renderMapThemeDynamics,
 } from "./rendering/map-theme-rendering.js";
 import { createMarbleView } from "./rendering/marble-view.js";
 import {
@@ -96,6 +96,7 @@ function setupRenderers({
   settings,
   clamp,
   mapState,
+  kitchenDynamicsState,
 }) {
   const {
     world: worldEl,
@@ -139,7 +140,6 @@ function setupRenderers({
     },
   };
   const { bounds, game, intro, marble } = state;
-  const themeDynamics = createKitchenDynamics();
   const trailRenderer = createTrailRenderer({
     trailEl,
     trailSegmentsEl,
@@ -183,6 +183,7 @@ function setupRenderers({
     terrainByType: mapState.terrainByType,
     obstacles: mapState.obstacles,
     obstacleBounds: mapState.obstacleBounds,
+    dynamicsState: kitchenDynamicsState,
     renderTerrainPatches: (type, container, elements, bounds) => {
       const renderer = terrainPatchRenderers[type];
       if (!renderer) return;
@@ -192,8 +193,7 @@ function setupRenderers({
       });
     },
     renderMapTheme,
-    updateMapThemeDynamics,
-    themeDynamics,
+    renderMapThemeDynamics,
     renderObstacleWalls: (
       container,
       renderedObstacles,
@@ -459,6 +459,8 @@ export function createApp({
   });
   const mapState = mapRuntime.state;
   const world = mapState.activeMap.world;
+  const kitchenDynamics = createKitchenDynamics();
+  kitchenDynamics.reset({ mapConfig: mapState.activeMap, world });
 
   const state = createGameState({
     world,
@@ -550,6 +552,7 @@ export function createApp({
     settings,
     clamp,
     mapState,
+    kitchenDynamicsState: kitchenDynamics.state,
   });
   const { applyFullscreenSetting, applySettings } = createSettingsApplier({
     documentRef,
@@ -589,6 +592,10 @@ export function createApp({
 
   function setCurrentMap(nextMap) {
     mapRuntime.setActiveMap(nextMap);
+    kitchenDynamics.reset({
+      mapConfig: mapState.activeMap,
+      world: mapState.world,
+    });
     mapRenderer.setWorld(mapState.world);
     terrainView.setTerrain({
       goal: mapState.goal,
@@ -596,6 +603,7 @@ export function createApp({
       terrainByType: mapState.terrainByType,
       obstacles: mapState.obstacles,
       obstacleBounds: mapState.obstacleBounds,
+      dynamicsState: kitchenDynamics.state,
       world: mapState.world,
     });
     ui.setMapObjects(mapObjectSummary(mapState.activeMap));
@@ -669,6 +677,7 @@ export function createApp({
 
   const currentPhysicsContext = createCurrentPhysicsContext(state, mapState);
   const gameLoop = createGameLoop({
+    activeMap: () => mapState.activeMap,
     cameraController,
     clamp,
     effectsRenderer,
@@ -677,6 +686,7 @@ export function createApp({
     hapticFeedback,
     goalController,
     goalTarget: () => mapState.goal,
+    kitchenDynamics,
     marble,
     marbleView,
     perf: state.perf,

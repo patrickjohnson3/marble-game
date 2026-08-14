@@ -29,6 +29,8 @@ export function createGameLoop({
   hapticFeedback,
   goalController,
   goalTarget = () => null,
+  activeMap = () => null,
+  kitchenDynamics = null,
   marble,
   marbleView,
   perf,
@@ -184,11 +186,13 @@ export function createGameLoop({
       updateGoalIndicator(context);
       updateHazardArmed();
       const themeBudgetStart = performance.now();
-      const themeEvents = terrainView?.updateMapThemeDynamics(
+      const themeEvents = kitchenDynamics?.update({
+        mapConfig: activeMap(),
         marble,
         previousMarble,
         frameDelta,
-      );
+      });
+      terrainView?.renderMapThemeDynamics();
       if (themeEvents?.squishedAnts > 0) {
         hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);
       } else if (themeEvents?.splatHits > 0) {

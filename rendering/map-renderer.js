@@ -11,16 +11,10 @@ export function createTerrainView({
   terrainByType = {},
   obstacles,
   obstacleBounds,
+  dynamicsState = { ants: [], cheerios: [] },
   renderTerrainPatches: drawTerrainPatches = () => {},
   renderMapTheme: drawMapTheme = () => {},
-  updateMapThemeDynamics: updateThemeDynamics = () => {},
-  themeDynamics = {
-    state: {},
-    reset() {},
-    update() {
-      return {};
-    },
-  },
+  renderMapThemeDynamics: drawMapThemeDynamics = () => {},
   renderObstacleWalls,
   renderObstacleHitboxes,
   goalFillEdgePercent = 70.8,
@@ -31,6 +25,7 @@ export function createTerrainView({
   let currentTerrainByType = terrainByType;
   let currentObstacles = obstacles;
   let currentObstacleBounds = obstacleBounds;
+  let currentDynamicsState = dynamicsState;
   let currentWorld = world;
   let currentHitboxOverlayEnabled = hitboxOverlayEnabled;
   const themeState = {};
@@ -41,10 +36,9 @@ export function createTerrainView({
   }
 
   function renderMapTheme() {
-    themeDynamics.reset({ mapConfig: currentMapConfig, world: currentWorld });
     drawMapTheme({
       container: mapThemeEl,
-      dynamicsState: themeDynamics.state,
+      dynamicsState: currentDynamicsState,
       overlayContainer: mapThemeOverlayEl,
       mapConfig: currentMapConfig,
       themeState,
@@ -100,6 +94,7 @@ export function createTerrainView({
     terrainByType = currentTerrainByType,
     obstacles,
     obstacleBounds,
+    dynamicsState = currentDynamicsState,
     world = currentWorld,
   }) {
     currentGoal = goal;
@@ -107,6 +102,7 @@ export function createTerrainView({
     currentTerrainByType = terrainByType;
     currentObstacles = obstacles;
     currentObstacleBounds = obstacleBounds;
+    currentDynamicsState = dynamicsState;
     currentWorld = world;
     renderTerrain();
   }
@@ -120,15 +116,10 @@ export function createTerrainView({
     );
   }
 
-  function updateMapThemeDynamics(marble, previousMarble, frameDelta) {
-    return updateThemeDynamics({
-      container: mapThemeEl,
-      dynamics: themeDynamics,
-      overlayContainer: mapThemeOverlayEl,
+  function renderMapThemeDynamics() {
+    drawMapThemeDynamics({
+      dynamicsState: currentDynamicsState,
       mapConfig: currentMapConfig,
-      frameDelta,
-      marble,
-      previousMarble,
       themeState,
     });
   }
@@ -142,7 +133,7 @@ export function createTerrainView({
     setTerrain,
     setHitboxOverlayEnabled,
     updateGoalProgress,
-    updateMapThemeDynamics,
+    renderMapThemeDynamics,
   };
 }
 
