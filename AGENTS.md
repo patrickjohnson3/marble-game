@@ -10,10 +10,10 @@ This is a vanilla JavaScript browser game with a small custom 2D engine. Entry p
 - `npm run lint`: runs ESLint across the repo.
 - `npm run format:check`: verifies Prettier formatting.
 - `npm run format`: applies Prettier formatting.
-- `npm run sync-cache`: updates `index.html` and `sw.js` cache versions after runtime asset changes.
+- `npm run sync-cache`: synchronizes generated cache versions and the import-map module list.
 - `python3 -m http.server`: serves the repo locally for browser/mobile testing.
 
-After changing runtime JS, CSS, HTML, maps, assets, or PWA files, run `npm run sync-cache` before final tests.
+`runtime-assets.js` is the source of truth for browser modules and precached assets. Update it when adding or removing a runtime file. After changing `index.html` or a listed runtime asset, run `npm run sync-cache` before final tests. Do not hand-edit the generated `assetVersion` or `runtimeModuleScripts` values in `index.html`, or `cacheVersion` in `sw.js`.
 
 ## Coding Style & Naming Conventions
 
