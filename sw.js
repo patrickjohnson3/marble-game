@@ -1,6 +1,6 @@
 import { runtimeFiles, runtimeModuleScripts } from "./runtime-assets.js";
 
-const cacheVersion = "marble-game-00ffd74d85952d2f";
+const cacheVersion = "marble-game-349400672f2b79ad";
 const assetVersion = cacheVersion.slice("marble-game-".length);
 const versionedFiles = [...runtimeModuleScripts, "style.css"].map(
   (file) => file + "?v=" + assetVersion,
@@ -51,8 +51,8 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-function keepCacheWriteAlive(event, cacheWrite) {
-  event.waitUntil(cacheWrite.catch(() => {}));
+function extendEventLifetime(event, work) {
+  event.waitUntil(work.catch(() => {}));
 }
 
 function cacheFirst(event, request) {
@@ -66,7 +66,7 @@ function cacheFirst(event, request) {
       const cacheWrite = caches
         .open(cacheVersion)
         .then((cache) => cache.put(request, responseToCache));
-      keepCacheWriteAlive(event, cacheWrite);
+      extendEventLifetime(event, cacheWrite);
       return response;
     });
   });
@@ -81,7 +81,7 @@ function fetchAndCacheNavigation(event, request) {
       const cacheWrite = caches
         .open(cacheVersion)
         .then((cache) => cache.put(cacheKey("index.html"), responseToCache));
-      keepCacheWriteAlive(event, cacheWrite);
+      extendEventLifetime(event, cacheWrite);
       return response;
     })
     .catch(() => caches.match(cacheKey("index.html")));
@@ -92,7 +92,7 @@ function navigationCacheFirst(event, request) {
   return caches.match(shellKey).then((cached) => {
     if (!cached) return fetchAndCacheNavigation(event, request);
 
-    keepCacheWriteAlive(
+    extendEventLifetime(
       event,
       fetchAndCacheNavigation(event, request).then(() => undefined),
     );
