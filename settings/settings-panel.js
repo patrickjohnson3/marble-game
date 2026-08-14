@@ -2,6 +2,7 @@ export function bindSettingsPanel({
   els,
   settings,
   controls,
+  defaults,
   applyRangeConfig,
   applySettings,
   applyFullscreenSetting,
@@ -26,7 +27,11 @@ export function bindSettingsPanel({
     resumeGame,
     retryMap,
     speedSetting,
+    speedSettingValue,
+    resetSpeedSetting,
     sensitivitySetting,
+    sensitivitySettingValue,
+    resetSensitivitySetting,
     hapticsSetting,
     trailSetting,
     fullscreenSetting,
@@ -40,6 +45,17 @@ export function bindSettingsPanel({
   applyRangeConfig(sensitivitySetting, controls.acceleration);
   speedSetting.value = settings.maxSpeed;
   sensitivitySetting.value = settings.acceleration;
+
+  function updateRangeOutput(input, output) {
+    const min = Number(input.min);
+    const max = Number(input.max);
+    const value = Number(input.value);
+    const percent = max > min ? ((value - min) / (max - min)) * 100 : 0;
+    output.textContent = Math.round(percent) + "%";
+  }
+
+  updateRangeOutput(speedSetting, speedSettingValue);
+  updateRangeOutput(sensitivitySetting, sensitivitySettingValue);
   hapticsSetting.checked = settings.hapticsEnabled;
   trailSetting.checked = settings.trailEnabled;
   fullscreenSetting.checked = settings.fullscreenEnabled;
@@ -49,9 +65,20 @@ export function bindSettingsPanel({
   fpsSetting.checked = settings.fpsEnabled;
   statsSetting.checked = settings.statsEnabled;
 
-  function bindRangeSetting(input, key) {
+  function bindRangeSetting(input, output, key) {
     input.addEventListener("input", () => {
       settings[key] = Number(input.value);
+      updateRangeOutput(input, output);
+      applySettings();
+      saveSettings();
+    });
+  }
+
+  function bindRangeReset(button, input, output, key) {
+    button.addEventListener("click", () => {
+      input.value = defaults[key];
+      settings[key] = defaults[key];
+      updateRangeOutput(input, output);
       applySettings();
       saveSettings();
     });
@@ -74,8 +101,20 @@ export function bindSettingsPanel({
   installApp.addEventListener("click", onInstallApp);
   neutralBtn.addEventListener("click", onSetNeutral);
 
-  bindRangeSetting(speedSetting, "maxSpeed");
-  bindRangeSetting(sensitivitySetting, "acceleration");
+  bindRangeSetting(speedSetting, speedSettingValue, "maxSpeed");
+  bindRangeSetting(sensitivitySetting, sensitivitySettingValue, "acceleration");
+  bindRangeReset(
+    resetSpeedSetting,
+    speedSetting,
+    speedSettingValue,
+    "maxSpeed",
+  );
+  bindRangeReset(
+    resetSensitivitySetting,
+    sensitivitySetting,
+    sensitivitySettingValue,
+    "acceleration",
+  );
   bindCheckboxSetting(hapticsSetting, "hapticsEnabled");
   bindCheckboxSetting(trailSetting, "trailEnabled");
   bindCheckboxSetting(fullscreenSetting, "fullscreenEnabled", () => {

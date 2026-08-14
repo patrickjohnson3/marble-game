@@ -38,6 +38,7 @@ export const copy = {
     installApp: "install app",
     neutral: "set neutral",
     retryMap: "retry map",
+    reset: "reset",
     resume: "resume",
   },
   settings: {
@@ -56,8 +57,8 @@ export const copy = {
       diagnostics: "Diagnostics",
     },
     labels: {
-      speedSetting: "speed",
-      sensitivitySetting: "sensitivity",
+      speedSetting: "top speed",
+      sensitivitySetting: "tilt response",
       hapticsSetting: "haptics",
       trailSetting: "trail",
       fullscreenSetting: "fullscreen",
@@ -89,6 +90,12 @@ export function applyDocumentCopy({ document, els }) {
   els.closeSettings.textContent = copy.buttons.closeSettings;
   els.installApp.textContent = copy.buttons.installApp;
   els.retryMap.textContent = copy.buttons.retryMap;
+  els.resetSpeedSetting.textContent = copy.buttons.reset;
+  els.resetSpeedSetting.title = "reset top speed";
+  els.resetSpeedSetting.setAttribute("aria-label", "reset top speed");
+  els.resetSensitivitySetting.textContent = copy.buttons.reset;
+  els.resetSensitivitySetting.title = "reset tilt response";
+  els.resetSensitivitySetting.setAttribute("aria-label", "reset tilt response");
   els.neutralBtn.textContent = copy.buttons.neutral;
   els.resumeGame.textContent = copy.buttons.resume;
   els.debug.textContent = copy.debugFallback;

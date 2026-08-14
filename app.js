@@ -783,6 +783,7 @@ export function createApp({
     els,
     settings,
     controls: settingsControls,
+    defaults: settingsConfig,
     applyRangeConfig,
     applySettings,
     applyFullscreenSetting,

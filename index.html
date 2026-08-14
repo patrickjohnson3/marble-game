@@ -52,7 +52,7 @@
       }
     </style>
     <script>
-      const assetVersion = "9ee7638fabada608";
+      const assetVersion = "fe10cf3db2a46f10";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -220,14 +220,33 @@
           aria-labelledby="gameplaySettingsTitle"
         >
           <h3 id="gameplaySettingsTitle"></h3>
-          <label class="settingRow" for="speedSetting">
-            <span></span>
+          <div class="rangeSetting">
+            <div class="rangeSettingHeader">
+              <label for="speedSetting"><span></span></label>
+              <output id="speedSettingValue" for="speedSetting"></output>
+            </div>
             <input id="speedSetting" type="range" />
-          </label>
-          <label class="settingRow" for="sensitivitySetting">
-            <span></span>
+            <div class="rangeSettingScale">
+              <span>low</span>
+              <button id="resetSpeedSetting" type="button"></button>
+              <span>high</span>
+            </div>
+          </div>
+          <div class="rangeSetting">
+            <div class="rangeSettingHeader">
+              <label for="sensitivitySetting"><span></span></label>
+              <output
+                id="sensitivitySettingValue"
+                for="sensitivitySetting"
+              ></output>
+            </div>
             <input id="sensitivitySetting" type="range" />
-          </label>
+            <div class="rangeSettingScale">
+              <span>low</span>
+              <button id="resetSensitivitySetting" type="button"></button>
+              <span>high</span>
+            </div>
+          </div>
           <label class="settingRow checkboxRow" for="hapticsSetting">
             <span></span>
             <input id="hapticsSetting" type="checkbox" />

@@ -15,9 +15,7 @@ function fakeControl(initialValue = "") {
 }
 
 function fakeButton() {
-  return {
-    addEventListener() {},
-  };
+  return fakeControl();
 }
 
 function createPanelHarness() {
@@ -47,6 +45,12 @@ function createPanelHarness() {
   const hitboxOverlaySetting = fakeControl();
   const installApp = fakeControl();
   const statsSetting = fakeControl();
+  const speedSetting = fakeControl();
+  const speedSettingValue = { textContent: "" };
+  const resetSpeedSetting = fakeButton();
+  const sensitivitySetting = fakeControl();
+  const sensitivitySettingValue = { textContent: "" };
+  const resetSensitivitySetting = fakeButton();
 
   bindSettingsPanel({
     els: {
@@ -57,8 +61,12 @@ function createPanelHarness() {
       resumeGame: fakeButton(),
       retryMap: fakeButton(),
       installApp,
-      speedSetting: fakeControl(),
-      sensitivitySetting: fakeControl(),
+      speedSetting,
+      speedSettingValue,
+      resetSpeedSetting,
+      sensitivitySetting,
+      sensitivitySettingValue,
+      resetSensitivitySetting,
       hapticsSetting: fakeControl(),
       trailSetting: fakeControl(),
       fullscreenSetting,
@@ -71,6 +79,10 @@ function createPanelHarness() {
     controls: {
       maxSpeed: { min: 8, max: 24, step: 1 },
       acceleration: { min: 0.06, max: 0.18, step: 0.005 },
+    },
+    defaults: {
+      maxSpeed: 14,
+      acceleration: 0.115,
     },
     applyRangeConfig(input, range) {
       input.min = range.min;
@@ -127,6 +139,9 @@ function createPanelHarness() {
     hitboxOverlaySetting,
     installApp,
     installCount: () => installCount,
+    resetSpeedSetting,
+    speedSetting,
+    speedSettingValue,
     statsSetting,
     settings,
   };
@@ -141,6 +156,32 @@ function testInstallButtonRunsInstallCommand() {
 }
 
 testInstallButtonRunsInstallCommand();
+
+function testRangeSettingsExposePositionAndResetToDefaults() {
+  const {
+    counts,
+    resetSpeedSetting,
+    settings,
+    speedSetting,
+    speedSettingValue,
+  } = createPanelHarness();
+
+  assert.equal(speedSettingValue.textContent, "38%");
+
+  speedSetting.value = 24;
+  speedSetting.listeners.input();
+  assert.equal(settings.maxSpeed, 24);
+  assert.equal(speedSettingValue.textContent, "100%");
+
+  resetSpeedSetting.listeners.click();
+  assert.equal(settings.maxSpeed, 14);
+  assert.equal(speedSetting.value, 14);
+  assert.equal(speedSettingValue.textContent, "38%");
+  assert.equal(counts().applyCount, 2);
+  assert.equal(counts().saveCount, 2);
+}
+
+testRangeSettingsExposePositionAndResetToDefaults();
 
 function testFpsTogglePersistsAndRenders() {
   const { counts, fpsSetting, settings } = createPanelHarness();
@@ -252,7 +293,11 @@ function testInstalledPwaDisablesFullscreenToggle() {
       retryMap: fakeButton(),
       installApp: fakeButton(),
       speedSetting: fakeControl(),
+      speedSettingValue: { textContent: "" },
+      resetSpeedSetting: fakeButton(),
       sensitivitySetting: fakeControl(),
+      sensitivitySettingValue: { textContent: "" },
+      resetSensitivitySetting: fakeButton(),
       hapticsSetting: fakeControl(),
       trailSetting: fakeControl(),
       fullscreenSetting,
@@ -265,6 +310,10 @@ function testInstalledPwaDisablesFullscreenToggle() {
     controls: {
       maxSpeed: { min: 8, max: 24, step: 1 },
       acceleration: { min: 0.06, max: 0.18, step: 0.005 },
+    },
+    defaults: {
+      maxSpeed: 14,
+      acceleration: 0.115,
     },
     applyRangeConfig(input, range) {
       input.min = range.min;

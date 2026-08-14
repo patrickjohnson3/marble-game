@@ -84,6 +84,14 @@ try {
     "Hold the marble inside the green goal to visit the next map.",
   );
   assert.equal(
+    document.getElementById("resetSpeedSetting").textContent,
+    "reset",
+  );
+  assert.equal(
+    document.getElementById("resetSensitivitySetting").textContent,
+    "reset",
+  );
+  assert.equal(
     document.getElementById("levelLabel").textContent,
     "level 1: kitchen floor",
   );

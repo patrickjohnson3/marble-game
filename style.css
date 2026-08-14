@@ -938,6 +938,48 @@ button.primaryAction {
 .settingsActions {
   margin-top: 16px;
 }
+.rangeSetting {
+  margin-bottom: 14px;
+}
+.rangeSettingHeader,
+.rangeSettingScale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rangeSettingHeader {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.rangeSettingHeader output {
+  color: #c8d0dc;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.rangeSetting > input {
+  width: 100%;
+}
+.rangeSettingScale {
+  margin-top: 2px;
+  color: #8993a3;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.rangeSettingScale button {
+  flex: 0 0 auto;
+  min-width: 54px;
+  min-height: 28px;
+  border-radius: 4px;
+  background: transparent;
+  padding: 3px 8px;
+  color: #aeb7c6;
+  font-size: 10px;
+  text-transform: uppercase;
+}
 .settingRow {
   display: grid;
   grid-template-columns: 96px 1fr;
