@@ -135,6 +135,9 @@ export function createKitchenDynamicsState() {
     frameIndex: 0,
     obstacles: [],
     terrainElements: [],
+    collisionCircle: { x: 0, y: 0, r: 0 },
+    collisionContact: {},
+    events: { cerealHits: 0, splatHits: 0, squishedAnts: 0 },
   };
 }
 
@@ -354,9 +357,7 @@ function resolveCerealObstacleCollision(circle, obstacle, contact) {
   circle.y += ny * separation;
 }
 
-function resolveCerealObstacleCollisions(circle, obstacles) {
-  const contact = {};
-
+function resolveCerealObstacleCollisions(circle, obstacles, contact) {
   for (let pass = 0; pass < obstacleResolvePasses; pass++) {
     for (let i = 0; i < obstacles.length; i++) {
       resolveCerealObstacleCollision(circle, obstacles[i], contact);
@@ -413,13 +414,16 @@ function updateCereal({ state, marble, previousMarble, events }) {
     const nextPushX = pushX + nx * amount;
     const nextPushY = pushY + ny * amount;
     const pushScale = cappedVectorScale(nextPushX, nextPushY, maxPush);
-    const cerealCircle = {
-      x: originX + nextPushX * pushScale,
-      y: originY + nextPushY * pushScale,
-      r: radius,
-    };
+    const cerealCircle = state.collisionCircle;
+    cerealCircle.x = originX + nextPushX * pushScale;
+    cerealCircle.y = originY + nextPushY * pushScale;
+    cerealCircle.r = radius;
 
-    resolveCerealObstacleCollisions(cerealCircle, state.obstacles);
+    resolveCerealObstacleCollisions(
+      cerealCircle,
+      state.obstacles,
+      state.collisionContact,
+    );
     cereal.pushX = cerealCircle.x - originX;
     cereal.pushY = cerealCircle.y - originY;
     if (
@@ -437,7 +441,10 @@ export function updateKitchenDynamics(
   state,
   { mapConfig, marble, previousMarble = marble, frameDelta = 1 },
 ) {
-  const events = { cerealHits: 0, splatHits: 0, squishedAnts: 0 };
+  const events = state.events;
+  events.cerealHits = 0;
+  events.splatHits = 0;
+  events.squishedAnts = 0;
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
   ensureElementCaches(state, mapConfig.elements);

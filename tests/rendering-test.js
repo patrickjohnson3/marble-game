@@ -735,7 +735,6 @@ function testKitchenAntsMunchCheerios() {
     kitchenDynamicWorld: { width: 200, height: 200 },
     kitchenDynamicRenderScale: 0.35,
     kitchenDynamicNeedsFullRedraw: true,
-    kitchenDynamicRenderCache: new Map(),
   };
 
   updateAndRenderMapThemeDynamics({
@@ -838,7 +837,6 @@ function testKitchenDynamicsContinueOutsideCameraView() {
     kitchenDynamicWorld: { width: 2000, height: 2000 },
     kitchenDynamicRenderScale: 0.35,
     kitchenDynamicNeedsFullRedraw: true,
-    kitchenDynamicRenderCache: new Map(),
   };
 
   updateAndRenderMapThemeDynamics({
@@ -885,7 +883,6 @@ function testMarbleSquishesKitchenAnts() {
     kitchenDynamicWorld: { width: 200, height: 200 },
     kitchenDynamicRenderScale: 0.35,
     kitchenDynamicNeedsFullRedraw: true,
-    kitchenDynamicRenderCache: new Map(),
   };
   antCanvas.context.calls.length = 0;
 
@@ -935,7 +932,6 @@ function testMarbleGetsFeedbackOnSquishedKitchenAnts() {
     kitchenDynamicWorld: { width: 200, height: 200 },
     kitchenDynamicRenderScale: 0.35,
     kitchenDynamicNeedsFullRedraw: true,
-    kitchenDynamicRenderCache: new Map(),
   };
 
   const events = updateAndRenderMapThemeDynamics({

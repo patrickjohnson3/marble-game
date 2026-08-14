@@ -219,11 +219,10 @@ export function handleWallCollisions(
   { marble, bounds, intro, obstacles, physics },
   onImpact,
   collisionObstacles = obstacles,
+  contactScratch = {},
 ) {
   const passes =
     physics.collisionResolvePasses ?? defaultCollisionResolvePasses;
-  const contactScratch = {};
-
   for (let pass = 0; pass < passes; pass++) {
     if (marble.x < bounds.left + marble.r) {
       onImpact(

@@ -138,6 +138,7 @@ function isOverTerrainPatch(marble, intro, patches, physics) {
 
 function createPhysicsScratch() {
   return {
+    collisionContact: {},
     frameFactors: {
       baseDrag: 1,
       gooPatchDrag: 1,
@@ -316,7 +317,12 @@ function physicsStep(context, dt, feedback) {
   const currentSurfaceType = surfaceType(hits);
   feedback.onTerrain?.(currentSurfaceType);
   applySurfaceDrag(context, hits, factors);
-  handleWallCollisions(context, feedback.onImpact, context.obstacles);
+  handleWallCollisions(
+    context,
+    feedback.onImpact,
+    context.obstacles,
+    physicsScratch.collisionContact,
+  );
   handleSurfaceFeedback(context, feedback.onSurface, currentSurfaceType);
 }
 

@@ -50,6 +50,7 @@ export function createGameLoop({
   let lastFrame = now();
   let lastSurfaceType = SURFACE_TYPES.floor;
   let hazardArmed = true;
+  const previousMarble = { x: marble.x, y: marble.y };
 
   function resetClock() {
     lastFrame = now();
@@ -161,7 +162,8 @@ export function createGameLoop({
 
     if (active) {
       const context = physicsContext();
-      const previousMarble = { x: marble.x, y: marble.y };
+      previousMarble.x = marble.x;
+      previousMarble.y = marble.y;
       const physicsBudgetStart = performance.now();
       updatePhysicsInput(context, frameDelta);
       updatePhysics(context, frameDelta, physicsFeedback);

@@ -540,38 +540,26 @@ function drawSquishedAnt(context, ant) {
   context.restore();
 }
 
-function dynamicBounds(x, y, radius) {
-  return {
-    bottom: y + radius,
-    left: x - radius,
-    right: x + radius,
-    top: y - radius,
-  };
+function setDynamicBounds(target, x, y, radius) {
+  target.bottom = y + radius + kitchenDynamicDirtyPadding;
+  target.left = x - radius - kitchenDynamicDirtyPadding;
+  target.right = x + radius + kitchenDynamicDirtyPadding;
+  target.top = y - radius - kitchenDynamicDirtyPadding;
 }
 
-function paddedBounds(bounds) {
-  return {
-    bottom: bounds.bottom + kitchenDynamicDirtyPadding,
-    left: bounds.left - kitchenDynamicDirtyPadding,
-    right: bounds.right + kitchenDynamicDirtyPadding,
-    top: bounds.top - kitchenDynamicDirtyPadding,
-  };
-}
-
-function cheerioBounds(cheerio) {
+function setCheerioBounds(target, cheerio) {
   const radius =
     cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
-  return paddedBounds(
-    dynamicBounds(
-      cheerio.originX + cheerio.pushX,
-      cheerio.originY + cheerio.pushY,
-      radius,
-    ),
+  setDynamicBounds(
+    target,
+    cheerio.originX + cheerio.pushX,
+    cheerio.originY + cheerio.pushY,
+    radius,
   );
 }
 
-function antBounds(ant) {
-  return paddedBounds(dynamicBounds(ant.x, ant.y, kitchenAntDrawRadius));
+function setAntBounds(target, ant) {
+  setDynamicBounds(target, ant.x, ant.y, kitchenAntDrawRadius);
 }
 
 function boundsChanged(a, b) {
@@ -606,61 +594,86 @@ function clearDynamicRect(context, scale, rect) {
   context.clearRect(left, top, right - left, bottom - top);
 }
 
-function dynamicObjectEntries(dynamicsState) {
-  const entries = [];
-  const cheerios = dynamicsState.cheerios;
-  const ants = dynamicsState.ants;
+function createDynamicEntry(object, kind) {
+  return {
+    bounds: { bottom: 0, left: 0, right: 0, top: 0 },
+    kind,
+    nextBounds: { bottom: 0, left: 0, right: 0, top: 0 },
+    object,
+    revision: Number.NEGATIVE_INFINITY,
+    visible: false,
+  };
+}
 
-  for (let i = 0; i < cheerios.length; i++) {
-    const cheerio = cheerios[i];
-    entries.push({
-      bounds: cheerio.active ? cheerioBounds(cheerio) : null,
-      draw: (context) => drawCheerio(context, cheerio),
-      object: cheerio,
-    });
+function dynamicEntries(themeState, dynamicsState) {
+  if (
+    themeState.kitchenDynamicCheerios === dynamicsState.cheerios &&
+    themeState.kitchenDynamicAnts === dynamicsState.ants
+  ) {
+    return themeState.kitchenDynamicEntries;
   }
 
-  for (let i = 0; i < ants.length; i++) {
-    const ant = ants[i];
-    entries.push({
-      bounds: ant.alive || ant.squished ? antBounds(ant) : null,
-      draw: (context) => {
-        if (ant.squished) drawSquishedAnt(context, ant);
-        else if (ant.alive) drawAnt(context, ant);
-      },
-      object: ant,
-    });
+  const entries = themeState.kitchenDynamicEntries ?? [];
+  entries.length = 0;
+  for (let i = 0; i < dynamicsState.cheerios.length; i++) {
+    entries.push(createDynamicEntry(dynamicsState.cheerios[i], "cheerio"));
   }
-
+  for (let i = 0; i < dynamicsState.ants.length; i++) {
+    entries.push(createDynamicEntry(dynamicsState.ants[i], "ant"));
+  }
+  themeState.kitchenDynamicEntries = entries;
+  themeState.kitchenDynamicCheerios = dynamicsState.cheerios;
+  themeState.kitchenDynamicAnts = dynamicsState.ants;
+  themeState.kitchenDynamicNeedsFullRedraw = true;
   return entries;
 }
 
-function dynamicDirtyRects(entries, renderCache) {
-  const dirtyRects = [];
+function dynamicEntryVisible(entry) {
+  return entry.kind === "cheerio"
+    ? entry.object.active
+    : entry.object.alive || entry.object.squished;
+}
+
+function setNextDynamicBounds(entry) {
+  if (entry.kind === "cheerio") {
+    setCheerioBounds(entry.nextBounds, entry.object);
+  } else {
+    setAntBounds(entry.nextBounds, entry.object);
+  }
+}
+
+function dynamicDirtyRects(entries, dirtyRects) {
+  dirtyRects.length = 0;
 
   for (let i = 0; i < entries.length; i++) {
-    const { bounds, object } = entries[i];
-    const previous = renderCache.get(object);
+    const entry = entries[i];
+    const nextVisible = dynamicEntryVisible(entry);
+    if (nextVisible) setNextDynamicBounds(entry);
     if (
-      !previous ||
-      previous.revision !== object.revision ||
-      boundsChanged(previous.bounds, bounds)
+      entry.visible !== nextVisible ||
+      entry.revision !== entry.object.revision ||
+      (nextVisible && boundsChanged(entry.bounds, entry.nextBounds))
     ) {
-      if (previous?.bounds) dirtyRects.push(previous.bounds);
-      if (bounds) dirtyRects.push(bounds);
+      if (entry.visible) dirtyRects.push(entry.bounds);
+      const previousBounds = entry.bounds;
+      entry.bounds = entry.nextBounds;
+      entry.nextBounds = previousBounds;
+      entry.visible = nextVisible;
+      entry.revision = entry.object.revision;
+      if (entry.visible) dirtyRects.push(entry.bounds);
     }
   }
 
   return dirtyRects;
 }
 
-function storeDynamicBounds(entries, renderCache) {
-  for (let i = 0; i < entries.length; i++) {
-    const { bounds, object } = entries[i];
-    renderCache.set(object, {
-      bounds: bounds ? { ...bounds } : null,
-      revision: object.revision,
-    });
+function drawDynamicEntry(context, entry) {
+  if (entry.kind === "cheerio") {
+    drawCheerio(context, entry.object);
+  } else if (entry.object.squished) {
+    drawSquishedAnt(context, entry.object);
+  } else if (entry.object.alive) {
+    drawAnt(context, entry.object);
   }
 }
 
@@ -765,21 +778,22 @@ function renderKitchenDynamics(themeState, dynamicsState) {
   const world = themeState.kitchenDynamicWorld;
   if (!context || !canvas || !world) return;
 
-  const entries = dynamicObjectEntries(dynamicsState);
-  const renderCache = themeState.kitchenDynamicRenderCache;
-  let dirtyRects = dynamicDirtyRects(entries, renderCache);
+  const entries = dynamicEntries(themeState, dynamicsState);
+  const dirtyRects = dynamicDirtyRects(
+    entries,
+    (themeState.kitchenDynamicDirtyRects ??= []),
+  );
 
   context.setTransform(1, 0, 0, 1, 0, 0);
   if (themeState.kitchenDynamicNeedsFullRedraw) {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    dirtyRects = [
-      {
-        bottom: world.height,
-        left: 0,
-        right: world.width,
-        top: 0,
-      },
-    ];
+    const fullBounds = (themeState.kitchenDynamicFullBounds ??= {});
+    fullBounds.bottom = world.height;
+    fullBounds.left = 0;
+    fullBounds.right = world.width;
+    fullBounds.top = 0;
+    dirtyRects.length = 1;
+    dirtyRects[0] = fullBounds;
     themeState.kitchenDynamicNeedsFullRedraw = false;
   } else if (dirtyRects.length === 0) {
     return;
@@ -801,14 +815,13 @@ function renderKitchenDynamics(themeState, dynamicsState) {
 
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
-    if (!entry.bounds) continue;
+    if (!entry.visible) continue;
     for (let j = 0; j < dirtyRects.length; j++) {
       if (!rectsIntersect(entry.bounds, dirtyRects[j])) continue;
-      entry.draw(context);
+      drawDynamicEntry(context, entry);
       break;
     }
   }
-  storeDynamicBounds(entries, renderCache);
 }
 
 export function renderMapThemeDynamics({
@@ -836,7 +849,11 @@ export function renderMapTheme({
   themeState.kitchenDynamicWorld = null;
   themeState.kitchenDynamicRenderScale = kitchenDynamicCanvasScale;
   themeState.kitchenDynamicNeedsFullRedraw = false;
-  themeState.kitchenDynamicRenderCache = new Map();
+  themeState.kitchenDynamicAnts = null;
+  themeState.kitchenDynamicCheerios = null;
+  themeState.kitchenDynamicDirtyRects = [];
+  themeState.kitchenDynamicEntries = [];
+  themeState.kitchenDynamicFullBounds = {};
   const theme = mapConfig?.theme;
   if (!theme || !renderers[theme] || !world) return;
 
