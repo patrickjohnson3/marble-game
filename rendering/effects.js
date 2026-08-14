@@ -76,6 +76,43 @@ function drawParticle(context, particle, progress) {
   }
 }
 
+function resetDirtyBounds(bounds) {
+  bounds.bottom = Number.NEGATIVE_INFINITY;
+  bounds.left = Number.POSITIVE_INFINITY;
+  bounds.right = Number.NEGATIVE_INFINITY;
+  bounds.top = Number.POSITIVE_INFINITY;
+}
+
+function includeParticleBounds(bounds, particle, progress) {
+  const size = particle.size * (0.7 + progress * 0.75);
+  const radius = size / 2 + 4;
+  const x =
+    particle.kind === "waterRipple"
+      ? particle.x
+      : particle.x + particle.dx * progress;
+  const y =
+    particle.kind === "waterRipple"
+      ? particle.y
+      : particle.y + particle.dy * progress;
+
+  bounds.bottom = Math.max(bounds.bottom, y + radius);
+  bounds.left = Math.min(bounds.left, x - radius);
+  bounds.right = Math.max(bounds.right, x + radius);
+  bounds.top = Math.min(bounds.top, y - radius);
+}
+
+function clearDirtyBounds(context, canvas, bounds, scale) {
+  if (!Number.isFinite(bounds.left)) return;
+
+  const left = Math.max(0, Math.floor(bounds.left * scale) - 1);
+  const top = Math.max(0, Math.floor(bounds.top * scale) - 1);
+  const right = Math.min(canvas.width, Math.ceil(bounds.right * scale) + 1);
+  const bottom = Math.min(canvas.height, Math.ceil(bounds.bottom * scale) + 1);
+  if (right > left && bottom > top) {
+    context.clearRect(left, top, right - left, bottom - top);
+  }
+}
+
 export function createEffectsRenderer({
   effectsEl,
   marble,
@@ -92,6 +129,13 @@ export function createEffectsRenderer({
   const canvasScale = config.canvasScale ?? 0.5;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
+  let currentDirtyBounds = {
+    bottom: Number.NEGATIVE_INFINITY,
+    left: Number.POSITIVE_INFINITY,
+    right: Number.NEGATIVE_INFINITY,
+    top: Number.POSITIVE_INFINITY,
+  };
+  let nextDirtyBounds = { ...currentDirtyBounds };
   let canvasDirty = false;
 
   configureCanvas(canvas, world, canvasScale);
@@ -221,8 +265,10 @@ export function createEffectsRenderer({
     activeParticles.length = 0;
     if (context && canvasDirty) {
       context.setTransform(1, 0, 0, 1, 0, 0);
-      context.clearRect(0, 0, canvas.width, canvas.height);
+      clearDirtyBounds(context, canvas, currentDirtyBounds, canvasScale);
     }
+    resetDirtyBounds(currentDirtyBounds);
+    resetDirtyBounds(nextDirtyBounds);
     canvasDirty = false;
     lastImpactAt = Number.NEGATIVE_INFINITY;
     lastGooSplatAt = Number.NEGATIVE_INFINITY;
@@ -240,22 +286,31 @@ export function createEffectsRenderer({
     prune(currentTime);
     if (activeParticles.length === 0 && !canvasDirty) return;
 
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    if (canvasDirty) {
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      clearDirtyBounds(context, canvas, currentDirtyBounds, canvasScale);
+    }
     if (activeParticles.length === 0) {
+      resetDirtyBounds(currentDirtyBounds);
       canvasDirty = false;
       return;
     }
 
+    resetDirtyBounds(nextDirtyBounds);
     context.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
     for (let i = 0; i < activeParticles.length; i++) {
       const particle = activeParticles[i];
-      drawParticle(
-        context,
-        particle,
-        clamp((currentTime - particle.bornAt) / particle.lifeMs, 0, 1),
+      const progress = clamp(
+        (currentTime - particle.bornAt) / particle.lifeMs,
+        0,
+        1,
       );
+      includeParticleBounds(nextDirtyBounds, particle, progress);
+      drawParticle(context, particle, progress);
     }
+    const previousDirtyBounds = currentDirtyBounds;
+    currentDirtyBounds = nextDirtyBounds;
+    nextDirtyBounds = previousDirtyBounds;
     canvasDirty = true;
   }
 

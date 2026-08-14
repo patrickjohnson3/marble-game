@@ -129,12 +129,20 @@ async function testEffectsThrottleAndParticleCap() {
     effects.render(currentTime);
     currentTime += 200;
     effects.render(currentTime);
+    const firstDirtyClear = effects.canvas.context.calls.find(
+      (call) => call[0] === "clearRect",
+    );
+    assert.ok(
+      firstDirtyClear[3] < effects.canvas.width &&
+        firstDirtyClear[4] < effects.canvas.height,
+      "effects should clear only the prior particle footprint",
+    );
     effects.render(currentTime + 1);
     assert.equal(
       effects.canvas.context.calls.filter((call) => call[0] === "clearRect")
         .length,
-      2,
-      "effects should clear once while drawing and once when the last particle expires",
+      1,
+      "effects should clear the final particle footprint once it expires",
     );
   } finally {
     globalThis.document = originalDocument;
