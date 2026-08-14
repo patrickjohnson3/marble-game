@@ -10,6 +10,7 @@ const tests = [
   "tests/haptics-test.js",
   "tests/goal-controller-test.js",
   "tests/platform-test.js",
+  "tests/service-worker-test.js",
   "tests/intro-sequence-test.js",
   "tests/intro-timers-test.js",
   "tests/config-test.js",

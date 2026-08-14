@@ -1,6 +1,6 @@
 import { runtimeFiles } from "./runtime-assets.js";
 
-const cacheVersion = "marble-game-7cb1ea777342adda";
+const cacheVersion = "marble-game-b87e9a2ac23478fa";
 const cacheableFiles = [
   "./",
   "index.html",
@@ -41,7 +41,11 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-function cacheFirst(request) {
+function keepCacheWriteAlive(event, cacheWrite) {
+  event.waitUntil(cacheWrite.catch(() => {}));
+}
+
+function cacheFirst(event, request) {
   return caches.match(request, { ignoreSearch: true }).then((cached) => {
     if (cached) return cached;
 
@@ -49,23 +53,25 @@ function cacheFirst(request) {
       if (!response.ok) return response;
 
       const responseToCache = response.clone();
-      caches
+      const cacheWrite = caches
         .open(cacheVersion)
         .then((cache) => cache.put(request, responseToCache));
+      keepCacheWriteAlive(event, cacheWrite);
       return response;
     });
   });
 }
 
-function navigationFirst(request) {
+function navigationFirst(event, request) {
   return fetch(request)
     .then((response) => {
       if (!response.ok) return response;
 
       const responseToCache = response.clone();
-      caches.open(cacheVersion).then((cache) => {
-        cache.put(cacheKey("index.html"), responseToCache);
-      });
+      const cacheWrite = caches
+        .open(cacheVersion)
+        .then((cache) => cache.put(cacheKey("index.html"), responseToCache));
+      keepCacheWriteAlive(event, cacheWrite);
       return response;
     })
     .catch(() => caches.match(cacheKey("index.html")));
@@ -76,9 +82,9 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET" || !sameOrigin(request)) return;
 
   if (request.mode === "navigate") {
-    event.respondWith(navigationFirst(request));
+    event.respondWith(navigationFirst(event, request));
     return;
   }
 
-  event.respondWith(cacheFirst(request));
+  event.respondWith(cacheFirst(event, request));
 });
