@@ -26,8 +26,6 @@ export const runtimeScripts = [
   "core/map-variants.js",
   "core/physics-collisions.js",
   "core/physics.js",
-  "core/procedural-generator.js",
-  "core/procedural-templates.js",
   "core/rect-bounds.js",
   "core/runtime-states.js",
   "core/state.js",
