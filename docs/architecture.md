@@ -23,8 +23,11 @@ The important top-level folders are:
 - `tests/`: Node-based unit and smoke tests.
 - `docs/`: developer-facing notes.
 
-Runtime files are cache-versioned manually. After changing runtime JavaScript,
-CSS, or HTML, run `npm run sync-cache` before committing.
+`runtime-assets.js` is the source of truth for browser modules and precached
+assets. Update it when adding or removing a runtime file. After changing
+`index.html` or a listed runtime asset, run `npm run sync-cache` before
+committing. Do not hand-edit the generated cache metadata in `index.html` or
+`sw.js`.
 
 ## Startup Sequence
 
@@ -47,10 +50,10 @@ The entrypoint is intentionally small:
    - settings applier
    - intro sequence
    - map progression and goal controller
-   - sensor and keyboard controllers
-   - lifecycle controller
-   - input manager
+   - sensor controller
    - game loop
+   - lifecycle controller
+   - keyboard controller and input manager
 8. Initial setup runs:
    - document copy is applied
    - map terrain and walls are rendered
@@ -75,8 +78,8 @@ When the start button is pressed:
 2. The start button is hidden and disabled.
 3. Motion permission is requested with a timeout. This is required for iOS-like
    permission flows but should not block desktop keyboard fallback forever.
-4. If permission is denied, the start button comes back and the hint explains
-   the failure.
+4. If permission is denied, the game remains started, the hint explains the
+   failure, and the sensor watchdog enables keyboard fallback.
 5. Fullscreen and wake lock are requested from `platform/platform.js`.
 6. `gameController.reset()` resets runtime state to the current spawn and intro
    pen.
@@ -408,7 +411,7 @@ Useful focused tests:
 - `node tests/rendering-test.js`
 - `node tests/lifecycle-test.js`
 
-If runtime JS, CSS, or HTML changed, run:
+If `index.html` or an asset listed in `runtime-assets.js` changed, run:
 
 ```sh
 npm run sync-cache

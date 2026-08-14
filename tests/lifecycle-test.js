@@ -267,7 +267,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
   );
 }
 
-async function testStartRestoresControlsWhenMotionPermissionDenied() {
+async function testMotionPermissionDenialKeepsKeyboardFallbackActive() {
   const state = createGameState({
     world: resolvedMapConfig.world,
     resolvedMapConfig,
@@ -421,7 +421,7 @@ function testResumeResetsFrameClock() {
 testStartPauseResumeReleaseReset();
 await testStartRequestsFullscreenFromClickPath();
 await testStartContinuesWhenMotionPermissionStalls();
-await testStartRestoresControlsWhenMotionPermissionDenied();
+await testMotionPermissionDenialKeepsKeyboardFallbackActive();
 testResumeResetsFrameClock();
 
 console.log("Lifecycle tests passed.");

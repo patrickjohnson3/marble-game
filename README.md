@@ -54,10 +54,13 @@ The browser smoke test uses local Chrome; set `CHROME_PATH` if Chrome is install
 
 ## Runtime Cache
 
-Runtime files are listed in `runtime-assets.js`. After changing runtime JavaScript, CSS, or HTML, run:
+`runtime-assets.js` is the source of truth for browser modules and precached
+assets. Update it when adding or removing a runtime file. After changing
+`index.html` or a listed runtime asset, run:
 
 ```sh
 npm run sync-cache
 ```
 
-This updates the `index.html` asset version and keeps the import-map cache manifest synchronized.
+This synchronizes the generated asset version and module cache manifest in
+`index.html` with the service-worker cache version in `sw.js`.
