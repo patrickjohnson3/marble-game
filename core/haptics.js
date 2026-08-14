@@ -1,21 +1,25 @@
-export function createHapticsController(state, tuning) {
+export function createHapticsController(
+  state,
+  tuning,
+  { vibrate = null, now = () => 0 } = {},
+) {
   function clamp(v, lo, hi) {
     return Math.max(lo, Math.min(hi, v));
   }
 
   function canVibrate() {
-    return state.enabled && "vibrate" in navigator;
+    return state.enabled && typeof vibrate === "function";
   }
 
   function pulseImpact(impact) {
     if (!canVibrate()) return;
     if (impact < state.impact.minImpact) return;
 
-    const now = performance.now();
-    if (now - state.impact.lastPulse < state.impact.cooldownMs) return;
+    const currentTime = now();
+    if (currentTime - state.impact.lastPulse < state.impact.cooldownMs) return;
 
-    state.impact.lastPulse = now;
-    navigator.vibrate(
+    state.impact.lastPulse = currentTime;
+    vibrate(
       clamp(
         Math.round(impact * tuning.impactScale),
         tuning.impactMinDurationMs,
@@ -28,16 +32,17 @@ export function createHapticsController(state, tuning) {
     if (!canVibrate()) return;
     if (speed < state.surface.minSpeed) return;
 
-    const now = performance.now();
-    if (now - state.surface.lastPulse < state.surface.cooldownMs) return;
+    const currentTime = now();
+    if (currentTime - state.surface.lastPulse < state.surface.cooldownMs)
+      return;
 
-    state.surface.lastPulse = now;
+    state.surface.lastPulse = currentTime;
     const scale =
       {
         gooPatch: tuning.gooSurfaceScale,
         waterPatch: tuning.waterSurfaceScale,
       }[surfaceType] ?? tuning.surfaceScale;
-    navigator.vibrate(
+    vibrate(
       clamp(
         Math.round(speed * scale),
         tuning.surfaceMinDurationMs,
@@ -50,15 +55,16 @@ export function createHapticsController(state, tuning) {
     if (!canVibrate()) return;
 
     if (kind === "complete") {
-      navigator.vibrate(tuning.goalCompletePattern);
+      vibrate(tuning.goalCompletePattern);
     } else if (kind === "hold") {
-      const now = performance.now();
-      if (now - state.goal.lastHoldPulse < state.goal.holdCooldownMs) return;
+      const currentTime = now();
+      if (currentTime - state.goal.lastHoldPulse < state.goal.holdCooldownMs)
+        return;
 
-      state.goal.lastHoldPulse = now;
-      navigator.vibrate(tuning.goalHoldDurationMs);
+      state.goal.lastHoldPulse = currentTime;
+      vibrate(tuning.goalHoldDurationMs);
     } else {
-      navigator.vibrate(tuning.goalEnterDurationMs);
+      vibrate(tuning.goalEnterDurationMs);
     }
   }
 

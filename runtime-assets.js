@@ -1,8 +1,6 @@
 export const runtimeScripts = [
   "app.js",
   "boot.js",
-  "core/camera.js",
-  "core/camera-gestures.js",
   "core/copy.js",
   "core/debug.js",
   "core/dom-ids.js",
@@ -32,6 +30,8 @@ export const runtimeScripts = [
   "core/startup-flow.js",
   "core/timer-utils.js",
   "input/input-manager.js",
+  "input/camera-controller.js",
+  "input/camera-gestures.js",
   "input/keyboard-controller.js",
   "input/sensor-controller.js",
   "input/sensor-watchdog.js",

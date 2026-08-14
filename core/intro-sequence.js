@@ -12,11 +12,14 @@ export function createIntroSequence({
   timing,
   messageOverlay,
   onRelease,
-  createElement = (tag) => document.createElement(tag),
+  clearTimeoutFn,
+  createElement,
+  now,
+  setTimeoutFn,
 }) {
   function clearTimers() {
-    clearTimeout(sequence.messageTimer);
-    clearTimeout(sequence.countdownTimer);
+    clearTimeoutFn(sequence.messageTimer);
+    clearTimeoutFn(sequence.countdownTimer);
     sequence.messageTimer = 0;
     sequence.countdownTimer = 0;
   }
@@ -35,15 +38,15 @@ export function createIntroSequence({
 
   function scheduleReleaseTick(delay = timing.countdownTickMs) {
     clearTimers();
-    trackIntroTimer(sequence, "releaseCountdown", delay, performance.now());
-    sequence.countdownTimer = setTimeout(() => {
+    trackIntroTimer(sequence, "releaseCountdown", delay, now());
+    sequence.countdownTimer = setTimeoutFn(() => {
       if (game.paused) {
         sequence.countdownTimer = 0;
         trackIntroTimer(
           sequence,
           "releaseCountdown",
           timing.countdownTickMs,
-          performance.now(),
+          now(),
         );
         return;
       }
@@ -73,11 +76,7 @@ export function createIntroSequence({
   }
 
   function pause() {
-    const hadActiveTimer = pauseIntroTimerState(
-      intro,
-      sequence,
-      performance.now(),
-    );
+    const hadActiveTimer = pauseIntroTimerState(intro, sequence, now());
     if (hadActiveTimer) clearTimers();
   }
 

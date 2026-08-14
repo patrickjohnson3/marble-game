@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createCameraController } from "../core/camera.js";
+import { createCameraController } from "../input/camera-controller.js";
 import { clamp, distance, midpoint } from "../core/geometry.js";
 
 function createController({

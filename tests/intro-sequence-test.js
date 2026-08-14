@@ -27,73 +27,55 @@ function fakeMessageOverlay() {
 }
 
 function testPausedCountdownTimeoutCanResume() {
-  const originalSetTimeout = globalThis.setTimeout;
-  const originalClearTimeout = globalThis.clearTimeout;
-  const originalPerformance = globalThis.performance;
   const callbacks = [];
   let now = 1000;
   let released = false;
 
-  globalThis.setTimeout = (callback) => {
+  const setTimeoutFn = (callback) => {
     callbacks.push(callback);
     return callbacks.length;
   };
-  globalThis.clearTimeout = () => {};
-  globalThis.performance = {
-    now() {
-      return now;
-    },
+  const intro = { released: false };
+  const introSequenceState = {
+    started: true,
+    sequenceStage: "releaseCountdown",
+    messageTimer: 0,
+    countdownTimer: 0,
+    countdownValue: 2,
+    timerStartedAt: 0,
+    timerDelayMs: 0,
   };
+  const game = { paused: true };
+  const sequence = createIntroSequence({
+    intro,
+    sequence: introSequenceState,
+    game,
+    timing: { introReleaseDelayMs: 2000, countdownTickMs: 1000 },
+    messageOverlay: fakeMessageOverlay(),
+    clearTimeoutFn() {},
+    createElement() {
+      return { className: "", textContent: "" };
+    },
+    now: () => now,
+    onRelease() {
+      released = true;
+    },
+    setTimeoutFn,
+  });
 
-  try {
-    const intro = {
-      released: false,
-    };
-    const introSequenceState = {
-      started: true,
-      sequenceStage: "releaseCountdown",
-      messageTimer: 0,
-      countdownTimer: 0,
-      countdownValue: 2,
-      timerStartedAt: 0,
-      timerDelayMs: 0,
-    };
-    const game = { paused: true };
-    const sequence = createIntroSequence({
-      intro,
-      sequence: introSequenceState,
-      game,
-      timing: {
-        introReleaseDelayMs: 2000,
-        countdownTickMs: 1000,
-      },
-      messageOverlay: fakeMessageOverlay(),
-      createElement() {
-        return { className: "", textContent: "" };
-      },
-      onRelease() {
-        released = true;
-      },
-    });
+  sequence.resume();
+  callbacks.shift()();
 
-    sequence.resume();
-    callbacks.shift()();
+  assert.equal(introSequenceState.sequenceStage, "releaseCountdown");
+  assert.equal(introSequenceState.timerDelayMs, 1000);
+  assert.equal(introSequenceState.countdownValue, 2);
+  assert.equal(released, false);
 
-    assert.equal(introSequenceState.sequenceStage, "releaseCountdown");
-    assert.equal(introSequenceState.timerDelayMs, 1000);
-    assert.equal(introSequenceState.countdownValue, 2);
-    assert.equal(released, false);
-
-    game.paused = false;
-    now = 2000;
-    sequence.resume();
-    callbacks.shift()();
-    assert.equal(introSequenceState.countdownValue, 1);
-  } finally {
-    globalThis.setTimeout = originalSetTimeout;
-    globalThis.clearTimeout = originalClearTimeout;
-    globalThis.performance = originalPerformance;
-  }
+  game.paused = false;
+  now = 2000;
+  sequence.resume();
+  callbacks.shift()();
+  assert.equal(introSequenceState.countdownValue, 1);
 }
 
 testPausedCountdownTimeoutCanResume();

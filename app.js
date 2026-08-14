@@ -1,4 +1,4 @@
-import { createCameraController } from "./core/camera.js";
+import { createCameraController } from "./input/camera-controller.js";
 import {
   hapticTuning,
   physicsConfig,
@@ -300,8 +300,15 @@ function setupInput({
   });
 }
 
-function setupFeedback(haptics) {
-  return createHapticsController(haptics, hapticTuning);
+function setupFeedback(haptics, windowRef) {
+  const vibrate = windowRef.navigator?.vibrate;
+  return createHapticsController(haptics, hapticTuning, {
+    now: () => windowRef.performance.now(),
+    vibrate:
+      typeof vibrate === "function"
+        ? (pattern) => vibrate.call(windowRef.navigator, pattern)
+        : null,
+  });
 }
 
 function createSettingsRuntime(storage) {
@@ -524,7 +531,7 @@ export function createApp({
   updatePwaStatus();
   ui.setMapObjects(mapObjectSummary(mapState.activeMap));
 
-  const hapticFeedback = setupFeedback(haptics);
+  const hapticFeedback = setupFeedback(haptics, windowRef);
   const cameraController = createCameraController({
     camera,
     cameraEl: worldEl,
@@ -626,7 +633,11 @@ export function createApp({
     game,
     timing,
     messageOverlay,
+    clearTimeoutFn: (timer) => windowRef.clearTimeout(timer),
+    createElement: (tag) => documentRef.createElement(tag),
+    now: () => windowRef.performance.now(),
     onRelease: releaseMap,
+    setTimeoutFn: (callback, delay) => windowRef.setTimeout(callback, delay),
   });
   const mapProgression = createMapProgression({
     baseMapConfig,
