@@ -36,9 +36,23 @@
       #messageOverlay {
         display: none;
       }
+      #bootError:not([hidden]) {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #101114;
+        color: white;
+        font:
+          600 16px/1.5 system-ui,
+          sans-serif;
+        text-align: center;
+      }
     </style>
     <script>
-      const assetVersion = "a7e4104504ffa90f";
+      const assetVersion = "fc64a9f1b78e4ad5";
       const runtimeModuleScripts = [
         "boot.js",
         "core/camera.js",
@@ -111,9 +125,12 @@
       window.__marbleAppBooted = false;
       window.__showMarbleBootError = function (error) {
         if (window.__marbleAppBooted) return;
-        const hintEl = document.getElementById("hint");
-        if (hintEl)
-          hintEl.textContent = "game failed to load. refresh and try again.";
+        const bootErrorEl = document.getElementById("bootError");
+        if (bootErrorEl) {
+          bootErrorEl.textContent =
+            "game failed to load. refresh and try again.";
+          bootErrorEl.hidden = false;
+        }
         if (error) console.error(error);
       };
       window.addEventListener("error", function (event) {
@@ -130,6 +147,7 @@
     </script>
   </head>
   <body>
+    <div id="bootError" role="alert" hidden></div>
     <div id="game">
       <div id="world">
         <div id="introWalls" class="walls"></div>

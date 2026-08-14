@@ -32,6 +32,16 @@ if (missingIds.length > 0) {
   process.exit(1);
 }
 
+assert.ok(
+  htmlIds.has("bootError"),
+  "index.html must include a visible boot error surface",
+);
+assert.match(
+  html,
+  /bootErrorEl\.hidden = false/,
+  "the inline boot handler must reveal the boot error surface",
+);
+
 const moduleScriptListMatch = html.match(
   /const runtimeModuleScripts = \[([\s\S]*?)\];/,
 );

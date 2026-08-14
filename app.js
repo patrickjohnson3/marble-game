@@ -80,9 +80,10 @@ import { createGameState } from "./core/state.js";
 import { createUi } from "./rendering/ui.js";
 
 function showBootError(documentRef, error) {
-  const hintEl = documentRef.getElementById("hint");
-  if (hintEl) {
-    hintEl.textContent = copy.bootError;
+  const bootErrorEl = documentRef.getElementById("bootError");
+  if (bootErrorEl) {
+    bootErrorEl.textContent = copy.bootError;
+    bootErrorEl.hidden = false;
   }
   console.error(error);
 }
