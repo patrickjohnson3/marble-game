@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a vanilla JavaScript browser game with a small custom 2D engine. Entry points live at `index.html`, `boot.js`, and `app.js`. Core game systems are in `core/`: physics, camera, game loop, map runtime, haptics, and startup flow. Input adapters are in `input/`; platform/PWA helpers are in `platform/`; settings UI and persistence are in `settings/`. Rendering code is split by concern in `rendering/`, including terrain patches, map themes, effects, marble view, and UI. Map definitions live in `maps/map-data.js`. Static art and PWA assets are in `assets/`. Tests are in `tests/`, with shared fakes in `tests/test-dom.js`.
+This is a static vanilla JavaScript game with no runtime build step. `index.html` loads `boot.js`, then `app.js` composes the application. Game systems live in `core/`; browser integration in `input/` and `platform/`; preferences in `settings/`; and visual output in `rendering/`. Maps live in `maps/map-data.js`, assets in `assets/`, and tests in `tests/`.
 
 ## Build, Test, and Development Commands
 
@@ -17,20 +17,20 @@ This is a vanilla JavaScript browser game with a small custom 2D engine. Entry p
 
 ## Architecture Boundaries
 
-Keep `app.js` as the composition root and gameplay rules in `core/`. Keep browser APIs in `platform/` or input controllers, and keep `rendering/` limited to visual output and disposable caches. Follow `docs/state-ownership.md`; controllers and renderers must not duplicate gameplay state owned by `state`, `mapRuntime.state`, or `settings`.
+Keep gameplay rules in `core/`, browser APIs in `platform/` or input controllers, and `rendering/` limited to output and disposable caches. Follow `docs/state-ownership.md`; controllers and renderers must not duplicate state owned by `state`, `mapRuntime.state`, or `settings`.
 
 ## Coding Style & Naming Conventions
 
-Use ES modules and keep code plain JavaScript. Follow Prettier defaults from `.prettierrc`; do not hand-format around it. Prefer small pure helpers for geometry, physics, map validation, and settings migration. Use descriptive camelCase names for functions and state fields. Keep gameplay tuning values named in `core/game-config.js` rather than scattering magic numbers.
+Use plain JavaScript ES modules and let Prettier plus `.editorconfig` control formatting. Keep gameplay tuning in `core/game-config.js`. Extract helpers when they isolate reusable or independently testable logic; avoid one-use wrappers.
 
 ## Testing Guidelines
 
-Tests use Node’s built-in `assert` and are executed by `npm test`. Add tests near the system being changed, using existing patterns such as `physics-test.js`, `rendering-test.js`, `map-runtime-test.js`, and `settings-store-test.js`. Prefer deterministic pure-function tests. For rendering changes, assert drawing behavior through the fake canvas call log rather than pixel snapshots.
+`npm test` runs Node `assert` tests and cache validation. Add focused tests beside the affected system. Rendering tests inspect the fake canvas call log rather than pixel snapshots.
 
 ## Commit & Pull Request Guidelines
 
-Commit messages are short imperative summaries, for example `Improve kitchen water spill` or `Add project TODO`. Keep commits focused: one behavior, refactor, or visual change per commit. Before pushing, run `npm run format:check`, `npm run lint`, and `npm test`. Pull requests should describe gameplay/user-visible impact, list verification commands, and include screenshots or mobile notes for visual changes.
+Use short imperative commit summaries and keep each commit to one behavior, refactor, or visual change. Before pushing, run `npm run format:check`, `npm run lint`, and `npm test`. Visual pull requests require screenshots or mobile verification notes.
 
 ## Agent-Specific Notes
 
-This is mobile-first. Be careful with motion sensors, haptics, fullscreen, wake lock, and PWA caching. Avoid adding engine abstractions unless they clearly simplify current gameplay work.
+Changes to motion sensors, haptics, fullscreen, wake lock, or PWA behavior must preserve desktop keyboard fallback, add focused tests, and receive HTTPS mobile verification when platform behavior changes. Add engine abstractions only when they remove current complexity.
