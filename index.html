@@ -52,7 +52,7 @@
       }
     </style>
     <script>
-      const assetVersion = "0ccb2e008941ead4";
+      const assetVersion = "0ca5f132fe8eeb67";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -207,46 +207,60 @@
         <div id="pwaStatus" class="settingsStatus" aria-live="polite"></div>
         <div id="mapObjectsStatus" class="settingsStatus"></div>
         <div id="hint" class="settingsStatus" aria-live="polite"></div>
-        <button id="installApp" class="secondary" hidden></button>
-        <button id="retryMap" class="secondary"></button>
-        <button id="neutral" class="secondary"></button>
-        <label class="settingRow" for="speedSetting">
-          <span></span>
-          <input id="speedSetting" type="range" />
-        </label>
-        <label class="settingRow" for="sensitivitySetting">
-          <span></span>
-          <input id="sensitivitySetting" type="range" />
-        </label>
-        <label class="settingRow checkboxRow" for="hapticsSetting">
-          <span></span>
-          <input id="hapticsSetting" type="checkbox" />
-        </label>
-        <label class="settingRow checkboxRow" for="trailSetting">
-          <span></span>
-          <input id="trailSetting" type="checkbox" />
-        </label>
-        <label class="settingRow checkboxRow" for="fullscreenSetting">
-          <span></span>
-          <input id="fullscreenSetting" type="checkbox" />
-        </label>
-        <label class="settingRow checkboxRow" for="goalIndicatorSetting">
-          <span></span>
-          <input id="goalIndicatorSetting" type="checkbox" />
-        </label>
-        <label class="settingRow checkboxRow" for="hitboxOverlaySetting">
-          <span></span>
-          <input id="hitboxOverlaySetting" type="checkbox" />
-        </label>
-        <label class="settingRow checkboxRow" for="fpsSetting">
-          <span></span>
-          <input id="fpsSetting" type="checkbox" />
-        </label>
-        <label class="settingRow checkboxRow" for="statsSetting">
-          <span></span>
-          <input id="statsSetting" type="checkbox" />
-        </label>
-        <button id="resumeGame" class="primaryAction"></button>
+        <section
+          class="settingsSection"
+          aria-labelledby="gameplaySettingsTitle"
+        >
+          <h3 id="gameplaySettingsTitle"></h3>
+          <label class="settingRow" for="speedSetting">
+            <span></span>
+            <input id="speedSetting" type="range" />
+          </label>
+          <label class="settingRow" for="sensitivitySetting">
+            <span></span>
+            <input id="sensitivitySetting" type="range" />
+          </label>
+          <label class="settingRow checkboxRow" for="hapticsSetting">
+            <span></span>
+            <input id="hapticsSetting" type="checkbox" />
+          </label>
+          <label class="settingRow checkboxRow" for="trailSetting">
+            <span></span>
+            <input id="trailSetting" type="checkbox" />
+          </label>
+          <label class="settingRow checkboxRow" for="goalIndicatorSetting">
+            <span></span>
+            <input id="goalIndicatorSetting" type="checkbox" />
+          </label>
+        </section>
+        <section class="settingsSection" aria-labelledby="deviceSettingsTitle">
+          <h3 id="deviceSettingsTitle"></h3>
+          <button id="installApp" class="secondary" hidden></button>
+          <button id="neutral" class="secondary"></button>
+          <label class="settingRow checkboxRow" for="fullscreenSetting">
+            <span></span>
+            <input id="fullscreenSetting" type="checkbox" />
+          </label>
+        </section>
+        <details class="settingsSection diagnosticsSettings">
+          <summary id="diagnosticsSettingsTitle"></summary>
+          <label class="settingRow checkboxRow" for="hitboxOverlaySetting">
+            <span></span>
+            <input id="hitboxOverlaySetting" type="checkbox" />
+          </label>
+          <label class="settingRow checkboxRow" for="fpsSetting">
+            <span></span>
+            <input id="fpsSetting" type="checkbox" />
+          </label>
+          <label class="settingRow checkboxRow" for="statsSetting">
+            <span></span>
+            <input id="statsSetting" type="checkbox" />
+          </label>
+        </details>
+        <div class="settingsActions">
+          <button id="retryMap" class="secondary"></button>
+          <button id="resumeGame" class="primaryAction"></button>
+        </div>
       </div>
     </div>
 

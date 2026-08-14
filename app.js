@@ -421,7 +421,7 @@ function pwaUpdateStatusText(status) {
     {
       checking: copy.pwa.checking,
       error: copy.pwa.error,
-      ready: copy.pwa.ready,
+      ready: "",
       unsupported: copy.pwa.unsupported,
       "update-delayed": copy.pwa.updateDelayed,
       "update-failed": copy.pwa.updateFailed,

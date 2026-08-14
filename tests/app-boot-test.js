@@ -60,6 +60,18 @@ try {
     "Settings",
   );
   assert.equal(
+    document.getElementById("gameplaySettingsTitle").textContent,
+    "Gameplay",
+  );
+  assert.equal(
+    document.getElementById("deviceSettingsTitle").textContent,
+    "Device",
+  );
+  assert.equal(
+    document.getElementById("diagnosticsSettingsTitle").textContent,
+    "Diagnostics",
+  );
+  assert.equal(
     document.getElementById("levelLabel").textContent,
     "level 1: kitchen floor",
   );

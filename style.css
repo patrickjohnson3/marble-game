@@ -859,9 +859,10 @@ button.primaryAction {
 }
 .settingsStatus {
   margin: -4px 0 12px;
-  border-radius: 10px;
-  background: #ffffff10;
-  padding: 9px 10px;
+  border-left: 2px solid #ffffff24;
+  border-radius: 4px;
+  background: #ffffff08;
+  padding: 7px 9px;
   color: #d7dde8;
   font-size: 13px;
   line-height: 1.25;
@@ -885,6 +886,31 @@ button.primaryAction {
 #settingsModal #retryMap {
   width: 100%;
   margin-bottom: 12px;
+}
+.settingsSection {
+  margin: 14px 0 0;
+  border: 0;
+  border-top: 1px solid #ffffff17;
+  padding: 12px 0 0;
+}
+.settingsSection h3,
+.diagnosticsSettings summary {
+  margin: 0 0 12px;
+  color: #aeb7c6;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.diagnosticsSettings summary {
+  cursor: pointer;
+  list-style-position: inside;
+}
+.diagnosticsSettings[open] summary {
+  color: white;
+}
+.settingsActions {
+  margin-top: 16px;
 }
 .settingRow {
   display: grid;

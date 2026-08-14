@@ -22,7 +22,6 @@ export const copy = {
     error: "offline app setup failed. refresh online and try again.",
     installedFullscreen:
       "installed app mode. fullscreen is handled by the app.",
-    ready: "offline app ready.",
     unsupported: "offline app unavailable in this browser.",
     updateDelayed:
       "app update is taking longer than expected. current version is still available.",
@@ -45,6 +44,11 @@ export const copy = {
     toggleLabel: "settings",
     title: "Settings",
     closeLabel: "close settings",
+    sections: {
+      gameplay: "Gameplay",
+      device: "Device",
+      diagnostics: "Diagnostics",
+    },
     labels: {
       speedSetting: "speed",
       sensitivitySetting: "sensitivity",
@@ -68,6 +72,9 @@ export function applyDocumentCopy({ document, els }) {
   els.settingsToggle.setAttribute("aria-label", copy.settings.toggleLabel);
   els.settingsToggle.title = copy.settings.title;
   els.settingsTitle.textContent = copy.settings.title;
+  els.gameplaySettingsTitle.textContent = copy.settings.sections.gameplay;
+  els.deviceSettingsTitle.textContent = copy.settings.sections.device;
+  els.diagnosticsSettingsTitle.textContent = copy.settings.sections.diagnostics;
   els.closeSettings.setAttribute("aria-label", copy.settings.closeLabel);
   els.closeSettings.textContent = copy.buttons.closeSettings;
   els.installApp.textContent = copy.buttons.installApp;
