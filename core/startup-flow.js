@@ -51,6 +51,7 @@ export async function startGameWithPermissions({
   if (sensor) sensor.permission = "pending";
   scheduleFrame();
   ui.setHint(copy.hints.calibrating);
+  ui.setGameStatus(copy.hints.calibrating);
   sensorWatchdog.schedule();
 
   const permission = await requestMotionPermissionWithTimeout({
@@ -66,8 +67,12 @@ export async function startGameWithPermissions({
 
   if (permission === false) {
     ui.setHint(copy.hints.motionDenied);
+    ui.setGameStatus(copy.hints.motionDenied);
     return;
   }
 
-  if (permission === "timeout") ui.setHint(copy.hints.noMotionSensor);
+  if (permission === "timeout") {
+    ui.setHint(copy.hints.noMotionSensor);
+    ui.setGameStatus(copy.hints.noMotionSensor);
+  }
 }

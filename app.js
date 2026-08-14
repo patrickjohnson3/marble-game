@@ -249,6 +249,7 @@ function setupSensors({
     sensor,
     onFallback() {
       ui.setHint(copy.hints.noMotionSensor);
+      ui.setGameStatus(copy.hints.noMotionSensor);
       sensor.using = SENSOR_MODES.keyboard;
       game.phase = GAME_PHASES.keyboard;
       tilt.neutralX = 0;
@@ -497,6 +498,7 @@ export function createApp({
   });
   const ui = createUi({
     controls: controlsEl,
+    gameStatus: els.gameStatus,
     hint,
     fpsCounter,
     debug,
@@ -765,6 +767,7 @@ export function createApp({
     sensor,
     tilt,
     closeSettings: gameController.closeSettings,
+    onInputReady: () => ui.setGameStatus(""),
   });
   inputManager = setupInput({
     els,

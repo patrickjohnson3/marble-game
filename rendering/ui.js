@@ -1,5 +1,6 @@
 export function createUi({
   controls,
+  gameStatus,
   goalIndicator,
   hint,
   levelLabel,
@@ -30,6 +31,13 @@ export function createUi({
 
   function setHint(message) {
     hint.textContent = message;
+  }
+
+  function setGameStatus(message) {
+    if (!gameStatus) return;
+
+    gameStatus.textContent = message;
+    gameStatus.hidden = !message;
   }
 
   function setLevelLabel(message) {
@@ -155,6 +163,7 @@ export function createUi({
     isSettingsOpen,
     openSettingsModal,
     setFpsEnabled,
+    setGameStatus,
     setGoalIndicator,
     setStatsEnabled,
     setHint,

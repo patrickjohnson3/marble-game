@@ -19,6 +19,7 @@ export const domIds = {
   marble: "marble",
   goalIndicator: "goalIndicator",
   messageOverlay: "messageOverlay",
+  gameStatus: "gameStatus",
   controls: "controls",
   startBtn: "start",
   neutralBtn: "neutral",

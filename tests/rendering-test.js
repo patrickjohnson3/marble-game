@@ -282,6 +282,32 @@ function testPwaStatusUpdatesSettingsStatus() {
 
 testPwaStatusUpdatesSettingsStatus();
 
+function testGameplayStatusVisibility() {
+  const gameStatus = new FakeElement();
+  const ui = createUi({
+    gameStatus,
+    hint: new FakeElement(),
+    fpsCounter: new FakeElement(),
+    debug: new FakeElement(),
+    settings: { fpsEnabled: false, statsEnabled: false },
+    settingsOverlay: new FakeElement(),
+    debugLines: () => [],
+    state: {},
+  });
+
+  ui.setGameStatus("keep holding normally for half a sec...");
+  assert.equal(gameStatus.hidden, false);
+  assert.equal(
+    gameStatus.textContent,
+    "keep holding normally for half a sec...",
+  );
+
+  ui.setGameStatus("");
+  assert.equal(gameStatus.hidden, true);
+}
+
+testGameplayStatusVisibility();
+
 function testLevelLabelHidesWhenEmpty() {
   const levelLabel = new FakeElement();
   const ui = createUi({

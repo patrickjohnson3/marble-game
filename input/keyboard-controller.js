@@ -20,6 +20,7 @@ export function createKeyboardController({
   sensor,
   tilt,
   closeSettings,
+  onInputReady = () => {},
 }) {
   function activateKeyboardFallback() {
     sensor.using =
@@ -34,6 +35,7 @@ export function createKeyboardController({
     tilt.neutralX = 0;
     tilt.neutralY = 0;
     calibration.autoNeutralDone = true;
+    onInputReady();
     introSequence.schedule();
     scheduleFrame();
   }

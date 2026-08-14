@@ -29,6 +29,7 @@ export function createSensorController({
       marble.vx = 0;
       marble.vy = 0;
       ui.setHint(copy.hints.neutralSet);
+      ui.setGameStatus("");
       introSequence.schedule();
     }
   }
@@ -75,6 +76,7 @@ export function createSensorController({
     tilt.smoothX = 0;
     tilt.smoothY = 0;
     ui.setHint(copy.hints.neutralReset);
+    ui.setGameStatus("");
     introSequence.schedule();
     scheduleFrame();
   }

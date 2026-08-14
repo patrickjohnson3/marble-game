@@ -5,6 +5,7 @@ function createHarness() {
   let frameSchedules = 0;
   let introSchedules = 0;
   let hint = "";
+  let gameStatus = "calibrating";
   const calibration = {
     autoNeutralDone: false,
     sampleCount: 0,
@@ -43,6 +44,9 @@ function createHarness() {
       setHint(message) {
         hint = message;
       },
+      setGameStatus(message) {
+        gameStatus = message;
+      },
     },
     adjustScreen: (gamma, beta) => [gamma, beta],
   });
@@ -52,6 +56,7 @@ function createHarness() {
     controller,
     counts: () => ({ frameSchedules, introSchedules }),
     game,
+    gameStatus: () => gameStatus,
     hint: () => hint,
     marble,
     tilt,
@@ -68,6 +73,7 @@ function testManualNeutralStartsIntroCountdown() {
   assert.equal(harness.tilt.neutralX, 3);
   assert.equal(harness.tilt.neutralY, -5);
   assert.deepEqual(harness.counts(), { frameSchedules: 1, introSchedules: 1 });
+  assert.equal(harness.gameStatus(), "");
 }
 
 function testAutoNeutralStartsIntroCountdownOnce() {
@@ -82,6 +88,7 @@ function testAutoNeutralStartsIntroCountdownOnce() {
   assert.equal(harness.tilt.neutralX, 5);
   assert.equal(harness.tilt.neutralY, 5);
   assert.equal(harness.counts().introSchedules, 1);
+  assert.equal(harness.gameStatus(), "");
 }
 
 testManualNeutralStartsIntroCountdown();

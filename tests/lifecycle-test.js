@@ -72,6 +72,7 @@ function createLifecycleHarness() {
       openSettingsModal() {
         settingsOpen = true;
       },
+      setGameStatus() {},
       setHint() {},
       setStartControls() {},
     },
@@ -172,7 +173,12 @@ async function testStartRequestsFullscreenFromClickPath() {
     settings: { fullscreenEnabled: true },
     timing,
     trailRenderer: { clear() {} },
-    ui: { isSettingsOpen: () => false, setHint() {}, setStartControls() {} },
+    ui: {
+      isSettingsOpen: () => false,
+      setGameStatus() {},
+      setHint() {},
+      setStartControls() {},
+    },
     getSpawn: () => resolvedMapConfig.spawn,
     enableMotion() {
       motionEnabled = true;
@@ -209,6 +215,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
   });
   let motionEnabled = false;
   let hint = "";
+  let gameStatus = "";
   let timeoutCallback = null;
 
   const lifecycle = createLifecycleController({
@@ -242,6 +249,9 @@ async function testStartContinuesWhenMotionPermissionStalls() {
     trailRenderer: { clear() {} },
     ui: {
       isSettingsOpen: () => false,
+      setGameStatus(message) {
+        gameStatus = message;
+      },
       setHint(message) {
         hint = message;
       },
@@ -280,6 +290,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
     hint,
     "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
   );
+  assert.equal(gameStatus, hint);
 }
 
 async function testMotionPermissionDenialKeepsKeyboardFallbackActive() {
@@ -292,6 +303,7 @@ async function testMotionPermissionDenialKeepsKeyboardFallbackActive() {
   });
   let motionEnabled = false;
   let hint = "";
+  let gameStatus = "";
   let fullscreenRequests = 0;
   const controlsEl = { hidden: false };
   const startBtn = {
@@ -330,6 +342,9 @@ async function testMotionPermissionDenialKeepsKeyboardFallbackActive() {
     trailRenderer: { clear() {} },
     ui: {
       isSettingsOpen: () => false,
+      setGameStatus(message) {
+        gameStatus = message;
+      },
       setHint(message) {
         hint = message;
       },
@@ -360,6 +375,7 @@ async function testMotionPermissionDenialKeepsKeyboardFallbackActive() {
   assert.equal(state.game.phase, "calibrating");
   assert.equal(state.input.sensor.permission, "denied");
   assert.equal(hint, "motion permission denied. check chrome site settings.");
+  assert.equal(gameStatus, hint);
 }
 
 function testResumeResetsFrameClock() {
@@ -402,7 +418,12 @@ function testResumeResetsFrameClock() {
     settings: { fullscreenEnabled: true },
     timing,
     trailRenderer: { clear() {} },
-    ui: { isSettingsOpen: () => false, setHint() {}, setStartControls() {} },
+    ui: {
+      isSettingsOpen: () => false,
+      setGameStatus() {},
+      setHint() {},
+      setStartControls() {},
+    },
     getSpawn: () => resolvedMapConfig.spawn,
     enableMotion() {},
     requestFullscreen() {},

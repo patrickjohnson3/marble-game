@@ -640,6 +640,26 @@ body {
   font-size: 16px;
   font-weight: 900;
 }
+#gameStatus {
+  position: fixed;
+  left: calc(12px + var(--safe-left));
+  right: calc(12px + var(--safe-right));
+  bottom: calc(70px + var(--safe-bottom));
+  z-index: 4;
+  border-radius: 12px;
+  background: #000b;
+  padding: 10px 12px;
+  color: white;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+#gameStatus:empty {
+  display: none;
+}
 #panel {
   position: fixed;
   left: calc(12px + var(--safe-left));
