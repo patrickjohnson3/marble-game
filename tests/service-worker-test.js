@@ -82,7 +82,15 @@ try {
   await installPromise;
   assert.equal(skippedWaiting, 1);
   assert.equal(
-    installedFiles.some((url) => url.endsWith("app.js")),
+    installedFiles.some((url) => url.includes("app.js?v=")),
+    true,
+  );
+  assert.equal(
+    installedFiles.some((url) => url.includes("style.css?v=")),
+    true,
+  );
+  assert.equal(
+    installedFiles.some((url) => url.endsWith("runtime-assets.js")),
     true,
   );
 

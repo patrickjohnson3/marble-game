@@ -60,6 +60,7 @@ export const runtimeModuleScripts = runtimeScripts;
 
 export const pwaFiles = [
   "manifest.webmanifest",
+  "runtime-assets.js",
   "sw.js",
   "assets/icons/marble-icon.svg",
   "assets/icons/marble-maskable.svg",

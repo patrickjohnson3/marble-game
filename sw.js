@@ -1,10 +1,20 @@
-import { runtimeFiles } from "./runtime-assets.js";
+import { runtimeFiles, runtimeModuleScripts } from "./runtime-assets.js";
 
-const cacheVersion = "marble-game-16a4dace77abe0e1";
+const cacheVersion = "marble-game-7f849c3fc63e705c";
+const assetVersion = cacheVersion.slice("marble-game-".length);
+const versionedFiles = [...runtimeModuleScripts, "style.css"].map(
+  (file) => file + "?v=" + assetVersion,
+);
 const cacheableFiles = [
   "./",
   "index.html",
-  ...runtimeFiles.filter((file) => file !== "sw.js"),
+  ...runtimeFiles.filter(
+    (file) =>
+      file !== "sw.js" &&
+      file !== "style.css" &&
+      !runtimeModuleScripts.includes(file),
+  ),
+  ...versionedFiles,
 ];
 
 function sameOrigin(request) {
