@@ -12,9 +12,10 @@ the rest of the ES modules directly.
 
 The important top-level folders are:
 
-- `core/`: game state, map data processing, physics, camera, lifecycle,
-  haptics, progression, timing, and pure utilities.
-- `input/`: browser input wiring plus keyboard and motion sensor controllers.
+- `core/`: game state, map data processing, physics, lifecycle, haptics,
+  progression, timing, and pure utilities.
+- `input/`: browser input wiring plus camera, keyboard, and motion sensor
+  controllers.
 - `rendering/`: DOM/SVG/canvas renderers for the marble, map, surfaces,
   effects, trail, and UI.
 - `settings/`: settings schema, persistence, UI binding, and runtime
@@ -263,8 +264,9 @@ interpret gameplay.
 `input/sensor-watchdog.js` owns fallback timing when motion sensors do not
 arrive. It switches the game into keyboard mode and starts the intro countdown.
 
-Camera gestures are handled in `core/camera-gestures.js` through the camera
-controller. Pinch zoom is a camera concern, not a physics concern.
+Camera transforms and gestures are handled in `input/camera-controller.js` and
+`input/camera-gestures.js`. Pinch zoom is an input/camera concern, not a physics
+concern.
 
 ## Settings Responsibilities
 
@@ -283,8 +285,9 @@ runtime-only fields do not leak into localStorage.
 
 ## Haptics And Feedback
 
-`core/haptics.js` translates gameplay events into vibration pulses when the
-platform supports `navigator.vibrate` and haptics are enabled.
+`core/haptics.js` translates gameplay events into vibration requests when
+haptics are enabled. `app.js` supplies the platform vibration capability from
+`navigator.vibrate`; unsupported browsers supply no capability.
 
 Feedback sources:
 
@@ -311,6 +314,8 @@ Ownership model:
 - `state.physics`: updated by settings applier and read by physics.
 - `mapRuntime.state`: active map, derived element arrays, spawn, goal, and goal
   hold progress.
+- `kitchenDynamics.state`: Cheerios, crumbs, ants, collision scratch, and
+  per-frame kitchen events. Rendering reads this state but does not advance it.
 - `settings`: runtime settings loaded from persisted settings and mutated by
   the settings panel.
 
@@ -323,8 +328,6 @@ Use this section when deciding where a change belongs.
 - `app.js`: composition root. Wires modules together. Avoid putting gameplay
   rules here unless they are orchestration rules.
 - `boot.js`: browser entrypoint only.
-- `core/camera.js`: camera transform, follow behavior, and gesture delegation.
-- `core/camera-gestures.js`: pointer gesture math for camera zoom/pan behavior.
 - `core/copy.js`: user-facing strings.
 - `core/debug.js`: debug/stat display formatting.
 - `core/dom.js` and `core/dom-ids.js`: DOM lookup and element ids.
@@ -335,7 +338,7 @@ Use this section when deciding where a change belongs.
 - `core/game-loop.js`: per-frame orchestration.
 - `core/geometry.js`: pure geometry utilities.
 - `core/goal-controller.js`: goal hold progress, goal haptics, and map advance.
-- `core/haptics.js`: vibration throttling and platform-safe haptic calls.
+- `core/haptics.js`: haptic request throttling and gameplay feedback patterns.
 - `core/intro-sequence.js` and `core/intro-timers.js`: intro countdown state
   and pause/resume handling.
 - `core/map-bounds.js`: intro pen and released-map bounds/walls.
@@ -354,7 +357,9 @@ Use this section when deciding where a change belongs.
 - `core/rect-bounds.js`: rectangle collection bounds.
 - `core/startup-flow.js`: permission/fullscreen/wake-lock startup path.
 - `core/state.js`: initial mutable state shape.
-- `core/timer-utils.js`: timer helpers.
+- `core/timer-utils.js`: pausable timeout used by the sensor watchdog.
+- `input/camera-controller.js` and `input/camera-gestures.js`: camera transform,
+  follow behavior, and pinch/pan input.
 - `input/*`: browser input binding and input-specific controllers.
 - `platform/platform.js`: browser/platform APIs isolated for testing.
 - `rendering/*`: visual output only.
