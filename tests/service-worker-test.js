@@ -8,12 +8,14 @@ const originalGlobals = {
 const listeners = {};
 const writes = [];
 const cacheMatches = [];
+const matchedResponses = new Map();
 const deletedCaches = [];
 let claimedClients = 0;
 let installedFiles = [];
 let openedCacheName = "";
 let skippedWaiting = 0;
 let resolveWrite;
+let holdCacheWrites = true;
 
 globalThis.self = {
   addEventListener(type, listener) {
@@ -37,7 +39,7 @@ globalThis.self = {
 globalThis.caches = {
   match(request, options) {
     cacheMatches.push({ request, options });
-    return Promise.resolve(null);
+    return Promise.resolve(matchedResponses.get(String(request)) ?? null);
   },
   keys() {
     return Promise.resolve(["marble-game-old", openedCacheName, "unrelated"]);
@@ -55,6 +57,7 @@ globalThis.caches = {
       },
       put(key) {
         writes.push(key);
+        if (!holdCacheWrites) return Promise.resolve();
         return new Promise((resolve) => {
           resolveWrite = resolve;
         });
@@ -136,6 +139,51 @@ try {
     cacheMatches[0].options,
     undefined,
     "runtime cache lookup must preserve asset-version query strings",
+  );
+
+  const cachedShell = { source: "cache" };
+  const networkShell = {
+    ok: true,
+    clone() {
+      return { cloned: true };
+    },
+  };
+  const shellKey = "https://example.test/app/index.html";
+  matchedResponses.set(shellKey, cachedShell);
+  holdCacheWrites = false;
+  let resolveNavigationFetch;
+  globalThis.fetch = () =>
+    new Promise((resolve) => {
+      resolveNavigationFetch = resolve;
+    });
+  let cachedResponsePromise;
+  const cachedNavigationLifetime = [];
+  listeners.fetch({
+    request: {
+      method: "GET",
+      mode: "navigate",
+      url: "https://example.test/app/",
+    },
+    respondWith(promise) {
+      cachedResponsePromise = promise;
+    },
+    waitUntil(promise) {
+      cachedNavigationLifetime.push(promise);
+    },
+  });
+
+  assert.equal(
+    await cachedResponsePromise,
+    cachedShell,
+    "cached navigation should not wait for the network",
+  );
+  assert.equal(typeof resolveNavigationFetch, "function");
+  resolveNavigationFetch(networkShell);
+  await Promise.all(cachedNavigationLifetime);
+  assert.equal(
+    writes.at(-1),
+    shellKey,
+    "background navigation should refresh the cached shell",
   );
   console.log("Service worker tests passed.");
 } finally {

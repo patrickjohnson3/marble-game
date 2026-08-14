@@ -1,6 +1,6 @@
 import { runtimeFiles, runtimeModuleScripts } from "./runtime-assets.js";
 
-const cacheVersion = "marble-game-5faa06c4e55f173b";
+const cacheVersion = "marble-game-bb3c5ca8f54955f0";
 const assetVersion = cacheVersion.slice("marble-game-".length);
 const versionedFiles = [...runtimeModuleScripts, "style.css"].map(
   (file) => file + "?v=" + assetVersion,
@@ -72,7 +72,7 @@ function cacheFirst(event, request) {
   });
 }
 
-function navigationFirst(event, request) {
+function fetchAndCacheNavigation(event, request) {
   return fetch(request)
     .then((response) => {
       if (!response.ok) return response;
@@ -87,12 +87,25 @@ function navigationFirst(event, request) {
     .catch(() => caches.match(cacheKey("index.html")));
 }
 
+function navigationCacheFirst(event, request) {
+  const shellKey = cacheKey("index.html");
+  return caches.match(shellKey).then((cached) => {
+    if (!cached) return fetchAndCacheNavigation(event, request);
+
+    keepCacheWriteAlive(
+      event,
+      fetchAndCacheNavigation(event, request).then(() => undefined),
+    );
+    return cached;
+  });
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET" || !sameOrigin(request)) return;
 
   if (request.mode === "navigate") {
-    event.respondWith(navigationFirst(event, request));
+    event.respondWith(navigationCacheFirst(event, request));
     return;
   }
 
