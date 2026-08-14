@@ -37,7 +37,6 @@ const cerealHitMinSpeed = 0.8;
 const cerealHitFeedbackCooldownFrames = 20;
 const kitchenFloorMapId = "kitchen-floor";
 const cheerioWaterSoakRate = 0.006;
-const spongeMaxOffset = 320;
 const spongeMass = 4;
 const spongeInverseMass = 1 / spongeMass;
 const spongeRestitution = 0;
@@ -180,8 +179,6 @@ export function createKitchenDynamicsState() {
     sponge: null,
     spongeContact: {},
     spongeDisturbed: false,
-    spongeOriginX: 0,
-    spongeOriginY: 0,
     spongeOriginAngle: 0,
     spongeSoakAnchorX: 0.5,
     spongeSoakAnchorY: 0.5,
@@ -240,8 +237,6 @@ export function resetKitchenDynamics(
   state.lastWaterRenderStep = 0;
   state.sponge = null;
   state.spongeDisturbed = false;
-  state.spongeOriginX = 0;
-  state.spongeOriginY = 0;
   state.spongeOriginAngle = 0;
   state.spongeSoakAnchorX = 0.5;
   state.spongeSoakAnchorY = 0.5;
@@ -277,8 +272,6 @@ export function resetKitchenDynamics(
       state.sponge.staticCollision = false;
       state.sponge.vx = 0;
       state.sponge.vy = 0;
-      state.spongeOriginX = state.sponge.x;
-      state.spongeOriginY = state.sponge.y;
       state.spongeOriginAngle = state.sponge.angle ?? 0;
     }
     cloneRuntimeWaterPatch(state, waterPatches);
@@ -348,22 +341,13 @@ function cappedVectorScale(x, y, maxLength) {
 
 function moveSponge(state, dx, dy) {
   const sponge = state.sponge;
-  const offsetX = sponge.x - state.spongeOriginX + dx;
-  const offsetY = sponge.y - state.spongeOriginY + dy;
-  const offsetScale = cappedVectorScale(offsetX, offsetY, spongeMaxOffset);
   const nextX = Math.max(
     0,
-    Math.min(
-      state.world.width - sponge.w,
-      state.spongeOriginX + offsetX * offsetScale,
-    ),
+    Math.min(state.world.width - sponge.w, sponge.x + dx),
   );
   const nextY = Math.max(
     0,
-    Math.min(
-      state.world.height - sponge.h,
-      state.spongeOriginY + offsetY * offsetScale,
-    ),
+    Math.min(state.world.height - sponge.h, sponge.y + dy),
   );
   const moveX = nextX - sponge.x;
   const moveY = nextY - sponge.y;

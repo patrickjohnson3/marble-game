@@ -274,6 +274,57 @@ function testShortEndSpongePushMaintainsContact() {
 
 testShortEndSpongePushMaintainsContact();
 
+function testSpongeContinuesMovingAwayFromItsStartingPoint() {
+  const authoredWater = {
+    type: "waterPatch",
+    x: 800,
+    y: 800,
+    w: 100,
+    h: 100,
+  };
+  const sponge = {
+    type: "obstacle",
+    fixture: "sponge",
+    x: 300,
+    y: 400,
+    w: 200,
+    h: 80,
+    hitboxW: 180,
+    hitboxH: 70,
+    angle: 0,
+    collisionCenterX: 400,
+    collisionCenterY: 440,
+    collisionCos: 1,
+    collisionSin: 0,
+    collisionHalfWidth: 90,
+    collisionHalfHeight: 35,
+  };
+  const mapConfig = kitchenMap("kitchen-floor", [authoredWater, sponge]);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({
+    mapConfig,
+    obstacles: [sponge],
+    waterPatches: [authoredWater],
+    world,
+  });
+  sponge.x += 319;
+  sponge.collisionCenterX += 319;
+  sponge.vx = 3.5;
+  const distantMarble = { x: 50, y: 50, vx: 0, vy: 0, r: 29 };
+
+  update(dynamics, mapConfig, distantMarble);
+  const firstX = sponge.x;
+  update(dynamics, mapConfig, distantMarble);
+
+  assert.equal(
+    sponge.x > firstX,
+    true,
+    "the sponge should keep moving instead of stopping at an invisible tether",
+  );
+}
+
+testSpongeContinuesMovingAwayFromItsStartingPoint();
+
 function testSpongeRoundedCornerDoesNotCreateFalseImpact() {
   const authoredWater = {
     type: "waterPatch",
