@@ -1,12 +1,11 @@
+import { clamp, distance, midpoint } from "../core/geometry.js";
+
 export function createCameraGestureController({
   camera,
   cameraEl,
   centerOnMarble,
-  clamp,
-  distance,
   game,
   intro,
-  midpoint,
   tuning,
   applyTransform,
 }) {

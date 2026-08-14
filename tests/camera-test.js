@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { createCameraController } from "../input/camera-controller.js";
-import { clamp, distance, midpoint } from "../core/geometry.js";
 
 function createController({
   marble = { x: 100, y: 100, vx: 5, vy: -2 },
@@ -24,9 +23,6 @@ function createController({
     intro: { released: true },
     marble,
     tuning: { gestureCooldownFrames: 10 },
-    clamp,
-    distance,
-    midpoint,
     viewport,
     world,
   });

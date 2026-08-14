@@ -1,4 +1,5 @@
 import { createCameraGestureController } from "./camera-gestures.js";
+import { clamp } from "../core/geometry.js";
 
 export function createCameraController({
   camera,
@@ -7,9 +8,6 @@ export function createCameraController({
   intro,
   marble,
   tuning,
-  clamp,
-  distance,
-  midpoint,
   viewport,
   world,
 }) {
@@ -104,11 +102,8 @@ export function createCameraController({
     camera,
     cameraEl,
     centerOnMarble,
-    clamp,
-    distance,
     game,
     intro,
-    midpoint,
     tuning,
     applyTransform,
   });

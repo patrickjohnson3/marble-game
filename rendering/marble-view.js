@@ -1,10 +1,11 @@
+import { clamp } from "../core/geometry.js";
+
 export function createMarbleView({
   marbleEl,
   marble,
   world,
   mapConfig,
   visualConfig,
-  clamp,
 }) {
   const light = mapConfig.light;
   const worldDiagonal = Math.hypot(world.width, world.height);

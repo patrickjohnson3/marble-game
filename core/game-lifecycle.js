@@ -4,24 +4,17 @@ import { GAME_PHASES, SENSOR_MODES } from "./runtime-states.js";
 import { startGameWithPermissions } from "./startup-flow.js";
 
 export function createLifecycleController({
+  state,
   cameraController,
   effectsRenderer,
   frameLoop,
-  game,
-  haptics,
-  intro,
-  introSequenceState,
   introSequence,
-  keyboard,
   mapRenderer,
-  marble,
   resetMap = () => {},
   resetCalibration,
   scheduleFrame,
-  sensor,
   sensorWatchdog,
   settings,
-  tilt,
   timing,
   trailRenderer,
   ui,
@@ -34,6 +27,14 @@ export function createLifecycleController({
   setTimeoutFn = setTimeout,
   clearTimeoutFn = clearTimeout,
 }) {
+  const {
+    game,
+    haptics,
+    intro,
+    introSequence: introSequenceState,
+    marble,
+  } = state;
+  const { keyboard, sensor, tilt } = state.input;
   let settingsPausedGame = false;
 
   function pauseGame() {

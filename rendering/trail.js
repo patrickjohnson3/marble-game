@@ -1,4 +1,5 @@
 import { GAME_PHASES } from "../core/runtime-states.js";
+import { clamp } from "../core/geometry.js";
 
 export function createTrailRenderer({
   trailEl,
@@ -7,7 +8,6 @@ export function createTrailRenderer({
   game,
   settings,
   config,
-  clamp,
 }) {
   const points = [];
   const pointPool = [];

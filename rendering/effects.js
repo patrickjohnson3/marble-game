@@ -1,3 +1,5 @@
+import { clamp } from "../core/geometry.js";
+
 function setVelocityUnit(marble, target) {
   const speed = Math.hypot(marble.vx, marble.vy);
   if (speed <= 0.001) {
@@ -80,7 +82,6 @@ export function createEffectsRenderer({
   effectsEl,
   marble,
   config,
-  clamp,
   random = Math.random,
   now = () => performance.now(),
   world = { width: 0, height: 0 },

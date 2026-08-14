@@ -1,8 +1,9 @@
 import { copy } from "./copy.js";
+import { clamp } from "./geometry.js";
 import { SURFACE_TYPES, updatePhysicsInput, updatePhysics } from "./physics.js";
 import { GAME_PHASES } from "./runtime-states.js";
 
-export function elapsedMsToFrameDelta(elapsedMs, timing, clamp) {
+export function elapsedMsToFrameDelta(elapsedMs, timing) {
   // Long frames intentionally run as capped slow-motion instead of catching up
   // with a large physics step that can tunnel through collision geometry.
   return clamp(
@@ -22,7 +23,6 @@ export function updateFrameBudgetMetric(perf, key, elapsedMs, alpha = 0.2) {
 
 export function createGameLoop({
   cameraController,
-  clamp,
   effectsRenderer,
   frameLoop,
   game,
@@ -150,11 +150,7 @@ export function createGameLoop({
     const frameBudgetStart = performance.now();
     frameLoop.beginFrame();
     const currentTime = now();
-    const frameDelta = elapsedMsToFrameDelta(
-      currentTime - lastFrame,
-      timing,
-      clamp,
-    );
+    const frameDelta = elapsedMsToFrameDelta(currentTime - lastFrame, timing);
     lastFrame = currentTime;
     const active = game.phase !== GAME_PHASES.waiting && !game.paused;
 

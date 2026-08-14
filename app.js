@@ -14,7 +14,7 @@ import { createFrameLoop } from "./core/frame-loop.js";
 import { createGameLoop } from "./core/game-loop.js";
 import { createLifecycleController } from "./core/game-lifecycle.js";
 import { createGoalController } from "./core/goal-controller.js";
-import { clamp, distance, midpoint } from "./core/geometry.js";
+import { clamp } from "./core/geometry.js";
 import { createHapticsController } from "./core/haptics.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
 import { createKitchenDynamics } from "./core/kitchen-dynamics.js";
@@ -94,7 +94,6 @@ function setupRenderers({
   world,
   viewport,
   settings,
-  clamp,
   mapState,
   kitchenDynamicsState,
 }) {
@@ -147,13 +146,11 @@ function setupRenderers({
     game,
     settings,
     config: visualConfig.trail,
-    clamp,
   });
   const effectsRenderer = createEffectsRenderer({
     effectsEl,
     marble,
     config: visualConfig.effects,
-    clamp,
     world,
   });
   const marbleView = createMarbleView({
@@ -162,7 +159,6 @@ function setupRenderers({
     world,
     mapConfig: resolvedMapConfig,
     visualConfig,
-    clamp,
   });
   const terrainView = createTerrainView({
     mapThemeEl,
@@ -539,9 +535,6 @@ export function createApp({
     intro,
     marble,
     tuning,
-    clamp,
-    distance,
-    midpoint,
     viewport,
     world,
   });
@@ -557,7 +550,6 @@ export function createApp({
     world,
     viewport,
     settings,
-    clamp,
     mapState,
     kitchenDynamicsState: kitchenDynamics.state,
   });
@@ -690,7 +682,6 @@ export function createApp({
   const gameLoop = createGameLoop({
     activeMap: () => mapState.activeMap,
     cameraController,
-    clamp,
     effectsRenderer,
     frameLoop,
     game,
@@ -720,24 +711,17 @@ export function createApp({
 
   let inputManager;
   const lifecycle = createLifecycleController({
+    state,
     cameraController,
     effectsRenderer,
     frameLoop,
-    game,
-    haptics,
-    intro,
-    introSequenceState,
     introSequence,
-    keyboard,
     mapRenderer,
-    marble,
     resetMap: () => setCurrentMap(resolvedMapConfig),
     resetCalibration: sensorController.resetCalibration,
     scheduleFrame,
-    sensor,
     sensorWatchdog,
     settings,
-    tilt,
     timing,
     trailRenderer,
     ui,
