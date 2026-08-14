@@ -229,6 +229,16 @@ The map system supports:
 - validation in tests/development checks
 - derived runtime arrays
 
+Map and dynamic-object starting positions are content details, not stable API.
+They may change between releases or generated variants. Tests should assert
+that starts are valid and safe unless an exact coordinate is the behavior under
+test.
+
+Goal reachability validation is intentionally a grid-sampled estimate. It
+rejects clearly blocked layouts and accounts for marble radius, but it is not a
+geometric proof that every accepted map is playable. New or substantially
+changed layouts still require playtesting.
+
 Key modules:
 
 - `core/map-config.js`: combines map data, base config, defaults, and frozen
