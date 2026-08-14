@@ -530,6 +530,75 @@ function testWaterPatchAddsModerateDragAndFeedback() {
   assert.deepEqual(surfaceFeedback, [[8, SURFACE_TYPES.waterPatch]]);
 }
 
+function testWaterPatchIgnoresTransparentCorner() {
+  const marble = { x: 45, y: 45, vx: 1, vy: 0, r: 5 };
+  const surfaces = [];
+  const surfaceFeedback = [];
+
+  updateTestPhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      roughPatches: [],
+      waterPatches: [{ x: 40, y: 40, w: 100, h: 100 }],
+      physics: {
+        accel: 0,
+        baseDragRetention: 1,
+        roughPatchDragRetention: 0.5,
+        waterPatchDragRetention: 0.5,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: (speed, surfaceType) => {
+        surfaceFeedback.push([speed, surfaceType]);
+      },
+      onTerrain: (surfaceType) => surfaces.push(surfaceType),
+    },
+  );
+
+  assert.equal(marble.vx, 1);
+  assert.deepEqual(surfaces, [SURFACE_TYPES.floor]);
+  assert.deepEqual(surfaceFeedback, []);
+}
+
+function testWaterPatchSweepMatchesVisibleShape() {
+  const patch = { x: 80, y: 40, w: 100, h: 100 };
+  const centeredMarble = { x: 20, y: 92, vx: 150, vy: 0, r: 5 };
+  const cornerMarble = { x: 20, y: 45, vx: 150, vy: 0, r: 5 };
+  const context = {
+    bounds: { left: 0, right: 240, top: 0, bottom: 200 },
+    intro: { released: true },
+    tilt: { smoothX: 0, smoothY: 0 },
+    obstacles: [],
+    roughPatches: [],
+    waterPatches: [patch],
+    physics: {
+      accel: 0,
+      baseDragRetention: 1,
+      roughPatchDragRetention: 1,
+      waterPatchDragRetention: 0.5,
+      bounce: 0,
+      maxSpeed: 200,
+      maxStepDistance: 200,
+    },
+  };
+  const feedback = { onImpact: () => {}, onSurface: () => {} };
+
+  updateTestPhysics({ ...context, marble: centeredMarble }, 1, feedback);
+  updateTestPhysics({ ...context, marble: cornerMarble }, 1, feedback);
+
+  assert.equal(centeredMarble.vx, 75);
+  assert.equal(cornerMarble.vx, 150);
+}
+
 function testGooPatchAddsStickyDragAndFeedback() {
   const marble = { x: 50, y: 50, vx: 10, vy: 0, r: 10 };
   const surfaces = [];
@@ -569,6 +638,41 @@ function testGooPatchAddsStickyDragAndFeedback() {
   assert.equal(marble.vx, 6);
   assert.deepEqual(surfaces, [SURFACE_TYPES.gooPatch]);
   assert.deepEqual(surfaceFeedback, [[6, SURFACE_TYPES.gooPatch]]);
+}
+
+function testGooPatchIgnoresTransparentCorner() {
+  const marble = { x: 45, y: 45, vx: 1, vy: 0, r: 5 };
+  const surfaces = [];
+
+  updateTestPhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      tilt: { smoothX: 0, smoothY: 0 },
+      obstacles: [],
+      gooPatches: [{ x: 40, y: 40, w: 100, h: 100 }],
+      roughPatches: [],
+      physics: {
+        accel: 0,
+        baseDragRetention: 1,
+        gooPatchDragRetention: 0.5,
+        roughPatchDragRetention: 1,
+        bounce: 0,
+        maxSpeed: 100,
+        maxStepDistance: 100,
+      },
+    },
+    1,
+    {
+      onImpact: () => {},
+      onSurface: () => {},
+      onTerrain: (surfaceType) => surfaces.push(surfaceType),
+    },
+  );
+
+  assert.equal(marble.vx, 1);
+  assert.deepEqual(surfaces, [SURFACE_TYPES.floor]);
 }
 
 function testTerrainFeedbackReportsSurfaceTypes() {
@@ -1460,7 +1564,10 @@ testRoughPatchDragChecksAllPatches();
 testIcePatchReducesDrag();
 testIcePatchUsesPreMoveSurfaceTiming();
 testGooPatchAddsStickyDragAndFeedback();
+testGooPatchIgnoresTransparentCorner();
 testWaterPatchAddsModerateDragAndFeedback();
+testWaterPatchIgnoresTransparentCorner();
+testWaterPatchSweepMatchesVisibleShape();
 testTerrainFeedbackReportsSurfaceTypes();
 testOverlappingTerrainUsesExplicitSurfacePriority();
 testHazardPatchReportsResetFeedback();

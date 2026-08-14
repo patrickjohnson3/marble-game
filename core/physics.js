@@ -27,6 +27,24 @@ const SURFACE_FEEDBACK_TYPES = Object.freeze([
   SURFACE_TYPES.roughPatch,
   SURFACE_TYPES.waterPatch,
 ]);
+const ELLIPTICAL_SURFACE_SHAPES = Object.freeze({
+  [SURFACE_TYPES.gooPatch]: Object.freeze({
+    centerX: 0.52,
+    centerY: 0.5,
+    radiusX: 0.5,
+    radiusY: 0.47,
+    cos: Math.cos(0.1),
+    sin: Math.sin(0.1),
+  }),
+  [SURFACE_TYPES.waterPatch]: Object.freeze({
+    centerX: 0.5,
+    centerY: 0.52,
+    radiusX: 0.44,
+    radiusY: 0.35,
+    cos: 1,
+    sin: 0,
+  }),
+});
 export const PRE_MOVE_SURFACE_TYPES = Object.freeze([SURFACE_TYPES.icePatch]);
 export const SWEPT_SURFACE_TYPES = Object.freeze([
   SURFACE_TYPES.gooPatch,
@@ -234,13 +252,40 @@ function segmentIntersectsExpandedRect(start, end, rect, padding) {
   return true;
 }
 
-function sweptOverTerrainPatch(start, end, intro, patches, physics) {
+function segmentIntersectsExpandedEllipse(start, end, patch, shape, padding) {
+  const centerX = patch.x + patch.w * shape.centerX;
+  const centerY = patch.y + patch.h * shape.centerY;
+  const radiusX = patch.w * shape.radiusX + padding;
+  const radiusY = patch.h * shape.radiusY + padding;
+  const startDx = start.x - centerX;
+  const startDy = start.y - centerY;
+  const endDx = end.x - centerX;
+  const endDy = end.y - centerY;
+  const startX = (shape.cos * startDx + shape.sin * startDy) / radiusX;
+  const startY = (-shape.sin * startDx + shape.cos * startDy) / radiusY;
+  const endX = (shape.cos * endDx + shape.sin * endDy) / radiusX;
+  const endY = (-shape.sin * endDx + shape.cos * endDy) / radiusY;
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const lengthSq = dx * dx + dy * dy;
+  const closestT =
+    lengthSq > 0 ? clamp(-(startX * dx + startY * dy) / lengthSq, 0, 1) : 0;
+  const closestX = startX + dx * closestT;
+  const closestY = startY + dy * closestT;
+
+  return closestX * closestX + closestY * closestY <= 1;
+}
+
+function sweptOverTerrainPatch(start, end, intro, patches, physics, type) {
   if (!intro.released) return false;
 
-  const padding =
-    end.r + Math.sqrt(Math.max(physics.collisionDistanceSqEpsilon ?? 0, 0));
-  return patches.some((rect) =>
-    segmentIntersectsExpandedRect(start, end, rect, padding),
+  const epsilon = Math.max(physics.collisionDistanceSqEpsilon ?? 0, 0);
+  const padding = Math.sqrt(end.r * end.r + epsilon);
+  const shape = ELLIPTICAL_SURFACE_SHAPES[type];
+  return patches.some((patch) =>
+    shape
+      ? segmentIntersectsExpandedEllipse(start, end, patch, shape, padding)
+      : segmentIntersectsExpandedRect(start, end, patch, padding),
   );
 }
 
@@ -285,6 +330,7 @@ function updateSurfaceHits(context, physicsScratch) {
       context.intro,
       terrainCandidates(context, type),
       context.physics,
+      type,
     );
   }
 
