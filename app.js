@@ -433,16 +433,7 @@ function mapLevelLabel(mapConfig) {
 }
 
 function mapObjectSummary(mapConfig) {
-  const themeObjects = {
-    hockeyRink: "objects: sticks, pucks, creases, rink markings.",
-    kitchenFloor:
-      "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
-    livingRoom: "objects: sofa, shelves, coffee table, rug, blocks, sock.",
-    parkingLot: "objects: cars, cones, oil stains, tire marks, parking lines.",
-    sandLot: "objects: rocks, crates, buckets, shovel, tire tracks.",
-  };
-
-  return themeObjects[mapConfig?.theme] ?? "objects: walls, patches, goal.";
+  return mapConfig?.objectSummary ?? "objects: walls, patches, goal.";
 }
 
 export function createApp({

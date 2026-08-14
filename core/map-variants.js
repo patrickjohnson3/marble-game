@@ -63,6 +63,7 @@ function resolveMapConfig(config, { seed, variant }) {
     variantId: variant.id,
     name: variant.name,
     theme: variant.theme,
+    objectSummary: variant.objectSummary,
     difficulty: variant.difficulty,
     goal: resolveVariantGoal(variant),
     spawn: { ...(variant.spawn ?? config.spawn) },

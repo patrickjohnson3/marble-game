@@ -50,6 +50,11 @@ function testWorldAndMapElements() {
   );
   assert.equal(resolvedMapConfig.seed, "kitchen-floor", "map seed");
   assert.equal(resolvedMapConfig.variantId, "kitchen-floor", "map variant");
+  assert.match(
+    resolvedMapConfig.objectSummary,
+    /fork.*Cheerios/,
+    "map object summary",
+  );
   assertPositiveNumber(resolvedMapConfig.spawn.r, "spawn radius");
   assertPositiveNumber(resolvedMapConfig.goal.r, "goal radius");
   assertPositiveNumber(resolvedMapConfig.goal.holdMs, "goal hold time");

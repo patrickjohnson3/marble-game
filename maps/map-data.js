@@ -370,6 +370,8 @@ export const authoredMapVariants = [
     id: "kitchen-floor",
     name: "kitchen floor",
     theme: "kitchenFloor",
+    objectSummary:
+      "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
     difficulty: 2,
     spawn: scaleMapPoint({ x: 420, y: 1820, r: 29 }),
     goal: scaleMapPoint({ x: 1760, y: 420, r: 95, holdMs: 5000 }),
@@ -379,6 +381,8 @@ export const authoredMapVariants = [
     id: "living-room",
     name: "living room",
     theme: "livingRoom",
+    objectSummary:
+      "objects: sofa, shelves, coffee table, rug, blocks, sock.",
     difficulty: 2,
     spawn: scaleMapPoint({ x: 360, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1820, y: 440, r: 95, holdMs: 5000 }),
@@ -388,6 +392,8 @@ export const authoredMapVariants = [
     id: "parking-lot",
     name: "parking lot",
     theme: "parkingLot",
+    objectSummary:
+      "objects: cars, cones, oil stains, tire marks, parking lines.",
     difficulty: 3,
     spawn: scaleMapPoint({ x: 280, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 340, r: 95, holdMs: 5000 }),
@@ -397,6 +403,7 @@ export const authoredMapVariants = [
     id: "sand-lot",
     name: "sand lot",
     theme: "sandLot",
+    objectSummary: "objects: rocks, crates, buckets, shovel, tire tracks.",
     difficulty: 3,
     spawn: scaleMapPoint({ x: 300, y: 340, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 1840, r: 95, holdMs: 5000 }),
@@ -406,6 +413,8 @@ export const authoredMapVariants = [
     id: "kitchen-breakfast-spill",
     name: "kitchen breakfast spill",
     theme: "kitchenFloor",
+    objectSummary:
+      "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
     difficulty: 2,
     spawn: scaleMapPoint({ x: 320, y: 1840, r: 29 }),
     goal: scaleMapPoint({ x: 1840, y: 360, r: 95, holdMs: 5000 }),
@@ -415,6 +424,8 @@ export const authoredMapVariants = [
     id: "parking-lot-puddles",
     name: "parking lot puddles",
     theme: "parkingLot",
+    objectSummary:
+      "objects: cars, cones, oil stains, tire marks, parking lines.",
     difficulty: 3,
     spawn: scaleMapPoint({ x: 280, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 320, r: 95, holdMs: 5000 }),
@@ -424,6 +435,7 @@ export const authoredMapVariants = [
     id: "hockey-rink",
     name: "hockey rink",
     theme: "hockeyRink",
+    objectSummary: "objects: sticks, pucks, creases, rink markings.",
     difficulty: 2,
     spawn: scaleMapPoint({ x: 1100, y: 1840, r: 29 }),
     goal: scaleMapPoint({ x: 1100, y: 320, r: 95, holdMs: 5000 }),
