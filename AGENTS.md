@@ -6,6 +6,8 @@ This is a static vanilla JavaScript game with no runtime build step. `index.html
 
 ## Build, Test, and Development Commands
 
+- `npm install`: installs the pinned development tools.
+- `npm run install-hooks`: enables the tracked pre-push gate.
 - `npm test`: runs the full Node-based test suite through `test-all.js`.
 - `npm run lint`: runs ESLint across the repo.
 - `npm run format:check`: verifies Prettier formatting.
