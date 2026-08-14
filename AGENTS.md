@@ -11,7 +11,7 @@ This is a vanilla JavaScript browser game with a small custom 2D engine. Entry p
 - `npm run format:check`: verifies Prettier formatting.
 - `npm run format`: applies Prettier formatting.
 - `npm run sync-cache`: synchronizes generated cache versions and the import-map module list.
-- `python3 -m http.server`: serves the repo locally for browser/mobile testing.
+- `python3 -m http.server`: serves desktop and same-device localhost testing. Verify motion sensors and PWA behavior from an HTTPS deployment or secure local endpoint; phone access over LAN HTTP is insufficient.
 
 `runtime-assets.js` is the source of truth for browser modules and precached assets. Update it when adding or removing a runtime file. After changing `index.html` or a listed runtime asset, run `npm run sync-cache` before final tests. Do not hand-edit the generated `assetVersion` or `runtimeModuleScripts` values in `index.html`, or `cacheVersion` in `sw.js`.
 
