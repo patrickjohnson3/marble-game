@@ -107,17 +107,18 @@ function testRenderOuterWallsKeepsPositiveInterior() {
     ]);
   });
 
-  assert.equal(container.children.length, 4);
-  assert.deepEqual(
-    container.children.map((canvas) => canvas.attributes["data-wall-edge"]),
-    ["top", "bottom", "left", "right"],
-  );
+  const frame = container.children[0];
+  assert.equal(container.children.length, 1);
+  assert.equal(frame.className, "wallFrame");
+  assert.equal(frame.style.left, "-34px");
+  assert.equal(frame.style.top, "-34px");
+  assert.equal(frame.style.width, "2268px");
+  assert.equal(frame.style.height, "2268px");
+  assert.equal(frame.style.properties["--wall-thickness"], "34px");
   assert.equal(
-    container.children.some((canvas) =>
-      canvas.context.calls.some((call) => call[0] === "clearRect"),
-    ),
-    false,
-    "wall edges should not allocate and clear the transparent map interior",
+    frame.context,
+    undefined,
+    "wall frame should not allocate canvas",
   );
 }
 
@@ -142,32 +143,33 @@ function testRenderOuterWallsRejectsInvalidWalls() {
 
 testRenderOuterWallsRejectsInvalidWalls();
 
-function testRenderOuterWallsCapsHighDensityDisplays() {
-  const originalDevicePixelRatio = globalThis.devicePixelRatio;
+function testRenderOuterWallsReusesFrameElement() {
   const container = new FakeElement();
 
-  globalThis.devicePixelRatio = 4;
-  try {
-    withFakeDocument(() => {
-      renderOuterWalls(container, [
-        { x: -34, y: -34, w: 2268, h: 34 },
-        { x: -34, y: 2200, w: 2268, h: 34 },
-        { x: -34, y: 0, w: 34, h: 2200 },
-        { x: 2200, y: 0, w: 34, h: 2200 },
-      ]);
-    });
-  } finally {
-    if (originalDevicePixelRatio === undefined) {
-      delete globalThis.devicePixelRatio;
-    } else {
-      globalThis.devicePixelRatio = originalDevicePixelRatio;
-    }
-  }
+  withFakeDocument(() => {
+    renderOuterWalls(container, [
+      { x: -34, y: -34, w: 2268, h: 34 },
+      { x: -34, y: 2200, w: 2268, h: 34 },
+      { x: -34, y: 0, w: 34, h: 2200 },
+      { x: 2200, y: 0, w: 34, h: 2200 },
+    ]);
+  });
+  const frame = container.children[0];
+  withFakeDocument(() => {
+    renderOuterWalls(container, [
+      { x: -20, y: -20, w: 1040, h: 20 },
+      { x: -20, y: 1000, w: 1040, h: 20 },
+      { x: -20, y: 0, w: 20, h: 1000 },
+      { x: 1000, y: 0, w: 20, h: 1000 },
+    ]);
+  });
 
-  assert.equal(container.children[0].width, 4536);
+  assert.equal(container.children[0], frame);
+  assert.equal(frame.style.width, "1040px");
+  assert.equal(frame.style.properties["--wall-thickness"], "20px");
 }
 
-testRenderOuterWallsCapsHighDensityDisplays();
+testRenderOuterWallsReusesFrameElement();
 
 function testRenderOuterWallsUsesFrameGeometry() {
   const container = new FakeElement();
@@ -181,7 +183,7 @@ function testRenderOuterWallsUsesFrameGeometry() {
     ]);
   });
 
-  assert.equal(container.children.length, 4);
+  assert.equal(container.children.length, 1);
 }
 
 testRenderOuterWallsUsesFrameGeometry();
@@ -1603,26 +1605,13 @@ try {
     { x: -10, y: 0, w: 10, h: 100 },
     { x: 100, y: 0, w: 10, h: 100 },
   ]);
-  const wallCanvases = wallsContainer.children;
-  const wallCanvas = wallCanvases[0];
-  assert.equal(wallCanvases.length, 4, "wall frame should use narrow edges");
+  const wallFrame = wallsContainer.children[0];
   assert.equal(
-    wallCanvas.classList.contains("wallCanvas"),
-    true,
-    "wall frame should render to canvas",
+    wallFrame.className,
+    "wallFrame",
+    "wall frame should render as one border element",
   );
-  assert.equal(
-    wallCanvas.context.calls.some((call) => call[0] === "fillRect"),
-    true,
-    "wall canvas should draw fill",
-  );
-  assert.equal(
-    wallCanvases.some((canvas) =>
-      canvas.context.calls.some((call) => call[0] === "clearRect"),
-    ),
-    false,
-    "wall canvases should not cover the transparent interior",
-  );
+  assert.equal(wallFrame.style.properties["--wall-thickness"], "10px");
 
   const container = new FakeElement();
   const gooPatchContainer = new FakeElement();

@@ -60,13 +60,20 @@ body {
   top: 0;
   transform-origin: 0 0;
 }
-.wallCanvas,
+.wallFrame,
 .obstacleCanvas,
 .hitboxCanvas,
 .kitchenObstacleLayer {
   position: absolute;
   overflow: visible;
   pointer-events: none;
+}
+.wallFrame {
+  box-sizing: border-box;
+  border: var(--wall-thickness) solid transparent;
+  border-image: linear-gradient(135deg, #f2f6fd, #d8e2f0 48%, #a9b7cc) 1;
+  outline: 1px solid rgba(255, 255, 255, 0.67);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.67);
 }
 .kitchenObstacleLayer {
   left: 0;

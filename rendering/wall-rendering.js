@@ -157,74 +157,6 @@ function wallFrameGeometry(walls) {
   };
 }
 
-function wallFrameStrips(frame) {
-  return [
-    {
-      edge: "top",
-      x: frame.left,
-      y: frame.top,
-      w: frame.right - frame.left,
-      h: frame.innerTop - frame.top,
-    },
-    {
-      edge: "bottom",
-      x: frame.left,
-      y: frame.innerBottom,
-      w: frame.right - frame.left,
-      h: frame.bottom - frame.innerBottom,
-    },
-    {
-      edge: "left",
-      x: frame.left,
-      y: frame.innerTop,
-      w: frame.innerLeft - frame.left,
-      h: frame.innerBottom - frame.innerTop,
-    },
-    {
-      edge: "right",
-      x: frame.innerRight,
-      y: frame.innerTop,
-      w: frame.right - frame.innerRight,
-      h: frame.innerBottom - frame.innerTop,
-    },
-  ].filter((strip) => strip.w > 0 && strip.h > 0);
-}
-
-function drawWallStrip(context, frame, strip) {
-  const fill = context.createLinearGradient(
-    frame.left,
-    frame.top,
-    frame.right,
-    frame.bottom,
-  );
-
-  fill.addColorStop(0, "#f2f6fd");
-  fill.addColorStop(0.48, "#d8e2f0");
-  fill.addColorStop(1, "#a9b7cc");
-
-  context.save();
-  context.fillStyle = fill;
-  context.fillRect(strip.x, strip.y, strip.w, strip.h);
-  context.restore();
-
-  context.save();
-  context.strokeStyle = "rgba(255,255,255,.67)";
-  context.lineWidth = 3;
-  context.strokeRect(
-    frame.left,
-    frame.top,
-    frame.right - frame.left,
-    frame.bottom - frame.top,
-  );
-  context.strokeRect(
-    frame.innerLeft,
-    frame.innerTop,
-    frame.innerRight - frame.innerLeft,
-    frame.innerBottom - frame.innerTop,
-  );
-  context.restore();
-}
-
 export function renderOuterWalls(container, walls) {
   if (!Array.isArray(walls) || walls.length === 0) {
     container.replaceChildren();
@@ -236,13 +168,19 @@ export function renderOuterWalls(container, walls) {
     return;
   }
 
-  const canvases = wallFrameStrips(frame).map((strip) => {
-    const { canvas, context } = createCanvas("wallCanvas", [strip]);
-    canvas.setAttribute("data-wall-edge", strip.edge);
-    if (context) drawWallStrip(context, frame, strip);
-    return canvas;
-  });
-  container.replaceChildren(...canvases);
+  const existingFrame = container.firstChild;
+  const frameElement =
+    existingFrame?.className === "wallFrame"
+      ? existingFrame
+      : document.createElement("div");
+  frameElement.className = "wallFrame";
+  frameElement.style.left = frame.left + "px";
+  frameElement.style.top = frame.top + "px";
+  frameElement.style.width = frame.right - frame.left + "px";
+  frameElement.style.height = frame.bottom - frame.top + "px";
+  frameElement.style.setProperty("--wall-thickness", frame.thickness + "px");
+  frameElement.setAttribute("aria-hidden", "true");
+  if (frameElement !== existingFrame) container.replaceChildren(frameElement);
 }
 
 export { createCanvas, drawRoundedRect, rectBounds, renderPatchCanvas };
