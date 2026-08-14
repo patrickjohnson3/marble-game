@@ -28,6 +28,8 @@ const antSplatFeedbackCooldownFrames = 24;
 const crumbRadiusRatio = 0.0032;
 const cerealHitMinSpeed = 0.8;
 const cerealHitFeedbackCooldownFrames = 20;
+const kitchenFloorMapId = "kitchen-floor";
+const cheerioWaterSoakRate = 0.006;
 
 const cheerioLayout = Object.freeze([
   { x: 0.16, y: 0.49 },
@@ -104,11 +106,15 @@ function createCereal(world, point, options = {}) {
     radius: (options.radiusRatio ?? cheerioRadiusRatio) * world.width,
     eaten: 0,
     active: true,
+    playerDisturbed: false,
     rotation: options.rotation ?? 0,
     lastHitFeedbackFrame: Number.NEGATIVE_INFINITY,
     sweptClosestX: 0,
     sweptClosestY: 0,
     sweptDistance: 0,
+    waterSoak: 0,
+    waterStainX: null,
+    waterStainY: null,
     revision: 0,
   };
 }
@@ -200,6 +206,34 @@ function surfaceInfluence(x, y, elements) {
   }
 
   return defaultSurfaceInfluence;
+}
+
+function soakPlayerDisturbedCheerio(cereal, elements, frameDelta) {
+  const waterSoak = cereal.waterSoak ?? 0;
+  if (cereal.kind !== "cheerio" || !cereal.playerDisturbed || waterSoak >= 1) {
+    return;
+  }
+
+  const x = cereal.originX + cereal.pushX;
+  const y = cereal.originY + cereal.pushY;
+  for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    if (
+      element.type !== MAP_ELEMENT_TYPES.waterPatch ||
+      !pointInRect(x, y, element)
+    ) {
+      continue;
+    }
+
+    cereal.waterSoak = Math.min(
+      1,
+      waterSoak + cheerioWaterSoakRate * frameDelta,
+    );
+    cereal.waterStainX = x;
+    cereal.waterStainY = y;
+    cereal.revision += 1;
+    return;
+  }
 }
 
 function ensureElementCaches(state, elements = []) {
@@ -365,10 +399,21 @@ function resolveCerealObstacleCollisions(circle, obstacles, contact) {
   }
 }
 
-function updateCereal({ state, marble, previousMarble, events }) {
+function updateCereal({
+  state,
+  marble,
+  previousMarble,
+  events,
+  frameDelta,
+  soakInWater,
+}) {
   for (let i = 0; i < state.cheerios.length; i++) {
     const cereal = state.cheerios[i];
     if (!cereal.active) continue;
+
+    if (soakInWater) {
+      soakPlayerDisturbedCheerio(cereal, state.terrainElements, frameDelta);
+    }
 
     const { originX, originY, radius, pushX, pushY } = cereal;
     const currentX = originX + pushX;
@@ -426,6 +471,7 @@ function updateCereal({ state, marble, previousMarble, events }) {
     );
     cereal.pushX = cerealCircle.x - originX;
     cereal.pushY = cerealCircle.y - originY;
+    cereal.playerDisturbed = true;
     if (
       speed >= cerealHitMinSpeed &&
       state.frameIndex - cereal.lastHitFeedbackFrame >=
@@ -448,7 +494,14 @@ export function updateKitchenDynamics(
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
   ensureElementCaches(state, mapConfig.elements);
-  updateCereal({ state, marble, previousMarble, events });
+  updateCereal({
+    state,
+    marble,
+    previousMarble,
+    events,
+    frameDelta,
+    soakInWater: mapConfig.id === kitchenFloorMapId,
+  });
   updateAnts({ state, frameDelta, marble, events });
   state.frameIndex += 1;
   return events;

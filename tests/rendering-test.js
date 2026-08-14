@@ -1107,6 +1107,41 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
 
 testKitchenCheerioShoveRespondsToTerrainPatch();
 
+function testWaterloggedCheerioVisiblyCloudsThePuddle() {
+  const container = new FakeElement();
+  const overlayContainer = new FakeElement();
+  const { state, themeState } = firstKitchenCheerio({
+    container,
+    overlayContainer,
+  });
+  const canvas = themeState.kitchenDynamicCanvas;
+  state.waterSoak = 0.75;
+  state.waterStainX = state.originX;
+  state.waterStainY = state.originY;
+  state.revision += 1;
+  canvas.context.calls.length = 0;
+
+  renderMapThemeDynamics({
+    dynamicsState: { ants: [], cheerios: [state] },
+    mapConfig: { theme: "kitchenFloor" },
+    themeState,
+  });
+
+  assert.equal(
+    canvas.context.calls.some(
+      (call) =>
+        call[0] === "ellipse" &&
+        call[1] === state.waterStainX &&
+        call[2] === state.waterStainY &&
+        call[3] > state.radius * 1.5,
+    ),
+    true,
+    "a soaking Cheerio should draw a visible cereal cloud in the water",
+  );
+}
+
+testWaterloggedCheerioVisiblyCloudsThePuddle();
+
 function testKitchenCheerioUsesActualPreviousMarblePosition() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();

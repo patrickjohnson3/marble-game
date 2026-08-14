@@ -5,6 +5,8 @@ const kitchenCheerioMinScale = 0.45;
 const kitchenCheerioOpacityFloor = 0.18;
 const kitchenCheerioSpriteUrl = "assets/sprites/cheerio.png";
 const kitchenDynamicDirtyPadding = 18;
+const kitchenSoggyCheerioScale = 1.14;
+const kitchenWaterStainRadiusScale = 2.25;
 let kitchenCheerioSprite = null;
 
 function getKitchenCheerioSprite() {
@@ -608,11 +610,36 @@ function setDynamicBounds(target, x, y, radius) {
 function setCheerioBounds(target, cheerio) {
   const radius =
     cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
-  setDynamicBounds(
-    target,
-    cheerio.originX + cheerio.pushX,
-    cheerio.originY + cheerio.pushY,
-    radius,
+  const waterSoak = cheerio.waterSoak ?? 0;
+  const drawRadius = radius * (1 + waterSoak * (kitchenSoggyCheerioScale - 1));
+  const x = cheerio.originX + cheerio.pushX;
+  const y = cheerio.originY + cheerio.pushY;
+
+  setDynamicBounds(target, x, y, drawRadius);
+  if (
+    waterSoak <= 0 ||
+    !Number.isFinite(cheerio.waterStainX) ||
+    !Number.isFinite(cheerio.waterStainY)
+  ) {
+    return;
+  }
+
+  const stainRadius = radius * kitchenWaterStainRadiusScale;
+  target.bottom = Math.max(
+    target.bottom,
+    cheerio.waterStainY + stainRadius + kitchenDynamicDirtyPadding,
+  );
+  target.left = Math.min(
+    target.left,
+    cheerio.waterStainX - stainRadius - kitchenDynamicDirtyPadding,
+  );
+  target.right = Math.max(
+    target.right,
+    cheerio.waterStainX + stainRadius + kitchenDynamicDirtyPadding,
+  );
+  target.top = Math.min(
+    target.top,
+    cheerio.waterStainY - stainRadius - kitchenDynamicDirtyPadding,
   );
 }
 
@@ -808,6 +835,66 @@ function drawCheerioSprite(context, sprite, x, y, radius, opacity) {
   return true;
 }
 
+function drawSoggyWaterStain(context, cheerio, radius, waterSoak) {
+  if (
+    waterSoak <= 0 ||
+    !Number.isFinite(cheerio.waterStainX) ||
+    !Number.isFinite(cheerio.waterStainY)
+  ) {
+    return;
+  }
+
+  const x = cheerio.waterStainX;
+  const y = cheerio.waterStainY;
+  const spread = radius * (1.1 + waterSoak * 1.15);
+  context.save();
+  context.globalAlpha = 0.08 + waterSoak * 0.16;
+  context.fillStyle = "#b78032";
+  context.beginPath();
+  context.ellipse(x, y, spread, spread * 0.62, -0.18, 0, Math.PI * 2);
+  context.ellipse(
+    x - spread * 0.48,
+    y + spread * 0.12,
+    spread * 0.58,
+    spread * 0.34,
+    0.2,
+    0,
+    Math.PI * 2,
+  );
+  context.ellipse(
+    x + spread * 0.44,
+    y - spread * 0.16,
+    spread * 0.52,
+    spread * 0.3,
+    -0.32,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+  context.restore();
+}
+
+function drawSoggyCheerioFinish(context, x, y, radius, waterSoak) {
+  if (waterSoak <= 0) return;
+
+  context.save();
+  context.globalAlpha = 0.08 + waterSoak * 0.24;
+  context.strokeStyle = "#754718";
+  context.lineWidth = Math.max(1, radius * (0.12 + waterSoak * 0.1));
+  context.beginPath();
+  context.ellipse(
+    x,
+    y,
+    radius * 0.78,
+    radius * (0.76 - waterSoak * 0.04),
+    0.12,
+    0,
+    Math.PI * 2,
+  );
+  context.stroke();
+  context.restore();
+}
+
 function drawCheerio(context, cheerio) {
   if (!cheerio.active) return;
 
@@ -816,6 +903,8 @@ function drawCheerio(context, cheerio) {
   const radius =
     cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
   const opacity = 1 - cheerio.eaten * (1 - kitchenCheerioOpacityFloor);
+  const waterSoak = cheerio.waterSoak ?? 0;
+  const soggyRadius = radius * (1 + waterSoak * (kitchenSoggyCheerioScale - 1));
   const sprite = getKitchenCheerioSprite();
 
   if (cheerio.kind === "crumb") {
@@ -823,11 +912,17 @@ function drawCheerio(context, cheerio) {
     return;
   }
 
-  if (drawCheerioSprite(context, sprite, x, y, radius, opacity)) return;
+  drawSoggyWaterStain(context, cheerio, radius, waterSoak);
+
+  if (drawCheerioSprite(context, sprite, x, y, soggyRadius, opacity)) {
+    drawSoggyCheerioFinish(context, x, y, soggyRadius, waterSoak);
+    return;
+  }
 
   context.globalAlpha = opacity;
-  drawFallbackCheerio(context, x, y, radius);
+  drawFallbackCheerio(context, x, y, soggyRadius);
   context.globalAlpha = 1;
+  drawSoggyCheerioFinish(context, x, y, soggyRadius, waterSoak);
 }
 
 function renderKitchenDynamics(themeState, dynamicsState) {

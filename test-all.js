@@ -7,6 +7,7 @@ const tests = [
   "tests/cache-version-test.js",
   "tests/runtime-assets-test.js",
   "tests/game-loop-test.js",
+  "tests/kitchen-dynamics-test.js",
   "tests/physics-test.js",
   "tests/haptics-test.js",
   "tests/goal-controller-test.js",
