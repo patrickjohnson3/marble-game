@@ -68,24 +68,12 @@ export function mapObstacleElements(elements) {
   return mapElementsOfType(elements, MAP_ELEMENT_TYPES.obstacle);
 }
 
-export function mapIcePatchElements(elements) {
-  return mapElementsOfType(elements, MAP_ELEMENT_TYPES.icePatch);
-}
-
 export function mapHazardPatchElements(elements) {
   return mapElementsOfType(elements, MAP_ELEMENT_TYPES.hazardPatch);
 }
 
-export function mapGooPatchElements(elements) {
-  return mapElementsOfType(elements, MAP_ELEMENT_TYPES.gooPatch);
-}
-
 export function mapRoughPatchElements(elements) {
   return mapElementsOfType(elements, MAP_ELEMENT_TYPES.roughPatch);
-}
-
-export function mapWaterPatchElements(elements) {
-  return mapElementsOfType(elements, MAP_ELEMENT_TYPES.waterPatch);
 }
 
 export function mapElementsByType(elements) {

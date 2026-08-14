@@ -366,14 +366,6 @@ function testHapticAndVisualRanges() {
   );
   assertPositiveNumber(visualConfig.effects.canvasScale, "effect canvas scale");
   assertPositiveNumber(
-    visualConfig.effects.surfaceMinSpeed,
-    "effect surface minimum speed",
-  );
-  assertPositiveNumber(
-    visualConfig.effects.surfaceCooldownMs,
-    "effect surface cooldown",
-  );
-  assertPositiveNumber(
     visualConfig.effects.gooSplatMinSpeed,
     "effect goo splat minimum speed",
   );
@@ -410,12 +402,6 @@ function testHapticAndVisualRanges() {
       visualConfig.effects.impactOpacity <= 1,
     true,
     "impact effect opacity",
-  );
-  assert.equal(
-    visualConfig.effects.surfaceOpacity > 0 &&
-      visualConfig.effects.surfaceOpacity <= 1,
-    true,
-    "surface effect opacity",
   );
   assert.equal(
     visualConfig.effects.gooSplatOpacity > 0 &&

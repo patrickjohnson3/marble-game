@@ -51,6 +51,5 @@ export function createMapProgression({
 
   return {
     advanceToNextMap,
-    nextMapVariant,
   };
 }

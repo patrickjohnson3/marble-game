@@ -1,29 +1,3 @@
-export function createTimeoutRegistry({
-  setTimeoutFn = setTimeout,
-  clearTimeoutFn = clearTimeout,
-} = {}) {
-  const timers = new Set();
-
-  function schedule(callback, delay) {
-    const timer = setTimeoutFn(() => {
-      timers.delete(timer);
-      callback();
-    }, delay);
-    timers.add(timer);
-    return timer;
-  }
-
-  function clearAll() {
-    timers.forEach((timer) => clearTimeoutFn(timer));
-    timers.clear();
-  }
-
-  return {
-    clearAll,
-    schedule,
-  };
-}
-
 export function createPausableTimeout({
   delayMs,
   onRun,

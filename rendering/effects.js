@@ -71,8 +71,6 @@ function drawParticle(context, particle, progress) {
     drawCircle(context, particle, progress, "#80e93a");
   } else if (particle.kind === "celebrate") {
     drawCircle(context, particle, progress, "#88f7c5");
-  } else if (particle.kind === "dust") {
-    drawCircle(context, particle, progress, "#ffd166");
   } else {
     drawCircle(context, particle, progress, "#ffd166");
   }
@@ -88,11 +86,9 @@ export function createEffectsRenderer({
 }) {
   let lastImpactAt = Number.NEGATIVE_INFINITY;
   let lastGooSplatAt = Number.NEGATIVE_INFINITY;
-  let lastSurfaceAt = 0;
   let lastWaterRippleAt = Number.NEGATIVE_INFINITY;
   const activeParticles = [];
   const direction = { x: 0, y: -1 };
-  const sideways = { x: 1, y: 0 };
   const canvasScale = config.canvasScale ?? 0.5;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
@@ -154,47 +150,6 @@ export function createEffectsRenderer({
         config.impactSizeMin + random() * config.impactSizeRange,
         config.impactLifeMinMs + random() * config.impactLifeRangeMs,
         config.impactOpacity,
-      );
-    }
-  }
-
-  function spawnSurface(speed, currentTime) {
-    if (
-      speed < config.surfaceMinSpeed ||
-      currentTime - lastSurfaceAt < config.surfaceCooldownMs
-    )
-      return;
-
-    lastSurfaceAt = currentTime;
-    setVelocityUnit(marble, direction);
-    sideways.x = -direction.y;
-    sideways.y = direction.x;
-    const intensity = clamp(speed / config.surfaceReferenceSpeed, 0, 1);
-    const count = Math.round(
-      config.surfaceMinParticles + intensity * config.surfaceExtraParticles,
-    );
-
-    for (let i = 0; i < count; i++) {
-      const offset = (random() - 0.5) * marble.r * config.surfaceWidthRatio;
-      const lift = config.surfaceLiftMin + random() * config.surfaceLiftRange;
-      spawn(
-        "dust",
-        marble.x -
-          direction.x * marble.r * config.surfaceBackRatio +
-          sideways.x * offset,
-        marble.y -
-          direction.y * marble.r * config.surfaceBackRatio +
-          sideways.y * offset,
-        -direction.x *
-          (config.surfaceDriftMin + random() * config.surfaceDriftRange) +
-          sideways.x * offset * config.surfaceScatter,
-        -direction.y *
-          (config.surfaceDriftMin + random() * config.surfaceDriftRange) +
-          sideways.y * offset * config.surfaceScatter -
-          lift,
-        config.surfaceSizeMin + random() * config.surfaceSizeRange,
-        config.surfaceLifeMinMs + random() * config.surfaceLifeRangeMs,
-        config.surfaceOpacity,
       );
     }
   }
@@ -271,7 +226,6 @@ export function createEffectsRenderer({
     canvasDirty = false;
     lastImpactAt = Number.NEGATIVE_INFINITY;
     lastGooSplatAt = Number.NEGATIVE_INFINITY;
-    lastSurfaceAt = 0;
     lastWaterRippleAt = Number.NEGATIVE_INFINITY;
   }
 
@@ -314,7 +268,6 @@ export function createEffectsRenderer({
     spawnGooSplat,
     spawnGoalComplete,
     spawnImpact,
-    spawnSurface,
     spawnWaterRipple,
   };
 }

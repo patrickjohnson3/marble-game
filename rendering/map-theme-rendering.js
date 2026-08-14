@@ -1,11 +1,3 @@
-const realWorldThemes = new Set([
-  "hockeyRink",
-  "kitchenFloor",
-  "livingRoom",
-  "parkingLot",
-  "sandLot",
-]);
-
 const kitchenFloorCanvasScale = 0.4;
 const kitchenDynamicCanvasScale = 0.5;
 const kitchenAntDrawRadius = 18;
@@ -395,10 +387,6 @@ const renderers = {
   parkingLot: renderParkingLot,
   sandLot: renderSandLot,
 };
-
-export function isRealWorldTheme(theme) {
-  return realWorldThemes.has(theme);
-}
 
 function drawAnt(context, ant) {
   const cos = Math.cos(ant.angle);

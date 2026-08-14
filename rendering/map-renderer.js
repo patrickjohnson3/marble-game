@@ -125,11 +125,7 @@ export function createTerrainView({
   }
 
   return {
-    renderGoal,
-    renderMapTheme,
-    renderObstacles,
     renderTerrain,
-    renderTerrainPatches,
     setTerrain,
     setHitboxOverlayEnabled,
     updateGoalProgress,
@@ -209,7 +205,6 @@ export function createMapRenderer({
   return {
     openMap,
     resetIntroPen,
-    setReleasedBounds,
     setWorld,
     setup,
     updateIntroBounds,

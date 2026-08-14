@@ -5,10 +5,7 @@ function fullscreenElement(documentRef = globalThis.document) {
   if (!documentRef) return null;
 
   return (
-    documentRef.fullscreenElement ||
-    documentRef.webkitFullscreenElement ||
-    documentRef.msFullscreenElement ||
-    null
+    documentRef.fullscreenElement || documentRef.webkitFullscreenElement || null
   );
 }
 
@@ -51,9 +48,7 @@ export async function requestFullscreenMode({
   const target = documentRef.documentElement;
   if (!target) return;
   const requestFullscreen =
-    target.requestFullscreen ||
-    target.webkitRequestFullscreen ||
-    target.msRequestFullscreen;
+    target.requestFullscreen || target.webkitRequestFullscreen;
 
   if (!requestFullscreen) return;
 
@@ -70,9 +65,7 @@ export async function exitFullscreenMode({
   if (!documentRef || !fullscreenElement(documentRef)) return;
 
   const exitFullscreen =
-    documentRef.exitFullscreen ||
-    documentRef.webkitExitFullscreen ||
-    documentRef.msExitFullscreen;
+    documentRef.exitFullscreen || documentRef.webkitExitFullscreen;
 
   if (!exitFullscreen) return;
 

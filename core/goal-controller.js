@@ -83,7 +83,6 @@ export function createGoalController({
   }
 
   return {
-    marbleInsideGoal,
     update,
   };
 }
