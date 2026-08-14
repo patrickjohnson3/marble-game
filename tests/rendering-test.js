@@ -1300,6 +1300,57 @@ function testKitchenObstaclesRenderAsFixtures() {
     3,
     "anonymous kitchen obstacles should not render as generic brown blocks",
   );
+
+  const originalLayer = layer;
+  const originalSpongeSprite = spongeSprite;
+  withFakeDocument(() => {
+    renderObstacleWalls(
+      container,
+      [
+        {
+          fixture: "fork",
+          x: 1920,
+          y: 2900,
+          w: 880,
+          h: 420,
+          hitboxW: 760,
+          hitboxH: 62,
+          angle: -0.42,
+        },
+        {
+          fixture: "sponge",
+          x: 560,
+          y: 2380,
+          w: 600,
+          h: 140,
+          hitboxW: 520,
+          hitboxH: 120,
+          angle: 0.2,
+          saturation: 1,
+        },
+        {
+          fixture: "spoon",
+          x: 2480,
+          y: 2180,
+          w: 720,
+          h: 90,
+          hitboxW: 620,
+          hitboxH: 54,
+          angle: 0.34,
+        },
+      ],
+      { mapConfig: { theme: "kitchenFloor" } },
+    );
+  });
+  assert.equal(container.children[0], originalLayer);
+  assert.equal(
+    originalLayer.children.find((child) =>
+      child.className.includes("kitchenSpongeSprite"),
+    ),
+    originalSpongeSprite,
+    "moving the sponge should update its existing sprite",
+  );
+  assert.equal(originalSpongeSprite.style.left, "600px");
 }
 
 testKitchenObstaclesRenderAsFixtures();
@@ -1689,6 +1740,24 @@ try {
     waterPatchCanvas.context.calls.some((call) => call[0] === "lineTo"),
     true,
     "water patch canvas should draw an irregular puddle edge",
+  );
+  renderWaterPatches(waterPatchContainer, [{ x: 30, y: 40, w: 84, h: 60 }], {
+    bounds: { left: 24, top: 34, width: 96, height: 72 },
+    padding: 24,
+  });
+  assert.equal(
+    waterPatchContainer.children[0],
+    waterPatchCanvas,
+    "puddle changes should reuse the existing terrain canvas",
+  );
+  assert.equal(
+    waterPatchCanvas.context.calls.some(
+      (call) =>
+        call[0] === "clearRect" &&
+        call[3] === waterPatchCanvas.width &&
+        call[4] === waterPatchCanvas.height,
+    ),
+    true,
   );
 
   renderObstacleWalls(

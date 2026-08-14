@@ -1,6 +1,7 @@
 import { rectBounds } from "../core/rect-bounds.js";
 
-function createCanvas(
+function configureCanvas(
+  canvas,
   className,
   rects,
   padding = 0,
@@ -10,12 +11,13 @@ function createCanvas(
   const top = bounds.top - padding;
   const width = bounds.width + padding * 2;
   const height = bounds.height + padding * 2;
-  const canvas = document.createElement("canvas");
   const pixelRatio = canvasPixelRatio();
 
   canvas.classList.add(className);
-  canvas.width = Math.ceil(width * pixelRatio);
-  canvas.height = Math.ceil(height * pixelRatio);
+  const pixelWidth = Math.ceil(width * pixelRatio);
+  const pixelHeight = Math.ceil(height * pixelRatio);
+  if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
+  if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
   canvas.style.left = left + "px";
   canvas.style.top = top + "px";
   canvas.style.width = width + "px";
@@ -34,7 +36,22 @@ function createCanvas(
     );
   }
 
-  return { canvas, context };
+  return { canvas, context, left, pixelRatio, top };
+}
+
+function createCanvas(
+  className,
+  rects,
+  padding = 0,
+  bounds = rectBounds(rects),
+) {
+  return configureCanvas(
+    document.createElement("canvas"),
+    className,
+    rects,
+    padding,
+    bounds,
+  );
 }
 
 function canvasPixelRatio() {
@@ -59,10 +76,28 @@ function renderPatchCanvas(
     return;
   }
 
-  const { canvas, context } = createCanvas(className, patches, padding, bounds);
+  const existingCanvas = container.firstChild;
+  const reuseCanvas = existingCanvas?.classList?.contains(className);
+  const { canvas, context, left, pixelRatio, top } = reuseCanvas
+    ? configureCanvas(existingCanvas, className, patches, padding, bounds)
+    : createCanvas(className, patches, padding, bounds);
   canvas.setAttribute(dataAttribute, String(patches.length));
-  if (context) patches.forEach((patch) => drawPatch(context, patch));
-  container.replaceChildren(canvas);
+  if (context) {
+    if (reuseCanvas) {
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.setTransform(
+        pixelRatio,
+        0,
+        0,
+        pixelRatio,
+        -left * pixelRatio,
+        -top * pixelRatio,
+      );
+    }
+    patches.forEach((patch) => drawPatch(context, patch));
+  }
+  if (!reuseCanvas) container.replaceChildren(canvas);
 }
 
 function wallFrameGeometry(walls) {

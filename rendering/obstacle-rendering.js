@@ -199,9 +199,16 @@ function appendKitchenFixtureSprite(
   minWidth,
   minHeight,
 ) {
-  if (parts.length === 0) return null;
+  let sprite = layer.children
+    ? Array.from(layer.children).find((child) => child.className === className)
+    : null;
+  if (parts.length === 0) {
+    sprite?.remove();
+    return null;
+  }
 
-  const sprite = document.createElement("div");
+  const isNew = !sprite;
+  sprite ??= document.createElement("div");
   const bounds = rectBounds(parts);
   const fixture = parts[0];
   const visualWidth = Math.max(fixture.hitboxW ?? bounds.width, minWidth);
@@ -217,7 +224,7 @@ function appendKitchenFixtureSprite(
   if (Number.isFinite(fixture.angle)) {
     sprite.style.setProperty("--fixture-angle", fixture.angle + "rad");
   }
-  layer.appendChild(sprite);
+  if (isNew) layer.appendChild(sprite);
   return sprite;
 }
 
@@ -255,13 +262,17 @@ function appendKitchenSpoonSprite(layer, spoonParts) {
 }
 
 function renderKitchenObstacleWalls(container, obstacles) {
-  const layer = document.createElement("div");
+  let layer = container.firstChild;
+  if (!layer || layer.className !== "kitchenObstacleLayer") {
+    layer = document.createElement("div");
+    layer.className = "kitchenObstacleLayer";
+    layer.setAttribute("aria-hidden", "true");
+    container.replaceChildren(layer);
+  }
   const forkParts = obstacles.filter(isForkFixture);
   const spongeParts = obstacles.filter(isSpongeFixture);
   const spoonParts = obstacles.filter(isSpoonFixture);
 
-  layer.className = "kitchenObstacleLayer";
-  layer.setAttribute("aria-hidden", "true");
   layer.setAttribute(
     "data-fixtures",
     String(forkParts.length + spongeParts.length + spoonParts.length),
@@ -269,7 +280,6 @@ function renderKitchenObstacleWalls(container, obstacles) {
   appendKitchenForkSprite(layer, forkParts);
   appendKitchenSpongeSprite(layer, spongeParts);
   appendKitchenSpoonSprite(layer, spoonParts);
-  container.replaceChildren(layer);
 }
 
 export function renderObstacleHitboxes(
