@@ -28,6 +28,10 @@ const antMunchRate = 0.006;
 const antSquishMinSpeed = 1.2;
 const antSplatMinSpeed = 0.7;
 const antSplatFeedbackCooldownFrames = 24;
+const antWaterAvoidanceFrames = 18;
+const antWaterAvoidancePadding = 10;
+const antWaterOutwardBias = 0.35;
+const antWaterSoakRejectionThreshold = 0.05;
 const crumbRadiusRatio = 0.0032;
 const cerealHitMinSpeed = 0.8;
 const cerealHitFeedbackCooldownFrames = 20;
@@ -147,6 +151,7 @@ function createAnt(world, point, index) {
     squished: false,
     lastSplatFeedbackFrame: Number.NEGATIVE_INFINITY,
     targetIndex: -1,
+    waterAvoidanceFrames: 0,
     wobble: index * 1.7,
     revision: 0,
   };
@@ -610,13 +615,37 @@ function setDistanceToSegment(pointX, pointY, start, end, target) {
   );
 }
 
-function nearestActiveCheerio(ant, cheerios) {
+function pointInPuddle(x, y, patch, padding = 0) {
+  if (!patch) return false;
+
+  const centerX = patch.x + patch.w * 0.5;
+  const centerY = patch.y + patch.h * 0.52;
+  const radiusX = patch.w * 0.44 + padding;
+  const radiusY = patch.h * 0.35 + padding;
+  const dx = (x - centerX) / Math.max(1, radiusX);
+  const dy = (y - centerY) / Math.max(1, radiusY);
+  return dx * dx + dy * dy <= 1;
+}
+
+function cerealUnavailableToAnt(cereal, waterPatch) {
+  if ((cereal.waterSoak ?? 0) >= antWaterSoakRejectionThreshold) return true;
+
+  return pointInPuddle(
+    cereal.originX + cereal.pushX,
+    cereal.originY + cereal.pushY,
+    waterPatch,
+  );
+}
+
+function nearestActiveCheerio(ant, cheerios, waterPatch) {
   let bestIndex = -1;
   let bestDistanceSq = Number.POSITIVE_INFINITY;
 
   for (let i = 0; i < cheerios.length; i++) {
     const cheerio = cheerios[i];
-    if (!cheerio.active) continue;
+    if (!cheerio.active || cerealUnavailableToAnt(cheerio, waterPatch)) {
+      continue;
+    }
 
     const x = cheerio.originX + cheerio.pushX;
     const y = cheerio.originY + cheerio.pushY;
@@ -632,13 +661,13 @@ function nearestActiveCheerio(ant, cheerios) {
   return bestIndex;
 }
 
-function antTarget(ant, cheerios) {
+function antTarget(ant, cheerios, waterPatch) {
   if (
     ant.targetIndex < 0 ||
     !cheerios[ant.targetIndex] ||
     !cheerios[ant.targetIndex].active
   ) {
-    ant.targetIndex = nearestActiveCheerio(ant, cheerios);
+    ant.targetIndex = nearestActiveCheerio(ant, cheerios, waterPatch);
   }
 
   return cheerios[ant.targetIndex] ?? null;
@@ -678,24 +707,82 @@ function updateAnts({ state, frameDelta, marble, events }) {
       continue;
     }
 
-    const target = antTarget(ant, state.cheerios);
+    if ((ant.waterAvoidanceFrames ?? 0) > 0) {
+      const avoidanceStep = antSpeed * frameDelta;
+      ant.x += Math.cos(ant.angle) * avoidanceStep;
+      ant.y += Math.sin(ant.angle) * avoidanceStep;
+      ant.waterAvoidanceFrames = Math.max(
+        0,
+        ant.waterAvoidanceFrames - frameDelta,
+      );
+      continue;
+    }
+
+    const target = antTarget(ant, state.cheerios, state.waterPatch);
     if (!target) continue;
 
     const targetX = target.originX + target.pushX;
     const targetY = target.originY + target.pushY;
     const dx = targetX - ant.x;
     const dy = targetY - ant.y;
+    const targetUnavailable = cerealUnavailableToAnt(target, state.waterPatch);
     const munchDistance = target.radius + antMunchDistance;
-    if (dx * dx + dy * dy <= munchDistance * munchDistance) {
+    if (
+      !targetUnavailable &&
+      dx * dx + dy * dy <= munchDistance * munchDistance
+    ) {
       target.eaten = Math.min(1, target.eaten + antMunchRate * frameDelta);
       if (target.eaten >= 1) target.active = false;
       continue;
     }
 
-    ant.angle = Math.atan2(dy, dx) + Math.sin(ant.wobble) * 0.18;
+    const desiredAngle = Math.atan2(dy, dx) + Math.sin(ant.wobble) * 0.18;
     ant.wobble += 0.11 * frameDelta;
-    ant.x += Math.cos(ant.angle) * antSpeed * frameDelta;
-    ant.y += Math.sin(ant.angle) * antSpeed * frameDelta;
+    const step = antSpeed * frameDelta;
+    const proposedX = ant.x + Math.cos(desiredAngle) * step;
+    const proposedY = ant.y + Math.sin(desiredAngle) * step;
+    if (
+      state.waterPatch &&
+      pointInPuddle(
+        proposedX,
+        proposedY,
+        state.waterPatch,
+        antWaterAvoidancePadding,
+      )
+    ) {
+      const centerX = state.waterPatch.x + state.waterPatch.w * 0.5;
+      const centerY = state.waterPatch.y + state.waterPatch.h * 0.52;
+      const radialX =
+        (ant.x - centerX) /
+        Math.max(1, state.waterPatch.w * 0.44 + antWaterAvoidancePadding);
+      const radialY =
+        (ant.y - centerY) /
+        Math.max(1, state.waterPatch.h * 0.35 + antWaterAvoidancePadding);
+      const radialLength = Math.hypot(radialX, radialY) || 1;
+      const normalX = radialX / radialLength;
+      const normalY = radialY / radialLength;
+
+      if (targetUnavailable) {
+        ant.targetIndex = -1;
+        ant.waterAvoidanceFrames = antWaterAvoidanceFrames;
+        ant.angle = Math.atan2(normalY, normalX);
+      } else {
+        let tangentX = -normalY;
+        let tangentY = normalX;
+        if (tangentX * dx + tangentY * dy < 0) {
+          tangentX = -tangentX;
+          tangentY = -tangentY;
+        }
+        ant.angle = Math.atan2(
+          tangentY + normalY * antWaterOutwardBias,
+          tangentX + normalX * antWaterOutwardBias,
+        );
+      }
+    } else {
+      ant.angle = desiredAngle;
+    }
+    ant.x += Math.cos(ant.angle) * step;
+    ant.y += Math.sin(ant.angle) * step;
   }
 }
 

@@ -314,4 +314,108 @@ function testSpongeRoundedCornerDoesNotCreateFalseImpact() {
 
 testSpongeRoundedCornerDoesNotCreateFalseImpact();
 
+function cerealAt(x, y, overrides = {}) {
+  return {
+    originX: x,
+    originY: y,
+    pushX: 0,
+    pushY: 0,
+    radius: 20,
+    eaten: 0,
+    active: true,
+    sweptClosestX: 0,
+    sweptClosestY: 0,
+    sweptDistance: 0,
+    waterSoak: 0,
+    revision: 0,
+    ...overrides,
+  };
+}
+
+function antAt(x, y, targetIndex = -1) {
+  return {
+    x,
+    y,
+    angle: 0,
+    alive: true,
+    squished: false,
+    targetIndex,
+    waterAvoidanceFrames: 0,
+    wobble: 0,
+    revision: 0,
+  };
+}
+
+function waterAvoidanceDynamics({ ant, cheerios }) {
+  const authoredWater = {
+    type: "waterPatch",
+    x: 300,
+    y: 400,
+    w: 300,
+    h: 200,
+  };
+  const mapConfig = kitchenMap("kitchen-floor", [authoredWater]);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({
+    mapConfig,
+    obstacles: [],
+    waterPatches: [authoredWater],
+    world,
+  });
+  dynamics.state.ants = [ant];
+  dynamics.state.cheerios = cheerios;
+  return { dynamics, mapConfig };
+}
+
+function testAntRecoilsFromWetTargetAndSelectsDryFood() {
+  const wet = cerealAt(330, 500, { waterSoak: 1 });
+  const dry = cerealAt(100, 500);
+  const ant = antAt(308, 500, 0);
+  const { dynamics, mapConfig } = waterAvoidanceDynamics({
+    ant,
+    cheerios: [wet, dry],
+  });
+  const marble = { x: 900, y: 900, vx: 0, vy: 0, r: 29 };
+
+  update(dynamics, mapConfig, marble);
+
+  assert.equal(ant.x < 308, true, "the ant should recoil from the puddle");
+  assert.equal(ant.targetIndex, -1);
+  assert.equal(ant.waterAvoidanceFrames > 0, true);
+  assert.equal(wet.eaten, 0, "an ant should not eat waterlogged cereal");
+
+  update(dynamics, mapConfig, marble, 20);
+  update(dynamics, mapConfig, marble);
+  assert.equal(ant.targetIndex, 1, "the ant should select nearby dry food");
+}
+
+testAntRecoilsFromWetTargetAndSelectsDryFood();
+
+function testAntSteersAroundWaterTowardDryFood() {
+  const dry = cerealAt(800, 500);
+  const ant = antAt(308, 500);
+  const { dynamics, mapConfig } = waterAvoidanceDynamics({
+    ant,
+    cheerios: [dry],
+  });
+
+  update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 });
+
+  assert.equal(ant.targetIndex, 0, "dry food should remain the target");
+  assert.equal(ant.x < 308, true, "avoidance should bias away from the water");
+  assert.notEqual(ant.y, 500, "avoidance should turn along the puddle edge");
+
+  let enteredPuddleCore = false;
+  for (let frame = 0; frame < 1000; frame++) {
+    update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 });
+    const puddleX = (ant.x - 450) / 132;
+    const puddleY = (ant.y - 504) / 70;
+    enteredPuddleCore ||= puddleX * puddleX + puddleY * puddleY <= 1;
+  }
+  assert.equal(enteredPuddleCore, false, "the ant must not cross the puddle");
+  assert.equal(dry.eaten > 0, true, "the ant should route around to dry food");
+}
+
+testAntSteersAroundWaterTowardDryFood();
+
 console.log("Kitchen dynamics tests passed.");
