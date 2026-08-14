@@ -682,6 +682,7 @@ function clearDynamicRect(context, scale, rect) {
 function createDynamicEntry(object, kind) {
   return {
     bounds: { bottom: 0, left: 0, right: 0, top: 0 },
+    dirtyBounds: { bottom: 0, left: 0, right: 0, top: 0 },
     kind,
     nextBounds: { bottom: 0, left: 0, right: 0, top: 0 },
     object,
@@ -739,13 +740,32 @@ function dynamicDirtyRects(entries, dirtyRects) {
       entry.revision !== entry.object.revision ||
       (nextVisible && boundsChanged(entry.bounds, entry.nextBounds))
     ) {
-      if (entry.visible) dirtyRects.push(entry.bounds);
+      const previousVisible = entry.visible;
       const previousBounds = entry.bounds;
       entry.bounds = entry.nextBounds;
       entry.nextBounds = previousBounds;
       entry.visible = nextVisible;
       entry.revision = entry.object.revision;
-      if (entry.visible) dirtyRects.push(entry.bounds);
+      if (previousVisible && entry.visible) {
+        entry.dirtyBounds.bottom = Math.max(
+          previousBounds.bottom,
+          entry.bounds.bottom,
+        );
+        entry.dirtyBounds.left = Math.min(
+          previousBounds.left,
+          entry.bounds.left,
+        );
+        entry.dirtyBounds.right = Math.max(
+          previousBounds.right,
+          entry.bounds.right,
+        );
+        entry.dirtyBounds.top = Math.min(previousBounds.top, entry.bounds.top);
+        dirtyRects.push(entry.dirtyBounds);
+      } else if (previousVisible) {
+        dirtyRects.push(previousBounds);
+      } else if (entry.visible) {
+        dirtyRects.push(entry.bounds);
+      }
     }
   }
 

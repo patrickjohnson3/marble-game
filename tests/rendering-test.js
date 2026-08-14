@@ -870,6 +870,11 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
     true,
     "kitchen dynamics should clear dirty regions instead of the full canvas",
   );
+  assert.equal(
+    clearCalls.length <= dynamics.state.ants.length,
+    true,
+    "each moving ant should clear one union of its old and new bounds",
+  );
 }
 
 testKitchenDynamicsUseDirtyRedrawsAfterInitialRender();
