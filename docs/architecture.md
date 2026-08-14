@@ -77,18 +77,19 @@ When the start button is pressed:
 
 1. `gameController.start()` calls `startGameWithPermissions()`.
 2. The start button is hidden and disabled.
-3. Motion permission is requested with a timeout. This is required for iOS-like
-   permission flows but should not block desktop keyboard fallback forever.
-4. If permission is denied, the game remains started, the hint explains the
-   failure, and the sensor watchdog enables keyboard fallback.
-5. Fullscreen and wake lock are requested from `platform/platform.js`.
-6. `gameController.reset()` resets runtime state to the current spawn and intro
-   pen.
-7. Motion listeners are enabled.
-8. `game.phase` becomes `calibrating`.
-9. A frame is scheduled.
-10. The sensor watchdog starts. If no sensor arrives, it switches to keyboard
-    mode and starts the intro countdown path.
+3. `gameController.reset()` restores the initial map, spawn, intro pen, input,
+   camera, effects, and goal state. Reset briefly restores the Start control, so
+   startup hides it again before yielding.
+4. Fullscreen and wake lock are requested from `platform/platform.js` without
+   blocking startup.
+5. Motion listeners are enabled, `game.phase` becomes `calibrating`, sensor
+   permission becomes `pending`, a frame is scheduled, and the sensor watchdog
+   starts.
+6. Motion permission is requested with a timeout. This supports iOS-like
+   permission flows without blocking desktop keyboard fallback forever.
+7. The permission result is recorded as `granted`, `denied`, or `timeout`. A
+   denial or timeout changes the hint, while the watchdog remains responsible
+   for switching to keyboard mode if no sensor input arrives.
 
 On mobile, sensor events normally auto-neutralize through
 `input/sensor-controller.js`. On desktop, keyboard input is enabled immediately
