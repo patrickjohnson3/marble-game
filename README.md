@@ -36,6 +36,13 @@ Then open `http://localhost:8000/`.
 - Desktop fallback: use arrow keys or WASD.
 - Settings: use the gear button.
 
+## Mobile Browser Targets
+
+The supported mobile targets are Android Chrome, Android Brave, iPhone Safari,
+and iPhone Chrome. Motion sensors and installed-app behavior require manual
+testing from the HTTPS deployment; the desktop browser smoke test does not
+cover these platform APIs.
+
 ## Checks
 
 ```sh

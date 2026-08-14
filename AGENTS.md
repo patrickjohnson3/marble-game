@@ -36,4 +36,4 @@ Use short imperative commit summaries and keep each commit to one behavior, refa
 
 ## Agent-Specific Notes
 
-Changes to motion sensors, haptics, fullscreen, wake lock, or PWA behavior must preserve desktop keyboard fallback, add focused tests, and receive HTTPS mobile verification when platform behavior changes. Add engine abstractions only when they remove current complexity.
+Changes to motion sensors, haptics, fullscreen, wake lock, or PWA behavior must preserve desktop keyboard fallback and add focused tests. Verify platform behavior over HTTPS in Android Chrome, Android Brave, iPhone Safari, and iPhone Chrome. Add engine abstractions only when they remove current complexity.

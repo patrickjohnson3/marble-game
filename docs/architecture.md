@@ -298,6 +298,19 @@ The runtime settings object is mutable. Persisted settings should always flow
 through `persistedSettingsFromRuntime()` before saving so transient debugging or
 runtime-only fields do not leak into localStorage.
 
+## PWA Updates
+
+`sw.js` installs new runtime assets into a versioned cache, calls
+`skipWaiting()`, and claims clients after activation. If an existing service
+worker already controls the page, `platform/platform.js` reloads once on
+`controllerchange` so the new version takes effect immediately. A first-time
+installation does not trigger that reload. Update status remains visible in the
+settings panel during the handoff.
+
+Platform changes require HTTPS device checks in Android Chrome, Android Brave,
+iPhone Safari, and iPhone Chrome. The Playwright smoke test covers local desktop
+Chrome behavior only.
+
 ## Haptics And Feedback
 
 `core/haptics.js` translates gameplay events into vibration requests when
