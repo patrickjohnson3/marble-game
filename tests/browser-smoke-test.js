@@ -134,6 +134,39 @@ async function testSyntheticOrientationWorkflow(browser, baseUrl) {
   }
 }
 
+async function testShortViewportSettingsRemainReachable(browser, baseUrl) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 667 } });
+
+  try {
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.waitForFunction(() => window.__marbleAppBooted === true);
+    await page.locator("#settingsToggle").click();
+
+    const scrollState = await page
+      .locator("#settingsOverlay")
+      .evaluate((overlay) => ({
+        clientHeight: overlay.clientHeight,
+        overflowY: window.getComputedStyle(overlay).overflowY,
+        scrollHeight: overlay.scrollHeight,
+      }));
+    assert.equal(scrollState.overflowY, "auto");
+    assert.equal(
+      scrollState.scrollHeight > scrollState.clientHeight,
+      true,
+      "short settings content should use the overlay scroll container",
+    );
+
+    await page.locator("#resumeGame").scrollIntoViewIfNeeded();
+    assert.equal(
+      await page.locator("#resumeGame").isVisible(),
+      true,
+      "Resume must remain reachable on a short mobile viewport",
+    );
+  } finally {
+    await page.close();
+  }
+}
+
 const server = createStaticServer();
 const port = await listen(server);
 const browser = await chromium.launch({
@@ -268,6 +301,10 @@ try {
 
   assert.deepEqual(browserErrors, [], "browser smoke test must not log errors");
   await testSyntheticOrientationWorkflow(browser, `http://127.0.0.1:${port}/`);
+  await testShortViewportSettingsRemainReachable(
+    browser,
+    `http://127.0.0.1:${port}/`,
+  );
   console.log("Browser smoke test passed.");
 } finally {
   await browser.close();

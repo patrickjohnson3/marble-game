@@ -833,6 +833,8 @@ button.primaryAction {
     calc(18px + var(--safe-bottom)) calc(18px + var(--safe-left));
   background: #0009;
   z-index: 10;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 #settingsOverlay.open {
   display: grid;
