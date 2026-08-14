@@ -561,6 +561,11 @@ function testKitchenThemeRendersDatedFloorDetails() {
   assert.equal(floor.style.width, "4400px");
   assert.equal(floor.style.height, "4400px");
   assert.equal(
+    floor.attributes["data-kitchen-landmarks"],
+    "5",
+    "kitchen floor should include distributed orientation landmarks",
+  );
+  assert.equal(
     floor.context.calls.some((call) => call[0] === "fillRect"),
     true,
     "kitchen floor canvas should draw tile fills",

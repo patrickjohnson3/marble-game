@@ -115,6 +115,7 @@ function appendKitchenFloorCanvas(parent, world) {
   canvas.height = Math.ceil(world.height * kitchenFloorCanvasScale);
   applyBox(canvas, { x: 0, y: 0, w: world.width, h: world.height });
   canvas.setAttribute("aria-hidden", "true");
+  canvas.setAttribute("data-kitchen-landmarks", "5");
   parent.appendChild(canvas);
   if (!context) return;
 
@@ -182,6 +183,75 @@ function appendKitchenFloorCanvas(parent, world) {
     );
     context.fill();
   });
+
+  // Sparse, unique floor wear gives the large repeating tile field location cues.
+  const sunX = world.width * 0.08;
+  const sunY = world.height * 0.12;
+  context.fillStyle = "#fff8d72b";
+  context.beginPath();
+  context.moveTo(sunX, sunY);
+  context.lineTo(sunX + 720, sunY + 90);
+  context.lineTo(sunX + 620, sunY + 610);
+  context.lineTo(sunX - 100, sunY + 520);
+  context.fill();
+  context.fillStyle = "#fffdf044";
+  context.fillRect(sunX + 100, sunY + 145, 520, 34);
+  context.fillRect(sunX + 48, sunY + 335, 520, 34);
+
+  const repairX = Math.floor((world.width * 0.82) / tileSize) * tileSize;
+  const repairY = Math.floor((world.height * 0.18) / tileSize) * tileSize;
+  context.fillStyle = "#c9b98566";
+  context.fillRect(repairX + 8, repairY + 8, tileSize - 16, tileSize - 16);
+  context.strokeStyle = "#f0e4bd73";
+  context.lineWidth = 5;
+  context.strokeRect(repairX + 8, repairY + 8, tileSize - 16, tileSize - 16);
+
+  const crackCenters = [
+    { x: world.width * 0.13, y: world.height * 0.82 },
+    { x: world.width * 0.72, y: world.height * 0.88 },
+  ];
+  context.strokeStyle = "#6f593752";
+  context.lineWidth = 4;
+  crackCenters.forEach((center, index) => {
+    const direction = index === 0 ? 1 : -1;
+    context.beginPath();
+    context.moveTo(center.x - 72 * direction, center.y - 28);
+    context.lineTo(center.x - 22 * direction, center.y - 5);
+    context.lineTo(center.x + 18 * direction, center.y + 42);
+    context.lineTo(center.x + 76 * direction, center.y + 62);
+    context.moveTo(center.x - 18 * direction, center.y - 2);
+    context.lineTo(center.x + 30 * direction, center.y - 52);
+    context.moveTo(center.x + 16 * direction, center.y + 40);
+    context.lineTo(center.x - 8 * direction, center.y + 94);
+    context.stroke();
+  });
+
+  context.fillStyle = "#8b71361f";
+  context.beginPath();
+  context.ellipse(
+    world.width * 0.52,
+    world.height * 0.84,
+    380,
+    96,
+    -0.18,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+
+  context.strokeStyle = "#7a64302e";
+  context.lineWidth = 14;
+  context.beginPath();
+  context.ellipse(
+    world.width * 0.9,
+    world.height * 0.54,
+    150,
+    92,
+    0.24,
+    0,
+    Math.PI * 2,
+  );
+  context.stroke();
 }
 
 function renderHockeyRink({ underlay, overlay, world }) {
