@@ -192,7 +192,7 @@ function isSpoonFixture(rect) {
   return rect.fixture === KITCHEN_FIXTURES.spoon;
 }
 
-function appendKitchenFixtureSprite(
+function syncKitchenFixtureSprite(
   layer,
   parts,
   className,
@@ -228,12 +228,12 @@ function appendKitchenFixtureSprite(
   return sprite;
 }
 
-function appendKitchenForkSprite(layer, forkParts) {
-  appendKitchenFixtureSprite(layer, forkParts, "kitchenForkSprite", 760, 110);
+function syncKitchenForkSprite(layer, forkParts) {
+  syncKitchenFixtureSprite(layer, forkParts, "kitchenForkSprite", 760, 110);
 }
 
-function appendKitchenSpongeSprite(layer, spongeParts) {
-  const sprite = appendKitchenFixtureSprite(
+function syncKitchenSpongeSprite(layer, spongeParts) {
+  const sprite = syncKitchenFixtureSprite(
     layer,
     spongeParts,
     "kitchenSpongeSprite",
@@ -257,8 +257,8 @@ function appendKitchenSpongeSprite(layer, spongeParts) {
   );
 }
 
-function appendKitchenSpoonSprite(layer, spoonParts) {
-  appendKitchenFixtureSprite(layer, spoonParts, "kitchenSpoonSprite", 620, 150);
+function syncKitchenSpoonSprite(layer, spoonParts) {
+  syncKitchenFixtureSprite(layer, spoonParts, "kitchenSpoonSprite", 620, 150);
 }
 
 function renderKitchenObstacleWalls(container, obstacles) {
@@ -277,9 +277,9 @@ function renderKitchenObstacleWalls(container, obstacles) {
     "data-fixtures",
     String(forkParts.length + spongeParts.length + spoonParts.length),
   );
-  appendKitchenForkSprite(layer, forkParts);
-  appendKitchenSpongeSprite(layer, spongeParts);
-  appendKitchenSpoonSprite(layer, spoonParts);
+  syncKitchenForkSprite(layer, forkParts);
+  syncKitchenSpongeSprite(layer, spongeParts);
+  syncKitchenSpoonSprite(layer, spoonParts);
 }
 
 export function renderObstacleHitboxes(
