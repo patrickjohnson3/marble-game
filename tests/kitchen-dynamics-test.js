@@ -261,6 +261,19 @@ function testOffCenterSpongeImpactCreatesMoreRotation() {
 
 testOffCenterSpongeImpactCreatesMoreRotation();
 
+function testShortEndSpongePushMaintainsContact() {
+  const centered = spongeImpactAngle(440);
+
+  assert.equal(centered.sponge.vx > 0, true);
+  assert.equal(
+    centered.marble.vx >= centered.sponge.vx,
+    true,
+    "an end-on push should not make the sponge outrun the marble",
+  );
+}
+
+testShortEndSpongePushMaintainsContact();
+
 function testSpongeRoundedCornerDoesNotCreateFalseImpact() {
   const authoredWater = {
     type: "waterPatch",
