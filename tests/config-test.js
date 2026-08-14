@@ -346,7 +346,6 @@ function testHapticAndVisualRanges() {
     visualConfig.map.goalFillEdgePercent,
     "goal fill edge percent",
   );
-  assertPositiveNumber(visualConfig.map.themeCullPadding, "theme cull padding");
   assertPositiveNumber(visualConfig.effects.impactMin, "effect impact minimum");
   assertPositiveNumber(
     visualConfig.effects.impactReference,

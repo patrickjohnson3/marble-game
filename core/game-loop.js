@@ -188,7 +188,6 @@ export function createGameLoop({
         marble,
         previousMarble,
         frameDelta,
-        cameraController.visibleWorldRect(visualConfig.map.themeCullPadding),
       );
       if (themeEvents?.squishedAnts > 0) {
         hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);

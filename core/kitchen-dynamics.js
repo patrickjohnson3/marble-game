@@ -19,15 +19,12 @@ const surfaceInfluences = Object.freeze({
 const cheerioObstacleSeparation = 0.5;
 const obstacleResolvePasses = 2;
 const antRadius = 7;
-const antCullRadius = 36;
 const antSpeed = 0.9;
 const antMunchDistance = 20;
 const antMunchRate = 0.006;
 const antSquishMinSpeed = 1.2;
 const antSplatMinSpeed = 0.7;
 const antSplatFeedbackCooldownFrames = 24;
-const cheerioMinScale = 0.45;
-const dynamicCullPadding = 18;
 const crumbRadiusRatio = 0.0032;
 const cerealHitMinSpeed = 0.8;
 const cerealHitFeedbackCooldownFrames = 20;
@@ -242,37 +239,6 @@ function setDistanceToSegment(pointX, pointY, start, end, target) {
   );
 }
 
-function paddedBounds(x, y, radius) {
-  return {
-    bottom: y + radius + dynamicCullPadding,
-    left: x - radius - dynamicCullPadding,
-    right: x + radius + dynamicCullPadding,
-    top: y - radius - dynamicCullPadding,
-  };
-}
-
-function boundsVisible(bounds, visibleWorld) {
-  return (
-    !visibleWorld ||
-    (bounds.left <= visibleWorld.right &&
-      visibleWorld.left <= bounds.right &&
-      bounds.top <= visibleWorld.bottom &&
-      visibleWorld.top <= bounds.bottom)
-  );
-}
-
-function cerealVisible(cereal, visibleWorld) {
-  const radius = cereal.radius * (1 - cereal.eaten * (1 - cheerioMinScale));
-  return boundsVisible(
-    paddedBounds(
-      cereal.originX + cereal.pushX,
-      cereal.originY + cereal.pushY,
-      radius,
-    ),
-    visibleWorld,
-  );
-}
-
 function nearestActiveCheerio(ant, cheerios) {
   let bestIndex = -1;
   let bestDistanceSq = Number.POSITIVE_INFINITY;
@@ -307,19 +273,13 @@ function antTarget(ant, cheerios) {
   return cheerios[ant.targetIndex] ?? null;
 }
 
-function updateAnts({ state, frameDelta, marble, visibleWorld, events }) {
+function updateAnts({ state, frameDelta, marble, events }) {
   const marbleSpeed = Math.hypot(marble.vx || 0, marble.vy || 0);
   const squishDistance = marble.r + antRadius;
   const squishDistanceSq = squishDistance * squishDistance;
 
   for (let i = 0; i < state.ants.length; i++) {
     const ant = state.ants[i];
-    if (
-      !boundsVisible(paddedBounds(ant.x, ant.y, antCullRadius), visibleWorld)
-    ) {
-      continue;
-    }
-
     const marbleDx = ant.x - marble.x;
     const marbleDy = ant.y - marble.y;
     const overlapsMarble =
@@ -404,10 +364,10 @@ function resolveCerealObstacleCollisions(circle, obstacles) {
   }
 }
 
-function updateCereal({ state, marble, previousMarble, visibleWorld, events }) {
+function updateCereal({ state, marble, previousMarble, events }) {
   for (let i = 0; i < state.cheerios.length; i++) {
     const cereal = state.cheerios[i];
-    if (!cereal.active || !cerealVisible(cereal, visibleWorld)) continue;
+    if (!cereal.active) continue;
 
     const { originX, originY, radius, pushX, pushY } = cereal;
     const currentX = originX + pushX;
@@ -475,14 +435,14 @@ function updateCereal({ state, marble, previousMarble, visibleWorld, events }) {
 
 export function updateKitchenDynamics(
   state,
-  { mapConfig, marble, previousMarble = marble, frameDelta = 1, visibleWorld },
+  { mapConfig, marble, previousMarble = marble, frameDelta = 1 },
 ) {
   const events = { cerealHits: 0, splatHits: 0, squishedAnts: 0 };
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
   ensureElementCaches(state, mapConfig.elements);
-  updateCereal({ state, marble, previousMarble, visibleWorld, events });
-  updateAnts({ state, frameDelta, marble, visibleWorld, events });
+  updateCereal({ state, marble, previousMarble, events });
+  updateAnts({ state, frameDelta, marble, events });
   state.frameIndex += 1;
   return events;
 }

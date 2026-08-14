@@ -771,7 +771,7 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
 
 testKitchenDynamicsUseDirtyRedrawsAfterInitialRender();
 
-function testKitchenDynamicsSkipOffscreenAnts() {
+function testKitchenDynamicsContinueOutsideCameraView() {
   const antCanvas = new FakeCanvasElement();
   const dynamics = kitchenDynamicsWith({
     cheerios: [
@@ -817,22 +817,21 @@ function testKitchenDynamicsSkipOffscreenAnts() {
     marble: { x: 1000, y: 1000, vx: 3, vy: 0, r: 29 },
     frameDelta: 20,
     themeState,
-    visibleWorld: { bottom: 120, left: 0, right: 120, top: 0 },
   });
 
   assert.equal(
     dynamics.state.ants[0].squished,
-    false,
-    "offscreen ants should not be updated",
+    true,
+    "camera position must not suppress ant collisions",
   );
-  assert.equal(
-    dynamics.state.cheerios[0].eaten,
+  assert.notEqual(
+    dynamics.state.cheerios[0].pushX,
     0,
-    "offscreen Cheerios should not be updated",
+    "camera position must not suppress cereal collisions",
   );
 }
 
-testKitchenDynamicsSkipOffscreenAnts();
+testKitchenDynamicsContinueOutsideCameraView();
 
 function testMarbleSquishesKitchenAnts() {
   const antCanvas = new FakeCanvasElement();

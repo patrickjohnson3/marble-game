@@ -108,28 +108,11 @@ function testSmallScaledWorldCentersInViewport() {
   assert.equal(camera.y, 50);
 }
 
-function testVisibleWorldRectUsesCameraTransform() {
-  const { camera, controller } = createController({
-    viewport: { width: () => 300, height: () => 200 },
-  });
-  camera.x = -100;
-  camera.y = -50;
-  camera.scale = 2;
-
-  assert.deepEqual(controller.visibleWorldRect(10), {
-    bottom: 135,
-    left: 40,
-    right: 210,
-    top: 15,
-  });
-}
-
 testFollowPreservesSmoothFollow();
 testFollowWaitsForGestureCooldown();
 testGesturePansCameraAndStartsCooldown();
 testCenterClampsToWorldEdges();
 testFollowClampsToFarWorldEdges();
 testSmallScaledWorldCentersInViewport();
-testVisibleWorldRectUsesCameraTransform();
 
 console.log("Camera tests passed.");

@@ -100,17 +100,6 @@ export function createCameraController({
     applyTransform();
   }
 
-  function visibleWorldRect(padding = 0) {
-    const scale = camera.scale || 1;
-
-    return {
-      bottom: (viewport.height() - camera.y) / scale + padding,
-      left: -camera.x / scale - padding,
-      right: (viewport.width() - camera.x) / scale + padding,
-      top: -camera.y / scale - padding,
-    };
-  }
-
   const gestures = createCameraGestureController({
     camera,
     cameraEl,
@@ -133,6 +122,5 @@ export function createCameraController({
     onPointerMove: gestures.onPointerMove,
     resetGesture: gestures.resetGesture,
     updateFollow,
-    visibleWorldRect,
   };
 }

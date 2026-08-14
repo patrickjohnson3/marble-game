@@ -158,6 +158,5 @@ export const visualConfig = {
     waterPatchCanvasPadding: 24,
     obstacleCanvasPadding: 32,
     goalFillEdgePercent: 70.8,
-    themeCullPadding: 180,
   },
 };

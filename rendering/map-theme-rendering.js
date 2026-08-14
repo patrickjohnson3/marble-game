@@ -818,14 +818,12 @@ export function updateMapThemeDynamics({
   previousMarble = marble,
   frameDelta = 1,
   themeState = {},
-  visibleWorld,
 }) {
   const events = dynamics.update({
     mapConfig,
     marble,
     previousMarble,
     frameDelta,
-    visibleWorld,
   });
   if (mapConfig?.theme === "kitchenFloor") {
     renderKitchenDynamics(themeState, dynamics.state);
