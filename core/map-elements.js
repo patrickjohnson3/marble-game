@@ -7,6 +7,18 @@ export const MAP_ELEMENT_TYPES = Object.freeze({
   waterPatch: "waterPatch",
 });
 
+export const KITCHEN_FIXTURES = Object.freeze({
+  fork: "fork",
+  spoon: "spoon",
+  sponge: "sponge",
+});
+
+const kitchenFixtureValues = new Set(Object.values(KITCHEN_FIXTURES));
+
+export function isKitchenFixture(value) {
+  return kitchenFixtureValues.has(value);
+}
+
 export const MAP_ELEMENT_REGISTRY = Object.freeze({
   [MAP_ELEMENT_TYPES.gooPatch]: Object.freeze({
     type: MAP_ELEMENT_TYPES.gooPatch,

@@ -20,6 +20,8 @@ export const mapValidationMessages = Object.freeze({
   elementObject: (index) => "element " + index + " must be an object",
   elementUnknownType: (index, type) =>
     "element " + index + " has unknown type " + type,
+  kitchenObstacleFixture: (index) =>
+    "element " + index + " must use a supported kitchen fixture",
   fieldNonFinite: (label, key) => label + " has non-finite " + key,
   fieldPositive: (label, key) => label + " " + key + " must be positive",
   rectPositiveDimensions: (label) => label + " must have positive dimensions",

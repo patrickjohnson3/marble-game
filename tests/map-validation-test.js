@@ -133,6 +133,18 @@ function testMapValidationReportsInvalidOrientedObstacleFields() {
   );
 }
 
+function testKitchenMapValidationRejectsInvisibleObstacleFixtures() {
+  const errors = validateMapConfig({
+    theme: "kitchenFloor",
+    world: { width: 200, height: 200 },
+    elements: [{ type: "obstacle", x: 80, y: 80, w: 20, h: 20 }],
+    spawn: { x: 20, y: 20, r: 5 },
+    goal: { x: 180, y: 180, r: 10, holdMs: 5000 },
+  });
+
+  assert.ok(errors.includes(mapValidationMessages.kitchenObstacleFixture(0)));
+}
+
 function testMapValidationUsesNarrowRotatedHitboxForGoalOverlap() {
   const errors = validateMapConfig({
     world: { width: 200, height: 200 },
@@ -314,6 +326,7 @@ testMapValidationReportsInvalidElementEntries();
 testMapValidationReportsUnknownAndOutOfBoundsElements();
 testMapValidationRejectsOffGridElementDimensions();
 testMapValidationReportsInvalidOrientedObstacleFields();
+testKitchenMapValidationRejectsInvisibleObstacleFixtures();
 testMapValidationUsesNarrowRotatedHitboxForGoalOverlap();
 testMapValidationDetectsRotatedHitboxOutsideVisualBounds();
 testMapValidationReportsInvalidNormalizedObstacles();

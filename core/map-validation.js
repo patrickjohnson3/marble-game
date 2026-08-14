@@ -1,4 +1,5 @@
 import {
+  isKitchenFixture,
   MAP_ELEMENT_TYPE_VALUES,
   mapObstacleElements,
 } from "./map-elements.js";
@@ -192,7 +193,10 @@ function validateWorldAndGrid(config, { errors, gridSize, world }) {
   }
 }
 
-function validateElements(elements, { allowedTypes, errors, gridSize, world }) {
+function validateElements(
+  elements,
+  { allowedTypes, errors, gridSize, theme, world },
+) {
   elements.forEach((element, index) => {
     if (!element || typeof element !== "object") {
       errors.push(mapValidationMessages.elementObject(index));
@@ -213,6 +217,9 @@ function validateElements(elements, { allowedTypes, errors, gridSize, world }) {
         errors,
         label: "element " + index,
       });
+      if (theme === "kitchenFloor" && !isKitchenFixture(element.fixture)) {
+        errors.push(mapValidationMessages.kitchenObstacleFixture(index));
+      }
     }
     if (Number.isFinite(gridSize) && gridSize > 0) {
       for (const key of ["x", "y", "w", "h"]) {
@@ -322,7 +329,13 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
 
   validateRequiredMapShape(config, { errors });
   validateWorldAndGrid(config, { errors, gridSize, world });
-  validateElements(elements, { allowedTypes, errors, gridSize, world });
+  validateElements(elements, {
+    allowedTypes,
+    errors,
+    gridSize,
+    theme: config?.theme,
+    world,
+  });
 
   const checkedSpawn = spawn ?? config?.spawn;
 

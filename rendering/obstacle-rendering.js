@@ -1,4 +1,5 @@
 import { createCanvas, rectBounds } from "./wall-rendering.js";
+import { KITCHEN_FIXTURES } from "../core/map-elements.js";
 
 function rectPath(x, y, w, h) {
   return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
@@ -180,15 +181,15 @@ function applyRectStyle(element, rect) {
 }
 
 function isForkFixture(rect) {
-  return rect.fixture === "fork";
+  return rect.fixture === KITCHEN_FIXTURES.fork;
 }
 
 function isSpongeFixture(rect) {
-  return rect.fixture === "sponge";
+  return rect.fixture === KITCHEN_FIXTURES.sponge;
 }
 
 function isSpoonFixture(rect) {
-  return rect.fixture === "spoon";
+  return rect.fixture === KITCHEN_FIXTURES.spoon;
 }
 
 function appendKitchenFixtureSprite(
