@@ -108,8 +108,8 @@ const kitchenFloorElements = [
   {
     type: "obstacle",
     fixture: "sponge",
-    x: 260,
-    y: 1170,
+    x: 745,
+    y: 930,
     w: 300,
     h: 140,
     hitboxW: 260,

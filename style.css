@@ -259,8 +259,9 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
-  filter: drop-shadow(0 16px 16px #0006);
-  transform: rotate(var(--fixture-angle, 0rad));
+  filter: brightness(var(--sponge-brightness, 1))
+    saturate(var(--sponge-color, 1)) drop-shadow(0 16px 16px #0006);
+  transform: rotate(var(--fixture-angle, 0rad)) scale(var(--sponge-scale, 1));
   transform-origin: center;
 }
 .kitchenSpoonSprite {

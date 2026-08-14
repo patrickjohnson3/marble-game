@@ -14,6 +14,7 @@ import {
 import { copy } from "../core/copy.js";
 import { resolvedMapConfig } from "../core/map-config.js";
 import { createMapRuntime } from "../core/map-runtime.js";
+import { SURFACE_TYPES } from "../core/physics.js";
 import { GAME_PHASES } from "../core/runtime-states.js";
 import { createGameState } from "../core/state.js";
 
@@ -172,7 +173,10 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
     effectImpacts: [],
     goalResets: 0,
     hapticImpacts: [],
+    hapticSurfaces: [],
     hints: [],
+    obstacleRenders: 0,
+    terrainTypeRenders: [],
     trailClears: 0,
   };
   let currentTime = 0;
@@ -229,7 +233,9 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
       pulseImpact(impact) {
         calls.hapticImpacts.push(impact);
       },
-      pulseSurface() {},
+      pulseSurface(speed, surfaceType) {
+        calls.hapticSurfaces.push([speed, surfaceType]);
+      },
     },
     goalController: { update() {} },
     goalTarget: () => mapRuntime.state.goal,
@@ -252,7 +258,15 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
     scheduleFrame() {},
     settings: { goalIndicatorEnabled: false },
     spawnTarget: () => mapRuntime.state.spawn,
-    terrainView: { renderMapThemeDynamics() {} },
+    terrainView: {
+      renderMapThemeDynamics() {},
+      renderObstacles() {
+        calls.obstacleRenders++;
+      },
+      renderTerrainType(type) {
+        calls.terrainTypeRenders.push(type);
+      },
+    },
     timing,
     tuning,
     trailRenderer: {
@@ -361,7 +375,32 @@ function testKitchenFeedbackRoutesOnePriorityImpactPerFrame() {
   ]);
 }
 
+function testSpongeAbsorptionRoutesFocusedRenderingAndFeedback() {
+  const activeMap = {
+    ...resolvedMapConfig,
+    world: { width: 400, height: 400 },
+    spawn: { x: 200, y: 200, r: 8 },
+    goal: { x: 350, y: 350, r: 30, holdMs: 5000 },
+    elements: [],
+  };
+  const harness = createBehaviorHarness({
+    activeMap,
+    kitchenEvents: [{ spongeChanges: 1, spongeSoaks: 1, waterChanges: 1 }],
+  });
+
+  harness.tick();
+
+  assert.equal(harness.calls.obstacleRenders, 1);
+  assert.deepEqual(harness.calls.terrainTypeRenders, [
+    SURFACE_TYPES.waterPatch,
+  ]);
+  assert.deepEqual(harness.calls.hapticSurfaces, [
+    [tuning.spongeSoakSurfaceFeedbackSpeed, SURFACE_TYPES.waterPatch],
+  ]);
+}
+
 testHazardRecoveryResetsGameplayFeedbackAndRearms();
 testKitchenFeedbackRoutesOnePriorityImpactPerFrame();
+testSpongeAbsorptionRoutesFocusedRenderingAndFeedback();
 
 console.log("Game loop tests passed.");

@@ -1,4 +1,4 @@
-import { MAP_ELEMENT_TYPES } from "./map-elements.js";
+import { KITCHEN_FIXTURES, MAP_ELEMENT_TYPES } from "./map-elements.js";
 import { circleOrientedRectContact } from "./physics-collisions.js";
 
 const cheerioRadiusRatio = 0.00525;
@@ -30,6 +30,15 @@ const cerealHitMinSpeed = 0.8;
 const cerealHitFeedbackCooldownFrames = 20;
 const kitchenFloorMapId = "kitchen-floor";
 const cheerioWaterSoakRate = 0.006;
+const spongeMinPushSpeed = 0.45;
+const spongePushContactPadding = 4;
+const spongePushBaseDistance = 0.8;
+const spongePushSpeedScale = 0.22;
+const spongeMaxPushDistance = 4.5;
+const spongeMaxOffset = 320;
+const spongeWaterSoakRate = 0.01;
+const spongeMaxPuddleLinearShrink = 0.2;
+const spongeWaterRedrawSteps = 20;
 
 const cheerioLayout = Object.freeze([
   { x: 0.16, y: 0.49 },
@@ -143,7 +152,23 @@ export function createKitchenDynamicsState() {
     terrainElements: [],
     collisionCircle: { x: 0, y: 0, r: 0 },
     collisionContact: {},
-    events: { cerealHits: 0, splatHits: 0, squishedAnts: 0 },
+    events: {
+      cerealHits: 0,
+      splatHits: 0,
+      spongeChanges: 0,
+      spongeSoaks: 0,
+      squishedAnts: 0,
+      waterChanges: 0,
+    },
+    lastWaterRenderStep: 0,
+    sponge: null,
+    spongeContact: {},
+    spongeDisturbed: false,
+    spongeOriginX: 0,
+    spongeOriginY: 0,
+    waterPatch: null,
+    waterPatchOriginal: null,
+    world: null,
   };
 }
 
@@ -163,13 +188,44 @@ function elementCaches(elements = []) {
   return { obstacles, terrainElements };
 }
 
-export function resetKitchenDynamics(state, { mapConfig, world }) {
+function cloneRuntimeWaterPatch(state, waterPatches) {
+  if (!Array.isArray(waterPatches) || !waterPatches[0]) return;
+
+  const patch = { ...waterPatches[0] };
+  waterPatches[0] = patch;
+  state.waterPatch = patch;
+  state.waterPatchOriginal = {
+    h: patch.h,
+    w: patch.w,
+    x: patch.x,
+    y: patch.y,
+  };
+  for (let i = 0; i < state.terrainElements.length; i++) {
+    if (state.terrainElements[i].type === MAP_ELEMENT_TYPES.waterPatch) {
+      state.terrainElements[i] = patch;
+      return;
+    }
+  }
+}
+
+export function resetKitchenDynamics(
+  state,
+  { mapConfig, obstacles, waterPatches, world },
+) {
   state.ants = [];
   state.cheerios = [];
   state.elementCacheSource = null;
   state.frameIndex = 0;
   state.obstacles = [];
   state.terrainElements = [];
+  state.lastWaterRenderStep = 0;
+  state.sponge = null;
+  state.spongeDisturbed = false;
+  state.spongeOriginX = 0;
+  state.spongeOriginY = 0;
+  state.waterPatch = null;
+  state.waterPatchOriginal = null;
+  state.world = world ?? null;
   if (mapConfig?.theme !== "kitchenFloor" || !world) return state;
 
   state.cheerios = cheerioLayout.map((point) => createCereal(world, point));
@@ -187,8 +243,19 @@ export function resetKitchenDynamics(state, { mapConfig, world }) {
   );
   const caches = elementCaches(mapConfig.elements);
   state.elementCacheSource = mapConfig.elements;
-  state.obstacles = caches.obstacles;
+  state.obstacles = Array.isArray(obstacles) ? obstacles : caches.obstacles;
   state.terrainElements = caches.terrainElements;
+  if (mapConfig.variantId === kitchenFloorMapId) {
+    state.sponge = state.obstacles.find(
+      (obstacle) => obstacle.fixture === KITCHEN_FIXTURES.sponge,
+    );
+    if (state.sponge) {
+      state.sponge.saturation = 0;
+      state.spongeOriginX = state.sponge.x;
+      state.spongeOriginY = state.sponge.y;
+    }
+    cloneRuntimeWaterPatch(state, waterPatches);
+  }
   return state;
 }
 
@@ -250,6 +317,147 @@ function cappedVectorScale(x, y, maxLength) {
   if (length <= maxLength || length === 0) return 1;
 
   return maxLength / length;
+}
+
+function moveSponge(state, dx, dy) {
+  const sponge = state.sponge;
+  const offsetX = sponge.x - state.spongeOriginX + dx;
+  const offsetY = sponge.y - state.spongeOriginY + dy;
+  const offsetScale = cappedVectorScale(offsetX, offsetY, spongeMaxOffset);
+  const nextX = Math.max(
+    0,
+    Math.min(
+      state.world.width - sponge.w,
+      state.spongeOriginX + offsetX * offsetScale,
+    ),
+  );
+  const nextY = Math.max(
+    0,
+    Math.min(
+      state.world.height - sponge.h,
+      state.spongeOriginY + offsetY * offsetScale,
+    ),
+  );
+  const moveX = nextX - sponge.x;
+  const moveY = nextY - sponge.y;
+  if (Math.abs(moveX) < 0.01 && Math.abs(moveY) < 0.01) return false;
+
+  sponge.x = nextX;
+  sponge.y = nextY;
+  if (Number.isFinite(sponge.collisionCenterX)) {
+    sponge.collisionCenterX += moveX;
+  }
+  if (Number.isFinite(sponge.collisionCenterY)) {
+    sponge.collisionCenterY += moveY;
+  }
+  return true;
+}
+
+function pushSponge(state, marble, frameDelta) {
+  const sponge = state.sponge;
+  const speed = Math.hypot(marble.vx || 0, marble.vy || 0);
+  if (!sponge || speed < spongeMinPushSpeed) return false;
+
+  const expandedRadius = marble.r + spongePushContactPadding;
+  const contactEpsilon = expandedRadius * expandedRadius - marble.r * marble.r;
+  const contact = circleOrientedRectContact(
+    marble,
+    sponge,
+    contactEpsilon,
+    state.spongeContact,
+    collisionZeroDistanceEpsilon,
+  );
+  if (!contact.intersects) return false;
+
+  const contactDistance = Math.sqrt(contact.distanceSq);
+  let directionX;
+  let directionY;
+  if (contactDistance > collisionZeroDistanceEpsilon) {
+    directionX = -contact.dx / contactDistance;
+    directionY = -contact.dy / contactDistance;
+  } else {
+    const centerX = sponge.collisionCenterX ?? sponge.x + sponge.w / 2;
+    const centerY = sponge.collisionCenterY ?? sponge.y + sponge.h / 2;
+    const centerDx = centerX - marble.x;
+    const centerDy = centerY - marble.y;
+    const centerDistance = Math.hypot(centerDx, centerDy) || 1;
+    directionX = centerDx / centerDistance;
+    directionY = centerDy / centerDistance;
+  }
+
+  const distance =
+    Math.min(
+      spongeMaxPushDistance,
+      spongePushBaseDistance + speed * spongePushSpeedScale,
+    ) * frameDelta;
+  return moveSponge(state, directionX * distance, directionY * distance);
+}
+
+function spongeTouchesWater(sponge, patch) {
+  const centerX = sponge.collisionCenterX ?? sponge.x + sponge.w / 2;
+  const centerY = sponge.collisionCenterY ?? sponge.y + sponge.h / 2;
+  const halfWidth =
+    sponge.collisionHalfWidth ?? (sponge.hitboxW ?? sponge.w) / 2;
+  const halfHeight =
+    sponge.collisionHalfHeight ?? (sponge.hitboxH ?? sponge.h) / 2;
+  const cos = Math.abs(sponge.collisionCos ?? Math.cos(sponge.angle ?? 0));
+  const sin = Math.abs(sponge.collisionSin ?? Math.sin(sponge.angle ?? 0));
+  const extentX = cos * halfWidth + sin * halfHeight;
+  const extentY = sin * halfWidth + cos * halfHeight;
+
+  return (
+    centerX + extentX >= patch.x &&
+    centerX - extentX <= patch.x + patch.w &&
+    centerY + extentY >= patch.y &&
+    centerY - extentY <= patch.y + patch.h
+  );
+}
+
+function shrinkWaterPatch(state, saturation) {
+  const patch = state.waterPatch;
+  const original = state.waterPatchOriginal;
+  const scale = 1 - saturation * spongeMaxPuddleLinearShrink;
+  const width = original.w * scale;
+  const height = original.h * scale;
+  patch.x = original.x + (original.w - width) / 2;
+  patch.y = original.y + (original.h - height) / 2;
+  patch.w = width;
+  patch.h = height;
+}
+
+function updateSponge(state, marble, frameDelta, events) {
+  if (!state.sponge || !state.waterPatch || !state.waterPatchOriginal) return;
+
+  if (pushSponge(state, marble, frameDelta)) {
+    state.spongeDisturbed = true;
+    events.spongeChanges = 1;
+  }
+  if (
+    !state.spongeDisturbed ||
+    !spongeTouchesWater(state.sponge, state.waterPatch)
+  ) {
+    return;
+  }
+
+  const previousSaturation = state.sponge.saturation ?? 0;
+  if (previousSaturation >= 1) return;
+
+  const saturation = Math.min(
+    1,
+    previousSaturation + spongeWaterSoakRate * frameDelta,
+  );
+  state.sponge.saturation = saturation;
+  shrinkWaterPatch(state, saturation);
+  const renderStep = Math.floor(saturation * spongeWaterRedrawSteps);
+  if (previousSaturation === 0) {
+    events.spongeSoaks = 1;
+    events.spongeChanges = 1;
+    events.waterChanges = 1;
+  } else if (renderStep !== state.lastWaterRenderStep) {
+    events.spongeChanges = 1;
+    events.waterChanges = 1;
+  }
+  state.lastWaterRenderStep = renderStep;
 }
 
 function setDistanceToSegment(pointX, pointY, start, end, target) {
@@ -490,17 +698,21 @@ export function updateKitchenDynamics(
   const events = state.events;
   events.cerealHits = 0;
   events.splatHits = 0;
+  events.spongeChanges = 0;
+  events.spongeSoaks = 0;
   events.squishedAnts = 0;
+  events.waterChanges = 0;
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
   ensureElementCaches(state, mapConfig.elements);
+  updateSponge(state, marble, frameDelta, events);
   updateCereal({
     state,
     marble,
     previousMarble,
     events,
     frameDelta,
-    soakInWater: mapConfig.id === kitchenFloorMapId,
+    soakInWater: mapConfig.variantId === kitchenFloorMapId,
   });
   updateAnts({ state, frameDelta, marble, events });
   state.frameIndex += 1;

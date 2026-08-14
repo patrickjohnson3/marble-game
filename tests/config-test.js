@@ -179,6 +179,10 @@ function testTimingAndTuning() {
     tuning.antSplatImpactFeedback,
     "ant splat impact feedback",
   );
+  assertPositiveNumber(
+    tuning.spongeSoakSurfaceFeedbackSpeed,
+    "sponge soak surface feedback speed",
+  );
 }
 
 function testPhysicsAndSettingsRanges() {

@@ -469,7 +469,12 @@ export function createApp({
   const mapState = mapRuntime.state;
   const world = mapState.activeMap.world;
   const kitchenDynamics = createKitchenDynamics();
-  kitchenDynamics.reset({ mapConfig: mapState.activeMap, world });
+  kitchenDynamics.reset({
+    mapConfig: mapState.activeMap,
+    obstacles: mapState.obstacles,
+    waterPatches: mapState.terrainByType[MAP_ELEMENT_TYPES.waterPatch].elements,
+    world,
+  });
 
   const state = createGameState({
     world,
@@ -607,6 +612,9 @@ export function createApp({
     mapRuntime.setActiveMap(nextMap);
     kitchenDynamics.reset({
       mapConfig: mapState.activeMap,
+      obstacles: mapState.obstacles,
+      waterPatches:
+        mapState.terrainByType[MAP_ELEMENT_TYPES.waterPatch].elements,
       world: mapState.world,
     });
     cameraController.setWorld(mapState.world);

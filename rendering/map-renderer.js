@@ -62,14 +62,19 @@ export function createTerrainView({
     setHitboxOverlayEnabled(currentHitboxOverlayEnabled);
   }
 
+  function renderTerrainType(type) {
+    const container = terrainContainers[type];
+    if (!container) return;
+
+    const terrain = currentTerrainByType[type] ?? {
+      bounds: null,
+      elements: [],
+    };
+    drawTerrainPatches(type, container, terrain.elements, terrain.bounds);
+  }
+
   function renderTerrainPatches() {
-    Object.entries(terrainContainers).forEach(([type, container]) => {
-      const terrain = currentTerrainByType[type] ?? {
-        bounds: null,
-        elements: [],
-      };
-      drawTerrainPatches(type, container, terrain.elements, terrain.bounds);
-    });
+    Object.keys(terrainContainers).forEach(renderTerrainType);
   }
 
   function renderGoal() {
@@ -125,7 +130,9 @@ export function createTerrainView({
   }
 
   return {
+    renderObstacles,
     renderTerrain,
+    renderTerrainType,
     setTerrain,
     setHitboxOverlayEnabled,
     updateGoalProgress,

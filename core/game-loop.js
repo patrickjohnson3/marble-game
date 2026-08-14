@@ -190,11 +190,22 @@ export function createGameLoop({
         previousMarble,
         frameDelta,
       });
+      if (themeEvents?.waterChanges > 0) {
+        terrainView?.renderTerrainType(SURFACE_TYPES.waterPatch);
+      }
+      if (themeEvents?.spongeChanges > 0) {
+        terrainView?.renderObstacles();
+      }
       terrainView?.renderMapThemeDynamics();
       if (themeEvents?.squishedAnts > 0) {
         hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);
       } else if (themeEvents?.splatHits > 0) {
         hapticFeedback.pulseImpact(tuning.antSplatImpactFeedback);
+      } else if (themeEvents?.spongeSoaks > 0) {
+        hapticFeedback.pulseSurface(
+          tuning.spongeSoakSurfaceFeedbackSpeed,
+          SURFACE_TYPES.waterPatch,
+        );
       } else if (themeEvents?.cerealHits > 0) {
         hapticFeedback.pulseImpact(tuning.cerealBumpImpactFeedback);
       }

@@ -75,6 +75,7 @@ export const tuning = {
   antSquishImpactFeedback: 4.5,
   antSplatImpactFeedback: 2.1,
   cerealBumpImpactFeedback: 1.8,
+  spongeSoakSurfaceFeedbackSpeed: 2.4,
 };
 
 export const visualConfig = {

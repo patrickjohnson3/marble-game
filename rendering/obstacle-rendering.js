@@ -226,12 +226,27 @@ function appendKitchenForkSprite(layer, forkParts) {
 }
 
 function appendKitchenSpongeSprite(layer, spongeParts) {
-  appendKitchenFixtureSprite(
+  const sprite = appendKitchenFixtureSprite(
     layer,
     spongeParts,
     "kitchenSpongeSprite",
     500,
     145,
+  );
+  if (!sprite) return;
+
+  const saturation = Math.max(0, Math.min(1, spongeParts[0].saturation ?? 0));
+  sprite.style.setProperty(
+    "--sponge-brightness",
+    (1 - saturation * 0.2).toFixed(3),
+  );
+  sprite.style.setProperty(
+    "--sponge-color",
+    (1 - saturation * 0.35).toFixed(3),
+  );
+  sprite.style.setProperty(
+    "--sponge-scale",
+    (1 + saturation * 0.04).toFixed(3),
   );
 }
 

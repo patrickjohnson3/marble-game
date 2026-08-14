@@ -1207,6 +1207,7 @@ function testKitchenObstaclesRenderAsFixtures() {
           hitboxW: 520,
           hitboxH: 120,
           angle: 0.16,
+          saturation: 0.75,
         },
         {
           fixture: "spoon",
@@ -1264,6 +1265,16 @@ function testKitchenObstaclesRenderAsFixtures() {
     spongeSprite.style.properties["--fixture-angle"],
     "0.16rad",
     "sponge sprite should rotate with the oriented hitbox",
+  );
+  assert.equal(
+    spongeSprite.style.properties["--sponge-brightness"],
+    "0.850",
+    "a wet sponge should render darker",
+  );
+  assert.equal(
+    spongeSprite.style.properties["--sponge-scale"],
+    "1.030",
+    "a wet sponge should swell slightly",
   );
   const spoonSprite = layer.children.find((child) =>
     child.className.includes("kitchenSpoonSprite"),
@@ -1369,9 +1380,11 @@ function testTerrainViewRedrawsWhenTerrainIsSet() {
     obstacleBounds,
     terrainByType,
   });
+  terrainView.renderTerrainType("roughPatch");
+  terrainView.renderObstacles();
 
-  assert.equal(obstacleRenderCount, 2);
-  assert.equal(terrainRenderCount, 2);
+  assert.equal(obstacleRenderCount, 3);
+  assert.equal(terrainRenderCount, 3);
 }
 
 testTerrainViewRedrawsWhenTerrainIsSet();
