@@ -141,13 +141,12 @@ function testProceduralMapGenerationReturnsValidSeededVariants() {
     ["generated-1-0", "generated-2-1", "generated-3-2", "generated-1-3"],
   );
   variants.forEach((variant) => {
-    assert.deepEqual(
-      validateMapConfig({
-        ...resolvedMapConfig,
-        ...variant,
-      }),
-      [],
+    const generatedMap = resolveMapVariantConfig(
+      { ...resolvedMapConfig, variants: [variant] },
+      variant.id,
     );
+
+    assert.deepEqual(validateMapConfig(generatedMap), []);
   });
 }
 
