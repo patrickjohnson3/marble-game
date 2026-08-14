@@ -89,6 +89,14 @@ async function testEffectsThrottleAndParticleCap() {
 
     assert.equal(effectsEl.childNodes.length, 1);
     assert.equal(effects.canvas.className, "effectsCanvas");
+    effects.render(currentTime);
+    effects.render(currentTime);
+    assert.equal(
+      effects.canvas.context.calls.filter((call) => call[0] === "clearRect")
+        .length,
+      0,
+      "an empty effects canvas should not be cleared every frame",
+    );
     effects.spawnImpact(5);
     assert.equal(effects.activeCount(), 2);
     effects.spawnImpact(5);
@@ -129,6 +137,17 @@ async function testEffectsThrottleAndParticleCap() {
     effects.spawnGooSplat(5);
     effects.spawnGooSplat(5);
     assert.equal(effects.activeCount(), 1);
+    effects.canvas.context.calls.length = 0;
+    effects.render(currentTime);
+    currentTime += 200;
+    effects.render(currentTime);
+    effects.render(currentTime + 1);
+    assert.equal(
+      effects.canvas.context.calls.filter((call) => call[0] === "clearRect")
+        .length,
+      2,
+      "effects should clear once while drawing and once when the last particle expires",
+    );
   } finally {
     globalThis.document = originalDocument;
   }

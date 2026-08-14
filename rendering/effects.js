@@ -95,6 +95,7 @@ export function createEffectsRenderer({
   const canvasScale = config.canvasScale ?? 0.5;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
+  let canvasDirty = false;
 
   configureCanvas(canvas, world, canvasScale);
   effectsEl.replaceChildren(canvas);
@@ -262,10 +263,11 @@ export function createEffectsRenderer({
 
   function clear() {
     activeParticles.length = 0;
-    if (context) {
+    if (context && canvasDirty) {
       context.setTransform(1, 0, 0, 1, 0, 0);
       context.clearRect(0, 0, canvas.width, canvas.height);
     }
+    canvasDirty = false;
     lastImpactAt = Number.NEGATIVE_INFINITY;
     lastGooSplatAt = Number.NEGATIVE_INFINITY;
     lastSurfaceAt = 0;
@@ -273,11 +275,18 @@ export function createEffectsRenderer({
   }
 
   function render(currentTime = now()) {
-    if (!context) return;
+    if (!context || (activeParticles.length === 0 && !canvasDirty)) return;
 
     prune(currentTime);
+    if (activeParticles.length === 0 && !canvasDirty) return;
+
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.clearRect(0, 0, canvas.width, canvas.height);
+    if (activeParticles.length === 0) {
+      canvasDirty = false;
+      return;
+    }
+
     context.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
     for (let i = 0; i < activeParticles.length; i++) {
       const particle = activeParticles[i];
@@ -287,6 +296,7 @@ export function createEffectsRenderer({
         clamp((currentTime - particle.bornAt) / particle.lifeMs, 0, 1),
       );
     }
+    canvasDirty = true;
   }
 
   return {
