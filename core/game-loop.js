@@ -194,9 +194,12 @@ export function createGameLoop({
         terrainView?.renderTerrainType(SURFACE_TYPES.waterPatch);
       }
       if (themeEvents?.spongeChanges > 0) {
-        terrainView?.renderObstacles();
+        terrainView?.renderMovedObstacles();
       }
       terrainView?.renderMapThemeDynamics();
+      if (themeEvents?.spongeImpact > 0) {
+        onImpact(themeEvents.spongeImpact);
+      }
       if (themeEvents?.squishedAnts > 0) {
         hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);
       } else if (themeEvents?.splatHits > 0) {

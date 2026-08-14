@@ -181,4 +181,68 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
 
 testPlayerCanPushSpongeIntoWaterToShrinkPuddle();
 
+function spongeImpactAngle(hitY) {
+  const authoredWater = {
+    type: "waterPatch",
+    x: 800,
+    y: 800,
+    w: 100,
+    h: 100,
+  };
+  const sponge = {
+    type: "obstacle",
+    fixture: "sponge",
+    x: 300,
+    y: 400,
+    w: 200,
+    h: 80,
+    hitboxW: 180,
+    hitboxH: 70,
+    angle: 0,
+    collisionCenterX: 400,
+    collisionCenterY: 440,
+    collisionCos: 1,
+    collisionSin: 0,
+    collisionHalfWidth: 90,
+    collisionHalfHeight: 35,
+  };
+  const mapConfig = kitchenMap("kitchen-floor", [authoredWater, sponge]);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({
+    mapConfig,
+    obstacles: [sponge],
+    waterPatches: [authoredWater],
+    world,
+  });
+  const marble = { x: 281, y: hitY, vx: 5, vy: 0, r: 29 };
+
+  const events = update(dynamics, mapConfig, marble);
+  return { angle: sponge.angle, events, marble, sponge };
+}
+
+function testOffCenterSpongeImpactCreatesMoreRotation() {
+  const centered = spongeImpactAngle(440);
+  const offCenter = spongeImpactAngle(410);
+
+  assert.equal(centered.sponge.x > 300, true);
+  assert.equal(offCenter.sponge.x > 300, true);
+  assert.equal(
+    Math.abs(offCenter.angle) > Math.abs(centered.angle),
+    true,
+    "an end hit should rotate the sponge more than a centered hit",
+  );
+  assert.equal(
+    offCenter.events.spongeImpact > 0,
+    true,
+    "the coupled collision should report impact feedback",
+  );
+  assert.equal(
+    offCenter.marble.x < offCenter.sponge.collisionCenterX,
+    true,
+    "collision separation should leave the marble outside the sponge",
+  );
+}
+
+testOffCenterSpongeImpactCreatesMoreRotation();
+
 console.log("Kitchen dynamics tests passed.");

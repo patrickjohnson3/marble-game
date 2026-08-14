@@ -1332,6 +1332,7 @@ function testObstacleHitboxesRenderDebugCanvas() {
 testObstacleHitboxesRenderDebugCanvas();
 
 function testTerrainViewRedrawsWhenTerrainIsSet() {
+  let hitboxRenderCount = 0;
   let obstacleRenderCount = 0;
   let terrainRenderCount = 0;
   const goal = { x: 100, y: 120, r: 50 };
@@ -1360,6 +1361,8 @@ function testTerrainViewRedrawsWhenTerrainIsSet() {
   const terrainView = createTerrainView({
     terrainContainers: { roughPatch: new FakeElement() },
     obstaclesEl: new FakeElement(),
+    hitboxesEl: new FakeElement(),
+    hitboxOverlayEnabled: true,
     goalEl: new FakeElement(),
     goal,
     terrainByType,
@@ -1367,6 +1370,9 @@ function testTerrainViewRedrawsWhenTerrainIsSet() {
     obstacleBounds,
     renderObstacleWalls() {
       obstacleRenderCount++;
+    },
+    renderObstacleHitboxes() {
+      hitboxRenderCount++;
     },
     renderTerrainPatches() {
       terrainRenderCount++;
@@ -1381,9 +1387,10 @@ function testTerrainViewRedrawsWhenTerrainIsSet() {
     terrainByType,
   });
   terrainView.renderTerrainType("roughPatch");
-  terrainView.renderObstacles();
+  terrainView.renderMovedObstacles();
 
   assert.equal(obstacleRenderCount, 3);
+  assert.equal(hitboxRenderCount, 3);
   assert.equal(terrainRenderCount, 3);
 }
 

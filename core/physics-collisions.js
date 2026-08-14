@@ -267,6 +267,7 @@ export function handleWallCollisions(
 
     if (intro.released) {
       for (let i = 0; i < collisionObstacles.length; i++) {
+        if (collisionObstacles[i].staticCollision === false) continue;
         resolveObstacleCollision(
           marble,
           collisionObstacles[i],

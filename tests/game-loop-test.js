@@ -260,7 +260,7 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
     spawnTarget: () => mapRuntime.state.spawn,
     terrainView: {
       renderMapThemeDynamics() {},
-      renderObstacles() {
+      renderMovedObstacles() {
         calls.obstacleRenders++;
       },
       renderTerrainType(type) {
@@ -385,7 +385,14 @@ function testSpongeAbsorptionRoutesFocusedRenderingAndFeedback() {
   };
   const harness = createBehaviorHarness({
     activeMap,
-    kitchenEvents: [{ spongeChanges: 1, spongeSoaks: 1, waterChanges: 1 }],
+    kitchenEvents: [
+      {
+        spongeChanges: 1,
+        spongeImpact: 3.2,
+        spongeSoaks: 1,
+        waterChanges: 1,
+      },
+    ],
   });
 
   harness.tick();
@@ -397,6 +404,8 @@ function testSpongeAbsorptionRoutesFocusedRenderingAndFeedback() {
   assert.deepEqual(harness.calls.hapticSurfaces, [
     [tuning.spongeSoakSurfaceFeedbackSpeed, SURFACE_TYPES.waterPatch],
   ]);
+  assert.deepEqual(harness.calls.effectImpacts, [3.2]);
+  assert.deepEqual(harness.calls.hapticImpacts, [3.2]);
 }
 
 testHazardRecoveryResetsGameplayFeedbackAndRearms();

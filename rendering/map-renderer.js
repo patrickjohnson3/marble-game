@@ -62,6 +62,11 @@ export function createTerrainView({
     setHitboxOverlayEnabled(currentHitboxOverlayEnabled);
   }
 
+  function renderMovedObstacles() {
+    renderObstacles();
+    if (currentHitboxOverlayEnabled) renderHitboxes();
+  }
+
   function renderTerrainType(type) {
     const container = terrainContainers[type];
     if (!container) return;
@@ -130,7 +135,7 @@ export function createTerrainView({
   }
 
   return {
-    renderObstacles,
+    renderMovedObstacles,
     renderTerrain,
     renderTerrainType,
     setTerrain,

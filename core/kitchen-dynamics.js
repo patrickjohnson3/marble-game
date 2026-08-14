@@ -30,12 +30,18 @@ const cerealHitMinSpeed = 0.8;
 const cerealHitFeedbackCooldownFrames = 20;
 const kitchenFloorMapId = "kitchen-floor";
 const cheerioWaterSoakRate = 0.006;
-const spongeMinPushSpeed = 0.45;
-const spongePushContactPadding = 4;
-const spongePushBaseDistance = 0.8;
-const spongePushSpeedScale = 0.22;
-const spongeMaxPushDistance = 4.5;
 const spongeMaxOffset = 320;
+const spongeMass = 4;
+const spongeInverseMass = 1 / spongeMass;
+const spongeRestitution = 0.12;
+const spongeLinearDragRetention = 0.94;
+const spongeAngularDragRetention = 0.9;
+const spongeMaxLinearSpeed = 3.5;
+const spongeMaxAngularSpeed = 0.025;
+const spongeLinearSettleSpeed = 0.01;
+const spongeAngularSettleSpeed = 0.00005;
+const spongeMaxAngleOffset = 0.55;
+const spongeCollisionSeparation = 0.5;
 const spongeWaterSoakRate = 0.01;
 const spongeMaxPuddleLinearShrink = 0.2;
 const spongeWaterRedrawSteps = 20;
@@ -156,6 +162,7 @@ export function createKitchenDynamicsState() {
       cerealHits: 0,
       splatHits: 0,
       spongeChanges: 0,
+      spongeImpact: 0,
       spongeSoaks: 0,
       squishedAnts: 0,
       waterChanges: 0,
@@ -166,6 +173,7 @@ export function createKitchenDynamicsState() {
     spongeDisturbed: false,
     spongeOriginX: 0,
     spongeOriginY: 0,
+    spongeOriginAngle: 0,
     waterPatch: null,
     waterPatchOriginal: null,
     world: null,
@@ -223,6 +231,7 @@ export function resetKitchenDynamics(
   state.spongeDisturbed = false;
   state.spongeOriginX = 0;
   state.spongeOriginY = 0;
+  state.spongeOriginAngle = 0;
   state.waterPatch = null;
   state.waterPatchOriginal = null;
   state.world = world ?? null;
@@ -250,9 +259,14 @@ export function resetKitchenDynamics(
       (obstacle) => obstacle.fixture === KITCHEN_FIXTURES.sponge,
     );
     if (state.sponge) {
+      state.sponge.angularVelocity = 0;
       state.sponge.saturation = 0;
+      state.sponge.staticCollision = false;
+      state.sponge.vx = 0;
+      state.sponge.vy = 0;
       state.spongeOriginX = state.sponge.x;
       state.spongeOriginY = state.sponge.y;
+      state.spongeOriginAngle = state.sponge.angle ?? 0;
     }
     cloneRuntimeWaterPatch(state, waterPatches);
   }
@@ -353,44 +367,129 @@ function moveSponge(state, dx, dy) {
   return true;
 }
 
-function pushSponge(state, marble, frameDelta) {
-  const sponge = state.sponge;
-  const speed = Math.hypot(marble.vx || 0, marble.vy || 0);
-  if (!sponge || speed < spongeMinPushSpeed) return false;
+function limitSpongeVelocity(sponge) {
+  const velocityScale = cappedVectorScale(
+    sponge.vx,
+    sponge.vy,
+    spongeMaxLinearSpeed,
+  );
+  sponge.vx *= velocityScale;
+  sponge.vy *= velocityScale;
+  sponge.angularVelocity = Math.max(
+    -spongeMaxAngularSpeed,
+    Math.min(spongeMaxAngularSpeed, sponge.angularVelocity),
+  );
+}
 
-  const expandedRadius = marble.r + spongePushContactPadding;
-  const contactEpsilon = expandedRadius * expandedRadius - marble.r * marble.r;
+function resolveSpongeCollision(state, marble) {
+  const sponge = state.sponge;
   const contact = circleOrientedRectContact(
     marble,
     sponge,
-    contactEpsilon,
+    0,
     state.spongeContact,
     collisionZeroDistanceEpsilon,
   );
-  if (!contact.intersects) return false;
+  if (!contact.intersects) return null;
 
-  const contactDistance = Math.sqrt(contact.distanceSq);
-  let directionX;
-  let directionY;
-  if (contactDistance > collisionZeroDistanceEpsilon) {
-    directionX = -contact.dx / contactDistance;
-    directionY = -contact.dy / contactDistance;
-  } else {
-    const centerX = sponge.collisionCenterX ?? sponge.x + sponge.w / 2;
-    const centerY = sponge.collisionCenterY ?? sponge.y + sponge.h / 2;
-    const centerDx = centerX - marble.x;
-    const centerDy = centerY - marble.y;
-    const centerDistance = Math.hypot(centerDx, centerDy) || 1;
-    directionX = centerDx / centerDistance;
-    directionY = centerDy / centerDistance;
+  const distance = Math.sqrt(contact.distanceSq);
+  const normalX =
+    distance > collisionZeroDistanceEpsilon
+      ? contact.dx / distance
+      : Number.isFinite(contact.insideNx)
+        ? contact.insideNx
+        : 1;
+  const normalY =
+    distance > collisionZeroDistanceEpsilon
+      ? contact.dy / distance
+      : Number.isFinite(contact.insideNy)
+        ? contact.insideNy
+        : 0;
+  const contactX =
+    distance > collisionZeroDistanceEpsilon
+      ? marble.x - contact.dx
+      : marble.x - normalX * marble.r;
+  const contactY =
+    distance > collisionZeroDistanceEpsilon
+      ? marble.y - contact.dy
+      : marble.y - normalY * marble.r;
+  const centerX = sponge.collisionCenterX ?? sponge.x + sponge.w / 2;
+  const centerY = sponge.collisionCenterY ?? sponge.y + sponge.h / 2;
+  const leverX = contactX - centerX;
+  const leverY = contactY - centerY;
+  const overlap =
+    distance > collisionZeroDistanceEpsilon
+      ? marble.r - distance
+      : marble.r + (contact.insideDistance || 0);
+  marble.x += normalX * (Math.max(0, overlap) + spongeCollisionSeparation);
+  marble.y += normalY * (Math.max(0, overlap) + spongeCollisionSeparation);
+
+  const angularVelocity = sponge.angularVelocity ?? 0;
+  const contactVelocityX = (sponge.vx ?? 0) - angularVelocity * leverY;
+  const contactVelocityY = (sponge.vy ?? 0) + angularVelocity * leverX;
+  const relativeVelocityX = marble.vx - contactVelocityX;
+  const relativeVelocityY = marble.vy - contactVelocityY;
+  const normalSpeed = relativeVelocityX * normalX + relativeVelocityY * normalY;
+  if (normalSpeed >= 0) return 0;
+
+  const width = sponge.hitboxW ?? sponge.w;
+  const height = sponge.hitboxH ?? sponge.h;
+  const inverseInertia = 12 / (spongeMass * (width * width + height * height));
+  const leverCrossNormal = leverX * normalY - leverY * normalX;
+  const impulse =
+    (-(1 + spongeRestitution) * normalSpeed) /
+    (1 +
+      spongeInverseMass +
+      leverCrossNormal * leverCrossNormal * inverseInertia);
+  const impulseX = impulse * normalX;
+  const impulseY = impulse * normalY;
+  marble.vx += impulseX;
+  marble.vy += impulseY;
+  sponge.vx = (sponge.vx ?? 0) - impulseX * spongeInverseMass;
+  sponge.vy = (sponge.vy ?? 0) - impulseY * spongeInverseMass;
+  sponge.angularVelocity =
+    angularVelocity - impulse * leverCrossNormal * inverseInertia;
+  limitSpongeVelocity(sponge);
+  return -normalSpeed;
+}
+
+function advanceSponge(state, frameDelta) {
+  const sponge = state.sponge;
+  sponge.vx *= Math.pow(spongeLinearDragRetention, frameDelta);
+  sponge.vy *= Math.pow(spongeLinearDragRetention, frameDelta);
+  sponge.angularVelocity *= Math.pow(spongeAngularDragRetention, frameDelta);
+  if (Math.hypot(sponge.vx, sponge.vy) < spongeLinearSettleSpeed) {
+    sponge.vx = 0;
+    sponge.vy = 0;
+  }
+  if (Math.abs(sponge.angularVelocity) < spongeAngularSettleSpeed) {
+    sponge.angularVelocity = 0;
   }
 
-  const distance =
+  const moved = moveSponge(
+    state,
+    sponge.vx * frameDelta,
+    sponge.vy * frameDelta,
+  );
+  const previousAngle = sponge.angle ?? 0;
+  const nextAngle = Math.max(
+    state.spongeOriginAngle - spongeMaxAngleOffset,
     Math.min(
-      spongeMaxPushDistance,
-      spongePushBaseDistance + speed * spongePushSpeedScale,
-    ) * frameDelta;
-  return moveSponge(state, directionX * distance, directionY * distance);
+      state.spongeOriginAngle + spongeMaxAngleOffset,
+      previousAngle + sponge.angularVelocity * frameDelta,
+    ),
+  );
+  if (nextAngle !== previousAngle) {
+    sponge.angle = nextAngle;
+    sponge.collisionCos = Math.cos(nextAngle);
+    sponge.collisionSin = Math.sin(nextAngle);
+  } else if (
+    nextAngle === state.spongeOriginAngle - spongeMaxAngleOffset ||
+    nextAngle === state.spongeOriginAngle + spongeMaxAngleOffset
+  ) {
+    sponge.angularVelocity = 0;
+  }
+  return moved || nextAngle !== previousAngle;
 }
 
 function spongeTouchesWater(sponge, patch) {
@@ -428,10 +527,12 @@ function shrinkWaterPatch(state, saturation) {
 function updateSponge(state, marble, frameDelta, events) {
   if (!state.sponge || !state.waterPatch || !state.waterPatchOriginal) return;
 
-  if (pushSponge(state, marble, frameDelta)) {
+  const impact = resolveSpongeCollision(state, marble);
+  if (impact > 0) {
     state.spongeDisturbed = true;
-    events.spongeChanges = 1;
+    events.spongeImpact = Math.max(events.spongeImpact, impact);
   }
+  if (advanceSponge(state, frameDelta)) events.spongeChanges = 1;
   if (
     !state.spongeDisturbed ||
     !spongeTouchesWater(state.sponge, state.waterPatch)
@@ -699,6 +800,7 @@ export function updateKitchenDynamics(
   events.cerealHits = 0;
   events.splatHits = 0;
   events.spongeChanges = 0;
+  events.spongeImpact = 0;
   events.spongeSoaks = 0;
   events.squishedAnts = 0;
   events.waterChanges = 0;

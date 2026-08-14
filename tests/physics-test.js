@@ -1148,6 +1148,37 @@ function testWallCollisionsIgnoreObstaclesBeforeIntroRelease() {
   assert.equal(marble.vx, 8);
 }
 
+function testStaticWallResolutionSkipsRuntimeDynamicObstacles() {
+  const marble = { x: 90, y: 50, vx: 8, vy: 0, r: 12 };
+  let impacts = 0;
+
+  handleWallCollisions(
+    {
+      marble,
+      bounds: { left: 0, right: 200, top: 0, bottom: 200 },
+      intro: { released: true },
+      obstacles: [
+        {
+          x: 100,
+          y: 30,
+          w: 40,
+          h: 40,
+          staticCollision: false,
+        },
+      ],
+      physics: {
+        bounce: 0.5,
+        collisionResolvePasses: 1,
+      },
+    },
+    () => impacts++,
+  );
+
+  assert.equal(marble.x, 90);
+  assert.equal(marble.vx, 8);
+  assert.equal(impacts, 0);
+}
+
 function testWorldBoundCollisionBeforeAdjacentObstacle() {
   const marble = { x: 5, y: 50, vx: 0, vy: 0, r: 10 };
 
@@ -1416,6 +1447,7 @@ testOverspeedClampIsFrameRateIndependent();
 testWallCollisionAppliesTangentialDrag();
 testCornerWallCollisionResolvesBothAxes();
 testWallCollisionsIgnoreObstaclesBeforeIntroRelease();
+testStaticWallResolutionSkipsRuntimeDynamicObstacles();
 testWorldBoundCollisionBeforeAdjacentObstacle();
 testMultipleCollisionPassesResolveChainedOverlaps();
 testPhysicsSubstepsAreCapped();
