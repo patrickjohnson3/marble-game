@@ -112,8 +112,8 @@ const kitchenFloorElements = [
     y: 930,
     w: 300,
     h: 140,
-    hitboxW: 260,
-    hitboxH: 120,
+    hitboxW: 132,
+    hitboxH: 112,
     angle: 0.16,
   },
   {
@@ -172,8 +172,8 @@ const kitchenBreakfastElements = [
     y: 1520,
     w: 280,
     h: 130,
-    hitboxW: 240,
-    hitboxH: 110,
+    hitboxW: 132,
+    hitboxH: 104,
     angle: -0.18,
   },
 ];

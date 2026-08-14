@@ -178,6 +178,8 @@ export function createKitchenDynamicsState() {
     spongeOriginX: 0,
     spongeOriginY: 0,
     spongeOriginAngle: 0,
+    spongeSoakAnchorX: 0.5,
+    spongeSoakAnchorY: 0.5,
     waterPatch: null,
     waterPatchOriginal: null,
     world: null,
@@ -236,6 +238,8 @@ export function resetKitchenDynamics(
   state.spongeOriginX = 0;
   state.spongeOriginY = 0;
   state.spongeOriginAngle = 0;
+  state.spongeSoakAnchorX = 0.5;
+  state.spongeSoakAnchorY = 0.5;
   state.waterPatch = null;
   state.waterPatchOriginal = null;
   state.world = world ?? null;
@@ -523,10 +527,25 @@ function shrinkWaterPatch(state, saturation) {
   const scale = 1 - saturation * spongeMaxPuddleLinearShrink;
   const width = original.w * scale;
   const height = original.h * scale;
-  patch.x = original.x + (original.w - width) / 2;
-  patch.y = original.y + (original.h - height) / 2;
+  patch.x = original.x + (original.w - width) * (1 - state.spongeSoakAnchorX);
+  patch.y = original.y + (original.h - height) * (1 - state.spongeSoakAnchorY);
   patch.w = width;
   patch.h = height;
+}
+
+function captureSpongeSoakAnchor(state) {
+  const sponge = state.sponge;
+  const original = state.waterPatchOriginal;
+  const centerX = sponge.collisionCenterX ?? sponge.x + sponge.w / 2;
+  const centerY = sponge.collisionCenterY ?? sponge.y + sponge.h / 2;
+  state.spongeSoakAnchorX = Math.max(
+    0,
+    Math.min(1, (centerX - original.x) / original.w),
+  );
+  state.spongeSoakAnchorY = Math.max(
+    0,
+    Math.min(1, (centerY - original.y) / original.h),
+  );
 }
 
 function updateSponge(state, marble, frameDelta, events) {
@@ -547,6 +566,7 @@ function updateSponge(state, marble, frameDelta, events) {
 
   const previousSaturation = state.sponge.saturation ?? 0;
   if (previousSaturation >= 1) return;
+  if (previousSaturation === 0) captureSpongeSoakAnchor(state);
 
   const saturation = Math.min(
     1,

@@ -157,6 +157,13 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
     "water should contract when the disturbed sponge overlaps it",
   );
   assert.equal(
+    Math.abs(
+      runtimeWater.x + runtimeWater.w - (authoredWater.x + authoredWater.w),
+    ) < 1e-9,
+    true,
+    "absorption from the left should pull back the contacted edge",
+  );
+  assert.equal(
     authoredWater.w,
     300,
     "the authored map definition must remain unchanged",
@@ -176,6 +183,15 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
     nextEvents.spongeSoaks,
     0,
     "absorption feedback should only fire when soaking begins",
+  );
+
+  update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 }, 200);
+  const fullySoakedWater = { ...runtimeWater };
+  update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 }, 60);
+  assert.deepEqual(
+    runtimeWater,
+    fullySoakedWater,
+    "a fully soaked sponge should leave the puddle stable",
   );
 }
 
