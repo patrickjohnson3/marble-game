@@ -93,6 +93,40 @@ try {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "networkidle" });
   await page.waitForFunction(() => window.__marbleAppBooted === true);
 
+  const renderedMap = await page.evaluate(() => {
+    const floor = document.querySelector(".kitchenFloorCanvas");
+    const centerPixel = floor
+      ?.getContext("2d")
+      ?.getImageData(
+        Math.floor(floor.width / 2),
+        Math.floor(floor.height / 2),
+        1,
+        1,
+      ).data;
+    const fixtureClasses = [
+      "kitchenForkSprite",
+      "kitchenSpoonSprite",
+      "kitchenSpongeSprite",
+    ];
+    return {
+      floorHeight: floor?.height ?? 0,
+      floorPixelAlpha: centerPixel?.[3] ?? 0,
+      floorWidth: floor?.width ?? 0,
+      fixtureBackgrounds: fixtureClasses.map((className) => {
+        const fixture = document.querySelector("." + className);
+        return fixture ? getComputedStyle(fixture).backgroundImage : "none";
+      }),
+    };
+  });
+  assert.equal(renderedMap.floorWidth > 0, true);
+  assert.equal(renderedMap.floorHeight > 0, true);
+  assert.equal(renderedMap.floorPixelAlpha > 0, true);
+  assert.equal(
+    renderedMap.fixtureBackgrounds.every((value) => value !== "none"),
+    true,
+    "kitchen fixtures must have visible sprite assets",
+  );
+
   const start = page.locator("#start");
   assert.equal(
     await start.isVisible(),

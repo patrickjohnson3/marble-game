@@ -8,6 +8,11 @@ const originalGlobals = {
 const listeners = {};
 const writes = [];
 const cacheMatches = [];
+const deletedCaches = [];
+let claimedClients = 0;
+let installedFiles = [];
+let openedCacheName = "";
+let skippedWaiting = 0;
 let resolveWrite;
 
 globalThis.self = {
@@ -18,14 +23,36 @@ globalThis.self = {
     href: "https://example.test/app/",
     origin: "https://example.test",
   },
+  clients: {
+    claim() {
+      claimedClients++;
+      return Promise.resolve();
+    },
+  },
+  skipWaiting() {
+    skippedWaiting++;
+    return Promise.resolve();
+  },
 };
 globalThis.caches = {
   match(request, options) {
     cacheMatches.push({ request, options });
     return Promise.resolve(null);
   },
-  open() {
+  keys() {
+    return Promise.resolve(["marble-game-old", openedCacheName, "unrelated"]);
+  },
+  delete(name) {
+    deletedCaches.push(name);
+    return Promise.resolve(true);
+  },
+  open(name) {
+    openedCacheName = name;
     return Promise.resolve({
+      addAll(files) {
+        installedFiles = files;
+        return Promise.resolve();
+      },
       put(key) {
         writes.push(key);
         return new Promise((resolve) => {
@@ -45,6 +72,29 @@ globalThis.fetch = () =>
 
 try {
   await import("../sw.js?test=" + Date.now());
+
+  let installPromise;
+  listeners.install({
+    waitUntil(promise) {
+      installPromise = promise;
+    },
+  });
+  await installPromise;
+  assert.equal(skippedWaiting, 1);
+  assert.equal(
+    installedFiles.some((url) => url.endsWith("app.js")),
+    true,
+  );
+
+  let activatePromise;
+  listeners.activate({
+    waitUntil(promise) {
+      activatePromise = promise;
+    },
+  });
+  await activatePromise;
+  assert.deepEqual(deletedCaches, ["marble-game-old"]);
+  assert.equal(claimedClients, 1);
 
   for (const mode of ["same-origin", "navigate"]) {
     let responsePromise;
