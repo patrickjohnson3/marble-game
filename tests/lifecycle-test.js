@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { hapticTuning, physicsConfig, timing } from "../core/game-config.js";
 import { resolvedMapConfig } from "../core/map-config.js";
 import { createLifecycleController } from "../core/game-lifecycle.js";
-import { resetIntroTimerState } from "../core/intro-timers.js";
+import { GAME_PHASES, SENSOR_MODES } from "../core/runtime-states.js";
 import { createGameState } from "../core/state.js";
 
 function createLifecycleHarness() {
@@ -13,87 +13,116 @@ function createLifecycleHarness() {
     hapticTuning,
     physicsConfig,
   });
-  let resets = 0;
-  let pausedBySettings = false;
-
-  const controller = {
-    start() {
-      controller.reset();
-      state.game.phase = "calibrating";
-    },
-    reset() {
-      state.game.phase = "waiting";
-      state.game.paused = false;
-      state.intro.released = false;
-      state.introSequence.started = false;
-      state.input.sensor.using = "none";
-      state.input.keyboard.x = 0;
-      state.input.keyboard.y = 0;
-      resetIntroTimerState(state.introSequence);
-      pausedBySettings = false;
-      resets++;
-    },
-    pause() {
-      if (state.game.phase === "waiting" || state.game.paused) return false;
-      state.game.paused = true;
-      return true;
-    },
-    resume() {
-      if (!state.game.paused) return;
-      state.game.paused = false;
-    },
-    openSettings() {
-      pausedBySettings = controller.pause();
-    },
-    closeSettings() {
-      if (!pausedBySettings) return;
-      pausedBySettings = false;
-      controller.resume();
-    },
+  const calls = {
+    introPause: 0,
+    introResume: 0,
+    mapReset: 0,
+    scheduledFrames: 0,
+    sensorPause: 0,
+    sensorResume: 0,
   };
+  let settingsOpen = false;
 
-  function releaseMap() {
-    state.intro.released = true;
-    state.game.phase = "running";
-  }
+  const lifecycle = createLifecycleController({
+    state,
+    cameraController: {
+      camera: state.camera,
+      centerOnMarble() {},
+      resetGesture() {},
+    },
+    effectsRenderer: { clear() {} },
+    frameLoop: { requestRender() {} },
+    introSequence: {
+      clearTimers() {},
+      hideMessage() {},
+      pause() {
+        calls.introPause++;
+      },
+      resume() {
+        calls.introResume++;
+      },
+      schedule() {},
+    },
+    mapRenderer: { resetIntroPen() {} },
+    resetMap() {
+      calls.mapReset++;
+    },
+    resetCalibration() {},
+    scheduleFrame() {
+      calls.scheduledFrames++;
+    },
+    sensorWatchdog: {
+      pause() {
+        calls.sensorPause++;
+      },
+      reset() {},
+      resume() {
+        calls.sensorResume++;
+      },
+      schedule() {},
+    },
+    settings: { fullscreenEnabled: false },
+    timing,
+    trailRenderer: { clear() {} },
+    ui: {
+      closeSettingsModal() {
+        settingsOpen = false;
+      },
+      isSettingsOpen: () => settingsOpen,
+      openSettingsModal() {
+        settingsOpen = true;
+      },
+      setHint() {},
+      setStartControls() {},
+    },
+    getSpawn: () => resolvedMapConfig.spawn,
+    enableMotion() {},
+    requestFullscreen() {},
+    requestMotionPermission: () => Promise.resolve(true),
+    keepDisplayAwake() {},
+  });
 
   return {
-    controller,
-    releaseMap,
-    get resets() {
-      return resets;
-    },
+    calls,
+    controller: lifecycle.gameController,
+    isSettingsOpen: () => settingsOpen,
     state,
   };
 }
 
-function testStartPauseResumeReleaseReset() {
+async function testStartPauseResumeReset() {
   const harness = createLifecycleHarness();
-  const { controller, releaseMap, state } = harness;
+  const { calls, controller, state } = harness;
 
   state.input.keyboard.x = 1;
-  state.input.sensor.using = "keyboard";
+  state.input.sensor.using = SENSOR_MODES.keyboard;
 
-  controller.start();
-  assert.equal(state.game.phase, "calibrating");
+  await controller.start();
+  assert.equal(state.game.phase, GAME_PHASES.calibrating);
   assert.equal(state.game.paused, false);
-  assert.equal(harness.resets, 1);
+  assert.equal(calls.mapReset, 1);
   assert.equal(state.input.keyboard.x, 0);
-  assert.equal(state.input.sensor.using, "none");
+  assert.equal(state.input.sensor.using, SENSOR_MODES.none);
 
   controller.openSettings();
+  assert.equal(harness.isSettingsOpen(), true);
   assert.equal(state.game.paused, true);
+  assert.equal(calls.sensorPause, 1);
+  assert.equal(calls.introPause, 1);
   controller.closeSettings();
+  assert.equal(harness.isSettingsOpen(), false);
   assert.equal(state.game.paused, false);
+  assert.equal(calls.sensorResume, 1);
+  assert.equal(calls.introResume, 1);
 
-  releaseMap();
-  assert.equal(state.game.phase, "running");
-  assert.equal(state.intro.released, true);
+  state.game.phase = GAME_PHASES.running;
+  state.intro.released = true;
 
   controller.reset();
-  assert.equal(state.game.phase, "waiting");
+  assert.equal(state.game.phase, GAME_PHASES.waiting);
   assert.equal(state.intro.released, false);
   assert.equal(state.game.paused, false);
+  assert.equal(calls.mapReset, 2);
 }
 
 async function testStartRequestsFullscreenFromClickPath() {
@@ -390,7 +419,7 @@ function testResumeResetsFrameClock() {
   assert.equal(resetClockCalls, 1);
 }
 
-testStartPauseResumeReleaseReset();
+await testStartPauseResumeReset();
 await testStartRequestsFullscreenFromClickPath();
 await testStartContinuesWhenMotionPermissionStalls();
 await testMotionPermissionDenialKeepsKeyboardFallbackActive();

@@ -4,6 +4,9 @@ import {
   goalHoldHint,
   goalHoldMultiplier,
 } from "../core/goal-controller.js";
+import { createMapProgression } from "../core/map-progression.js";
+import { createMapRuntime } from "../core/map-runtime.js";
+import { resolveMapVariantConfig } from "../core/map-variants.js";
 
 const goal = { x: 100, y: 100, r: 50 };
 const marble = { x: 100, y: 100, r: 10 };
@@ -19,77 +22,132 @@ assert.equal(goalHoldHint(2500, 1), "hold steady: 3s");
 assert.equal(goalHoldHint(2500, 1.5), "hold center: 3s");
 assert.equal(goalHoldHint(0, 2), "hold center: 1s");
 
-function testGoalCompletionAdvancesMapOnce() {
-  const calls = [];
-  const mapState = {
-    activeMap: { id: "current" },
-    goal: { x: 100, y: 100, r: 50, holdMs: 20 },
-    goalCompleted: false,
-    goalHoldMs: 0,
+function testGoalHoldResetAndMapProgression() {
+  const baseMapConfig = {
+    seed: "first",
+    world: { width: 300, height: 300 },
+    spawn: { x: 20, y: 20, r: 5 },
+    variants: [
+      {
+        id: "first",
+        difficulty: 2,
+        world: { width: 300, height: 300 },
+        spawn: { x: 20, y: 20, r: 5 },
+        goal: { x: 100, y: 100, r: 30, holdMs: 100 },
+        elements: [],
+      },
+      {
+        id: "second",
+        difficulty: 2,
+        world: { width: 500, height: 400 },
+        spawn: { x: 40, y: 50, r: 6 },
+        goal: { x: 450, y: 350, r: 35, holdMs: 200 },
+        elements: [],
+      },
+    ],
   };
-  const mapRuntime = {
-    state: mapState,
-    addGoalHold(ms) {
-      mapState.goalHoldMs = Math.min(
-        mapState.goal.holdMs,
-        mapState.goalHoldMs + ms,
-      );
-      return mapState.goalHoldMs / mapState.goal.holdMs;
-    },
-    clearGoalCompleted() {
-      mapState.goalCompleted = false;
-    },
-    completeGoal() {
-      mapState.goalCompleted = true;
-    },
-    resetGoalProgress() {
-      mapState.goalCompleted = false;
-      mapState.goalHoldMs = 0;
+  const firstMap = resolveMapVariantConfig(baseMapConfig, "first", "first");
+  const mapRuntime = createMapRuntime({ initialMap: firstMap });
+  const marble = { ...firstMap.spawn };
+  const intro = { released: false };
+  const calls = {
+    completedMaps: [],
+    effects: 0,
+    haptics: [],
+    hints: [],
+    progress: [],
+    renders: 0,
+    resets: 0,
+  };
+  const terrainView = {
+    updateGoalProgress(progress) {
+      calls.progress.push(progress);
     },
   };
+  const ui = {
+    setHint(hint) {
+      calls.hints.push(hint);
+    },
+  };
+  const mapProgression = createMapProgression({
+    baseMapConfig,
+    getCurrentMap: () => mapRuntime.state.activeMap,
+    applyMap: (nextMap) => mapRuntime.setActiveMap(nextMap),
+    resetForNextMap() {
+      calls.resets++;
+      marble.x = mapRuntime.state.spawn.x;
+      marble.y = mapRuntime.state.spawn.y;
+      marble.r = mapRuntime.state.spawn.r;
+    },
+    terrainView,
+    ui,
+    requestRender() {
+      calls.renders++;
+    },
+  });
   const controller = createGoalController({
     copy: { mapOpen: "map open." },
     effectsRenderer: {
       spawnGoalComplete() {
-        calls.push("effect");
+        calls.effects++;
       },
     },
     hapticFeedback: {
       pulseGoal(kind) {
-        calls.push("haptic:" + kind);
+        calls.haptics.push(kind);
       },
     },
-    intro: { released: true },
-    mapProgression: {
-      advanceToNextMap() {
-        calls.push("advance");
-        return true;
-      },
-    },
+    intro,
+    mapProgression,
     mapRuntime,
-    marble: { x: 100, y: 100, r: 10 },
+    marble,
     onComplete(map) {
-      calls.push("complete:" + map.id);
+      calls.completedMaps.push(map.variantId);
     },
-    terrainView: { updateGoalProgress() {} },
-    timing: { targetFrameMs: 16.67 },
-    ui: { setHint() {} },
+    terrainView,
+    timing: { targetFrameMs: 10 },
+    ui,
   });
 
+  marble.x = 100;
+  marble.y = 100;
   controller.update(1);
+  assert.equal(mapRuntime.state.goalHoldMs, 0, "the closed map gates goals");
 
-  assert.equal(mapState.goalCompleted, true);
-  assert.equal(mapState.goalHoldMs, 20);
-  assert.deepEqual(calls, [
-    "haptic:enter",
-    "haptic:hold",
-    "complete:current",
-    "effect",
-    "haptic:complete",
-    "advance",
-  ]);
+  intro.released = true;
+  marble.x = 120;
+  controller.update(1);
+  assert.equal(mapRuntime.state.goalHoldMs > 0, true);
+  assert.equal(mapRuntime.state.goalCompleted, false);
+
+  marble.x = 140;
+  controller.update(1);
+  assert.equal(mapRuntime.state.goalHoldMs, 0, "leaving must clear the hold");
+  assert.equal(calls.progress.at(-1), 0);
+  assert.equal(calls.hints.at(-1), "map open.");
+
+  marble.x = 100;
+  marble.y = 100;
+  for (let frame = 0; frame < 5; frame++) controller.update(1);
+
+  assert.equal(mapRuntime.state.activeMap.variantId, "second");
+  assert.equal(mapRuntime.state.goalHoldMs, 0);
+  assert.equal(mapRuntime.state.goalCompleted, false);
+  assert.deepEqual(
+    { x: marble.x, y: marble.y, r: marble.r },
+    baseMapConfig.variants[1].spawn,
+  );
+  assert.deepEqual(calls.completedMaps, ["first"]);
+  assert.equal(calls.effects, 1);
+  assert.equal(calls.resets, 1);
+  assert.equal(calls.renders, 1);
+  assert.equal(calls.haptics.includes("complete"), true);
+
+  controller.update(1);
+  assert.deepEqual(calls.completedMaps, ["first"]);
+  assert.equal(calls.effects, 1);
 }
 
-testGoalCompletionAdvancesMapOnce();
+testGoalHoldResetAndMapProgression();
 
 console.log("Goal controller tests passed.");

@@ -4,6 +4,8 @@ import { createServer } from "node:http";
 import { extname, resolve, sep } from "node:path";
 import { URL } from "node:url";
 import { chromium } from "playwright-core";
+import { tuning } from "../core/game-config.js";
+import { copy } from "../core/copy.js";
 
 const root = process.cwd();
 const contentTypes = {
@@ -73,6 +75,63 @@ function closeServer(server) {
 
 async function marbleTransform(page) {
   return page.locator("#marble").evaluate((element) => element.style.transform);
+}
+
+async function dispatchOrientation(page, { beta, gamma, count = 1 }) {
+  await page.evaluate(
+    ({ beta: eventBeta, gamma: eventGamma, count: eventCount }) => {
+      for (let index = 0; index < eventCount; index++) {
+        const event = new window.Event("deviceorientation");
+        Object.defineProperties(event, {
+          beta: { value: eventBeta },
+          gamma: { value: eventGamma },
+        });
+        window.dispatchEvent(event);
+      }
+    },
+    { beta, gamma, count },
+  );
+}
+
+async function testSyntheticOrientationWorkflow(browser, baseUrl) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const browserErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") browserErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+
+  try {
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.waitForFunction(() => window.__marbleAppBooted === true);
+    await page.locator("#start").click();
+
+    await dispatchOrientation(page, {
+      beta: 0,
+      gamma: 0,
+      count: tuning.neutralSampleCount,
+    });
+    await page.waitForFunction(
+      (expectedHint) =>
+        document.getElementById("hint").textContent === expectedHint,
+      copy.hints.neutralSet,
+    );
+
+    const neutralTransform = await marbleTransform(page);
+    await dispatchOrientation(page, { beta: 0, gamma: 24 });
+    await page.waitForFunction(
+      (before) => document.getElementById("marble").style.transform !== before,
+      neutralTransform,
+    );
+
+    assert.deepEqual(
+      browserErrors,
+      [],
+      "synthetic orientation workflow must not log browser errors",
+    );
+  } finally {
+    await page.close();
+  }
 }
 
 const server = createStaticServer();
@@ -184,6 +243,7 @@ try {
   await page.keyboard.up("ArrowRight");
 
   assert.deepEqual(browserErrors, [], "browser smoke test must not log errors");
+  await testSyntheticOrientationWorkflow(browser, `http://127.0.0.1:${port}/`);
   console.log("Browser smoke test passed.");
 } finally {
   await browser.close();
