@@ -15,6 +15,10 @@ This is a vanilla JavaScript browser game with a small custom 2D engine. Entry p
 
 `runtime-assets.js` is the source of truth for browser modules and precached assets. Update it when adding or removing a runtime file. After changing `index.html` or a listed runtime asset, run `npm run sync-cache` before final tests. Do not hand-edit the generated `assetVersion` or `runtimeModuleScripts` values in `index.html`, or `cacheVersion` in `sw.js`.
 
+## Architecture Boundaries
+
+Keep `app.js` as the composition root and gameplay rules in `core/`. Keep browser APIs in `platform/` or input controllers, and keep `rendering/` limited to visual output and disposable caches. Follow `docs/state-ownership.md`; controllers and renderers must not duplicate gameplay state owned by `state`, `mapRuntime.state`, or `settings`.
+
 ## Coding Style & Naming Conventions
 
 Use ES modules and keep code plain JavaScript. Follow Prettier defaults from `.prettierrc`; do not hand-format around it. Prefer small pure helpers for geometry, physics, map validation, and settings migration. Use descriptive camelCase names for functions and state fields. Keep gameplay tuning values named in `core/game-config.js` rather than scattering magic numbers.
