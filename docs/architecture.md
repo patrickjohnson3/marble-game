@@ -309,6 +309,10 @@ settings panel during the handoff. Installations still pending after 30 seconds
 report that the update is delayed, and failed installations leave the current
 version available instead of displaying a permanent downloading state.
 
+`createPwaInstallController()` captures Chromium's `beforeinstallprompt` event.
+The settings install command is visible only while that one-use browser prompt
+is available, and it is hidden after prompting or receiving `appinstalled`.
+
 Platform changes require HTTPS device checks in Android Chrome, Android Brave,
 iPhone Safari, and iPhone Chrome. The Playwright smoke test covers local desktop
 Chrome behavior only.

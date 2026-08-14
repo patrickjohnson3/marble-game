@@ -167,6 +167,55 @@ function notifyServiceWorkerStatus(onStatusChange, status) {
   if (typeof onStatusChange === "function") onStatusChange(status);
 }
 
+export function createPwaInstallController({
+  onAvailabilityChange = () => {},
+  windowRef = globalThis.window,
+} = {}) {
+  let installPrompt = null;
+  let available = false;
+
+  function setAvailable(nextAvailable) {
+    if (available === nextAvailable) return;
+
+    available = nextAvailable;
+    onAvailabilityChange(available);
+  }
+
+  function clearPrompt() {
+    installPrompt = null;
+    setAvailable(false);
+  }
+
+  function onBeforeInstallPrompt(event) {
+    if (typeof event?.prompt !== "function") return;
+
+    event.preventDefault?.();
+    installPrompt = event;
+    setAvailable(true);
+  }
+
+  async function promptInstall() {
+    if (!installPrompt) return false;
+
+    const prompt = installPrompt;
+    clearPrompt();
+    try {
+      const promptResult = await prompt.prompt();
+      const choice = prompt.userChoice ? await prompt.userChoice : promptResult;
+      return choice?.outcome === "accepted";
+    } catch {
+      return false;
+    }
+  }
+
+  windowRef?.addEventListener?.("beforeinstallprompt", onBeforeInstallPrompt);
+  windowRef?.addEventListener?.("appinstalled", clearPrompt);
+
+  return {
+    promptInstall,
+  };
+}
+
 const serviceWorkerUpdateStatusTimeoutMs = 30000;
 
 function watchServiceWorkerRegistration({

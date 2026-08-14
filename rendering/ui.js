@@ -5,6 +5,7 @@ export function createUi({
   levelLabel,
   fpsCounter,
   debug,
+  installApp,
   mapObjectsStatus,
   pwaStatus,
   settings,
@@ -41,6 +42,12 @@ export function createUi({
 
     pwaStatus.textContent = message;
     pwaStatus.hidden = !message;
+  }
+
+  function setPwaInstallAvailable(available) {
+    if (!installApp) return;
+
+    installApp.hidden = !available;
   }
 
   function setMapObjects(message) {
@@ -153,6 +160,7 @@ export function createUi({
     setHint,
     setLevelLabel,
     setMapObjects,
+    setPwaInstallAvailable,
     setPwaStatus,
     setStartControls,
     updateDebugPanel,

@@ -254,10 +254,12 @@ testStatsDefaultsHiddenAndUpdatesWhenEnabled();
 
 function testPwaStatusUpdatesSettingsStatus() {
   const pwaStatus = new FakeElement();
+  const installApp = new FakeElement();
   const ui = createUi({
     hint: new FakeElement(),
     fpsCounter: new FakeElement(),
     debug: new FakeElement(),
+    installApp,
     pwaStatus,
     settings: { fpsEnabled: false, statsEnabled: false },
     settingsOverlay: new FakeElement(),
@@ -271,6 +273,11 @@ function testPwaStatusUpdatesSettingsStatus() {
 
   ui.setPwaStatus("");
   assert.equal(pwaStatus.hidden, true);
+
+  ui.setPwaInstallAvailable(true);
+  assert.equal(installApp.hidden, false);
+  ui.setPwaInstallAvailable(false);
+  assert.equal(installApp.hidden, true);
 }
 
 testPwaStatusUpdatesSettingsStatus();

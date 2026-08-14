@@ -132,6 +132,49 @@ async function testScreenAdjustedUsesInjectedScreen() {
   );
 }
 
+async function testPwaInstallControllerUsesAvailableBrowserPromptOnce() {
+  const listeners = {};
+  const availability = [];
+  let preventDefaultCount = 0;
+  let promptCount = 0;
+  const { createPwaInstallController } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+  const controller = createPwaInstallController({
+    onAvailabilityChange(available) {
+      availability.push(available);
+    },
+    windowRef: {
+      addEventListener(type, listener) {
+        listeners[type] = listener;
+      },
+    },
+  });
+  const promptEvent = {
+    preventDefault() {
+      preventDefaultCount++;
+    },
+    prompt() {
+      promptCount++;
+    },
+    userChoice: Promise.resolve({ outcome: "accepted" }),
+  };
+
+  listeners.beforeinstallprompt(promptEvent);
+  assert.deepEqual(availability, [true]);
+  assert.equal(preventDefaultCount, 1);
+
+  assert.equal(await controller.promptInstall(), true);
+  assert.equal(promptCount, 1);
+  assert.deepEqual(availability, [true, false]);
+  assert.equal(await controller.promptInstall(), false);
+  assert.equal(promptCount, 1);
+
+  listeners.beforeinstallprompt(promptEvent);
+  listeners.appinstalled();
+  assert.deepEqual(availability, [true, false, true, false]);
+}
+
 async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
   const listeners = {};
   let registration = null;
@@ -466,6 +509,7 @@ await testFullscreenSkipsInstalledPwaDisplayMode();
 await testAppDisplayModeDetectsInstalledPwa();
 await testMotionPermissionUsesInjectedWindow();
 await testScreenAdjustedUsesInjectedScreen();
+await testPwaInstallControllerUsesAvailableBrowserPromptOnce();
 await testServiceWorkerRegistrationIsDeferredUntilLoad();
 await testServiceWorkerRegistrationHandlesUnsupportedBrowsers();
 await testServiceWorkerRegistrationReportsWaitingUpdate();

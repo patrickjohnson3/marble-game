@@ -200,6 +200,30 @@ try {
     "the fatal boot layer must stay hidden after a successful boot",
   );
 
+  await page.evaluate(() => {
+    window.__installPromptCount = 0;
+    const userChoice = Promise.resolve({ outcome: "accepted" });
+    const event = new window.Event("beforeinstallprompt", {
+      cancelable: true,
+    });
+    Object.defineProperties(event, {
+      prompt: {
+        value() {
+          window.__installPromptCount++;
+          return userChoice;
+        },
+      },
+      userChoice: { value: userChoice },
+    });
+    window.dispatchEvent(event);
+  });
+  await page.locator("#settingsToggle").click();
+  assert.equal(await page.locator("#installApp").isVisible(), true);
+  await page.locator("#installApp").click();
+  assert.equal(await page.locator("#installApp").isHidden(), true);
+  assert.equal(await page.evaluate(() => window.__installPromptCount), 1);
+  await page.locator("#closeSettings").click();
+
   const initialTransform = await marbleTransform(page);
   await page.keyboard.press("ArrowRight");
   await page.waitForTimeout(100);

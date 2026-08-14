@@ -36,6 +36,7 @@ export const copy = {
   buttons: {
     start: "start",
     closeSettings: "×",
+    installApp: "install app",
     neutral: "set neutral",
     retryMap: "retry map",
     resume: "resume",
@@ -69,6 +70,7 @@ export function applyDocumentCopy({ document, els }) {
   els.settingsTitle.textContent = copy.settings.title;
   els.closeSettings.setAttribute("aria-label", copy.settings.closeLabel);
   els.closeSettings.textContent = copy.buttons.closeSettings;
+  els.installApp.textContent = copy.buttons.installApp;
   els.retryMap.textContent = copy.buttons.retryMap;
   els.neutralBtn.textContent = copy.buttons.neutral;
   els.resumeGame.textContent = copy.buttons.resume;

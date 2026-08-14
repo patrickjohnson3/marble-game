@@ -29,6 +29,7 @@ function createPanelHarness() {
   let saveCount = 0;
   let renderCount = 0;
   let retryCount = 0;
+  let installCount = 0;
   const settings = {
     maxSpeed: 14,
     acceleration: 0.115,
@@ -44,6 +45,7 @@ function createPanelHarness() {
   const fullscreenSetting = fakeControl();
   const goalIndicatorSetting = fakeControl();
   const hitboxOverlaySetting = fakeControl();
+  const installApp = fakeControl();
   const statsSetting = fakeControl();
 
   bindSettingsPanel({
@@ -54,6 +56,7 @@ function createPanelHarness() {
       closeSettings: fakeButton(),
       resumeGame: fakeButton(),
       retryMap: fakeButton(),
+      installApp,
       speedSetting: fakeControl(),
       sensitivitySetting: fakeControl(),
       hapticsSetting: fakeControl(),
@@ -85,6 +88,9 @@ function createPanelHarness() {
     },
     onOpenSettings() {},
     onCloseSettings() {},
+    onInstallApp() {
+      installCount++;
+    },
     onRetryMap() {
       retryCount++;
     },
@@ -119,10 +125,22 @@ function createPanelHarness() {
     fullscreenSetting,
     goalIndicatorSetting,
     hitboxOverlaySetting,
+    installApp,
+    installCount: () => installCount,
     statsSetting,
     settings,
   };
 }
+
+function testInstallButtonRunsInstallCommand() {
+  const { installApp, installCount } = createPanelHarness();
+
+  installApp.listeners.click();
+
+  assert.equal(installCount(), 1);
+}
+
+testInstallButtonRunsInstallCommand();
 
 function testFpsTogglePersistsAndRenders() {
   const { counts, fpsSetting, settings } = createPanelHarness();
@@ -232,6 +250,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
       closeSettings: fakeButton(),
       resumeGame: fakeButton(),
       retryMap: fakeButton(),
+      installApp: fakeButton(),
       speedSetting: fakeControl(),
       sensitivitySetting: fakeControl(),
       hapticsSetting: fakeControl(),

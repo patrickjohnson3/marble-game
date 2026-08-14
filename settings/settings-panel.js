@@ -8,6 +8,7 @@ export function bindSettingsPanel({
   saveSettings,
   onOpenSettings,
   onCloseSettings,
+  onInstallApp = () => {},
   onRetryMap,
   onSetNeutral,
   onFpsChanged,
@@ -18,6 +19,7 @@ export function bindSettingsPanel({
 }) {
   const {
     neutralBtn,
+    installApp,
     settingsToggle,
     settingsOverlay,
     closeSettings,
@@ -69,6 +71,7 @@ export function bindSettingsPanel({
   closeSettings.addEventListener("click", onCloseSettings);
   resumeGame.addEventListener("click", onCloseSettings);
   retryMap.addEventListener("click", onRetryMap);
+  installApp.addEventListener("click", onInstallApp);
   neutralBtn.addEventListener("click", onSetNeutral);
 
   bindRangeSetting(speedSetting, "maxSpeed");

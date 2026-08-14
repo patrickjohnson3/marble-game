@@ -53,6 +53,7 @@ import { createKeyboardController } from "./input/keyboard-controller.js";
 import { createSensorController } from "./input/sensor-controller.js";
 import { createSensorWatchdog } from "./input/sensor-watchdog.js";
 import {
+  createPwaInstallController,
   exitFullscreenMode,
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
@@ -457,6 +458,7 @@ export function createApp({
     fpsCounter,
     hint,
     debug,
+    installApp,
     mapObjectsStatus,
   } = els;
 
@@ -498,6 +500,7 @@ export function createApp({
     hint,
     fpsCounter,
     debug,
+    installApp,
     mapObjectsStatus,
     pwaStatus: els.pwaStatus,
     settings,
@@ -529,6 +532,10 @@ export function createApp({
   }
   updatePwaStatus();
   ui.setMapObjects(mapObjectSummary(mapState.activeMap));
+  const pwaInstallController = createPwaInstallController({
+    onAvailabilityChange: ui.setPwaInstallAvailable,
+    windowRef,
+  });
 
   const hapticFeedback = setupFeedback(haptics, windowRef);
   const cameraController = createCameraController({
@@ -777,6 +784,7 @@ export function createApp({
     saveSettings,
     onOpenSettings: gameController.openSettings,
     onCloseSettings: gameController.closeSettings,
+    onInstallApp: pwaInstallController.promptInstall,
     onRetryMap: retryCurrentMap,
     onSetNeutral: sensorController.setNeutralNow,
     onFpsChanged: ui.setFpsEnabled,

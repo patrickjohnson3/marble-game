@@ -859,6 +859,7 @@ button.primaryAction {
   line-height: 1;
 }
 #settingsModal #neutral,
+#settingsModal #installApp,
 #settingsModal #retryMap {
   width: 100%;
   margin-bottom: 12px;

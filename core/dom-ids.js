@@ -29,6 +29,7 @@ export const domIds = {
   mapObjectsStatus: "mapObjectsStatus",
   closeSettings: "closeSettings",
   resumeGame: "resumeGame",
+  installApp: "installApp",
   retryMap: "retryMap",
   speedSetting: "speedSetting",
   sensitivitySetting: "sensitivitySetting",

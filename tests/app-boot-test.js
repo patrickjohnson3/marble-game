@@ -64,6 +64,10 @@ try {
     "level 1: kitchen floor",
   );
   assert.equal(document.getElementById("resumeGame").textContent, "resume");
+  assert.equal(
+    document.getElementById("installApp").textContent,
+    "install app",
+  );
 
   const startButton = document.getElementById("start");
   const startListener = startButton.listeners.find(
