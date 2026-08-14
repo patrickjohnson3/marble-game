@@ -17,6 +17,7 @@ import { createGoalController } from "./core/goal-controller.js";
 import { clamp, distance, midpoint } from "./core/geometry.js";
 import { createHapticsController } from "./core/haptics.js";
 import { createIntroSequence } from "./core/intro-sequence.js";
+import { createKitchenDynamics } from "./core/kitchen-dynamics.js";
 import {
   introPenWalls,
   mapEdgeWalls,
@@ -139,6 +140,7 @@ function setupRenderers({
     },
   };
   const { bounds, game, intro, marble } = state;
+  const themeDynamics = createKitchenDynamics();
   const trailRenderer = createTrailRenderer({
     trailEl,
     trailSegmentsEl,
@@ -192,6 +194,7 @@ function setupRenderers({
     },
     renderMapTheme,
     updateMapThemeDynamics,
+    themeDynamics,
     renderObstacleWalls: (
       container,
       renderedObstacles,

@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
+import {
+  createKitchenDynamics,
+  createKitchenDynamicsState,
+} from "../core/kitchen-dynamics.js";
 import { renderGooPatches } from "../rendering/goo-patch-rendering.js";
 import { renderHazardPatches } from "../rendering/hazard-patch-rendering.js";
 import { renderIcePatches } from "../rendering/ice-patch-rendering.js";
@@ -60,6 +64,13 @@ function withFakeImage(callback) {
       globalThis.Image = originalImage;
     }
   }
+}
+
+function kitchenDynamicsWith(overrides = {}) {
+  return createKitchenDynamics({
+    ...createKitchenDynamicsState(),
+    ...overrides,
+  });
 }
 
 function testRenderOuterWallsKeepsPositiveInterior() {
@@ -458,15 +469,20 @@ function testKitchenThemeRendersDatedFloorDetails() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
   const themeState = {};
+  const mapConfig = { theme: "kitchenFloor" };
+  const world = { width: 4400, height: 4400 };
+  const dynamics = kitchenDynamicsWith();
+  dynamics.reset({ mapConfig, world });
 
   withFakeImage(() => {
     withFakeDocument(() => {
       renderMapTheme({
         container,
+        dynamicsState: dynamics.state,
         overlayContainer,
-        mapConfig: { theme: "kitchenFloor" },
+        mapConfig,
         themeState,
-        world: { width: 4400, height: 4400 },
+        world,
       });
     });
   });
@@ -494,13 +510,12 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen floor theme should not render brown accent boxes",
   );
   assert.equal(
-    themeState.kitchenCheerios.length,
+    dynamics.state.cheerios.length,
     46,
     "kitchen floor theme should seed fistfuls of scattered cereal",
   );
   assert.equal(
-    themeState.kitchenCheerios.filter((cereal) => cereal.kind === "crumb")
-      .length,
+    dynamics.state.cheerios.filter((cereal) => cereal.kind === "crumb").length,
     12,
     "kitchen floor theme should mix loose cereal crumbs into the pushable clutter",
   );
@@ -520,17 +535,17 @@ function testKitchenThemeRendersDatedFloorDetails() {
     "kitchen Cheerios should render from the textured sprite",
   );
   assert.equal(
-    themeState.kitchenAnts.length,
+    dynamics.state.ants.length,
     10,
     "kitchen floor should seed a small capped ant colony",
   );
   assert.equal(
-    Array.isArray(themeState.kitchenObstacles),
+    Array.isArray(dynamics.state.obstacles),
     true,
     "kitchen theme should precompute obstacle candidates",
   );
   assert.equal(
-    Array.isArray(themeState.kitchenTerrainElements),
+    Array.isArray(dynamics.state.terrainElements),
     true,
     "kitchen theme should precompute terrain candidates",
   );
@@ -547,18 +562,23 @@ function testKitchenCheeriosGiveWayToMarble() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
   const themeState = {};
+  const mapConfig = { theme: "kitchenFloor" };
+  const world = { width: 4400, height: 4400 };
+  const dynamics = kitchenDynamicsWith();
+  dynamics.reset({ mapConfig, world });
 
   withFakeDocument(() => {
     renderMapTheme({
       container,
+      dynamicsState: dynamics.state,
       overlayContainer,
-      mapConfig: { theme: "kitchenFloor" },
+      mapConfig,
       themeState,
-      world: { width: 4400, height: 4400 },
+      world,
     });
   });
 
-  const cheerioState = themeState.kitchenCheerios[0];
+  const cheerioState = dynamics.state.cheerios[0];
   const antCanvas = themeState.kitchenDynamicCanvas;
   const drawCallsBefore = antCanvas.context.calls.length;
   const marble = {
@@ -572,7 +592,8 @@ function testKitchenCheeriosGiveWayToMarble() {
   updateMapThemeDynamics({
     container,
     overlayContainer,
-    mapConfig: { theme: "kitchenFloor" },
+    dynamics,
+    mapConfig,
     marble,
     themeState,
   });
@@ -598,6 +619,10 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
     pushX: 0,
     pushY: 0,
     radius: 23,
+    eaten: 0,
+    active: true,
+    lastHitFeedbackFrame: Number.NEGATIVE_INFINITY,
+    revision: 0,
     sweptClosestX: 0,
     sweptClosestY: 0,
     sweptDistance: 0,
@@ -613,8 +638,10 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
     hitboxH: 30,
     angle: -0.42,
   };
+  const dynamics = kitchenDynamicsWith({ cheerios: [cheerioState] });
 
   updateMapThemeDynamics({
+    dynamics,
     mapConfig: {
       theme: "kitchenFloor",
       elements: [fork],
@@ -626,9 +653,7 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
       vy: 0,
       r: 29,
     },
-    themeState: {
-      kitchenCheerios: [cheerioState],
-    },
+    themeState: {},
   });
 
   const contact = circleOrientedRectContact(
@@ -657,28 +682,34 @@ function testKitchenAntsMunchCheerios() {
     sweptClosestX: 0,
     sweptClosestY: 0,
     sweptDistance: 0,
+    revision: 0,
   };
   const antCanvas = new FakeCanvasElement();
+  const ant = {
+    x: 105,
+    y: 100,
+    angle: 0,
+    alive: true,
+    squished: false,
+    targetIndex: -1,
+    wobble: 0,
+    revision: 0,
+  };
+  const dynamics = kitchenDynamicsWith({
+    cheerios: [cheerioState],
+    ants: [ant],
+  });
   const themeState = {
-    kitchenCheerios: [cheerioState],
-    kitchenAnts: [
-      {
-        x: 105,
-        y: 100,
-        angle: 0,
-        alive: true,
-        squished: false,
-        targetIndex: -1,
-        wobble: 0,
-      },
-    ],
     kitchenDynamicCanvas: antCanvas,
     kitchenDynamicContext: antCanvas.context,
     kitchenDynamicWorld: { width: 200, height: 200 },
     kitchenDynamicRenderScale: 0.35,
+    kitchenDynamicNeedsFullRedraw: true,
+    kitchenDynamicRenderCache: new Map(),
   };
 
   updateMapThemeDynamics({
+    dynamics,
     mapConfig: { theme: "kitchenFloor", elements: [] },
     marble: { x: 300, y: 300, vx: 0, vy: 0, r: 29 },
     frameDelta: 20,
@@ -699,14 +730,19 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
   const themeState = {};
+  const mapConfig = { theme: "kitchenFloor", elements: [] };
+  const world = { width: 4400, height: 4400 };
+  const dynamics = kitchenDynamicsWith();
+  dynamics.reset({ mapConfig, world });
 
   withFakeDocument(() => {
     renderMapTheme({
       container,
+      dynamicsState: dynamics.state,
       overlayContainer,
-      mapConfig: { theme: "kitchenFloor" },
+      mapConfig,
       themeState,
-      world: { width: 4400, height: 4400 },
+      world,
     });
   });
 
@@ -714,7 +750,8 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
   canvas.context.calls.length = 0;
 
   updateMapThemeDynamics({
-    mapConfig: { theme: "kitchenFloor", elements: [] },
+    dynamics,
+    mapConfig,
     marble: { x: 2200, y: 2200, vx: 0, vy: 0, r: 29 },
     frameDelta: 1,
     themeState,
@@ -736,8 +773,8 @@ testKitchenDynamicsUseDirtyRedrawsAfterInitialRender();
 
 function testKitchenDynamicsSkipOffscreenAnts() {
   const antCanvas = new FakeCanvasElement();
-  const themeState = {
-    kitchenCheerios: [
+  const dynamics = kitchenDynamicsWith({
+    cheerios: [
       {
         originX: 1010,
         originY: 1000,
@@ -749,10 +786,10 @@ function testKitchenDynamicsSkipOffscreenAnts() {
         sweptClosestX: 0,
         sweptClosestY: 0,
         sweptDistance: 0,
-        lastBounds: null,
+        revision: 0,
       },
     ],
-    kitchenAnts: [
+    ants: [
       {
         x: 1000,
         y: 1000,
@@ -761,16 +798,21 @@ function testKitchenDynamicsSkipOffscreenAnts() {
         squished: false,
         targetIndex: -1,
         wobble: 0,
-        lastBounds: null,
+        revision: 0,
       },
     ],
+  });
+  const themeState = {
     kitchenDynamicCanvas: antCanvas,
     kitchenDynamicContext: antCanvas.context,
     kitchenDynamicWorld: { width: 2000, height: 2000 },
     kitchenDynamicRenderScale: 0.35,
+    kitchenDynamicNeedsFullRedraw: true,
+    kitchenDynamicRenderCache: new Map(),
   };
 
   updateMapThemeDynamics({
+    dynamics,
     mapConfig: { theme: "kitchenFloor", elements: [] },
     marble: { x: 1000, y: 1000, vx: 3, vy: 0, r: 29 },
     frameDelta: 20,
@@ -779,12 +821,12 @@ function testKitchenDynamicsSkipOffscreenAnts() {
   });
 
   assert.equal(
-    themeState.kitchenAnts[0].squished,
+    dynamics.state.ants[0].squished,
     false,
     "offscreen ants should not be updated",
   );
   assert.equal(
-    themeState.kitchenCheerios[0].eaten,
+    dynamics.state.cheerios[0].eaten,
     0,
     "offscreen Cheerios should not be updated",
   );
@@ -794,9 +836,8 @@ testKitchenDynamicsSkipOffscreenAnts();
 
 function testMarbleSquishesKitchenAnts() {
   const antCanvas = new FakeCanvasElement();
-  const themeState = {
-    kitchenCheerios: [],
-    kitchenAnts: [
+  const dynamics = kitchenDynamicsWith({
+    ants: [
       {
         x: 100,
         y: 100,
@@ -805,17 +846,22 @@ function testMarbleSquishesKitchenAnts() {
         squished: false,
         targetIndex: -1,
         wobble: 0,
-        lastBounds: null,
+        revision: 0,
       },
     ],
+  });
+  const themeState = {
     kitchenDynamicCanvas: antCanvas,
     kitchenDynamicContext: antCanvas.context,
     kitchenDynamicWorld: { width: 200, height: 200 },
     kitchenDynamicRenderScale: 0.35,
+    kitchenDynamicNeedsFullRedraw: true,
+    kitchenDynamicRenderCache: new Map(),
   };
   antCanvas.context.calls.length = 0;
 
   const events = updateMapThemeDynamics({
+    dynamics,
     mapConfig: { theme: "kitchenFloor", elements: [] },
     marble: { x: 100, y: 100, vx: 3, vy: 0, r: 29 },
     themeState,
@@ -823,7 +869,7 @@ function testMarbleSquishesKitchenAnts() {
 
   assert.equal(events.squishedAnts, 1, "marble should squish ants on contact");
   assert.equal(
-    themeState.kitchenAnts[0].squished,
+    dynamics.state.ants[0].squished,
     true,
     "squished ants should stay as splats",
   );
@@ -838,10 +884,9 @@ testMarbleSquishesKitchenAnts();
 
 function testMarbleGetsFeedbackOnSquishedKitchenAnts() {
   const antCanvas = new FakeCanvasElement();
-  const themeState = {
-    kitchenAntFrameIndex: 30,
-    kitchenCheerios: [],
-    kitchenAnts: [
+  const dynamics = kitchenDynamicsWith({
+    frameIndex: 30,
+    ants: [
       {
         x: 100,
         y: 100,
@@ -851,16 +896,21 @@ function testMarbleGetsFeedbackOnSquishedKitchenAnts() {
         lastSplatFeedbackFrame: 0,
         targetIndex: -1,
         wobble: 0,
-        lastBounds: null,
+        revision: 0,
       },
     ],
+  });
+  const themeState = {
     kitchenDynamicCanvas: antCanvas,
     kitchenDynamicContext: antCanvas.context,
     kitchenDynamicWorld: { width: 200, height: 200 },
     kitchenDynamicRenderScale: 0.35,
+    kitchenDynamicNeedsFullRedraw: true,
+    kitchenDynamicRenderCache: new Map(),
   };
 
   const events = updateMapThemeDynamics({
+    dynamics,
     mapConfig: { theme: "kitchenFloor", elements: [] },
     marble: { x: 100, y: 100, vx: 1, vy: 0, r: 29 },
     themeState,
@@ -882,20 +932,25 @@ testMarbleGetsFeedbackOnSquishedKitchenAnts();
 
 function firstKitchenCheerio({ container, overlayContainer }) {
   const themeState = {};
+  const mapConfig = { theme: "kitchenFloor" };
+  const world = { width: 4400, height: 4400 };
+  const dynamics = kitchenDynamicsWith();
+  dynamics.reset({ mapConfig, world });
 
   withFakeDocument(() => {
     renderMapTheme({
       container,
+      dynamicsState: dynamics.state,
       overlayContainer,
-      mapConfig: { theme: "kitchenFloor" },
+      mapConfig,
       themeState,
-      world: { width: 4400, height: 4400 },
+      world,
     });
   });
 
-  const state = themeState.kitchenCheerios[0];
+  const state = dynamics.state.cheerios[0];
 
-  return { state, themeState };
+  return { dynamics, state, themeState };
 }
 
 function shovedDistance({ state }) {
@@ -929,6 +984,7 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
 
   updateMapThemeDynamics({
     container: waterContainer,
+    dynamics: waterCheerio.dynamics,
     overlayContainer: waterOverlay,
     mapConfig: {
       theme: "kitchenFloor",
@@ -939,6 +995,7 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
   });
   updateMapThemeDynamics({
     container: gooContainer,
+    dynamics: gooCheerio.dynamics,
     overlayContainer: gooOverlay,
     mapConfig: {
       theme: "kitchenFloor",
@@ -960,7 +1017,7 @@ testKitchenCheerioShoveRespondsToTerrainPatch();
 function testKitchenCheerioUsesActualPreviousMarblePosition() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
-  const { state, themeState } = firstKitchenCheerio({
+  const { dynamics, state, themeState } = firstKitchenCheerio({
     container,
     overlayContainer,
   });
@@ -978,6 +1035,7 @@ function testKitchenCheerioUsesActualPreviousMarblePosition() {
 
   updateMapThemeDynamics({
     container,
+    dynamics,
     overlayContainer,
     mapConfig: { theme: "kitchenFloor" },
     marble,

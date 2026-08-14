@@ -14,6 +14,13 @@ export function createTerrainView({
   renderTerrainPatches: drawTerrainPatches = () => {},
   renderMapTheme: drawMapTheme = () => {},
   updateMapThemeDynamics: updateThemeDynamics = () => {},
+  themeDynamics = {
+    state: {},
+    reset() {},
+    update() {
+      return {};
+    },
+  },
   renderObstacleWalls,
   renderObstacleHitboxes,
   goalFillEdgePercent = 70.8,
@@ -34,8 +41,10 @@ export function createTerrainView({
   }
 
   function renderMapTheme() {
+    themeDynamics.reset({ mapConfig: currentMapConfig, world: currentWorld });
     drawMapTheme({
       container: mapThemeEl,
+      dynamicsState: themeDynamics.state,
       overlayContainer: mapThemeOverlayEl,
       mapConfig: currentMapConfig,
       themeState,
@@ -119,6 +128,7 @@ export function createTerrainView({
   ) {
     return updateThemeDynamics({
       container: mapThemeEl,
+      dynamics: themeDynamics,
       overlayContainer: mapThemeOverlayEl,
       mapConfig: currentMapConfig,
       frameDelta,

@@ -16,6 +16,7 @@ export const runtimeScripts = [
   "core/haptics.js",
   "core/intro-sequence.js",
   "core/intro-timers.js",
+  "core/kitchen-dynamics.js",
   "core/map-bounds.js",
   "core/map-config.js",
   "core/map-elements.js",
