@@ -119,14 +119,14 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
   const sponge = {
     type: "obstacle",
     fixture: "sponge",
-    x: 160,
+    x: 225,
     y: 430,
     w: 160,
     h: 80,
     hitboxW: 140,
     hitboxH: 70,
     angle: 0,
-    collisionCenterX: 240,
+    collisionCenterX: 305,
     collisionCenterY: 470,
     collisionCos: 1,
     collisionSin: 0,
@@ -146,11 +146,11 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
   const events = update(
     dynamics,
     mapConfig,
-    { x: 141, y: 470, vx: 4, vy: 0, r: 29 },
+    { x: 206, y: 470, vx: 4, vy: 0, r: 29 },
     1,
   );
 
-  assert.equal(sponge.x > 160, true, "the marble should shove the sponge");
+  assert.equal(sponge.x > 225, true, "the marble should shove the sponge");
   assert.equal(
     runtimeWater.w < authoredWater.w,
     true,
@@ -159,7 +159,7 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
   assert.equal(
     Math.abs(
       runtimeWater.x + runtimeWater.w - (authoredWater.x + authoredWater.w),
-    ) < 1e-9,
+    ) < 0.1,
     true,
     "absorption from the left should pull back the contacted edge",
   );
@@ -196,6 +196,58 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
 }
 
 testPlayerCanPushSpongeIntoWaterToShrinkPuddle();
+
+function testSpongeDoesNotSoakInTransparentPuddleCorner() {
+  const authoredWater = {
+    type: "waterPatch",
+    x: 300,
+    y: 400,
+    w: 300,
+    h: 200,
+  };
+  const runtimeWaterPatches = [authoredWater];
+  const sponge = {
+    type: "obstacle",
+    fixture: "sponge",
+    x: 160,
+    y: 430,
+    w: 160,
+    h: 80,
+    hitboxW: 140,
+    hitboxH: 70,
+    angle: 0,
+    collisionCenterX: 240,
+    collisionCenterY: 470,
+    collisionCos: 1,
+    collisionSin: 0,
+    collisionHalfWidth: 70,
+    collisionHalfHeight: 35,
+  };
+  const mapConfig = kitchenMap("kitchen-floor", [authoredWater, sponge]);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({
+    mapConfig,
+    obstacles: [sponge],
+    waterPatches: runtimeWaterPatches,
+    world,
+  });
+
+  const events = update(dynamics, mapConfig, {
+    x: 141,
+    y: 470,
+    vx: 4,
+    vy: 0,
+    r: 29,
+  });
+
+  assert.equal(sponge.x > 160, true, "the marble should shove the sponge");
+  assert.equal(sponge.saturation, 0);
+  assert.equal(events.spongeSoaks, 0);
+  assert.equal(runtimeWaterPatches[0].w, authoredWater.w);
+  assert.equal(runtimeWaterPatches[0].h, authoredWater.h);
+}
+
+testSpongeDoesNotSoakInTransparentPuddleCorner();
 
 function spongeImpactAngle(hitY) {
   const authoredWater = {

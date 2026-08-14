@@ -490,6 +490,22 @@ function advanceSponge(state, frameDelta) {
   return moved || nextAngle !== previousAngle;
 }
 
+function spongePointTouchesWater(
+  centerX,
+  centerY,
+  cos,
+  sin,
+  localX,
+  localY,
+  patch,
+) {
+  return pointInPuddle(
+    centerX + cos * localX - sin * localY,
+    centerY + sin * localX + cos * localY,
+    patch,
+  );
+}
+
 function spongeTouchesWater(sponge, patch) {
   const centerX = sponge.collisionCenterX ?? sponge.x + sponge.w / 2;
   const centerY = sponge.collisionCenterY ?? sponge.y + sponge.h / 2;
@@ -497,17 +513,60 @@ function spongeTouchesWater(sponge, patch) {
     sponge.collisionHalfWidth ?? (sponge.hitboxW ?? sponge.w) / 2;
   const halfHeight =
     sponge.collisionHalfHeight ?? (sponge.hitboxH ?? sponge.h) / 2;
-  const cos = Math.abs(sponge.collisionCos ?? Math.cos(sponge.angle ?? 0));
-  const sin = Math.abs(sponge.collisionSin ?? Math.sin(sponge.angle ?? 0));
-  const extentX = cos * halfWidth + sin * halfHeight;
-  const extentY = sin * halfWidth + cos * halfHeight;
-
-  return (
-    centerX + extentX >= patch.x &&
-    centerX - extentX <= patch.x + patch.w &&
-    centerY + extentY >= patch.y &&
-    centerY - extentY <= patch.y + patch.h
+  const cos = sponge.collisionCos ?? Math.cos(sponge.angle ?? 0);
+  const sin = sponge.collisionSin ?? Math.sin(sponge.angle ?? 0);
+  const cornerRadius = Math.min(
+    spongeCollisionCornerRadius,
+    halfWidth,
+    halfHeight,
   );
+  const cornerX = halfWidth - cornerRadius + cornerRadius * Math.SQRT1_2;
+  const cornerY = halfHeight - cornerRadius + cornerRadius * Math.SQRT1_2;
+
+  if (pointInPuddle(centerX, centerY, patch)) return true;
+
+  for (let sign = -1; sign <= 1; sign += 2) {
+    if (
+      spongePointTouchesWater(
+        centerX,
+        centerY,
+        cos,
+        sin,
+        sign * halfWidth,
+        0,
+        patch,
+      ) ||
+      spongePointTouchesWater(
+        centerX,
+        centerY,
+        cos,
+        sin,
+        0,
+        sign * halfHeight,
+        patch,
+      )
+    ) {
+      return true;
+    }
+
+    for (let crossSign = -1; crossSign <= 1; crossSign += 2) {
+      if (
+        spongePointTouchesWater(
+          centerX,
+          centerY,
+          cos,
+          sin,
+          sign * cornerX,
+          crossSign * cornerY,
+          patch,
+        )
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 function shrinkWaterPatch(state, saturation) {
