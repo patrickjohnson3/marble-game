@@ -123,15 +123,19 @@ Frame scheduling is split between `core/frame-loop.js` and `core/game-loop.js`.
    - advance marble roll and impact squash animation
    - update goal hold/progression
    - update camera follow
-6. Render the marble.
-7. Update the trail unless paused.
-8. Update FPS and debug stats.
-9. Mark the frame rendered.
-10. Schedule the next frame if gameplay is still active.
+   - advance kitchen dynamics and emit kitchen haptic feedback
+   - redraw changed kitchen dynamic regions
+6. Render the marble, trail, and active effects.
+7. Update FPS and debug stats.
+8. Mark the frame rendered.
+9. Schedule the next frame if gameplay is still active.
 
-The game loop intentionally mutates the shared runtime state. That keeps the
-game simple and avoids object churn in the hot path. Pure helpers are tested in
-isolation where practical.
+The game loop intentionally mutates shared runtime state. Previous-position,
+physics-contact, kitchen-event, kitchen-collision, and kitchen-render records
+are reused across frames. Trail points and segments are pooled; effect particles
+remain short-lived allocations. The runtime is not assumed to be
+allocation-free. Profile before adding more pooling or scratch state. Pure
+helpers are tested in isolation where practical.
 
 ## Physics Pipeline
 
