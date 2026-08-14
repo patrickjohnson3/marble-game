@@ -40,11 +40,13 @@ Then open `http://localhost:8000/`.
 
 ```sh
 npm test
+npm run test:browser
 npm run lint
 npm run format:check
 ```
 
 The pre-push hook runs the same test, lint, and format checks.
+The browser smoke test uses local Chrome; set `CHROME_PATH` if Chrome is installed elsewhere.
 
 ## Developer Docs
 
