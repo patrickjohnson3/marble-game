@@ -14,6 +14,8 @@ export function createUi({
   startBtn,
   debugLines,
   state,
+  setTimeoutFn = globalThis.setTimeout,
+  clearTimeoutFn = globalThis.clearTimeout,
 }) {
   const fps = {
     lastTime: null,
@@ -28,6 +30,7 @@ export function createUi({
   const debugUpdateIntervalMs = 250;
   let lastDebugText = "";
   let lastDebugUpdate = Number.NEGATIVE_INFINITY;
+  let levelLabelTimer = 0;
 
   function setHint(message) {
     hint.textContent = message;
@@ -43,6 +46,15 @@ export function createUi({
   function setLevelLabel(message) {
     levelLabel.textContent = message;
     levelLabel.hidden = !message;
+  }
+
+  function showLevelLabel(message, durationMs) {
+    clearTimeoutFn(levelLabelTimer);
+    setLevelLabel(message);
+    levelLabelTimer = setTimeoutFn(() => {
+      levelLabelTimer = 0;
+      setLevelLabel("");
+    }, durationMs);
   }
 
   function setPwaStatus(message) {
@@ -168,6 +180,7 @@ export function createUi({
     setStatsEnabled,
     setHint,
     setLevelLabel,
+    showLevelLabel,
     setMapObjects,
     setPwaInstallAvailable,
     setPwaStatus,

@@ -609,6 +609,7 @@ testMapProgressionHandlesMissingCurrentMap();
 
 function testMapProgressionUsesQuietSuccessHint() {
   const hints = [];
+  const labels = [];
   let activeMap = resolveSeededMapConfig(simpleSeededMapConfig);
   const progression = createMapProgression({
     baseMapConfig: simpleSeededMapConfig,
@@ -618,13 +619,21 @@ function testMapProgressionUsesQuietSuccessHint() {
     },
     resetForNextMap() {},
     terrainView: { updateGoalProgress() {} },
-    ui: { setHint: (hint) => hints.push(hint) },
+    ui: {
+      setHint: (hint) => hints.push(hint),
+      showLevelLabel(label, durationMs) {
+        labels.push({ durationMs, label });
+      },
+    },
     requestRender() {},
     copy: copy.hints,
+    formatMapLabel: (map) => "next: " + map.variantId,
+    mapLabelDurationMs: 1800,
   });
 
   assert.equal(progression.advanceToNextMap(), true);
   assert.deepEqual(hints, [copy.hints.mapOpen]);
+  assert.deepEqual(labels, [{ durationMs: 1800, label: "next: only" }]);
 }
 
 testMapProgressionUsesQuietSuccessHint();

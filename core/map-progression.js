@@ -11,6 +11,8 @@ export function createMapProgression({
   terrainView,
   ui,
   requestRender,
+  formatMapLabel = (map) => map?.name ?? "",
+  mapLabelDurationMs = 0,
   copy = {
     mapOpen: "map open.",
     goalNoNextMap: "goal reached. no next map available.",
@@ -44,6 +46,8 @@ export function createMapProgression({
 
     applyMap(nextMap);
     resetForNextMap();
+    const label = formatMapLabel(nextMap);
+    if (label) ui.showLevelLabel(label, mapLabelDurationMs);
     ui.setHint(copy.mapOpen);
     requestRender();
     return true;

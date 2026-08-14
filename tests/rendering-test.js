@@ -331,6 +331,36 @@ function testLevelLabelHidesWhenEmpty() {
 
 testLevelLabelHidesWhenEmpty();
 
+function testLevelLabelCanHideAfterATransientHandoff() {
+  const levelLabel = new FakeElement();
+  let hideLabel = null;
+  const ui = createUi({
+    hint: new FakeElement(),
+    levelLabel,
+    fpsCounter: new FakeElement(),
+    debug: new FakeElement(),
+    settings: { fpsEnabled: false, statsEnabled: false },
+    settingsOverlay: new FakeElement(),
+    debugLines: () => [],
+    state: {},
+    clearTimeoutFn() {},
+    setTimeoutFn(callback, delay) {
+      assert.equal(delay, 1800);
+      hideLabel = callback;
+      return 1;
+    },
+  });
+
+  ui.showLevelLabel("level 2: living room", 1800);
+  assert.equal(levelLabel.hidden, false);
+  assert.equal(levelLabel.textContent, "level 2: living room");
+
+  hideLabel();
+  assert.equal(levelLabel.hidden, true);
+}
+
+testLevelLabelCanHideAfterATransientHandoff();
+
 function testMapObjectStatusUpdatesSettingsStatus() {
   const mapObjectsStatus = new FakeElement();
   const ui = createUi({

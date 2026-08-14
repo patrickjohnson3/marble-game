@@ -659,6 +659,8 @@ export function createApp({
     terrainView,
     ui,
     copy: copy.hints,
+    formatMapLabel: mapLevelLabel,
+    mapLabelDurationMs: timing.mapLabelDurationMs,
     requestRender,
   });
   function retryCurrentMap() {
