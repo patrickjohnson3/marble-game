@@ -21,9 +21,11 @@ for (const script of scripts) {
   }
 }
 
-const htmlIds = new Set(
-  [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]),
+const allHtmlIds = [...html.matchAll(/\sid="([^"]+)"/g)].map(
+  (match) => match[1],
 );
+const htmlIds = new Set(allHtmlIds);
+assert.equal(htmlIds.size, allHtmlIds.length, "index.html IDs must be unique");
 const missingIds = requiredDomIds.filter((id) => !htmlIds.has(id));
 
 if (missingIds.length > 0) {
