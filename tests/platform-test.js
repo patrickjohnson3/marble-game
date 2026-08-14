@@ -232,6 +232,7 @@ async function testServiceWorkerRegistrationReportsWaitingUpdate() {
 async function testServiceWorkerRegistrationReportsInstalledUpdate() {
   const listeners = {};
   const workerListeners = {};
+  const statuses = [];
   const worker = {
     state: "installing",
     addEventListener(type, listener) {
@@ -263,6 +264,9 @@ async function testServiceWorkerRegistrationReportsInstalledUpdate() {
     onUpdateReady() {
       updateReadyCount++;
     },
+    onStatusChange(status) {
+      statuses.push(status);
+    },
     windowRef: {
       addEventListener(type, listener) {
         listeners[type] = listener;
@@ -277,6 +281,138 @@ async function testServiceWorkerRegistrationReportsInstalledUpdate() {
   workerListeners.statechange();
 
   assert.equal(updateReadyCount, 1);
+  assert.deepEqual(statuses, [
+    "checking",
+    "ready",
+    "update-installing",
+    "update-ready",
+  ]);
+}
+
+async function testServiceWorkerFirstInstallReturnsToReady() {
+  const listeners = {};
+  const workerListeners = {};
+  const statuses = [];
+  const clearedTimers = [];
+  const worker = {
+    state: "installing",
+    addEventListener(type, listener) {
+      workerListeners[type] = listener;
+    },
+  };
+  let registrationListener = null;
+  const { registerServiceWorker } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+
+  registerServiceWorker({
+    navigatorRef: {
+      serviceWorker: {
+        controller: null,
+        register() {
+          return Promise.resolve({
+            get installing() {
+              return worker;
+            },
+            addEventListener(type, listener) {
+              registrationListener = listener;
+            },
+          });
+        },
+      },
+    },
+    onStatusChange(status) {
+      statuses.push(status);
+    },
+    setTimeoutFn() {
+      return 17;
+    },
+    clearTimeoutFn(timer) {
+      clearedTimers.push(timer);
+    },
+    windowRef: {
+      addEventListener(type, listener) {
+        listeners[type] = listener;
+      },
+    },
+  });
+
+  await listeners.load();
+  await Promise.resolve();
+  registrationListener();
+  worker.state = "installed";
+  workerListeners.statechange();
+
+  assert.deepEqual(statuses, [
+    "checking",
+    "ready",
+    "update-installing",
+    "ready",
+  ]);
+  assert.deepEqual(clearedTimers, [17]);
+}
+
+async function testServiceWorkerReportsDelayedAndFailedUpdates() {
+  const listeners = {};
+  const workerListeners = {};
+  const statuses = [];
+  const worker = {
+    state: "installing",
+    addEventListener(type, listener) {
+      workerListeners[type] = listener;
+    },
+  };
+  let registrationListener = null;
+  let timeoutCallback = null;
+  const { registerServiceWorker } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+
+  registerServiceWorker({
+    navigatorRef: {
+      serviceWorker: {
+        controller: {},
+        register() {
+          return Promise.resolve({
+            get installing() {
+              return worker;
+            },
+            addEventListener(type, listener) {
+              registrationListener = listener;
+            },
+          });
+        },
+      },
+    },
+    onStatusChange(status) {
+      statuses.push(status);
+    },
+    setTimeoutFn(callback) {
+      timeoutCallback = callback;
+      return 23;
+    },
+    clearTimeoutFn() {},
+    windowRef: {
+      addEventListener(type, listener) {
+        listeners[type] = listener;
+      },
+    },
+  });
+
+  await listeners.load();
+  await Promise.resolve();
+  registrationListener();
+  timeoutCallback();
+  worker.state = "redundant";
+  workerListeners.statechange();
+
+  assert.deepEqual(statuses, [
+    "checking",
+    "ready",
+    "update-installing",
+    "update-delayed",
+    "update-failed",
+  ]);
 }
 
 async function testServiceWorkerRegistrationReloadsWhenUpdateTakesControl() {
@@ -334,6 +470,8 @@ await testServiceWorkerRegistrationIsDeferredUntilLoad();
 await testServiceWorkerRegistrationHandlesUnsupportedBrowsers();
 await testServiceWorkerRegistrationReportsWaitingUpdate();
 await testServiceWorkerRegistrationReportsInstalledUpdate();
+await testServiceWorkerFirstInstallReturnsToReady();
+await testServiceWorkerReportsDelayedAndFailedUpdates();
 await testServiceWorkerRegistrationReloadsWhenUpdateTakesControl();
 
 console.log("Platform tests passed.");

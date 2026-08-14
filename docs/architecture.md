@@ -305,7 +305,9 @@ runtime-only fields do not leak into localStorage.
 worker already controls the page, `platform/platform.js` reloads once on
 `controllerchange` so the new version takes effect immediately. A first-time
 installation does not trigger that reload. Update status remains visible in the
-settings panel during the handoff.
+settings panel during the handoff. Installations still pending after 30 seconds
+report that the update is delayed, and failed installations leave the current
+version available instead of displaying a permanent downloading state.
 
 Platform changes require HTTPS device checks in Android Chrome, Android Brave,
 iPhone Safari, and iPhone Chrome. The Playwright smoke test covers local desktop

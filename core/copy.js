@@ -24,6 +24,9 @@ export const copy = {
       "installed app mode. fullscreen is handled by the app.",
     ready: "offline app ready.",
     unsupported: "offline app unavailable in this browser.",
+    updateDelayed:
+      "app update is taking longer than expected. current version is still available.",
+    updateFailed: "app update failed. current version is still available.",
     updateInstalling: "downloading app update...",
     updateReady: "app update installed. reloading...",
   },

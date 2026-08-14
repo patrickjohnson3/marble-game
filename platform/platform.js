@@ -167,11 +167,15 @@ function notifyServiceWorkerStatus(onStatusChange, status) {
   if (typeof onStatusChange === "function") onStatusChange(status);
 }
 
+const serviceWorkerUpdateStatusTimeoutMs = 30000;
+
 function watchServiceWorkerRegistration({
+  clearTimeoutFn,
   navigatorRef,
   onStatusChange,
   notifyUpdateReady,
   registration,
+  setTimeoutFn,
 }) {
   if (!registration?.addEventListener) return;
 
@@ -182,16 +186,44 @@ function watchServiceWorkerRegistration({
   registration.addEventListener("updatefound", () => {
     notifyServiceWorkerStatus(onStatusChange, "update-installing");
     const worker = registration.installing;
-    if (!worker?.addEventListener) return;
+    if (!worker?.addEventListener) {
+      notifyServiceWorkerStatus(onStatusChange, "ready");
+      return;
+    }
 
-    worker.addEventListener("statechange", () => {
-      if (
-        worker.state === "installed" &&
-        navigatorRef.serviceWorker.controller
-      ) {
-        notifyUpdateReady();
+    let finished = false;
+    const statusTimeout = setTimeoutFn(() => {
+      if (!finished) {
+        notifyServiceWorkerStatus(onStatusChange, "update-delayed");
       }
-    });
+    }, serviceWorkerUpdateStatusTimeoutMs);
+
+    function finish(status) {
+      if (finished) return;
+
+      finished = true;
+      clearTimeoutFn(statusTimeout);
+      if (status === "update-ready") {
+        notifyUpdateReady();
+      } else {
+        notifyServiceWorkerStatus(onStatusChange, status);
+      }
+    }
+
+    function handleStateChange() {
+      if (worker.state === "installed") {
+        finish(
+          navigatorRef.serviceWorker.controller ? "update-ready" : "ready",
+        );
+      } else if (worker.state === "activated") {
+        finish("ready");
+      } else if (worker.state === "redundant") {
+        finish("update-failed");
+      }
+    }
+
+    worker.addEventListener("statechange", handleStateChange);
+    handleStateChange();
   });
 }
 
@@ -201,6 +233,8 @@ export function registerServiceWorker({
   onUpdateReady,
   windowRef = globalThis.window,
   scriptUrl = "sw.js",
+  setTimeoutFn = globalThis.setTimeout,
+  clearTimeoutFn = globalThis.clearTimeout,
 } = {}) {
   if (!navigatorRef?.serviceWorker || !windowRef?.addEventListener) {
     notifyServiceWorkerStatus(onStatusChange, "unsupported");
@@ -239,10 +273,12 @@ export function registerServiceWorker({
       .then((registration) => {
         notifyServiceWorkerStatus(onStatusChange, "ready");
         watchServiceWorkerRegistration({
+          clearTimeoutFn,
           navigatorRef,
           onStatusChange,
           notifyUpdateReady,
           registration,
+          setTimeoutFn,
         });
       })
       .catch((error) => {

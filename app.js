@@ -421,6 +421,8 @@ function pwaUpdateStatusText(status) {
       error: copy.pwa.error,
       ready: copy.pwa.ready,
       unsupported: copy.pwa.unsupported,
+      "update-delayed": copy.pwa.updateDelayed,
+      "update-failed": copy.pwa.updateFailed,
       "update-installing": copy.pwa.updateInstalling,
       "update-ready": copy.pwa.updateReady,
     }[status] || ""
@@ -522,7 +524,7 @@ export function createApp({
     const displayStatus = fullscreenManagedByPwa
       ? copy.pwa.installedFullscreen
       : "";
-    pwaUpdateStatus = pwaUpdateStatusText(status) || pwaUpdateStatus;
+    pwaUpdateStatus = pwaUpdateStatusText(status);
     ui.setPwaStatus([displayStatus, pwaUpdateStatus].filter(Boolean).join(" "));
   }
   updatePwaStatus();
