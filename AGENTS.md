@@ -33,4 +33,4 @@ Commit messages are short imperative summaries, for example `Improve kitchen wat
 
 ## Agent-Specific Notes
 
-This is mobile-first. Be careful with motion sensors, haptics, fullscreen, wake lock, and PWA caching. Avoid adding engine abstractions unless they clearly simplify current gameplay work. Favor readable real-world map content over generic systems.
+This is mobile-first. Be careful with motion sensors, haptics, fullscreen, wake lock, and PWA caching. Avoid adding engine abstractions unless they clearly simplify current gameplay work.
