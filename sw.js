@@ -1,6 +1,6 @@
 import { runtimeFiles } from "./runtime-assets.js";
 
-const cacheVersion = "marble-game-722c5fee26d218f8";
+const cacheVersion = "marble-game-09517bd12b7f3976";
 const cacheableFiles = [
   "./",
   "index.html",
@@ -46,7 +46,7 @@ function keepCacheWriteAlive(event, cacheWrite) {
 }
 
 function cacheFirst(event, request) {
-  return caches.match(request, { ignoreSearch: true }).then((cached) => {
+  return caches.match(request).then((cached) => {
     if (cached) return cached;
 
     return fetch(request).then((response) => {

@@ -7,6 +7,7 @@ const originalGlobals = {
 };
 const listeners = {};
 const writes = [];
+const cacheMatches = [];
 let resolveWrite;
 
 globalThis.self = {
@@ -19,7 +20,8 @@ globalThis.self = {
   },
 };
 globalThis.caches = {
-  match() {
+  match(request, options) {
+    cacheMatches.push({ request, options });
     return Promise.resolve(null);
   },
   open() {
@@ -72,6 +74,11 @@ try {
   }
 
   assert.equal(writes.length, 2);
+  assert.equal(
+    cacheMatches[0].options,
+    undefined,
+    "runtime cache lookup must preserve asset-version query strings",
+  );
   console.log("Service worker tests passed.");
 } finally {
   globalThis.caches = originalGlobals.caches;

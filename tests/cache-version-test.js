@@ -12,6 +12,7 @@ function testRuntimeModuleScriptsAssignmentUsesManifestOrder() {
   );
 
   assert.deepEqual(scripts, runtimeModuleScripts);
+  assert.ok(scripts.includes("app.js"), "app.js must be cache-versioned");
 }
 
 function testIndexNormalizationReplacesVersionAndScriptList() {

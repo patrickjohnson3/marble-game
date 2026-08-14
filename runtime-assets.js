@@ -56,9 +56,7 @@ export const runtimeScripts = [
   "settings/settings-store.js",
 ];
 
-export const runtimeModuleScripts = runtimeScripts.filter(
-  (script) => script !== "app.js",
-);
+export const runtimeModuleScripts = runtimeScripts;
 
 export const pwaFiles = [
   "manifest.webmanifest",
