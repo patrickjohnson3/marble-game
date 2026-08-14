@@ -870,6 +870,32 @@ button.primaryAction {
 .settingsStatus:empty {
   display: none;
 }
+.settingsHelp {
+  margin-top: 12px;
+  border-top: 1px solid #ffffff17;
+  padding-top: 12px;
+}
+.settingsHelp summary {
+  cursor: pointer;
+  color: #c8d0dc;
+  font-size: 13px;
+  font-weight: 800;
+}
+.settingsHelp[open] summary {
+  color: white;
+}
+.settingsHelpContent {
+  padding: 4px 0 0 18px;
+  color: #d7dde8;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.settingsHelpContent p {
+  margin: 9px 0;
+}
+.settingsHelpContent .settingsStatus {
+  margin: 9px 0 0;
+}
 #closeSettings {
   flex: 0 0 auto;
   width: 40px;

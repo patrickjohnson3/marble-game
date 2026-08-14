@@ -1,7 +1,7 @@
 export const copy = {
   bootError: "game failed to load. refresh and try again.",
   title: "marble tilt",
-  initialHint: "click or tap start. tilt or use arrows/WASD.",
+  initialHint: "",
   hints: {
     mapOpen: "",
     noMotionSensor:
@@ -44,6 +44,12 @@ export const copy = {
     toggleLabel: "settings",
     title: "Settings",
     closeLabel: "close settings",
+    help: {
+      title: "Controls & map",
+      movement: "Tilt your phone to steer. On desktop, use arrows or WASD.",
+      camera: "Pinch to zoom. Drag with two fingers to pan.",
+      goal: "Hold the marble inside the green goal to visit the next map.",
+    },
     sections: {
       gameplay: "Gameplay",
       device: "Device",
@@ -72,6 +78,10 @@ export function applyDocumentCopy({ document, els }) {
   els.settingsToggle.setAttribute("aria-label", copy.settings.toggleLabel);
   els.settingsToggle.title = copy.settings.title;
   els.settingsTitle.textContent = copy.settings.title;
+  els.controlsHelpTitle.textContent = copy.settings.help.title;
+  els.movementHelp.textContent = copy.settings.help.movement;
+  els.cameraHelp.textContent = copy.settings.help.camera;
+  els.goalHelp.textContent = copy.settings.help.goal;
   els.gameplaySettingsTitle.textContent = copy.settings.sections.gameplay;
   els.deviceSettingsTitle.textContent = copy.settings.sections.device;
   els.diagnosticsSettingsTitle.textContent = copy.settings.sections.diagnostics;

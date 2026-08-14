@@ -52,7 +52,7 @@
       }
     </style>
     <script>
-      const assetVersion = "0ca5f132fe8eeb67";
+      const assetVersion = "6c4895c6da8e1685";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -205,8 +205,16 @@
           <button id="closeSettings" aria-label=""></button>
         </div>
         <div id="pwaStatus" class="settingsStatus" aria-live="polite"></div>
-        <div id="mapObjectsStatus" class="settingsStatus"></div>
-        <div id="hint" class="settingsStatus" aria-live="polite"></div>
+        <details class="settingsHelp">
+          <summary id="controlsHelpTitle"></summary>
+          <div class="settingsHelpContent">
+            <p id="movementHelp"></p>
+            <p id="cameraHelp"></p>
+            <p id="goalHelp"></p>
+            <div id="mapObjectsStatus" class="settingsStatus"></div>
+            <div id="hint" class="settingsStatus" aria-live="polite"></div>
+          </div>
+        </details>
         <section
           class="settingsSection"
           aria-labelledby="gameplaySettingsTitle"

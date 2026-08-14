@@ -72,6 +72,18 @@ try {
     "Diagnostics",
   );
   assert.equal(
+    document.getElementById("controlsHelpTitle").textContent,
+    "Controls & map",
+  );
+  assert.equal(
+    document.getElementById("cameraHelp").textContent,
+    "Pinch to zoom. Drag with two fingers to pan.",
+  );
+  assert.equal(
+    document.getElementById("goalHelp").textContent,
+    "Hold the marble inside the green goal to visit the next map.",
+  );
+  assert.equal(
     document.getElementById("levelLabel").textContent,
     "level 1: kitchen floor",
   );
