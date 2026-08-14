@@ -99,6 +99,89 @@ export function circleOrientedRectContact(
   return target;
 }
 
+export function circleOrientedRoundedRectContact(
+  circle,
+  rect,
+  cornerRadius,
+  epsilon = 0,
+  target = {},
+  zeroDistanceEpsilon = defaultCollisionZeroDistanceEpsilon,
+) {
+  const angle = rect.angle ?? 0;
+  const centerX = rect.collisionCenterX ?? rect.x + rect.w / 2;
+  const centerY = rect.collisionCenterY ?? rect.y + rect.h / 2;
+  const halfWidth = rect.collisionHalfWidth ?? (rect.hitboxW ?? rect.w) / 2;
+  const halfHeight = rect.collisionHalfHeight ?? (rect.hitboxH ?? rect.h) / 2;
+  const radius = Math.max(0, Math.min(cornerRadius, halfWidth, halfHeight));
+  if (radius === 0) {
+    return circleOrientedRectContact(
+      circle,
+      rect,
+      epsilon,
+      target,
+      zeroDistanceEpsilon,
+    );
+  }
+
+  const cos = rect.collisionCos ?? Math.cos(angle);
+  const sin = rect.collisionSin ?? Math.sin(angle);
+  const dx = circle.x - centerX;
+  const dy = circle.y - centerY;
+  const localX = cos * dx + sin * dy;
+  const localY = -sin * dx + cos * dy;
+  const coreHalfWidth = halfWidth - radius;
+  const coreHalfHeight = halfHeight - radius;
+  const closestX = Math.max(-coreHalfWidth, Math.min(coreHalfWidth, localX));
+  const closestY = Math.max(-coreHalfHeight, Math.min(coreHalfHeight, localY));
+  const coreDx = localX - closestX;
+  const coreDy = localY - closestY;
+  const coreDistance = Math.hypot(coreDx, coreDy);
+  const signedDistance = coreDistance - radius;
+
+  if (signedDistance > zeroDistanceEpsilon) {
+    const localNormalX = coreDx / coreDistance;
+    const localNormalY = coreDy / coreDistance;
+    target.dx = (cos * localNormalX - sin * localNormalY) * signedDistance;
+    target.dy = (sin * localNormalX + cos * localNormalY) * signedDistance;
+    target.distanceSq = signedDistance * signedDistance;
+    target.intersects = target.distanceSq <= circle.r * circle.r + epsilon;
+    target.insideDistance = 0;
+    target.insideNx = 0;
+    target.insideNy = 0;
+    return target;
+  }
+
+  let localNormalX;
+  let localNormalY;
+  let insideDistance;
+  if (coreDistance > zeroDistanceEpsilon) {
+    localNormalX = coreDx / coreDistance;
+    localNormalY = coreDy / coreDistance;
+    insideDistance = radius - coreDistance;
+  } else {
+    const horizontalDistance = halfWidth - Math.abs(localX);
+    const verticalDistance = halfHeight - Math.abs(localY);
+    if (horizontalDistance < verticalDistance) {
+      localNormalX = localX < 0 ? -1 : 1;
+      localNormalY = 0;
+      insideDistance = horizontalDistance;
+    } else {
+      localNormalX = 0;
+      localNormalY = localY < 0 ? -1 : 1;
+      insideDistance = verticalDistance;
+    }
+  }
+
+  target.intersects = true;
+  target.dx = 0;
+  target.dy = 0;
+  target.distanceSq = 0;
+  target.insideDistance = Math.max(0, insideDistance);
+  target.insideNx = cos * localNormalX - sin * localNormalY;
+  target.insideNy = sin * localNormalX + cos * localNormalY;
+  return target;
+}
+
 export function circleObstacleContact(
   circle,
   obstacle,

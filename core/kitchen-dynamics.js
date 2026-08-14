@@ -1,5 +1,8 @@
 import { KITCHEN_FIXTURES, MAP_ELEMENT_TYPES } from "./map-elements.js";
-import { circleOrientedRectContact } from "./physics-collisions.js";
+import {
+  circleOrientedRectContact,
+  circleOrientedRoundedRectContact,
+} from "./physics-collisions.js";
 
 const cheerioRadiusRatio = 0.00525;
 const cheerioShovePadding = 18;
@@ -41,6 +44,7 @@ const spongeMaxAngularSpeed = 0.025;
 const spongeLinearSettleSpeed = 0.01;
 const spongeAngularSettleSpeed = 0.00005;
 const spongeMaxAngleOffset = 0.55;
+const spongeCollisionCornerRadius = 18;
 const spongeCollisionSeparation = 0.5;
 const spongeWaterSoakRate = 0.01;
 const spongeMaxPuddleLinearShrink = 0.2;
@@ -383,9 +387,10 @@ function limitSpongeVelocity(sponge) {
 
 function resolveSpongeCollision(state, marble) {
   const sponge = state.sponge;
-  const contact = circleOrientedRectContact(
+  const contact = circleOrientedRoundedRectContact(
     marble,
     sponge,
+    spongeCollisionCornerRadius,
     0,
     state.spongeContact,
     collisionZeroDistanceEpsilon,

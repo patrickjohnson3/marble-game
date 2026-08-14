@@ -214,7 +214,7 @@ function spongeImpactAngle(hitY) {
     waterPatches: [authoredWater],
     world,
   });
-  const marble = { x: 281, y: hitY, vx: 5, vy: 0, r: 29 };
+  const marble = { x: 283, y: hitY, vx: 5, vy: 0, r: 29 };
 
   const events = update(dynamics, mapConfig, marble);
   return { angle: sponge.angle, events, marble, sponge };
@@ -244,5 +244,58 @@ function testOffCenterSpongeImpactCreatesMoreRotation() {
 }
 
 testOffCenterSpongeImpactCreatesMoreRotation();
+
+function testSpongeRoundedCornerDoesNotCreateFalseImpact() {
+  const authoredWater = {
+    type: "waterPatch",
+    x: 800,
+    y: 800,
+    w: 100,
+    h: 100,
+  };
+  const sponge = {
+    type: "obstacle",
+    fixture: "sponge",
+    x: 300,
+    y: 400,
+    w: 200,
+    h: 80,
+    hitboxW: 180,
+    hitboxH: 70,
+    angle: 0,
+    collisionCenterX: 400,
+    collisionCenterY: 440,
+    collisionCos: 1,
+    collisionSin: 0,
+    collisionHalfWidth: 90,
+    collisionHalfHeight: 35,
+  };
+  const mapConfig = kitchenMap("kitchen-floor", [authoredWater, sponge]);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({
+    mapConfig,
+    obstacles: [sponge],
+    waterPatches: [authoredWater],
+    world,
+  });
+  const cornerOffset = 25 / Math.SQRT2;
+  const marble = {
+    x: 400 - 90 - cornerOffset,
+    y: 440 - 35 - cornerOffset,
+    vx: 4,
+    vy: 4,
+    r: 29,
+  };
+  const initialMarble = { x: marble.x, y: marble.y };
+
+  const events = update(dynamics, mapConfig, marble);
+
+  assert.equal(events.spongeImpact, 0);
+  assert.equal(sponge.x, 300, "a clear corner pass must not move the sponge");
+  assert.equal(marble.x, initialMarble.x);
+  assert.equal(marble.y, initialMarble.y);
+}
+
+testSpongeRoundedCornerDoesNotCreateFalseImpact();
 
 console.log("Kitchen dynamics tests passed.");

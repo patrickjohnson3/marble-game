@@ -9,6 +9,7 @@ import {
 } from "../core/geometry.js";
 import {
   circleOrientedRectContact,
+  circleOrientedRoundedRectContact,
   handleWallCollisions,
   marbleOverRect,
   resolveObstacleCollision,
@@ -155,6 +156,37 @@ function testCircleOrientedRectContactUsesCachedCollisionFields() {
   assert.equal(Number.isFinite(contact.insideNx), true);
   assert.equal(Number.isFinite(contact.insideNy), true);
 }
+
+function testCircleOrientedRoundedRectRejectsClearCornerContact() {
+  const halfWidth = 50;
+  const halfHeight = 25;
+  const cornerOffset = 22 / Math.SQRT2;
+  const rect = {
+    x: 50,
+    y: 75,
+    w: halfWidth * 2,
+    h: halfHeight * 2,
+    angle: 0,
+  };
+  const circle = {
+    x: 100 + halfWidth + cornerOffset,
+    y: 100 + halfHeight + cornerOffset,
+    r: 25,
+  };
+
+  assert.equal(
+    circleOrientedRectContact(circle, rect).intersects,
+    true,
+    "the sharp rectangle demonstrates the old transparent-corner collision",
+  );
+  assert.equal(
+    circleOrientedRoundedRectContact(circle, rect, 15).intersects,
+    false,
+    "the rounded collider should leave a visibly clear corner alone",
+  );
+}
+
+testCircleOrientedRoundedRectRejectsClearCornerContact();
 
 function testMarbleOverRectHonorsEpsilon() {
   const marble = { x: 4.9, y: 20, r: 5 };
