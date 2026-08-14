@@ -133,6 +133,53 @@ function testMapValidationReportsInvalidOrientedObstacleFields() {
   );
 }
 
+function testMapValidationUsesNarrowRotatedHitboxForGoalOverlap() {
+  const errors = validateMapConfig({
+    world: { width: 200, height: 200 },
+    elements: [
+      {
+        type: "obstacle",
+        x: 50,
+        y: 50,
+        w: 100,
+        h: 100,
+        hitboxW: 100,
+        hitboxH: 10,
+        angle: Math.PI / 4,
+      },
+    ],
+    spawn: { x: 20, y: 180, r: 5 },
+    goal: { x: 55, y: 55, r: 5, holdMs: 5000 },
+  });
+
+  assert.equal(
+    errors.includes(mapValidationMessages.goalObstacleOverlap),
+    false,
+  );
+}
+
+function testMapValidationDetectsRotatedHitboxOutsideVisualBounds() {
+  const errors = validateMapConfig({
+    world: { width: 200, height: 200 },
+    elements: [
+      {
+        type: "obstacle",
+        x: 50,
+        y: 90,
+        w: 100,
+        h: 20,
+        hitboxW: 100,
+        hitboxH: 20,
+        angle: Math.PI / 4,
+      },
+    ],
+    spawn: { x: 20, y: 180, r: 5 },
+    goal: { x: 135, y: 135, r: 8, holdMs: 5000 },
+  });
+
+  assert.ok(errors.includes(mapValidationMessages.goalObstacleOverlap));
+}
+
 function testMapValidationReportsInvalidNormalizedObstacles() {
   assert.ok(
     validateMapConfig(emptyElementMapConfig, {
@@ -267,6 +314,8 @@ testMapValidationReportsInvalidElementEntries();
 testMapValidationReportsUnknownAndOutOfBoundsElements();
 testMapValidationRejectsOffGridElementDimensions();
 testMapValidationReportsInvalidOrientedObstacleFields();
+testMapValidationUsesNarrowRotatedHitboxForGoalOverlap();
+testMapValidationDetectsRotatedHitboxOutsideVisualBounds();
 testMapValidationReportsInvalidNormalizedObstacles();
 testMapValidationUsesNormalizedObstacleOverrideForSpawnAndGoal();
 testMapValidationRejectsVariantWorldMismatch();

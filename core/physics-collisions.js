@@ -99,6 +99,26 @@ export function circleOrientedRectContact(
   return target;
 }
 
+export function circleObstacleContact(
+  circle,
+  obstacle,
+  epsilon = 0,
+  target = {},
+  zeroDistanceEpsilon = defaultCollisionZeroDistanceEpsilon,
+) {
+  if (Number.isFinite(obstacle.angle)) {
+    return circleOrientedRectContact(
+      circle,
+      obstacle,
+      epsilon,
+      target,
+      zeroDistanceEpsilon,
+    );
+  }
+
+  return circleRectContact(circle, obstacle, epsilon, target);
+}
+
 function axisAlignedInsideNormal(marble, obstacle) {
   let nearestDistance = Math.abs(marble.x - obstacle.x);
   let nx = -1;
@@ -129,20 +149,13 @@ function axisAlignedInsideNormal(marble, obstacle) {
 }
 
 function obstacleContact(marble, obstacle, physics, target) {
-  const epsilon = physics.collisionDistanceSqEpsilon ?? 0;
-
-  if (Number.isFinite(obstacle.angle)) {
-    return circleOrientedRectContact(
-      marble,
-      obstacle,
-      epsilon,
-      target,
-      physics.collisionZeroDistanceEpsilon ??
-        defaultCollisionZeroDistanceEpsilon,
-    );
-  }
-
-  return circleRectContact(marble, obstacle, epsilon, target);
+  return circleObstacleContact(
+    marble,
+    obstacle,
+    physics.collisionDistanceSqEpsilon ?? 0,
+    target,
+    physics.collisionZeroDistanceEpsilon ?? defaultCollisionZeroDistanceEpsilon,
+  );
 }
 
 function collisionFeedback(normalSpeed, tangentSpeed, physics) {

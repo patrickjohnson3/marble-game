@@ -1,4 +1,5 @@
-import { circleRectContact, clamp } from "./geometry.js";
+import { clamp } from "./geometry.js";
+import { circleObstacleContact } from "./physics-collisions.js";
 
 export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
   const radius = spawn.r;
@@ -58,7 +59,7 @@ export function hasReachableGoal({ world, obstacles, spawn, goal, cellSize }) {
     }
     return !obstacles.some(
       (obstacle) =>
-        circleRectContact({ x: point.x, y: point.y, r: radius }, obstacle)
+        circleObstacleContact({ x: point.x, y: point.y, r: radius }, obstacle)
           .intersects,
     );
   }

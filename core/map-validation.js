@@ -1,9 +1,9 @@
-import { circleFrom, circleRectContact } from "./geometry.js";
 import {
   MAP_ELEMENT_TYPE_VALUES,
   mapObstacleElements,
 } from "./map-elements.js";
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
+import { circleObstacleContact } from "./physics-collisions.js";
 import { hasReachableGoal } from "./map-reachability.js";
 import { mapValidationMessages } from "./map-validation-messages.js";
 import { validMapVariants } from "./map-variants.js";
@@ -62,7 +62,7 @@ function validateGoal(goal, { world, obstacles, errors }) {
   }
   if (
     obstacles.some(
-      (obstacle) => circleRectContact(circleFrom(goal), obstacle).intersects,
+      (obstacle) => circleObstacleContact(goal, obstacle).intersects,
     )
   ) {
     errors.push(mapValidationMessages.goalObstacleOverlap);
@@ -92,7 +92,9 @@ function validateSpawn(spawn, { world, obstacles, errors }) {
     errors.push(mapValidationMessages.spawnInsideWorld);
   }
   if (
-    obstacles.some((obstacle) => circleRectContact(spawn, obstacle).intersects)
+    obstacles.some(
+      (obstacle) => circleObstacleContact(spawn, obstacle).intersects,
+    )
   ) {
     errors.push(mapValidationMessages.spawnObstacleOverlap);
   }
