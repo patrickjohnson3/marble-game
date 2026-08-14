@@ -1402,6 +1402,49 @@ function testTerrainViewRedrawsWhenTerrainIsSet() {
 
 testTerrainViewRedrawsWhenTerrainIsSet();
 
+function testTerrainViewAllocatesHitboxesOnlyWhenEnabled() {
+  let hitboxRenderCount = 0;
+  const hitboxesEl = new FakeElement();
+  const terrainView = createTerrainView({
+    terrainContainers: {},
+    obstaclesEl: new FakeElement(),
+    hitboxesEl,
+    hitboxOverlayEnabled: false,
+    goalEl: new FakeElement(),
+    goal: { x: 100, y: 120, r: 50 },
+    terrainByType: {},
+    obstacles: [{ x: 10, y: 10, w: 20, h: 20 }],
+    obstacleBounds: {
+      left: 10,
+      top: 10,
+      right: 30,
+      bottom: 30,
+      width: 20,
+      height: 20,
+    },
+    renderObstacleWalls() {},
+    renderObstacleHitboxes(container) {
+      hitboxRenderCount++;
+      container.replaceChildren(new FakeElement());
+    },
+  });
+
+  terrainView.renderTerrain();
+  assert.equal(hitboxRenderCount, 0);
+  assert.equal(hitboxesEl.children.length, 0);
+
+  terrainView.setHitboxOverlayEnabled(true);
+  assert.equal(hitboxRenderCount, 1);
+  assert.equal(hitboxesEl.children.length, 1);
+  assert.equal(hitboxesEl.classList.contains("show"), true);
+
+  terrainView.setHitboxOverlayEnabled(false);
+  assert.equal(hitboxesEl.children.length, 0);
+  assert.equal(hitboxesEl.classList.contains("show"), false);
+}
+
+testTerrainViewAllocatesHitboxesOnlyWhenEnabled();
+
 function testTerrainViewUsesUpdatedWorld() {
   const renderedWorlds = [];
   const goal = { x: 100, y: 120, r: 50 };

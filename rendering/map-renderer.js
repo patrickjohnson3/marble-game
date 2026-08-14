@@ -30,8 +30,7 @@ export function createTerrainView({
   let currentHitboxOverlayEnabled = hitboxOverlayEnabled;
   const themeState = {};
 
-  function setHitboxOverlayEnabled(enabled) {
-    currentHitboxOverlayEnabled = Boolean(enabled);
+  function applyHitboxOverlayVisibility() {
     hitboxesEl?.classList.toggle("show", currentHitboxOverlayEnabled);
   }
 
@@ -56,10 +55,27 @@ export function createTerrainView({
   }
 
   function renderHitboxes() {
+    if (!currentHitboxOverlayEnabled) {
+      hitboxesEl?.replaceChildren();
+      applyHitboxOverlayVisibility();
+      return;
+    }
+
     renderObstacleHitboxes?.(hitboxesEl, currentObstacles, {
       bounds: currentObstacleBounds,
     });
-    setHitboxOverlayEnabled(currentHitboxOverlayEnabled);
+    applyHitboxOverlayVisibility();
+  }
+
+  function setHitboxOverlayEnabled(enabled) {
+    const nextEnabled = Boolean(enabled);
+    if (currentHitboxOverlayEnabled === nextEnabled) {
+      applyHitboxOverlayVisibility();
+      return;
+    }
+
+    currentHitboxOverlayEnabled = nextEnabled;
+    renderHitboxes();
   }
 
   function renderMovedObstacles() {
