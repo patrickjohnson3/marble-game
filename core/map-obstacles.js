@@ -29,7 +29,7 @@ export function normalizeJoinedObstacleRects(rects) {
     )) {
       const horizontalBottom = horizontal.y + horizontal.h;
       const verticalBottom = vertical.y + vertical.h;
-      const horizontalRight = horizontal.x + horizontal.w;
+      let horizontalRight = horizontal.x + horizontal.w;
       const verticalRight = vertical.x + vertical.w;
 
       if (
@@ -51,9 +51,18 @@ export function normalizeJoinedObstacleRects(rects) {
 
       const verticalBottomGap = Math.abs(verticalBottom - horizontalBottom);
       const verticalTopGap = Math.abs(vertical.y - horizontal.y);
-      const horizontalRightGap = Math.abs(verticalRight - horizontalRight);
+      let horizontalRightGap = Math.abs(verticalRight - horizontalRight);
       const horizontalLeftGap = Math.abs(vertical.x - horizontal.x);
       const threshold = Math.max(horizontal.h, vertical.w);
+
+      if (horizontalRight > verticalRight && horizontalRightGap <= threshold) {
+        const width = verticalRight - horizontal.x;
+        if (width > 0) {
+          horizontal.w = width;
+          horizontalRight = verticalRight;
+          horizontalRightGap = 0;
+        }
+      }
 
       if (
         verticalBottomGap <= threshold &&

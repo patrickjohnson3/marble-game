@@ -722,6 +722,17 @@ function testObstacleNormalizationTrimsTJoinOverhang() {
 
 testObstacleNormalizationTrimsTJoinOverhang();
 
+function testObstacleNormalizationTrimsRightJoinOverhang() {
+  const [horizontal] = normalizeJoinedObstacleRects([
+    { type: "obstacle", x: 0, y: 40, w: 110, h: 20 },
+    { type: "obstacle", x: 80, y: 0, w: 20, h: 80 },
+  ]);
+
+  assert.equal(horizontal.w, 100);
+}
+
+testObstacleNormalizationTrimsRightJoinOverhang();
+
 function testCurrentMapJoinedWallsSurviveNormalization() {
   const obstacles = currentMapObstacles();
 

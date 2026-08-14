@@ -1,7 +1,4 @@
-import {
-  isHorizontalRect,
-  rangesTouchOrOverlap,
-} from "../core/map-obstacles.js";
+import { isHorizontalRect } from "../core/map-obstacles.js";
 
 const mapScale = 2;
 
@@ -47,35 +44,8 @@ function scaleMapElement(element) {
   };
 }
 
-function trimScaledObstacleJoinOverhangs(elements) {
-  const scaledElements = elements.map(scaleMapElement);
-  const horizontalObstacles = scaledElements.filter(isHorizontalObstacle);
-  const verticalObstacles = scaledElements.filter(
-    (element) => element.type === "obstacle" && !isHorizontalObstacle(element),
-  );
-
-  for (const horizontal of horizontalObstacles) {
-    for (const vertical of verticalObstacles) {
-      const horizontalRight = horizontal.x + horizontal.w;
-      const verticalRight = vertical.x + vertical.w;
-      const threshold = Math.max(horizontal.h, vertical.w);
-
-      if (
-        rangesTouchOrOverlap(
-          horizontal.y,
-          horizontal.y + horizontal.h,
-          vertical.y,
-          vertical.y + vertical.h,
-        ) &&
-        horizontalRight > verticalRight &&
-        Math.abs(horizontalRight - verticalRight) <= threshold
-      ) {
-        horizontal.w = verticalRight - horizontal.x;
-      }
-    }
-  }
-
-  return scaledElements;
+function scaleMapElements(elements) {
+  return elements.map(scaleMapElement);
 }
 
 function scaleMapPoint(point) {
@@ -375,7 +345,7 @@ export const authoredMapVariants = [
     difficulty: 2,
     spawn: scaleMapPoint({ x: 420, y: 1820, r: 29 }),
     goal: scaleMapPoint({ x: 1760, y: 420, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(kitchenFloorElements),
+    elements: scaleMapElements(kitchenFloorElements),
   },
   {
     id: "living-room",
@@ -385,7 +355,7 @@ export const authoredMapVariants = [
     difficulty: 2,
     spawn: scaleMapPoint({ x: 360, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1820, y: 440, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(livingRoomElements),
+    elements: scaleMapElements(livingRoomElements),
   },
   {
     id: "parking-lot",
@@ -396,7 +366,7 @@ export const authoredMapVariants = [
     difficulty: 3,
     spawn: scaleMapPoint({ x: 280, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 340, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(parkingLotElements),
+    elements: scaleMapElements(parkingLotElements),
   },
   {
     id: "sand-lot",
@@ -406,7 +376,7 @@ export const authoredMapVariants = [
     difficulty: 3,
     spawn: scaleMapPoint({ x: 300, y: 340, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 1840, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(sandLotElements),
+    elements: scaleMapElements(sandLotElements),
   },
   {
     id: "kitchen-breakfast-spill",
@@ -417,7 +387,7 @@ export const authoredMapVariants = [
     difficulty: 2,
     spawn: scaleMapPoint({ x: 320, y: 1840, r: 29 }),
     goal: scaleMapPoint({ x: 1840, y: 360, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(kitchenBreakfastElements),
+    elements: scaleMapElements(kitchenBreakfastElements),
   },
   {
     id: "parking-lot-puddles",
@@ -428,7 +398,7 @@ export const authoredMapVariants = [
     difficulty: 3,
     spawn: scaleMapPoint({ x: 280, y: 1860, r: 29 }),
     goal: scaleMapPoint({ x: 1880, y: 320, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(parkingLotPuddlesElements),
+    elements: scaleMapElements(parkingLotPuddlesElements),
   },
   {
     id: "hockey-rink",
@@ -438,21 +408,21 @@ export const authoredMapVariants = [
     difficulty: 2,
     spawn: scaleMapPoint({ x: 1100, y: 1840, r: 29 }),
     goal: scaleMapPoint({ x: 1100, y: 320, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(hockeyRinkElements),
+    elements: scaleMapElements(hockeyRinkElements),
   },
   {
     id: "default",
     name: "classic maze",
     difficulty: 1,
     goal: scaleMapPoint({ x: 1920, y: 1900, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(defaultElements),
+    elements: scaleMapElements(defaultElements),
   },
   {
     id: "generated-1",
     name: "switchback maze",
     difficulty: 2,
     goal: scaleMapPoint({ x: 1840, y: 1850, r: 95, holdMs: 5000 }),
-    elements: trimScaledObstacleJoinOverhangs(generatedOneElements),
+    elements: scaleMapElements(generatedOneElements),
   },
 ];
 
