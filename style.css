@@ -29,9 +29,6 @@ body {
   inset: 0;
   overflow: hidden;
   background: #101114;
-  --camera-x: 0px;
-  --camera-y: 0px;
-  --camera-scale: 1;
 }
 #game::before {
   content: "";
@@ -45,16 +42,16 @@ body {
     linear-gradient(90deg, #ffffff08 1px, transparent 1px),
     radial-gradient(circle at center, #191b20, #101114 86%);
   background-position:
-    calc(var(--camera-x) * 0.72) calc(var(--camera-y) * 0.72),
-    calc(var(--camera-x) * 0.55) calc(var(--camera-y) * 0.55),
-    var(--camera-x) var(--camera-y),
-    var(--camera-x) var(--camera-y),
+    0 0,
+    0 0,
+    0 0,
+    0 0,
     center;
   background-size:
-    calc(168px * var(--camera-scale)) calc(168px * var(--camera-scale)),
-    calc(126px * var(--camera-scale)) calc(126px * var(--camera-scale)),
-    calc(42px * var(--camera-scale)) calc(42px * var(--camera-scale)),
-    calc(42px * var(--camera-scale)) calc(42px * var(--camera-scale)),
+    168px 168px,
+    126px 126px,
+    42px 42px,
+    42px 42px,
     100% 100%;
 }
 #world {

@@ -62,11 +62,6 @@ export function createCameraController({
 
   function applyTransform() {
     clampCameraPosition();
-    const floorStyle = cameraEl.parentElement?.style ?? cameraEl.style;
-
-    floorStyle.setProperty?.("--camera-x", camera.x + "px");
-    floorStyle.setProperty?.("--camera-y", camera.y + "px");
-    floorStyle.setProperty?.("--camera-scale", camera.scale);
     cameraEl.style.transform =
       "translate(" +
       camera.x +
