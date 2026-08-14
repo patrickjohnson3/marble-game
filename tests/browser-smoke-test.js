@@ -114,7 +114,9 @@ try {
       floorWidth: floor?.width ?? 0,
       fixtureBackgrounds: fixtureClasses.map((className) => {
         const fixture = document.querySelector("." + className);
-        return fixture ? getComputedStyle(fixture).backgroundImage : "none";
+        return fixture
+          ? window.getComputedStyle(fixture).backgroundImage
+          : "none";
       }),
     };
   });

@@ -1,10 +1,5 @@
 import { copy } from "./copy.js";
 import { GAME_PHASES } from "./runtime-states.js";
-import {
-  requestFullscreenMode,
-  requestMotionPermissionIfNeeded,
-  requestWakeLock,
-} from "../platform/platform.js";
 
 function requestMotionPermissionWithTimeout({
   requestMotionPermission,
@@ -33,9 +28,9 @@ function requestMotionPermissionWithTimeout({
 export async function startGameWithPermissions({
   enableMotion,
   game,
-  keepDisplayAwake = requestWakeLock,
-  requestFullscreen = requestFullscreenMode,
-  requestMotionPermission = requestMotionPermissionIfNeeded,
+  keepDisplayAwake,
+  requestFullscreen,
+  requestMotionPermission,
   resetGame,
   scheduleFrame,
   sensor,

@@ -1,6 +1,5 @@
 import { copy } from "../core/copy.js";
 import { GAME_PHASES } from "../core/runtime-states.js";
-import { screenAdjusted } from "../platform/platform.js";
 
 export function createSensorController({
   calibration,
@@ -12,7 +11,7 @@ export function createSensorController({
   tilt,
   tuning,
   ui,
-  adjustScreen = screenAdjusted,
+  adjustScreen,
 }) {
   function maybeAutoNeutral() {
     if (game.paused) return;

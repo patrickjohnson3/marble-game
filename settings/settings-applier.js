@@ -1,16 +1,11 @@
-import {
-  exitFullscreenMode,
-  requestFullscreenMode,
-} from "../platform/platform.js";
-
 export function createSettingsApplier({
   documentRef,
   haptics,
   physics,
   settings,
   trailRenderer,
-  requestFullscreen = requestFullscreenMode,
-  exitFullscreen = exitFullscreenMode,
+  requestFullscreen,
+  exitFullscreen,
 }) {
   function applySettings() {
     physics.maxSpeed = settings.maxSpeed;

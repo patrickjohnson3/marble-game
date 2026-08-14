@@ -53,6 +53,7 @@ import { createKeyboardController } from "./input/keyboard-controller.js";
 import { createSensorController } from "./input/sensor-controller.js";
 import { createSensorWatchdog } from "./input/sensor-watchdog.js";
 import {
+  exitFullscreenMode,
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
   requestWakeLock,
@@ -555,6 +556,8 @@ export function createApp({
   });
   const { applyFullscreenSetting, applySettings } = createSettingsApplier({
     documentRef,
+    exitFullscreen: (options) =>
+      exitFullscreenMode({ ...options, documentRef }),
     haptics,
     physics,
     requestFullscreen: (options) =>
