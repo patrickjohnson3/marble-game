@@ -62,14 +62,12 @@ function testActiveFrameRunsGameplayBeforeRendering() {
     intro: state.intro,
     keyboard: state.input.keyboard,
     marble: state.marble,
-    obstacles: mapState.obstacles,
     physics: state.physics,
-    terrainByType: mapState.terrainByType,
+    mapState,
     tilt: state.input.tilt,
   };
   let currentTime = 0;
   const loop = createGameLoop({
-    activeMap: () => mapState.activeMap,
     cameraController: {
       centerOnMarble() {},
       updateFollow() {
@@ -107,6 +105,7 @@ function testActiveFrameRunsGameplayBeforeRendering() {
         return {};
       },
     },
+    mapState,
     marble: state.marble,
     marbleView: {
       render() {
@@ -115,7 +114,7 @@ function testActiveFrameRunsGameplayBeforeRendering() {
     },
     now: () => currentTime,
     perf: state.perf,
-    physicsContext: () => physicsContext,
+    physicsContext,
     scheduleFrame() {
       calls.push("schedule");
     },
@@ -198,14 +197,12 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
     intro: state.intro,
     keyboard: state.input.keyboard,
     marble: state.marble,
-    obstacles: mapRuntime.state.obstacles,
     physics: state.physics,
-    terrainByType: mapRuntime.state.terrainByType,
+    mapState: mapRuntime.state,
     tilt: state.input.tilt,
   };
   const eventQueue = kitchenEvents ? [...kitchenEvents] : null;
   const loop = createGameLoop({
-    activeMap: () => mapRuntime.state.activeMap,
     cameraController: {
       centerOnMarble() {
         calls.centered++;
@@ -238,7 +235,6 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
       },
     },
     goalController: { update() {} },
-    goalTarget: () => mapRuntime.state.activeMap.goal,
     kitchenDynamics: eventQueue
       ? {
           state: {},
@@ -247,17 +243,17 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
           },
         }
       : null,
+    mapState: mapRuntime.state,
     marble: state.marble,
     marbleView: { render() {} },
     now: () => currentTime,
     perf: state.perf,
-    physicsContext: () => physicsContext,
+    physicsContext,
     resetGoalProgress() {
       calls.goalResets++;
     },
     scheduleFrame() {},
     settings: { goalIndicatorEnabled: false },
-    spawnTarget: () => mapRuntime.state.activeMap.spawn,
     terrainView: {
       renderMapThemeDynamics() {},
       renderMovedObstacles() {

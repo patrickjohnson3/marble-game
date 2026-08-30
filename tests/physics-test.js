@@ -46,7 +46,17 @@ function updateTestPhysics(context, dt, feedback) {
     [MAP_ELEMENT_TYPES.waterPatch]: terrainBucket(context.waterPatches),
   };
 
-  updatePhysics({ ...context, terrainByType }, dt, feedback);
+  updatePhysics(
+    {
+      ...context,
+      mapState: {
+        obstacles: context.obstacles ?? [],
+        terrainByType,
+      },
+    },
+    dt,
+    feedback,
+  );
 }
 
 function testCircleRectContact() {

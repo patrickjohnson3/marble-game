@@ -364,26 +364,17 @@ function bindViewportEvents({
   documentRef.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
 }
 
-function createCurrentPhysicsContext(state, mapState) {
-  const { bounds, camera, game, input, intro, marble, physics } = state;
+function createPhysicsContext(state, mapState) {
+  const { bounds, input, intro, marble, physics } = state;
   const { keyboard, tilt } = input;
-  const physicsContext = {
+  return {
     marble,
     bounds,
     intro,
     tilt,
     keyboard,
-    camera,
-    game,
     physics,
-    terrainByType: mapState.terrainByType,
-    obstacles: mapState.obstacles,
-  };
-
-  return function currentPhysicsContext() {
-    physicsContext.terrainByType = mapState.terrainByType;
-    physicsContext.obstacles = mapState.obstacles;
-    return physicsContext;
+    mapState,
   };
 }
 
@@ -691,28 +682,26 @@ export function createApp({
       }),
   });
 
-  const currentPhysicsContext = createCurrentPhysicsContext(state, mapState);
+  const physicsContext = createPhysicsContext(state, mapState);
   const gameLoop = createGameLoop({
-    activeMap: () => mapState.activeMap,
     cameraController,
     effectsRenderer,
     frameLoop,
     game,
     hapticFeedback,
     goalController,
-    goalTarget: () => mapState.activeMap.goal,
     kitchenDynamics,
+    mapState,
     marble,
     marbleView,
     perf: state.perf,
-    physicsContext: currentPhysicsContext,
+    physicsContext,
     resetGoalProgress: () => {
       mapRuntime.resetGoalProgress();
       terrainView.updateGoalProgress(0);
     },
     scheduleFrame,
     settings,
-    spawnTarget: () => mapState.activeMap.spawn,
     terrainView,
     timing,
     tuning,

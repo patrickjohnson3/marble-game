@@ -28,9 +28,8 @@ export function createGameLoop({
   game,
   hapticFeedback,
   goalController,
-  goalTarget = () => null,
-  activeMap = () => null,
   kitchenDynamics = null,
+  mapState,
   marble,
   marbleView,
   perf,
@@ -38,7 +37,6 @@ export function createGameLoop({
   scheduleFrame,
   resetGoalProgress = () => {},
   settings = { goalIndicatorEnabled: false },
-  spawnTarget = () => null,
   terrainView,
   timing,
   tuning,
@@ -93,7 +91,7 @@ export function createGameLoop({
   function onHazard() {
     if (!hazardArmed) return;
 
-    const spawn = spawnTarget();
+    const spawn = mapState.activeMap?.spawn;
     if (!spawn) return;
 
     hazardArmed = false;
@@ -112,7 +110,7 @@ export function createGameLoop({
   }
 
   function updateGoalIndicator(context) {
-    const goal = goalTarget();
+    const goal = mapState.activeMap?.goal;
     if (!settings.goalIndicatorEnabled || !context.intro.released || !goal) {
       ui.setGoalIndicator({ visible: false });
       return;
@@ -128,7 +126,7 @@ export function createGameLoop({
   }
 
   function updateHazardArmed() {
-    const spawn = spawnTarget();
+    const spawn = mapState.activeMap?.spawn;
     if (!spawn) return;
 
     const distanceFromSpawn = Math.hypot(
@@ -161,7 +159,7 @@ export function createGameLoop({
     }
 
     if (active) {
-      const context = physicsContext();
+      const context = physicsContext;
       previousMarble.x = marble.x;
       previousMarble.y = marble.y;
       const physicsBudgetStart = performance.now();
@@ -185,7 +183,7 @@ export function createGameLoop({
       updateHazardArmed();
       const themeBudgetStart = performance.now();
       const themeEvents = kitchenDynamics?.update({
-        mapConfig: activeMap(),
+        mapConfig: mapState.activeMap,
         marble,
         previousMarble,
         frameDelta,

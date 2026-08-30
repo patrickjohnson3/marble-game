@@ -183,7 +183,7 @@ function scratch(context) {
 
 function terrainByType(context, type) {
   return (
-    context.terrainByType?.[type] ?? {
+    context.mapState.terrainByType[type] ?? {
       elements: [],
     }
   );
@@ -366,7 +366,7 @@ function physicsStep(context, dt, feedback) {
   handleWallCollisions(
     context,
     feedback.onImpact,
-    context.obstacles,
+    context.mapState.obstacles,
     physicsScratch.collisionContact,
   );
   handleSurfaceFeedback(context, feedback.onSurface, currentSurfaceType);
