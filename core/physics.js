@@ -15,18 +15,6 @@ export const SURFACE_TYPES = Object.freeze({
   hazardPatch: MAP_ELEMENT_TYPES.hazardPatch,
   waterPatch: MAP_ELEMENT_TYPES.waterPatch,
 });
-export const SURFACE_PRIORITY = Object.freeze([
-  SURFACE_TYPES.gooPatch,
-  SURFACE_TYPES.roughPatch,
-  SURFACE_TYPES.waterPatch,
-  SURFACE_TYPES.icePatch,
-  SURFACE_TYPES.floor,
-]);
-const SURFACE_FEEDBACK_TYPES = Object.freeze([
-  SURFACE_TYPES.gooPatch,
-  SURFACE_TYPES.roughPatch,
-  SURFACE_TYPES.waterPatch,
-]);
 const ELLIPTICAL_SURFACE_SHAPES = Object.freeze({
   [SURFACE_TYPES.gooPatch]: Object.freeze({
     centerX: 0.52,
@@ -146,12 +134,13 @@ export function physicsSubstepCount(speed, dt, physics) {
 }
 
 function isOverTerrainPatch(marble, intro, patches, physics) {
-  return (
-    intro.released &&
-    patches.some((rect) =>
-      marbleOverRect(marble, rect, physics.collisionDistanceSqEpsilon ?? 0),
-    )
-  );
+  if (!intro.released) return false;
+
+  const epsilon = physics.collisionDistanceSqEpsilon ?? 0;
+  for (let i = 0; i < patches.length; i++) {
+    if (marbleOverRect(marble, patches[i], epsilon)) return true;
+  }
+  return false;
 }
 
 function createPhysicsScratch() {
@@ -282,11 +271,14 @@ function sweptOverTerrainPatch(start, end, intro, patches, physics, type) {
   const epsilon = Math.max(physics.collisionDistanceSqEpsilon ?? 0, 0);
   const padding = Math.sqrt(end.r * end.r + epsilon);
   const shape = ELLIPTICAL_SURFACE_SHAPES[type];
-  return patches.some((patch) =>
-    shape
+  for (let i = 0; i < patches.length; i++) {
+    const patch = patches[i];
+    const intersects = shape
       ? segmentIntersectsExpandedEllipse(start, end, patch, shape, padding)
-      : segmentIntersectsExpandedRect(start, end, patch, padding),
-  );
+      : segmentIntersectsExpandedRect(start, end, patch, padding);
+    if (intersects) return true;
+  }
+  return false;
 }
 
 function applySurfaceDrag(context, hits, factors) {
@@ -307,15 +299,23 @@ function applySurfaceDrag(context, hits, factors) {
 }
 
 function handleSurfaceFeedback({ marble }, onSurface, surfaceType) {
-  if (!SURFACE_FEEDBACK_TYPES.includes(surfaceType)) return;
+  if (
+    surfaceType !== SURFACE_TYPES.gooPatch &&
+    surfaceType !== SURFACE_TYPES.roughPatch &&
+    surfaceType !== SURFACE_TYPES.waterPatch
+  ) {
+    return;
+  }
 
   onSurface(Math.hypot(marble.vx, marble.vy), surfaceType);
 }
 
 function surfaceType(hits) {
-  return SURFACE_PRIORITY.find(
-    (type) => type === SURFACE_TYPES.floor || hits[type],
-  );
+  if (hits.gooPatch) return SURFACE_TYPES.gooPatch;
+  if (hits.roughPatch) return SURFACE_TYPES.roughPatch;
+  if (hits.waterPatch) return SURFACE_TYPES.waterPatch;
+  if (hits.icePatch) return SURFACE_TYPES.icePatch;
+  return SURFACE_TYPES.floor;
 }
 
 function updateSurfaceHits(context, physicsScratch) {

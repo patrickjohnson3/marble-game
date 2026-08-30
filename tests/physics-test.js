@@ -17,7 +17,6 @@ import {
 import {
   PRE_MOVE_SURFACE_TYPES,
   SURFACE_TYPES,
-  SURFACE_PRIORITY,
   SWEPT_SURFACE_TYPES,
   physicsSubstepCount,
   updatePhysics,
@@ -759,13 +758,6 @@ function testOverlappingTerrainUsesExplicitSurfacePriority() {
     },
   );
 
-  assert.deepEqual(SURFACE_PRIORITY, [
-    SURFACE_TYPES.gooPatch,
-    SURFACE_TYPES.roughPatch,
-    SURFACE_TYPES.waterPatch,
-    SURFACE_TYPES.icePatch,
-    SURFACE_TYPES.floor,
-  ]);
   assert.deepEqual(surfaces, [SURFACE_TYPES.gooPatch]);
 }
 

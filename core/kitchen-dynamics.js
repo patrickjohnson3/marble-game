@@ -709,7 +709,7 @@ function antTarget(ant, cheerios, waterPatch) {
   return cheerios[ant.targetIndex] ?? null;
 }
 
-function updateAnts({ state, frameDelta, marble, events }) {
+function updateAnts(state, marble, frameDelta, events) {
   const marbleSpeed = Math.hypot(marble.vx || 0, marble.vy || 0);
   const squishDistance = marble.r + antRadius;
   const squishDistanceSq = squishDistance * squishDistance;
@@ -856,14 +856,14 @@ function resolveCerealObstacleCollisions(circle, obstacles, contact) {
   }
 }
 
-function updateCereal({
+function updateCereal(
   state,
   marble,
   previousMarble,
-  events,
   frameDelta,
+  events,
   soakInWater,
-}) {
+) {
   for (let i = 0; i < state.cheerios.length; i++) {
     const cereal = state.cheerios[i];
     if (!cereal.active) continue;
@@ -942,7 +942,10 @@ function updateCereal({
 
 export function updateKitchenDynamics(
   state,
-  { mapConfig, marble, previousMarble = marble, frameDelta = 1 },
+  mapConfig,
+  marble,
+  previousMarble = marble,
+  frameDelta = 1,
 ) {
   const events = state.events;
   events.cerealHits = 0;
@@ -956,15 +959,15 @@ export function updateKitchenDynamics(
 
   ensureElementCaches(state, mapConfig.elements);
   updateSponge(state, marble, frameDelta, events);
-  updateCereal({
+  updateCereal(
     state,
     marble,
     previousMarble,
-    events,
     frameDelta,
-    soakInWater: mapConfig.variantId === kitchenFloorMapId,
-  });
-  updateAnts({ state, frameDelta, marble, events });
+    events,
+    mapConfig.variantId === kitchenFloorMapId,
+  );
+  updateAnts(state, marble, frameDelta, events);
   state.frameIndex += 1;
   return events;
 }
@@ -975,8 +978,14 @@ export function createKitchenDynamics(state = createKitchenDynamicsState()) {
     reset(context) {
       return resetKitchenDynamics(state, context);
     },
-    update(context) {
-      return updateKitchenDynamics(state, context);
+    update(mapConfig, marble, previousMarble, frameDelta) {
+      return updateKitchenDynamics(
+        state,
+        mapConfig,
+        marble,
+        previousMarble,
+        frameDelta,
+      );
     },
   };
 }

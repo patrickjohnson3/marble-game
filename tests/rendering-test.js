@@ -97,12 +97,7 @@ function updateAndRenderMapThemeDynamics({
   frameDelta = 1,
   themeState = {},
 }) {
-  const events = dynamics.update({
-    mapConfig,
-    marble,
-    previousMarble,
-    frameDelta,
-  });
+  const events = dynamics.update(mapConfig, marble, previousMarble, frameDelta);
   renderMapThemeDynamics({
     dynamicsState: dynamics.state,
     mapConfig,
@@ -422,7 +417,7 @@ function testGoalIndicatorUpdatesVisibilityAndAngle() {
     state: {},
   });
 
-  ui.setGoalIndicator({ visible: true, angle: 1.25 });
+  ui.setGoalIndicator(true, 1.25);
 
   assert.equal(goalIndicator.classList.contains("show"), true);
   assert.equal(
@@ -430,7 +425,7 @@ function testGoalIndicatorUpdatesVisibilityAndAngle() {
     "1.25rad",
   );
 
-  ui.setGoalIndicator({ visible: false });
+  ui.setGoalIndicator(false);
   assert.equal(goalIndicator.classList.contains("show"), false);
 }
 

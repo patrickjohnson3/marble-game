@@ -20,12 +20,7 @@ function marbleAt(cheerio, overrides = {}) {
 }
 
 function update(dynamics, mapConfig, marble, frameDelta = 1) {
-  return dynamics.update({
-    mapConfig,
-    marble,
-    previousMarble: marble,
-    frameDelta,
-  });
+  return dynamics.update(mapConfig, marble, marble, frameDelta);
 }
 
 function testCheerioOnlySoaksAfterPlayerDisturbsIt() {

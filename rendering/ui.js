@@ -77,7 +77,7 @@ export function createUi({
     mapObjectsStatus.hidden = !message;
   }
 
-  function setGoalIndicator({ visible, angle = 0 }) {
+  function setGoalIndicator(visible, angle = 0) {
     if (goalIndicatorState.visible !== visible) {
       goalIndicatorState.visible = visible;
       goalIndicator.classList.toggle("show", visible);

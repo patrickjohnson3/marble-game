@@ -112,17 +112,17 @@ export function createGameLoop({
   function updateGoalIndicator(context) {
     const goal = mapState.activeMap?.goal;
     if (!settings.goalIndicatorEnabled || !context.intro.released || !goal) {
-      ui.setGoalIndicator({ visible: false });
+      ui.setGoalIndicator(false);
       return;
     }
 
     const dx = goal.x - marble.x;
     const dy = goal.y - marble.y;
     const distance = Math.hypot(dx, dy);
-    ui.setGoalIndicator({
-      visible: distance > goal.r * tuning.goalIndicatorDistanceMultiplier,
-      angle: Math.atan2(dy, dx),
-    });
+    ui.setGoalIndicator(
+      distance > goal.r * tuning.goalIndicatorDistanceMultiplier,
+      Math.atan2(dy, dx),
+    );
   }
 
   function updateHazardArmed() {
@@ -182,12 +182,12 @@ export function createGameLoop({
       updateGoalIndicator(context);
       updateHazardArmed();
       const themeBudgetStart = performance.now();
-      const themeEvents = kitchenDynamics?.update({
-        mapConfig: mapState.activeMap,
+      const themeEvents = kitchenDynamics?.update(
+        mapState.activeMap,
         marble,
         previousMarble,
         frameDelta,
-      });
+      );
       if (themeEvents?.waterChanges > 0) {
         terrainView?.renderTerrainType(SURFACE_TYPES.waterPatch);
       }
