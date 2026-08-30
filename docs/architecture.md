@@ -241,8 +241,6 @@ Key modules:
 
 - `core/map-config.js`: combines map data, base config, defaults, and frozen
   generated variants.
-- `core/procedural-generator.js`: development/test utility for deterministic
-  generated variants from templates and seed values.
 - `core/map-variants.js`: resolves/selects active variants.
 - `core/map-validation.js`: validates map shape and required fields.
 - `core/map-runtime.js`: owns derived active-map state used by rendering,
@@ -378,10 +376,9 @@ Use this section when deciding where a change belongs.
 - `core/map-runtime.js`: active-map derived state and goal progress state.
 - `core/map-validation.js` and `core/map-validation-messages.js`: map schema
   and validation errors.
-- `core/map-variants.js`: variant hashing, selection, and resolution.
+- `core/map-variants.js`: variant selection and resolution.
 - `core/physics.js`: input smoothing, velocity, drag, substeps, surfaces.
 - `core/physics-collisions.js`: wall and obstacle collision resolution.
-- `core/procedural-generator.js`: development/test procedural variant utility.
 - `core/rect-bounds.js`: rectangle collection bounds.
 - `core/state.js`: initial mutable state shape.
 - `input/camera-controller.js` and `input/camera-gestures.js`: camera transform,

@@ -24,7 +24,6 @@ assert.equal(goalHoldHint(0, 2), "hold center: 1s");
 
 function testGoalHoldResetAndMapProgression() {
   const baseMapConfig = {
-    seed: "first",
     world: { width: 300, height: 300 },
     spawn: { x: 20, y: 20, r: 5 },
     variants: [

@@ -11,8 +11,7 @@ export const variantSelectionFixtures = [
   { id: "b", elements: [roughPatch()] },
 ];
 
-export const simpleSeededMapConfig = {
-  seed: "seed-a",
+export const simpleMapConfig = {
   variants: [
     {
       id: "only",
@@ -25,14 +24,12 @@ export const simpleSeededMapConfig = {
 };
 
 export const missingElementsVariantConfig = {
-  seed: "bad-variant",
   variants: [{ id: "bad-variant", goal: goal() }],
   spawn: spawn(),
   world: { width: 100, height: 100 },
 };
 
 export const malformedVariantConfig = {
-  seed: "seed-a",
   variants: [
     null,
     {
@@ -56,7 +53,6 @@ export const emptyElementMapConfig = mapConfig();
 
 export const variantWorldMismatchConfig = {
   ...emptyElementMapConfig,
-  seed: "other-size",
   variants: [
     {
       id: "other-size",

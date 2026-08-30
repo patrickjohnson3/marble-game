@@ -12,10 +12,10 @@ import {
   variantWorldMismatchConfig,
 } from "./map-fixtures.js";
 
-function testResolveSeededMapConfigAllowsValidationOfMissingVariantElements() {
+function testResolveMapConfigAllowsValidationOfMissingVariantElements() {
   const resolved = resolveMapVariantConfig(
     missingElementsVariantConfig,
-    missingElementsVariantConfig.seed,
+    "bad-variant",
   );
 
   assert.equal(resolved.variantId, "bad-variant");
@@ -223,7 +223,7 @@ function testMapValidationUsesNormalizedObstacleOverrideForSpawnAndGoal() {
 function testMapValidationAllowsVariantWorldSizes() {
   const resolved = resolveMapVariantConfig(
     variantWorldMismatchConfig,
-    variantWorldMismatchConfig.seed,
+    "other-size",
   );
 
   assert.deepEqual(resolved.world, { width: 120, height: 100 });
@@ -323,7 +323,7 @@ function testReachabilityHandlesGoalNearCellBoundary() {
   );
 }
 
-testResolveSeededMapConfigAllowsValidationOfMissingVariantElements();
+testResolveMapConfigAllowsValidationOfMissingVariantElements();
 testMapValidationRejectsBlockedSpawn();
 testMapValidationReportsMalformedConfig();
 testMapValidationReportsInvalidWorldAndGrid();

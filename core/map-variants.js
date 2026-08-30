@@ -1,15 +1,3 @@
-export function hashMapSeed(seed) {
-  const text = String(seed ?? "");
-  let hash = 2166136261;
-
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-
-  return hash >>> 0;
-}
-
 export function validMapVariants(variants) {
   return Array.isArray(variants)
     ? variants.filter((variant) => variant && typeof variant === "object")
@@ -25,14 +13,6 @@ export function selectNextMapVariant(variants, currentVariantId) {
   );
   if (currentIndex < 0) return validVariants[0];
   return validVariants[(currentIndex + 1) % validVariants.length];
-}
-
-export function goalRadiusForDifficulty(difficulty, fallbackRadius) {
-  const level = Math.round(difficulty);
-  if (level <= 1) return Math.max(fallbackRadius, 110);
-  if (level === 2) return fallbackRadius;
-  if (level >= 3) return Math.min(fallbackRadius, 84);
-  return fallbackRadius;
 }
 
 function resolveMapConfig(config, variant) {

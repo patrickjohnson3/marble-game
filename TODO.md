@@ -13,10 +13,9 @@
 ## Later
 
 1. Add another real-world map with matching obstacles and terrain.
-2. Add focused tests for any new procedural generation helpers.
-3. Profile mobile performance after canvas or particle changes.
-4. Add a few mobile-DPR visual regression baselines after the real-world-map visuals stabilize.
-5. Split kitchen simulation tests from rendering tests only if the rendering suite becomes difficult to maintain; retain rendering integration coverage.
+2. Profile mobile performance after canvas or particle changes.
+3. Add a few mobile-DPR visual regression baselines after the real-world-map visuals stabilize.
+4. Split kitchen simulation tests from rendering tests only if the rendering suite becomes difficult to maintain; retain rendering integration coverage.
 
 ## Parking Lot
 

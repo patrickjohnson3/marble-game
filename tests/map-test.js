@@ -1,10 +1,5 @@
 import assert from "node:assert/strict";
-import { circleRectContact } from "../core/geometry.js";
-import {
-  authoredMapVariants,
-  baseMapConfig,
-  resolvedMapConfig,
-} from "../core/map-config.js";
+import { authoredMapVariants, baseMapConfig } from "../core/map-config.js";
 import {
   mapHazardPatchElements,
   mapObstacleElements,
@@ -16,35 +11,16 @@ import {
   snapToGrid,
 } from "../core/map-obstacles.js";
 import {
-  goalRadiusForDifficulty,
   resolveMapVariantConfig,
   selectNextMapVariant,
   validMapVariants,
 } from "../core/map-variants.js";
-import { validateMapConfig } from "../core/map-validation.js";
 import { createMapProgression } from "../core/map-progression.js";
-import {
-  createSeededRandom,
-  generateProceduralMapVariants,
-  generateTemplateMapVariant,
-  gridAlignedPosition,
-  gridAlignedSize,
-  jitterPatch,
-  jitterPoint,
-  jitterRect,
-  limitElementsByBudget,
-  outsideClearZones,
-  pickRandom,
-  proceduralElementBudget,
-  randomBetween,
-  templatePointToWorld,
-  templateRectToElement,
-} from "../core/procedural-generator.js";
 import { copy } from "../core/copy.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
 import {
   malformedVariantConfig,
-  simpleSeededMapConfig,
+  simpleMapConfig,
   smallJoinOverhangRects,
   touchingJoinOverhangRects,
   variantSelectionFixtures,
@@ -77,324 +53,20 @@ function testValidMapVariantsFiltersMalformedEntries() {
 
 testValidMapVariantsFiltersMalformedEntries();
 
-function testProceduralMapBoundaryWrapsVariantSelection() {
+function testMapBoundaryWrapsVariantSelection() {
   assert.equal(
-    resolveMapVariantConfig(simpleSeededMapConfig, "only").variantId,
+    resolveMapVariantConfig(simpleMapConfig, "only").variantId,
     "only",
   );
   assert.equal(
-    selectNextMapVariant(simpleSeededMapConfig.variants, "missing").id,
+    selectNextMapVariant(simpleMapConfig.variants, "missing").id,
     "only",
   );
 }
 
-testProceduralMapBoundaryWrapsVariantSelection();
+testMapBoundaryWrapsVariantSelection();
 
-function testGoalRadiusTunesByDifficulty() {
-  assert.equal(goalRadiusForDifficulty(1, 95), 110);
-  assert.equal(goalRadiusForDifficulty(1.4, 95), 110);
-  assert.equal(goalRadiusForDifficulty(2, 95), 95);
-  assert.equal(goalRadiusForDifficulty(2.49, 95), 95);
-  assert.equal(goalRadiusForDifficulty(3, 95), 84);
-  assert.equal(goalRadiusForDifficulty(undefined, 95), 95);
-  assert.equal(resolveMapVariantConfig(baseMapConfig, "default").goal.r, 110);
-}
-
-testGoalRadiusTunesByDifficulty();
-
-function testProceduralMapGenerationReturnsValidSeededVariants() {
-  const variants = generateProceduralMapVariants({
-    baseMapConfig: resolvedMapConfig,
-    count: 4,
-    seed: "batch-seed",
-  });
-  const repeated = generateProceduralMapVariants({
-    baseMapConfig: resolvedMapConfig,
-    count: 4,
-    seed: "batch-seed",
-  });
-
-  assert.equal(variants.length, 4);
-  assert.deepEqual(variants, repeated);
-  assert.deepEqual(
-    variants.map((variant) => variant.id),
-    ["generated-1-0", "generated-2-1", "generated-3-2", "generated-1-3"],
-  );
-  variants.forEach((variant) => {
-    const generatedMap = resolveMapVariantConfig(
-      { ...resolvedMapConfig, variants: [variant] },
-      variant.id,
-    );
-
-    assert.deepEqual(validateMapConfig(generatedMap), []);
-  });
-}
-
-testProceduralMapGenerationReturnsValidSeededVariants();
-
-function testProceduralRandomHelpersAreDeterministic() {
-  const first = createSeededRandom("same-seed");
-  const second = createSeededRandom("same-seed");
-  const fixed = () => 0.5;
-
-  assert.deepEqual([first(), first(), first()], [second(), second(), second()]);
-  assert.equal(randomBetween(fixed, 10, 20), 15);
-  assert.equal(pickRandom(fixed, ["a", "b", "c"]), "b");
-  assert.equal(pickRandom(fixed, []), null);
-  assert.equal(pickRandom(fixed, null), null);
-}
-
-testProceduralRandomHelpersAreDeterministic();
-
-function testProceduralJitterHelpersStayInSafeBounds() {
-  const highRandom = () => 1;
-  const lowRandom = () => 0;
-
-  assert.deepEqual(jitterPoint({ x: 0, y: 1 }, lowRandom), {
-    x: 0.1,
-    y: 0.9,
-  });
-  assert.deepEqual(jitterPatch({ x: 0, y: 1, w: 1, h: 1 }, highRandom), {
-    x: 0.06,
-    y: 0.86,
-    w: 0.24,
-    h: 0.18,
-  });
-
-  const horizontal = jitterRect({ x: 1, y: 0, w: 1, h: 0.04 }, highRandom);
-  const vertical = jitterRect({ x: 0, y: 1, w: 0.04, h: 1 }, lowRandom);
-
-  assert.equal(horizontal.x, 0.9);
-  assert.equal(horizontal.y, 0.06);
-  assert.equal(horizontal.w, 0.55);
-  assert.equal(horizontal.h, 0.04);
-  assert.equal(vertical.x, 0.06);
-  assert.equal(vertical.y, 0.9);
-  assert.equal(vertical.w, 0.04);
-  assert.equal(vertical.h, 0.55);
-}
-
-testProceduralJitterHelpersStayInSafeBounds();
-
-function testProceduralTemplateConversionSnapsAndClamps() {
-  const world = { width: 1000, height: 800 };
-  const gridSize = 20;
-
-  assert.equal(gridAlignedSize(9, gridSize), gridSize);
-  assert.equal(gridAlignedSize(31, gridSize), 40);
-  assert.equal(gridAlignedPosition(997, 100, 1000, gridSize), 900);
-  assert.deepEqual(templatePointToWorld({ x: 0.503, y: 0.747 }, world, 20), {
-    x: 500,
-    y: 600,
-  });
-  assert.deepEqual(
-    templateRectToElement({
-      rect: { x: 0.973, y: 0.975, w: 0.021, h: 0.021 },
-      type: "obstacle",
-      world,
-      gridSize,
-    }),
-    { type: "obstacle", x: 980, y: 780, w: 20, h: 20 },
-  );
-}
-
-testProceduralTemplateConversionSnapsAndClamps();
-
-function testProceduralElementBudgetsClampDifficultyAndKeepUnknownTypes() {
-  assert.deepEqual(proceduralElementBudget(-10), {
-    hazardPatch: 1,
-    icePatch: 0,
-    obstacle: 7,
-    roughPatch: 1,
-  });
-  assert.deepEqual(proceduralElementBudget(99), {
-    hazardPatch: 2,
-    icePatch: 1,
-    obstacle: 9,
-    roughPatch: 2,
-  });
-
-  const elements = [
-    ...Array.from({ length: 12 }, (_, index) => ({
-      type: "obstacle",
-      x: index,
-      y: 0,
-      w: 10,
-      h: 10,
-    })),
-    { type: "decorativeFork", x: 0, y: 0, w: 10, h: 10 },
-  ];
-  const limited = limitElementsByBudget(elements, 1);
-
-  assert.equal(
-    limited.filter((element) => element.type === "obstacle").length,
-    7,
-  );
-  assert.equal(
-    limited.some((element) => element.type === "decorativeFork"),
-    true,
-  );
-}
-
-testProceduralElementBudgetsClampDifficultyAndKeepUnknownTypes();
-
-function testProceduralClearZonesRejectSpawnAndGoalOverlap() {
-  const spawn = { x: 100, y: 100, r: 20 };
-  const goal = { x: 400, y: 400, r: 50 };
-
-  assert.equal(
-    outsideClearZones({ x: 170, y: 90, w: 40, h: 20 }, spawn, goal),
-    false,
-  );
-  assert.equal(
-    outsideClearZones({ x: 465, y: 390, w: 40, h: 20 }, spawn, goal),
-    false,
-  );
-  assert.equal(
-    outsideClearZones({ x: 250, y: 250, w: 40, h: 20 }, spawn, goal),
-    true,
-  );
-}
-
-testProceduralClearZonesRejectSpawnAndGoalOverlap();
-
-function testGenerateTemplateMapVariantUsesTemplateAndDifficulty() {
-  const template = {
-    id: "controlled-template",
-    terrainFocus: "roughPatch",
-    spawn: { x: 0.2, y: 0.2 },
-    goal: { x: 0.8, y: 0.8 },
-    walls: [{ x: 0.35, y: 0.2, w: 0.08, h: 0.5 }],
-    roughPatches: [{ x: 0.5, y: 0.45, w: 0.12, h: 0.1 }],
-    icePatches: [{ x: 0.15, y: 0.55, w: 0.12, h: 0.1 }],
-    hazardPatches: [{ x: 0.65, y: 0.2, w: 0.1, h: 0.08 }],
-  };
-  const variant = generateTemplateMapVariant({
-    baseMapConfig: resolvedMapConfig,
-    difficulty: 3,
-    index: 4,
-    seed: "controlled-seed",
-    template,
-  });
-
-  assert.equal(variant.id, "generated-3-4");
-  assert.equal(variant.templateId, template.id);
-  assert.equal(variant.goal.r, 84);
-  assert.equal(
-    variant.elements.some((element) => element.type === "roughPatch"),
-    true,
-  );
-  assert.equal(
-    variant.elements.some((element) => element.type === "icePatch"),
-    false,
-  );
-  assert.equal(
-    variant.elements.every(
-      (element) =>
-        element.x % resolvedMapConfig.grid.size === 0 &&
-        element.y % resolvedMapConfig.grid.size === 0 &&
-        element.w % resolvedMapConfig.grid.size === 0 &&
-        element.h % resolvedMapConfig.grid.size === 0,
-    ),
-    true,
-  );
-}
-
-testGenerateTemplateMapVariantUsesTemplateAndDifficulty();
-
-function testProceduralMapGenerationHandlesEmptyCounts() {
-  assert.deepEqual(
-    generateProceduralMapVariants({
-      baseMapConfig: resolvedMapConfig,
-      count: 0,
-      seed: "empty-count-seed",
-    }),
-    [],
-  );
-  assert.deepEqual(
-    generateProceduralMapVariants({
-      baseMapConfig: resolvedMapConfig,
-      count: -2,
-      seed: "negative-count-seed",
-    }),
-    [],
-  );
-  assert.equal(
-    generateProceduralMapVariants({
-      baseMapConfig: resolvedMapConfig,
-      count: 2.8,
-      seed: "fractional-count-seed",
-    }).length,
-    2,
-  );
-}
-
-testProceduralMapGenerationHandlesEmptyCounts();
-
-function testProceduralMapGenerationHandlesMalformedBaseConfig() {
-  assert.deepEqual(generateProceduralMapVariants(), []);
-  assert.deepEqual(
-    generateProceduralMapVariants({
-      baseMapConfig: {
-        ...resolvedMapConfig,
-        world: null,
-      },
-    }),
-    [],
-  );
-  assert.deepEqual(
-    generateProceduralMapVariants({
-      baseMapConfig: {
-        ...resolvedMapConfig,
-        grid: {},
-      },
-    }),
-    [],
-  );
-  assert.deepEqual(
-    generateProceduralMapVariants({
-      baseMapConfig: {
-        ...resolvedMapConfig,
-        spawn: { x: resolvedMapConfig.spawn.x, y: resolvedMapConfig.spawn.y },
-      },
-    }),
-    [],
-  );
-}
-
-testProceduralMapGenerationHandlesMalformedBaseConfig();
-
-function testProceduralMapGenerationIsGridAlignedAndSeeded() {
-  const variants = generateProceduralMapVariants({
-    baseMapConfig: resolvedMapConfig,
-    count: 3,
-    seed: "same-seed",
-  });
-  const otherSeedVariants = generateProceduralMapVariants({
-    baseMapConfig: resolvedMapConfig,
-    count: 3,
-    seed: "other-seed",
-  });
-  const generated = variants[2];
-
-  assert.notDeepEqual(variants, otherSeedVariants);
-  assert.equal(generated.spawn.x % resolvedMapConfig.grid.size, 0);
-  assert.equal(generated.goal.y % resolvedMapConfig.grid.size, 0);
-  assert.equal(
-    generated.elements.every(
-      (element) =>
-        element.x % resolvedMapConfig.grid.size === 0 &&
-        element.y % resolvedMapConfig.grid.size === 0 &&
-        element.w % resolvedMapConfig.grid.size === 0 &&
-        element.h % resolvedMapConfig.grid.size === 0,
-    ),
-    true,
-  );
-}
-
-testProceduralMapGenerationIsGridAlignedAndSeeded();
-
-function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
+function testBaseMapConfigAppendsFrozenVariantsAfterAuthoredMaps() {
   assert.equal(
     baseMapConfig.variants.length > authoredMapVariants.length,
     true,
@@ -413,7 +85,7 @@ function testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps() {
   );
 }
 
-testBaseMapConfigAppendsProceduralVariantsAfterAuthoredMaps();
+testBaseMapConfigAppendsFrozenVariantsAfterAuthoredMaps();
 
 function testAuthoredMapsIncludeRealWorldVariants() {
   assert.deepEqual(
@@ -433,113 +105,6 @@ function testAuthoredMapsIncludeRealWorldVariants() {
 }
 
 testAuthoredMapsIncludeRealWorldVariants();
-
-function testProceduralMapGenerationKeepsSpawnAndGoalClear() {
-  const variants = generateProceduralMapVariants({
-    baseMapConfig: resolvedMapConfig,
-    count: 6,
-    seed: "clear-zone-seed",
-  });
-
-  variants.forEach((variant) => {
-    variant.elements.forEach((element) => {
-      assert.equal(
-        circleRectContact({ ...variant.spawn, r: variant.spawn.r * 4 }, element)
-          .intersects,
-        false,
-      );
-      assert.equal(
-        circleRectContact(
-          { ...variant.goal, r: variant.goal.r * 1.45 },
-          element,
-        ).intersects,
-        false,
-      );
-    });
-  });
-}
-
-testProceduralMapGenerationKeepsSpawnAndGoalClear();
-
-function testProceduralMapGenerationIncludesPlayableElementMix() {
-  const variants = generateProceduralMapVariants({
-    baseMapConfig: resolvedMapConfig,
-    count: 6,
-    seed: "element-mix-seed",
-  });
-  const elements = variants.flatMap((variant) => variant.elements);
-
-  assert.equal(
-    elements.some((element) => element.type === "obstacle"),
-    true,
-  );
-  assert.equal(
-    elements.some((element) => element.type === "roughPatch"),
-    true,
-  );
-  assert.equal(
-    elements.some((element) => element.type === "icePatch"),
-    true,
-  );
-  assert.equal(
-    elements.some((element) => element.type === "hazardPatch"),
-    true,
-  );
-}
-
-testProceduralMapGenerationIncludesPlayableElementMix();
-
-function testProceduralMapGenerationHonorsElementBudgets() {
-  const variants = generateProceduralMapVariants({
-    baseMapConfig: resolvedMapConfig,
-    count: 6,
-    seed: "budget-seed",
-  });
-
-  variants.forEach((variant) => {
-    const counts = variant.elements.reduce(
-      (totals, element) => ({
-        ...totals,
-        [element.type]: (totals[element.type] ?? 0) + 1,
-      }),
-      {},
-    );
-    const level = Math.min(Math.max(Math.round(variant.difficulty), 1), 3);
-
-    assert.equal((counts.obstacle ?? 0) <= 6 + level, true);
-    assert.equal((counts.roughPatch ?? 0) <= (level === 1 ? 1 : 2), true);
-    assert.equal((counts.icePatch ?? 0) <= (level === 1 ? 0 : 1), true);
-    assert.equal((counts.hazardPatch ?? 0) <= (level === 1 ? 1 : 2), true);
-  });
-}
-
-testProceduralMapGenerationHonorsElementBudgets();
-
-function testProceduralMapsUseOneTerrainFocus() {
-  const variants = generateProceduralMapVariants({
-    baseMapConfig: resolvedMapConfig,
-    count: 6,
-    seed: "terrain-focus-seed",
-  });
-
-  variants.forEach((variant) => {
-    const terrainTypes = new Set(
-      variant.elements
-        .filter(
-          (element) =>
-            element.type === "roughPatch" || element.type === "icePatch",
-        )
-        .map((element) => element.type),
-    );
-
-    assert.equal(terrainTypes.size <= 1, true);
-    if (terrainTypes.size === 1) {
-      assert.equal([...terrainTypes][0], variant.terrainFocus);
-    }
-  });
-}
-
-testProceduralMapsUseOneTerrainFocus();
 
 function testNextMapVariantSelectionIsGuarded() {
   const variants = variantSelectionFixtures;
@@ -567,7 +132,7 @@ function testMapProgressionHandlesMissingCurrentMap() {
   const hints = [];
   let renderRequests = 0;
   const progression = createMapProgression({
-    baseMapConfig: simpleSeededMapConfig,
+    baseMapConfig: simpleMapConfig,
     getCurrentMap: () => null,
     applyMap() {
       throw new Error("missing current map should not apply next map");
@@ -590,9 +155,9 @@ testMapProgressionHandlesMissingCurrentMap();
 function testMapProgressionUsesQuietSuccessHint() {
   const hints = [];
   const labels = [];
-  let activeMap = resolveMapVariantConfig(simpleSeededMapConfig, "only");
+  let activeMap = resolveMapVariantConfig(simpleMapConfig, "only");
   const progression = createMapProgression({
-    baseMapConfig: simpleSeededMapConfig,
+    baseMapConfig: simpleMapConfig,
     getCurrentMap: () => activeMap,
     applyMap(nextMap) {
       activeMap = nextMap;
@@ -619,7 +184,7 @@ function testMapProgressionUsesQuietSuccessHint() {
 testMapProgressionUsesQuietSuccessHint();
 
 function testResolveMapConfigCopiesSelectedElements() {
-  const config = simpleSeededMapConfig;
+  const config = simpleMapConfig;
   const resolved = resolveMapVariantConfig(config, "only");
 
   assert.equal(resolved.variantId, "only");
@@ -639,10 +204,10 @@ function testResolveMapVariantConfigIgnoresMalformedVariants() {
 testResolveMapVariantConfigIgnoresMalformedVariants();
 
 function testResolveMapVariantConfigFallsBackToBaseWhenMissing() {
-  const resolved = resolveMapVariantConfig(simpleSeededMapConfig, "missing");
+  const resolved = resolveMapVariantConfig(simpleMapConfig, "missing");
 
   assert.equal(resolved.variantId, undefined);
-  assert.deepEqual(resolved.spawn, simpleSeededMapConfig.spawn);
+  assert.deepEqual(resolved.spawn, simpleMapConfig.spawn);
 }
 
 testResolveMapVariantConfigFallsBackToBaseWhenMissing();
