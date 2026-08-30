@@ -226,7 +226,7 @@ The map system supports:
 
 - authored variants
 - frozen generated variants
-- variant selection by id or seed
+- variant selection by id
 - validation in tests/development checks
 - derived runtime arrays
 

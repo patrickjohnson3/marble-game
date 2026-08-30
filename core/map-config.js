@@ -1,4 +1,4 @@
-import { resolveSeededMapConfig } from "./map-variants.js";
+import { resolveMapVariantConfig } from "./map-variants.js";
 import {
   authoredMapVariants,
   mapVariants as staticMapVariants,
@@ -6,18 +6,15 @@ import {
 
 export { authoredMapVariants };
 
-const mapScale = 2;
-
 const baseMapDefaults = {
-  seed: "kitchen-floor",
   variants: staticMapVariants,
   world: {
-    width: 2200 * mapScale,
-    height: 2200 * mapScale,
+    width: 4400,
+    height: 4400,
   },
   spawn: {
-    x: 1100 * mapScale,
-    y: 1100 * mapScale,
+    x: 2200,
+    y: 2200,
     r: 29,
   },
   grid: {
@@ -56,4 +53,7 @@ export const baseMapConfig = {
   variants: mapVariants,
 };
 
-export const resolvedMapConfig = resolveSeededMapConfig(baseMapConfig);
+export const resolvedMapConfig = resolveMapVariantConfig(
+  baseMapConfig,
+  "kitchen-floor",
+);

@@ -38,11 +38,7 @@ export function createMapProgression({
       return blockAdvance(copy.goalNoNextMap);
     }
 
-    const nextMap = resolveMapVariantConfig(
-      baseMapConfig,
-      variant.id,
-      variant.id,
-    );
+    const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id);
 
     applyMap(nextMap);
     resetForNextMap();

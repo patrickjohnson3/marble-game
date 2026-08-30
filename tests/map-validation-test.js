@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { validateMapConfig } from "../core/map-validation.js";
-import { resolveSeededMapConfig } from "../core/map-variants.js";
+import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { hasLikelyReachableGoal } from "../core/map-reachability.js";
 import { mapValidationMessages } from "../core/map-validation-messages.js";
 import {
@@ -13,7 +13,10 @@ import {
 } from "./map-fixtures.js";
 
 function testResolveSeededMapConfigAllowsValidationOfMissingVariantElements() {
-  const resolved = resolveSeededMapConfig(missingElementsVariantConfig);
+  const resolved = resolveMapVariantConfig(
+    missingElementsVariantConfig,
+    missingElementsVariantConfig.seed,
+  );
 
   assert.equal(resolved.variantId, "bad-variant");
   assert.ok(
@@ -218,7 +221,10 @@ function testMapValidationUsesNormalizedObstacleOverrideForSpawnAndGoal() {
 }
 
 function testMapValidationAllowsVariantWorldSizes() {
-  const resolved = resolveSeededMapConfig(variantWorldMismatchConfig);
+  const resolved = resolveMapVariantConfig(
+    variantWorldMismatchConfig,
+    variantWorldMismatchConfig.seed,
+  );
 
   assert.deepEqual(resolved.world, { width: 120, height: 100 });
   assert.deepEqual(validateMapConfig(resolved), []);

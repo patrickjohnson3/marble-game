@@ -1,232 +1,174 @@
-import { isHorizontalRect } from "../core/map-obstacles.js";
-
-const mapScale = 2;
-
-function isHorizontalObstacle(element) {
-  return element.type === "obstacle" && isHorizontalRect(element);
-}
-
-function scaledObstacleHitbox(element, isHorizontal) {
-  return {
-    ...(Number.isFinite(element.hitboxW)
-      ? {
-          hitboxW: isHorizontal ? element.hitboxW * mapScale : element.hitboxW,
-        }
-      : {}),
-    ...(Number.isFinite(element.hitboxH)
-      ? {
-          hitboxH: isHorizontal ? element.hitboxH : element.hitboxH * mapScale,
-        }
-      : {}),
-  };
-}
-
-function scaleMapElement(element) {
-  if (element.type === "obstacle") {
-    const isHorizontal = isHorizontalObstacle(element);
-
-    return {
-      ...element,
-      x: element.x * mapScale,
-      y: element.y * mapScale,
-      w: isHorizontal ? element.w * mapScale : element.w,
-      h: isHorizontal ? element.h : element.h * mapScale,
-      ...scaledObstacleHitbox(element, isHorizontal),
-    };
-  }
-
-  return {
-    ...element,
-    x: element.x * mapScale,
-    y: element.y * mapScale,
-    w: element.w * mapScale,
-    h: element.h * mapScale,
-  };
-}
-
-function scaleMapElements(elements) {
-  return elements.map(scaleMapElement);
-}
-
-function scaleMapPoint(point) {
-  return {
-    ...point,
-    x: point.x * mapScale,
-    y: point.y * mapScale,
-  };
-}
-
 const defaultElements = [
-  { type: "obstacle", x: 260, y: 330, w: 510, h: 40 },
-  { type: "obstacle", x: 720, y: 250, w: 50, h: 360 },
-  { type: "obstacle", x: 1320, y: 330, w: 430, h: 50 },
-  { type: "obstacle", x: 1700, y: 600, w: 60, h: 430 },
-  { type: "obstacle", x: 250, y: 900, w: 720, h: 50 },
-  { type: "obstacle", x: 910, y: 760, w: 60, h: 380 },
-  { type: "obstacle", x: 1180, y: 960, w: 520, h: 50 },
-  { type: "obstacle", x: 520, y: 1380, w: 50, h: 440 },
-  { type: "obstacle", x: 520, y: 1570, w: 930, h: 50 },
-  { type: "obstacle", x: 1640, y: 1370, w: 50, h: 470 },
-  { type: "icePatch", x: 800, y: 520, w: 230, h: 210 },
-  { type: "hazardPatch", x: 1040, y: 1220, w: 220, h: 160 },
-  { type: "roughPatch", x: 360, y: 650, w: 290, h: 220 },
-  { type: "roughPatch", x: 1420, y: 1160, w: 330, h: 260 },
-  { type: "roughPatch", x: 1680, y: 1600, w: 300, h: 230 },
+  { type: "obstacle", x: 520, y: 660, w: 1020, h: 40 },
+  { type: "obstacle", x: 1440, y: 500, w: 50, h: 720 },
+  { type: "obstacle", x: 2640, y: 660, w: 860, h: 50 },
+  { type: "obstacle", x: 3400, y: 1200, w: 60, h: 860 },
+  { type: "obstacle", x: 500, y: 1800, w: 1440, h: 50 },
+  { type: "obstacle", x: 1820, y: 1520, w: 60, h: 760 },
+  { type: "obstacle", x: 2360, y: 1920, w: 1040, h: 50 },
+  { type: "obstacle", x: 1040, y: 2760, w: 50, h: 880 },
+  { type: "obstacle", x: 1040, y: 3140, w: 1860, h: 50 },
+  { type: "obstacle", x: 3280, y: 2740, w: 50, h: 940 },
+  { type: "icePatch", x: 1600, y: 1040, w: 460, h: 420 },
+  { type: "hazardPatch", x: 2080, y: 2440, w: 440, h: 320 },
+  { type: "roughPatch", x: 720, y: 1300, w: 580, h: 440 },
+  { type: "roughPatch", x: 2840, y: 2320, w: 660, h: 520 },
+  { type: "roughPatch", x: 3360, y: 3200, w: 600, h: 460 },
 ];
 
 const generatedOneElements = [
-  { type: "obstacle", x: 360, y: 420, w: 560, h: 50 },
-  { type: "obstacle", x: 870, y: 420, w: 50, h: 360 },
-  { type: "obstacle", x: 1260, y: 300, w: 50, h: 470 },
-  { type: "obstacle", x: 1260, y: 720, w: 520, h: 50 },
-  { type: "obstacle", x: 300, y: 1080, w: 680, h: 50 },
-  { type: "obstacle", x: 300, y: 1080, w: 50, h: 420 },
-  { type: "obstacle", x: 1160, y: 1180, w: 660, h: 50 },
-  { type: "obstacle", x: 1770, y: 1180, w: 50, h: 500 },
-  { type: "obstacle", x: 620, y: 1680, w: 600, h: 50 },
-  { type: "obstacle", x: 1170, y: 1460, w: 50, h: 270 },
-  { type: "icePatch", x: 980, y: 840, w: 260, h: 220 },
-  { type: "hazardPatch", x: 1360, y: 1560, w: 240, h: 170 },
-  { type: "roughPatch", x: 460, y: 660, w: 310, h: 240 },
-  { type: "roughPatch", x: 720, y: 1320, w: 350, h: 230 },
-  { type: "roughPatch", x: 1640, y: 940, w: 260, h: 210 },
+  { type: "obstacle", x: 720, y: 840, w: 1120, h: 50 },
+  { type: "obstacle", x: 1740, y: 840, w: 50, h: 720 },
+  { type: "obstacle", x: 2520, y: 600, w: 50, h: 940 },
+  { type: "obstacle", x: 2520, y: 1440, w: 1040, h: 50 },
+  { type: "obstacle", x: 600, y: 2160, w: 1360, h: 50 },
+  { type: "obstacle", x: 600, y: 2160, w: 50, h: 840 },
+  { type: "obstacle", x: 2320, y: 2360, w: 1320, h: 50 },
+  { type: "obstacle", x: 3540, y: 2360, w: 50, h: 1000 },
+  { type: "obstacle", x: 1240, y: 3360, w: 1200, h: 50 },
+  { type: "obstacle", x: 2340, y: 2920, w: 50, h: 540 },
+  { type: "icePatch", x: 1960, y: 1680, w: 520, h: 440 },
+  { type: "hazardPatch", x: 2720, y: 3120, w: 480, h: 340 },
+  { type: "roughPatch", x: 920, y: 1320, w: 620, h: 480 },
+  { type: "roughPatch", x: 1440, y: 2640, w: 700, h: 460 },
+  { type: "roughPatch", x: 3280, y: 1880, w: 520, h: 420 },
 ];
 
 const hockeyRinkElements = [
-  { type: "icePatch", x: 180, y: 180, w: 1840, h: 1840 },
-  { type: "obstacle", x: 440, y: 320, w: 520, h: 40 },
-  { type: "obstacle", x: 1240, y: 1840, w: 520, h: 40 },
-  { type: "obstacle", x: 240, y: 700, w: 50, h: 360 },
-  { type: "obstacle", x: 1910, y: 1140, w: 50, h: 360 },
-  { type: "hazardPatch", x: 1000, y: 980, w: 200, h: 200 },
-  { type: "roughPatch", x: 460, y: 1580, w: 260, h: 170 },
+  { type: "icePatch", x: 360, y: 360, w: 3680, h: 3680 },
+  { type: "obstacle", x: 880, y: 640, w: 1040, h: 40 },
+  { type: "obstacle", x: 2480, y: 3680, w: 1040, h: 40 },
+  { type: "obstacle", x: 480, y: 1400, w: 50, h: 720 },
+  { type: "obstacle", x: 3820, y: 2280, w: 50, h: 720 },
+  { type: "hazardPatch", x: 2000, y: 1960, w: 400, h: 400 },
+  { type: "roughPatch", x: 920, y: 3160, w: 520, h: 340 },
 ];
 
 const kitchenFloorElements = [
-  { type: "gooPatch", x: 620, y: 900, w: 280, h: 230 },
-  { type: "waterPatch", x: 1030, y: 640, w: 560, h: 380 },
+  { type: "gooPatch", x: 1240, y: 1800, w: 560, h: 460 },
+  { type: "waterPatch", x: 2060, y: 1280, w: 1120, h: 760 },
   {
     type: "obstacle",
     fixture: "sponge",
-    x: 745,
-    y: 930,
-    w: 300,
+    x: 1490,
+    y: 1860,
+    w: 600,
     h: 140,
-    hitboxW: 132,
+    hitboxW: 264,
     hitboxH: 112,
     angle: 0.16,
   },
   {
     type: "obstacle",
     fixture: "spoon",
-    x: 1240,
-    y: 1090,
-    w: 360,
+    x: 2480,
+    y: 2180,
+    w: 720,
     h: 90,
-    hitboxW: 310,
+    hitboxW: 620,
     hitboxH: 54,
     angle: 0.34,
   },
   {
     type: "obstacle",
     fixture: "fork",
-    x: 960,
-    y: 1450,
-    w: 440,
+    x: 1920,
+    y: 2900,
+    w: 880,
     h: 420,
-    hitboxW: 380,
+    hitboxW: 760,
     hitboxH: 62,
     angle: -0.42,
   },
 ];
 
 const kitchenBreakfastElements = [
-  { type: "waterPatch", x: 690, y: 1180, w: 520, h: 330 },
-  { type: "gooPatch", x: 1370, y: 720, w: 250, h: 210 },
+  { type: "waterPatch", x: 1380, y: 2360, w: 1040, h: 660 },
+  { type: "gooPatch", x: 2740, y: 1440, w: 500, h: 420 },
   {
     type: "obstacle",
     fixture: "fork",
-    x: 340,
-    y: 760,
-    w: 420,
+    x: 680,
+    y: 1520,
+    w: 840,
     h: 360,
-    hitboxW: 360,
+    hitboxW: 720,
     hitboxH: 60,
     angle: 0.52,
   },
   {
     type: "obstacle",
     fixture: "spoon",
-    x: 1300,
-    y: 1460,
-    w: 340,
+    x: 2600,
+    y: 2920,
+    w: 680,
     h: 90,
-    hitboxW: 290,
+    hitboxW: 580,
     hitboxH: 52,
     angle: -0.26,
   },
   {
     type: "obstacle",
     fixture: "sponge",
-    x: 330,
-    y: 1520,
-    w: 280,
+    x: 660,
+    y: 3040,
+    w: 560,
     h: 130,
-    hitboxW: 132,
+    hitboxW: 264,
     hitboxH: 104,
     angle: -0.18,
   },
 ];
 
 const livingRoomElements = [
-  { type: "obstacle", x: 220, y: 360, w: 700, h: 150 },
-  { type: "obstacle", x: 1540, y: 300, w: 110, h: 560 },
-  { type: "obstacle", x: 780, y: 1020, w: 520, h: 180 },
-  { type: "obstacle", x: 280, y: 1620, w: 480, h: 100 },
-  { type: "obstacle", x: 1460, y: 1540, w: 430, h: 90 },
-  { type: "roughPatch", x: 560, y: 660, w: 820, h: 620 },
-  { type: "roughPatch", x: 1280, y: 1180, w: 420, h: 280 },
-  { type: "icePatch", x: 420, y: 1280, w: 220, h: 180 },
-  { type: "hazardPatch", x: 1660, y: 900, w: 220, h: 240 },
+  { type: "obstacle", x: 440, y: 720, w: 1400, h: 150 },
+  { type: "obstacle", x: 3080, y: 600, w: 110, h: 1120 },
+  { type: "obstacle", x: 1560, y: 2040, w: 1040, h: 180 },
+  { type: "obstacle", x: 560, y: 3240, w: 960, h: 100 },
+  { type: "obstacle", x: 2920, y: 3080, w: 860, h: 90 },
+  { type: "roughPatch", x: 1120, y: 1320, w: 1640, h: 1240 },
+  { type: "roughPatch", x: 2560, y: 2360, w: 840, h: 560 },
+  { type: "icePatch", x: 840, y: 2560, w: 440, h: 360 },
+  { type: "hazardPatch", x: 3320, y: 1800, w: 440, h: 480 },
 ];
 
 const parkingLotElements = [
-  { type: "obstacle", x: 360, y: 300, w: 430, h: 150 },
-  { type: "obstacle", x: 1020, y: 300, w: 430, h: 150 },
-  { type: "obstacle", x: 300, y: 820, w: 150, h: 430 },
-  { type: "obstacle", x: 1680, y: 760, w: 150, h: 430 },
-  { type: "obstacle", x: 720, y: 1440, w: 500, h: 120 },
-  { type: "obstacle", x: 1380, y: 1520, w: 430, h: 130 },
-  { type: "hazardPatch", x: 920, y: 820, w: 260, h: 190 },
-  { type: "hazardPatch", x: 1320, y: 1240, w: 220, h: 180 },
-  { type: "icePatch", x: 520, y: 1220, w: 260, h: 210 },
-  { type: "roughPatch", x: 1480, y: 420, w: 300, h: 230 },
+  { type: "obstacle", x: 720, y: 600, w: 860, h: 150 },
+  { type: "obstacle", x: 2040, y: 600, w: 860, h: 150 },
+  { type: "obstacle", x: 600, y: 1640, w: 150, h: 860 },
+  { type: "obstacle", x: 3360, y: 1520, w: 150, h: 860 },
+  { type: "obstacle", x: 1440, y: 2880, w: 1000, h: 120 },
+  { type: "obstacle", x: 2760, y: 3040, w: 860, h: 130 },
+  { type: "hazardPatch", x: 1840, y: 1640, w: 520, h: 380 },
+  { type: "hazardPatch", x: 2640, y: 2480, w: 440, h: 360 },
+  { type: "icePatch", x: 1040, y: 2440, w: 520, h: 420 },
+  { type: "roughPatch", x: 2960, y: 840, w: 600, h: 460 },
 ];
 
 const parkingLotPuddlesElements = [
-  { type: "obstacle", x: 360, y: 300, w: 430, h: 150 },
-  { type: "obstacle", x: 1060, y: 380, w: 420, h: 140 },
-  { type: "obstacle", x: 280, y: 840, w: 150, h: 430 },
-  { type: "obstacle", x: 1660, y: 760, w: 150, h: 430 },
-  { type: "obstacle", x: 760, y: 1440, w: 460, h: 120 },
-  { type: "obstacle", x: 1380, y: 1540, w: 420, h: 130 },
-  { type: "waterPatch", x: 560, y: 660, w: 360, h: 230 },
-  { type: "waterPatch", x: 1220, y: 1120, w: 410, h: 260 },
-  { type: "hazardPatch", x: 960, y: 860, w: 250, h: 180 },
-  { type: "roughPatch", x: 1480, y: 420, w: 300, h: 230 },
+  { type: "obstacle", x: 720, y: 600, w: 860, h: 150 },
+  { type: "obstacle", x: 2120, y: 760, w: 840, h: 140 },
+  { type: "obstacle", x: 560, y: 1680, w: 150, h: 860 },
+  { type: "obstacle", x: 3320, y: 1520, w: 150, h: 860 },
+  { type: "obstacle", x: 1520, y: 2880, w: 920, h: 120 },
+  { type: "obstacle", x: 2760, y: 3080, w: 840, h: 130 },
+  { type: "waterPatch", x: 1120, y: 1320, w: 720, h: 460 },
+  { type: "waterPatch", x: 2440, y: 2240, w: 820, h: 520 },
+  { type: "hazardPatch", x: 1920, y: 1720, w: 500, h: 360 },
+  { type: "roughPatch", x: 2960, y: 840, w: 600, h: 460 },
 ];
 
 const sandLotElements = [
-  { type: "roughPatch", x: 220, y: 260, w: 650, h: 520 },
-  { type: "roughPatch", x: 1120, y: 340, w: 760, h: 520 },
-  { type: "roughPatch", x: 420, y: 1260, w: 740, h: 560 },
-  { type: "obstacle", x: 520, y: 940, w: 520, h: 60 },
-  { type: "obstacle", x: 980, y: 940, w: 60, h: 420 },
-  { type: "obstacle", x: 1380, y: 1060, w: 430, h: 60 },
-  { type: "obstacle", x: 1380, y: 1060, w: 60, h: 360 },
-  { type: "hazardPatch", x: 1480, y: 1540, w: 260, h: 220 },
-  { type: "hazardPatch", x: 900, y: 500, w: 220, h: 180 },
-  { type: "icePatch", x: 1660, y: 760, w: 200, h: 160 },
+  { type: "roughPatch", x: 440, y: 520, w: 1300, h: 1040 },
+  { type: "roughPatch", x: 2240, y: 680, w: 1520, h: 1040 },
+  { type: "roughPatch", x: 840, y: 2520, w: 1480, h: 1120 },
+  { type: "obstacle", x: 1040, y: 1880, w: 1040, h: 60 },
+  { type: "obstacle", x: 1960, y: 1880, w: 60, h: 840 },
+  { type: "obstacle", x: 2760, y: 2120, w: 860, h: 60 },
+  { type: "obstacle", x: 2760, y: 2120, w: 60, h: 720 },
+  { type: "hazardPatch", x: 2960, y: 3080, w: 520, h: 440 },
+  { type: "hazardPatch", x: 1800, y: 1000, w: 440, h: 360 },
+  { type: "icePatch", x: 3320, y: 1520, w: 400, h: 320 },
 ];
 
 export const frozenGeneratedMapVariants = [
@@ -343,9 +285,9 @@ export const authoredMapVariants = [
     objectSummary:
       "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
     difficulty: 2,
-    spawn: scaleMapPoint({ x: 420, y: 1820, r: 29 }),
-    goal: scaleMapPoint({ x: 1760, y: 420, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(kitchenFloorElements),
+    spawn: { x: 840, y: 3640, r: 29 },
+    goal: { x: 3520, y: 840, r: 95, holdMs: 5000 },
+    elements: kitchenFloorElements,
   },
   {
     id: "living-room",
@@ -353,9 +295,9 @@ export const authoredMapVariants = [
     theme: "livingRoom",
     objectSummary: "objects: sofa, shelves, coffee table, rug, blocks, sock.",
     difficulty: 2,
-    spawn: scaleMapPoint({ x: 360, y: 1860, r: 29 }),
-    goal: scaleMapPoint({ x: 1820, y: 440, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(livingRoomElements),
+    spawn: { x: 720, y: 3720, r: 29 },
+    goal: { x: 3640, y: 880, r: 95, holdMs: 5000 },
+    elements: livingRoomElements,
   },
   {
     id: "parking-lot",
@@ -364,9 +306,9 @@ export const authoredMapVariants = [
     objectSummary:
       "objects: cars, cones, oil stains, tire marks, parking lines.",
     difficulty: 3,
-    spawn: scaleMapPoint({ x: 280, y: 1860, r: 29 }),
-    goal: scaleMapPoint({ x: 1880, y: 340, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(parkingLotElements),
+    spawn: { x: 560, y: 3720, r: 29 },
+    goal: { x: 3760, y: 680, r: 84, holdMs: 5000 },
+    elements: parkingLotElements,
   },
   {
     id: "sand-lot",
@@ -374,9 +316,9 @@ export const authoredMapVariants = [
     theme: "sandLot",
     objectSummary: "objects: rocks, crates, buckets, shovel, tire tracks.",
     difficulty: 3,
-    spawn: scaleMapPoint({ x: 300, y: 340, r: 29 }),
-    goal: scaleMapPoint({ x: 1880, y: 1840, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(sandLotElements),
+    spawn: { x: 600, y: 680, r: 29 },
+    goal: { x: 3760, y: 3680, r: 84, holdMs: 5000 },
+    elements: sandLotElements,
   },
   {
     id: "kitchen-breakfast-spill",
@@ -385,9 +327,9 @@ export const authoredMapVariants = [
     objectSummary:
       "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
     difficulty: 2,
-    spawn: scaleMapPoint({ x: 320, y: 1840, r: 29 }),
-    goal: scaleMapPoint({ x: 1840, y: 360, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(kitchenBreakfastElements),
+    spawn: { x: 640, y: 3680, r: 29 },
+    goal: { x: 3680, y: 720, r: 95, holdMs: 5000 },
+    elements: kitchenBreakfastElements,
   },
   {
     id: "parking-lot-puddles",
@@ -396,9 +338,9 @@ export const authoredMapVariants = [
     objectSummary:
       "objects: cars, cones, oil stains, tire marks, parking lines.",
     difficulty: 3,
-    spawn: scaleMapPoint({ x: 280, y: 1860, r: 29 }),
-    goal: scaleMapPoint({ x: 1880, y: 320, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(parkingLotPuddlesElements),
+    spawn: { x: 560, y: 3720, r: 29 },
+    goal: { x: 3760, y: 640, r: 84, holdMs: 5000 },
+    elements: parkingLotPuddlesElements,
   },
   {
     id: "hockey-rink",
@@ -406,23 +348,23 @@ export const authoredMapVariants = [
     theme: "hockeyRink",
     objectSummary: "objects: sticks, pucks, creases, rink markings.",
     difficulty: 2,
-    spawn: scaleMapPoint({ x: 1100, y: 1840, r: 29 }),
-    goal: scaleMapPoint({ x: 1100, y: 320, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(hockeyRinkElements),
+    spawn: { x: 2200, y: 3680, r: 29 },
+    goal: { x: 2200, y: 640, r: 95, holdMs: 5000 },
+    elements: hockeyRinkElements,
   },
   {
     id: "default",
     name: "classic maze",
     difficulty: 1,
-    goal: scaleMapPoint({ x: 1920, y: 1900, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(defaultElements),
+    goal: { x: 3840, y: 3800, r: 110, holdMs: 5000 },
+    elements: defaultElements,
   },
   {
     id: "generated-1",
     name: "switchback maze",
     difficulty: 2,
-    goal: scaleMapPoint({ x: 1840, y: 1850, r: 95, holdMs: 5000 }),
-    elements: scaleMapElements(generatedOneElements),
+    goal: { x: 3680, y: 3700, r: 95, holdMs: 5000 },
+    elements: generatedOneElements,
   },
 ];
 

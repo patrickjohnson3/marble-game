@@ -46,7 +46,7 @@ function testGoalHoldResetAndMapProgression() {
       },
     ],
   };
-  const firstMap = resolveMapVariantConfig(baseMapConfig, "first", "first");
+  const firstMap = resolveMapVariantConfig(baseMapConfig, "first");
   const mapRuntime = createMapRuntime({ initialMap: firstMap });
   const marble = { ...firstMap.spawn };
   const intro = { released: false };

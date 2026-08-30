@@ -48,7 +48,6 @@ function testWorldAndMapElements() {
     resolvedMapConfig.intro.viewportMargin,
     "intro viewport margin",
   );
-  assert.equal(resolvedMapConfig.seed, "kitchen-floor", "map seed");
   assert.equal(resolvedMapConfig.variantId, "kitchen-floor", "map variant");
   assert.match(
     resolvedMapConfig.objectSummary,

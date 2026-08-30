@@ -17,11 +17,8 @@ import {
 } from "../core/map-obstacles.js";
 import {
   goalRadiusForDifficulty,
-  hashMapSeed,
   resolveMapVariantConfig,
-  resolveSeededMapConfig,
   selectNextMapVariant,
-  selectSeededMapVariant,
   validMapVariants,
 } from "../core/map-variants.js";
 import { validateMapConfig } from "../core/map-validation.js";
@@ -71,22 +68,6 @@ function testGridSnapping() {
 
 testGridSnapping();
 
-function testSeededMapVariantSelection() {
-  const variants = variantSelectionFixtures;
-  const seed = "same-seed";
-
-  assert.equal(hashMapSeed(seed), hashMapSeed(seed));
-  assert.equal(
-    selectSeededMapVariant(variants, seed),
-    selectSeededMapVariant(variants, seed),
-  );
-  assert.equal(selectSeededMapVariant(variants, "b").id, "b");
-  assert.equal(selectSeededMapVariant([null, variants[0]], "a").id, "a");
-  assert.equal(selectSeededMapVariant([null], "a"), null);
-}
-
-testSeededMapVariantSelection();
-
 function testValidMapVariantsFiltersMalformedEntries() {
   const valid = { id: "valid", elements: [] };
 
@@ -97,7 +78,6 @@ function testValidMapVariantsFiltersMalformedEntries() {
 testValidMapVariantsFiltersMalformedEntries();
 
 function testProceduralMapBoundaryWrapsVariantSelection() {
-  assert.equal(resolveSeededMapConfig(simpleSeededMapConfig).variantId, "only");
   assert.equal(
     resolveMapVariantConfig(simpleSeededMapConfig, "only").variantId,
     "only",
@@ -610,7 +590,7 @@ testMapProgressionHandlesMissingCurrentMap();
 function testMapProgressionUsesQuietSuccessHint() {
   const hints = [];
   const labels = [];
-  let activeMap = resolveSeededMapConfig(simpleSeededMapConfig);
+  let activeMap = resolveMapVariantConfig(simpleSeededMapConfig, "only");
   const progression = createMapProgression({
     baseMapConfig: simpleSeededMapConfig,
     getCurrentMap: () => activeMap,
@@ -638,18 +618,17 @@ function testMapProgressionUsesQuietSuccessHint() {
 
 testMapProgressionUsesQuietSuccessHint();
 
-function testResolveSeededMapConfigCopiesSelectedElements() {
+function testResolveMapConfigCopiesSelectedElements() {
   const config = simpleSeededMapConfig;
-  const resolved = resolveSeededMapConfig(config);
+  const resolved = resolveMapVariantConfig(config, "only");
 
-  assert.equal(resolved.seed, "seed-a");
   assert.equal(resolved.variantId, "only");
   assert.equal(resolved.name, undefined);
   assert.deepEqual(resolved.elements, config.variants[0].elements);
   assert.notEqual(resolved.elements, config.variants[0].elements);
 }
 
-testResolveSeededMapConfigCopiesSelectedElements();
+testResolveMapConfigCopiesSelectedElements();
 
 function testResolveMapVariantConfigIgnoresMalformedVariants() {
   const resolved = resolveMapVariantConfig(malformedVariantConfig, "safe");
@@ -663,7 +642,6 @@ function testResolveMapVariantConfigFallsBackToBaseWhenMissing() {
   const resolved = resolveMapVariantConfig(simpleSeededMapConfig, "missing");
 
   assert.equal(resolved.variantId, undefined);
-  assert.equal(resolved.seed, simpleSeededMapConfig.seed);
   assert.deepEqual(resolved.spawn, simpleSeededMapConfig.spawn);
 }
 

@@ -16,16 +16,6 @@ export function validMapVariants(variants) {
     : [];
 }
 
-export function selectSeededMapVariant(variants, seed) {
-  const validVariants = validMapVariants(variants);
-  if (validVariants.length === 0) return null;
-
-  const exactVariant = validVariants.find((variant) => variant.id === seed);
-  if (exactVariant) return exactVariant;
-
-  return validVariants[hashMapSeed(seed) % validVariants.length];
-}
-
 export function selectNextMapVariant(variants, currentVariantId) {
   const validVariants = validMapVariants(variants);
   if (validVariants.length === 0) return null;
@@ -45,45 +35,31 @@ export function goalRadiusForDifficulty(difficulty, fallbackRadius) {
   return fallbackRadius;
 }
 
-function resolveVariantGoal(variant) {
-  const goal = { ...variant.goal };
-  goal.r = goalRadiusForDifficulty(variant.difficulty, goal.r);
-  return goal;
-}
-
-function resolveMapConfig(config, { seed, variant }) {
-  if (!variant) return { ...config, seed };
+function resolveMapConfig(config, variant) {
+  if (!variant) return { ...config };
   const elements = Array.isArray(variant.elements)
     ? variant.elements.map((element) => ({ ...element }))
     : variant.elements;
 
   return {
     ...config,
-    seed,
     variantId: variant.id,
     name: variant.name,
     theme: variant.theme,
     objectSummary: variant.objectSummary,
     difficulty: variant.difficulty,
     world: { ...(variant.world ?? config.world) },
-    goal: resolveVariantGoal(variant),
+    goal: { ...variant.goal },
     spawn: { ...(variant.spawn ?? config.spawn) },
     elements,
   };
 }
 
-export function resolveSeededMapConfig(config, seed = config.seed) {
-  return resolveMapConfig(config, {
-    seed,
-    variant: selectSeededMapVariant(config.variants, seed),
-  });
-}
-
-export function resolveMapVariantConfig(config, variantId, seed = config.seed) {
-  return resolveMapConfig(config, {
-    seed,
-    variant: validMapVariants(config.variants).find(
+export function resolveMapVariantConfig(config, variantId) {
+  return resolveMapConfig(
+    config,
+    validMapVariants(config.variants).find(
       (variant) => variant.id === variantId,
     ),
-  });
+  );
 }
