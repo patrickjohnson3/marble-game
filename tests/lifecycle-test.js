@@ -33,7 +33,7 @@ function createLifecycleHarness() {
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     introSequence: {
-      clearTimers() {},
+      reset() {},
       hideMessage() {},
       pause() {
         calls.introPause++;
@@ -150,7 +150,7 @@ async function testStartRequestsFullscreenFromClickPath() {
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     introSequence: {
-      clearTimers() {},
+      reset() {},
       hideMessage() {},
       pause() {},
       resume() {},
@@ -228,7 +228,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     introSequence: {
-      clearTimers() {},
+      reset() {},
       hideMessage() {},
       pause() {},
       resume() {},
@@ -321,7 +321,7 @@ async function testMotionPermissionDenialKeepsKeyboardFallbackActive() {
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     introSequence: {
-      clearTimers() {},
+      reset() {},
       hideMessage() {},
       pause() {},
       resume() {},
@@ -399,7 +399,7 @@ function testResumeResetsFrameClock() {
     effectsRenderer: { clear() {} },
     frameLoop: { requestRender() {} },
     introSequence: {
-      clearTimers() {},
+      reset() {},
       hideMessage() {},
       pause() {},
       resume() {},

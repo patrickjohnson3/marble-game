@@ -1,8 +1,3 @@
-import {
-  pauseIntroTimerState,
-  resumeIntroTimerAction,
-  trackIntroTimer,
-} from "./intro-timers.js";
 import { copy } from "./copy.js";
 
 export function createIntroSequence({
@@ -18,10 +13,19 @@ export function createIntroSequence({
   setTimeoutFn,
 }) {
   function clearTimers() {
-    clearTimeoutFn(sequence.messageTimer);
     clearTimeoutFn(sequence.countdownTimer);
-    sequence.messageTimer = 0;
     sequence.countdownTimer = 0;
+  }
+
+  function reset() {
+    clearTimers();
+    sequence.started = false;
+    sequence.countdownValue = Math.ceil(
+      timing.introReleaseDelayMs / timing.countdownTickMs,
+    );
+    sequence.sequenceStage = "idle";
+    sequence.timerStartedAt = 0;
+    sequence.timerDelayMs = 0;
   }
 
   function hideMessage() {
@@ -38,16 +42,15 @@ export function createIntroSequence({
 
   function scheduleReleaseTick(delay = timing.countdownTickMs) {
     clearTimers();
-    trackIntroTimer(sequence, "releaseCountdown", delay, now());
+    sequence.sequenceStage = "releaseCountdown";
+    sequence.timerStartedAt = now();
+    sequence.timerDelayMs = delay;
     sequence.countdownTimer = setTimeoutFn(() => {
       if (game.paused) {
         sequence.countdownTimer = 0;
-        trackIntroTimer(
-          sequence,
-          "releaseCountdown",
-          timing.countdownTickMs,
-          now(),
-        );
+        sequence.sequenceStage = "releaseCountdown";
+        sequence.timerStartedAt = now();
+        sequence.timerDelayMs = timing.countdownTickMs;
         return;
       }
 
@@ -76,23 +79,37 @@ export function createIntroSequence({
   }
 
   function pause() {
-    const hadActiveTimer = pauseIntroTimerState(intro, sequence, now());
-    if (hadActiveTimer) clearTimers();
+    if (
+      !sequence.started ||
+      intro.released ||
+      sequence.sequenceStage === "idle"
+    ) {
+      return;
+    }
+
+    const elapsed = now() - sequence.timerStartedAt;
+    sequence.timerDelayMs = Math.max(0, sequence.timerDelayMs - elapsed);
+    clearTimers();
   }
 
   function resume() {
-    const delay = Math.max(0, sequence.timerDelayMs);
-    const action = resumeIntroTimerAction(intro, sequence);
-    if (action === "releaseCountdown") {
-      showReleaseCountdown();
-      scheduleReleaseTick(delay);
+    if (
+      !sequence.started ||
+      intro.released ||
+      sequence.sequenceStage !== "releaseCountdown"
+    ) {
+      return;
     }
+
+    showReleaseCountdown();
+    scheduleReleaseTick(Math.max(0, sequence.timerDelayMs));
   }
 
   return {
     clearTimers,
     hideMessage,
     pause,
+    reset,
     resume,
     schedule,
   };

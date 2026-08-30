@@ -39,7 +39,6 @@ function testPausedCountdownTimeoutCanResume() {
   const introSequenceState = {
     started: true,
     sequenceStage: "releaseCountdown",
-    messageTimer: 0,
     countdownTimer: 0,
     countdownValue: 2,
     timerStartedAt: 0,
@@ -86,7 +85,6 @@ function testCountdownReleasesMapExactlyOnce() {
   const introSequenceState = {
     started: false,
     sequenceStage: "idle",
-    messageTimer: 0,
     countdownTimer: 0,
     countdownValue: 0,
     timerStartedAt: 0,
@@ -146,5 +144,70 @@ function testCountdownReleasesMapExactlyOnce() {
 
 testPausedCountdownTimeoutCanResume();
 testCountdownReleasesMapExactlyOnce();
+
+function testPausePreservesDelayAndResetRestoresInitialState() {
+  const scheduledDelays = [];
+  const clearedTimers = [];
+  let now = 0;
+  const intro = { released: false };
+  const state = {
+    started: false,
+    sequenceStage: "idle",
+    countdownTimer: 0,
+    countdownValue: 0,
+    timerStartedAt: 0,
+    timerDelayMs: 0,
+  };
+  const sequence = createIntroSequence({
+    intro,
+    sequence: state,
+    game: { paused: false },
+    timing: { introReleaseDelayMs: 3000, countdownTickMs: 1000 },
+    messageOverlay: fakeMessageOverlay(),
+    clearTimeoutFn(timer) {
+      clearedTimers.push(timer);
+    },
+    createElement() {
+      return { className: "", textContent: "" };
+    },
+    now: () => now,
+    onRelease() {},
+    setTimeoutFn(_callback, delay) {
+      scheduledDelays.push(delay);
+      return scheduledDelays.length;
+    },
+  });
+
+  sequence.schedule();
+  now = 400;
+  sequence.pause();
+  assert.equal(state.timerDelayMs, 600);
+  assert.equal(clearedTimers.includes(1), true);
+
+  sequence.resume();
+  assert.equal(scheduledDelays.at(-1), 600);
+
+  sequence.reset();
+  assert.deepEqual(
+    {
+      countdownTimer: state.countdownTimer,
+      countdownValue: state.countdownValue,
+      sequenceStage: state.sequenceStage,
+      started: state.started,
+      timerDelayMs: state.timerDelayMs,
+      timerStartedAt: state.timerStartedAt,
+    },
+    {
+      countdownTimer: 0,
+      countdownValue: 3,
+      sequenceStage: "idle",
+      started: false,
+      timerDelayMs: 0,
+      timerStartedAt: 0,
+    },
+  );
+}
+
+testPausePreservesDelayAndResetRestoresInitialState();
 
 console.log("Intro sequence tests passed.");

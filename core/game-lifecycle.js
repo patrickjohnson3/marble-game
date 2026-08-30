@@ -1,7 +1,29 @@
 import { copy } from "./copy.js";
-import { resetIntroTimerState, shouldPauseGame } from "./intro-timers.js";
 import { GAME_PHASES, SENSOR_MODES } from "./runtime-states.js";
-import { startGameWithPermissions } from "./startup-flow.js";
+
+function requestMotionPermissionWithTimeout({
+  requestMotionPermission,
+  timeoutMs,
+  setTimeoutFn,
+  clearTimeoutFn,
+}) {
+  return new Promise((resolve) => {
+    let settled = false;
+    let timer = 0;
+    const finish = (allowed) => {
+      if (settled) return;
+
+      settled = true;
+      clearTimeoutFn(timer);
+      resolve(allowed);
+    };
+    timer = setTimeoutFn(() => finish("timeout"), timeoutMs);
+
+    Promise.resolve()
+      .then(requestMotionPermission)
+      .then(finish, () => finish(false));
+  });
+}
 
 export function createLifecycleController({
   state,
@@ -27,18 +49,12 @@ export function createLifecycleController({
   setTimeoutFn = setTimeout,
   clearTimeoutFn = clearTimeout,
 }) {
-  const {
-    game,
-    haptics,
-    intro,
-    introSequence: introSequenceState,
-    marble,
-  } = state;
+  const { game, haptics, intro, marble } = state;
   const { keyboard, sensor, tilt } = state.input;
   let settingsPausedGame = false;
 
   function pauseGame() {
-    if (!shouldPauseGame(game)) return false;
+    if (game.paused || game.phase === GAME_PHASES.waiting) return false;
 
     game.paused = true;
     keyboard.x = 0;
@@ -65,7 +81,7 @@ export function createLifecycleController({
 
   function resetGameState() {
     sensorWatchdog.reset();
-    introSequence.clearTimers();
+    introSequence.reset();
     resetCalibration();
     resetMap();
 
@@ -76,12 +92,6 @@ export function createLifecycleController({
     sensor.using = SENSOR_MODES.none;
 
     intro.released = false;
-    introSequenceState.started = false;
-    introSequenceState.countdownValue = Math.ceil(
-      timing.introReleaseDelayMs / timing.countdownTickMs,
-    );
-    resetIntroTimerState(introSequenceState);
-
     keyboard.x = 0;
     keyboard.y = 0;
     tilt.rawX = 0;
@@ -122,22 +132,35 @@ export function createLifecycleController({
   }
 
   async function start() {
-    await startGameWithPermissions({
-      enableMotion,
-      game,
-      keepDisplayAwake,
-      requestFullscreen,
+    ui.setStartControls({ visible: false, disabled: true });
+    resetGameState();
+    ui.setStartControls({ visible: false, disabled: true });
+    requestFullscreen({ fullscreenOnStart: settings.fullscreenEnabled });
+    keepDisplayAwake();
+    enableMotion();
+    game.phase = GAME_PHASES.calibrating;
+    sensor.permission = "pending";
+    scheduleFrame();
+    ui.setHint(copy.hints.calibrating);
+    ui.setGameStatus(copy.hints.calibrating);
+    sensorWatchdog.schedule();
+
+    const permission = await requestMotionPermissionWithTimeout({
       requestMotionPermission,
-      resetGame: gameController.reset,
-      scheduleFrame,
-      sensor,
-      sensorWatchdog,
-      settings,
-      timing,
-      ui,
+      timeoutMs: timing.motionPermissionTimeoutMs,
       setTimeoutFn,
       clearTimeoutFn,
     });
+    sensor.permission =
+      permission === "timeout" ? "timeout" : permission ? "granted" : "denied";
+
+    if (permission === false) {
+      ui.setHint(copy.hints.motionDenied);
+      ui.setGameStatus(copy.hints.motionDenied);
+    } else if (permission === "timeout") {
+      ui.setHint(copy.hints.noMotionSensor);
+      ui.setGameStatus(copy.hints.noMotionSensor);
+    }
   }
 
   function openSettings() {

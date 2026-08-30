@@ -14,7 +14,6 @@ const tests = [
   "tests/platform-test.js",
   "tests/service-worker-test.js",
   "tests/intro-sequence-test.js",
-  "tests/intro-timers-test.js",
   "tests/config-test.js",
   "tests/map-test.js",
   "tests/map-validation-test.js",

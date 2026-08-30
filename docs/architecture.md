@@ -70,12 +70,11 @@ radius from the rendered element before gameplay starts.
 
 ## Start Button Flow
 
-The user-facing start behavior lives in `core/startup-flow.js` and
-`core/game-lifecycle.js`.
+The user-facing start behavior lives in `core/game-lifecycle.js`.
 
 When the start button is pressed:
 
-1. `gameController.start()` calls `startGameWithPermissions()`.
+1. `gameController.start()` begins the permission and startup flow.
 2. The start button is hidden and disabled.
 3. `gameController.reset()` restores the initial map, spawn, intro pen, input,
    camera, effects, and goal state. Reset briefly restores the Start control, so
@@ -374,8 +373,7 @@ Use this section when deciding where a change belongs.
 - `core/geometry.js`: pure geometry utilities.
 - `core/goal-controller.js`: goal hold progress, goal haptics, and map advance.
 - `core/haptics.js`: haptic request throttling and gameplay feedback patterns.
-- `core/intro-sequence.js` and `core/intro-timers.js`: intro countdown state
-  and pause/resume handling.
+- `core/intro-sequence.js`: intro countdown state and pause/resume handling.
 - `core/map-bounds.js`: intro pen and released-map bounds/walls.
 - `core/map-config.js`: resolved map config and combined variants.
 - `core/map-elements.js`: element type filters.
@@ -390,9 +388,7 @@ Use this section when deciding where a change belongs.
 - `core/physics-collisions.js`: wall and obstacle collision resolution.
 - `core/procedural-generator.js`: development/test procedural variant utility.
 - `core/rect-bounds.js`: rectangle collection bounds.
-- `core/startup-flow.js`: permission/fullscreen/wake-lock startup path.
 - `core/state.js`: initial mutable state shape.
-- `core/timer-utils.js`: pausable timeout used by the sensor watchdog.
 - `input/camera-controller.js` and `input/camera-gestures.js`: camera transform,
   follow behavior, and pinch/pan input.
 - `input/*`: browser input binding and input-specific controllers.
@@ -422,10 +418,9 @@ Change marble feel:
 
 Change startup or fullscreen behavior:
 
-1. Start in `core/startup-flow.js`.
-2. Check lifecycle reset/pause behavior in `core/game-lifecycle.js`.
-3. Keep direct browser API calls in `platform/platform.js`.
-4. Cover behavior with lifecycle/startup/platform tests.
+1. Start in `core/game-lifecycle.js`.
+2. Keep direct browser API calls in `platform/platform.js`.
+3. Cover behavior with lifecycle and platform tests.
 
 Change map progression:
 

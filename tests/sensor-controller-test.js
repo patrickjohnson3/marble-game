@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createSensorController } from "../input/sensor-controller.js";
+import { createSensorWatchdog } from "../input/sensor-watchdog.js";
 
 function createHarness() {
   let frameSchedules = 0;
@@ -113,5 +114,45 @@ function testOrientationTakesPriorityOverMotionFallback() {
 }
 
 testOrientationTakesPriorityOverMotionFallback();
+
+function testSensorWatchdogResumesWithRemainingDelay() {
+  const delays = [];
+  const callbacks = [];
+  let fallbackCount = 0;
+  let now = 0;
+  const game = { paused: false };
+  const sensor = { using: "none" };
+  const watchdog = createSensorWatchdog({
+    delayMs: 100,
+    game,
+    sensor,
+    onFallback() {
+      fallbackCount++;
+    },
+    now: () => now,
+    setTimeoutFn(callback, delay) {
+      callbacks.push(callback);
+      delays.push(delay);
+      return callbacks.length;
+    },
+    clearTimeoutFn() {},
+  });
+
+  watchdog.schedule();
+  now = 40;
+  watchdog.pause();
+  watchdog.resume(() => true);
+  assert.deepEqual(delays, [100, 60]);
+
+  callbacks.at(-1)();
+  assert.equal(fallbackCount, 1);
+
+  watchdog.schedule();
+  sensor.using = "deviceorientation";
+  callbacks.at(-1)();
+  assert.equal(fallbackCount, 1);
+}
+
+testSensorWatchdogResumesWithRemainingDelay();
 
 console.log("Sensor controller tests passed.");

@@ -1,4 +1,3 @@
-import { resetIntroTimerState } from "./intro-timers.js";
 import { GAME_PHASES, SENSOR_MODES } from "./runtime-states.js";
 
 export function createGameState({
@@ -32,11 +31,13 @@ export function createGameState({
     },
     introSequence: {
       started: false,
-      messageTimer: 0,
       countdownTimer: 0,
       countdownValue: Math.ceil(
         timing.introReleaseDelayMs / timing.countdownTickMs,
       ),
+      sequenceStage: "idle",
+      timerStartedAt: 0,
+      timerDelayMs: 0,
     },
     input: {
       tilt: {
@@ -100,6 +101,5 @@ export function createGameState({
     physics: { ...physicsConfig },
   };
 
-  resetIntroTimerState(state.introSequence);
   return state;
 }
