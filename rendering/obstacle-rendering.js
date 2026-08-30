@@ -1,4 +1,5 @@
-import { createCanvas, rectBounds } from "./wall-rendering.js";
+import { rectBounds } from "../core/rect-bounds.js";
+import { createCanvas } from "./wall-rendering.js";
 import { KITCHEN_FIXTURES } from "../core/map-elements.js";
 
 function rectPath(x, y, w, h) {

@@ -39,7 +39,7 @@ function configureCanvas(
   return { canvas, context, left, pixelRatio, top };
 }
 
-function createCanvas(
+export function createCanvas(
   className,
   rects,
   padding = 0,
@@ -58,7 +58,7 @@ function canvasPixelRatio() {
   return Math.min(Math.max(1, globalThis.devicePixelRatio || 1), 2);
 }
 
-function drawRoundedRect(context, rect, radius) {
+export function drawRoundedRect(context, rect, radius) {
   if (context.roundRect) {
     context.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
     return;
@@ -66,7 +66,7 @@ function drawRoundedRect(context, rect, radius) {
   context.rect(rect.x, rect.y, rect.w, rect.h);
 }
 
-function renderPatchCanvas(
+export function renderPatchCanvas(
   container,
   patches,
   { bounds, className, dataAttribute, drawPatch, padding = 0 } = {},
@@ -182,5 +182,3 @@ export function renderOuterWalls(container, walls) {
   frameElement.setAttribute("aria-hidden", "true");
   if (frameElement !== existingFrame) container.replaceChildren(frameElement);
 }
-
-export { createCanvas, drawRoundedRect, rectBounds, renderPatchCanvas };

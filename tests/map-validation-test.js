@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { validateMapConfig } from "../core/map-validation.js";
+import {
+  mapValidationMessages,
+  validateMapConfig,
+} from "../core/map-validation.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { hasLikelyReachableGoal } from "../core/map-reachability.js";
-import { mapValidationMessages } from "../core/map-validation-messages.js";
 import {
   blockedSpawnConfig,
   emptyElementMapConfig,

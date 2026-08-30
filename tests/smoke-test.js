@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "fs";
 import { spawnSync } from "child_process";
 import { resolvedMapConfig } from "../core/map-config.js";
-import { requiredDomIds } from "../core/dom-ids.js";
+import { requiredDomIds } from "../core/dom.js";
 import { MAP_ELEMENT_TYPES } from "../core/map-elements.js";
 import { runtimeModuleScripts, runtimeScripts } from "../runtime-assets.js";
 

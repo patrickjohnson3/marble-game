@@ -19,40 +19,22 @@ export function isKitchenFixture(value) {
   return kitchenFixtureValues.has(value);
 }
 
-export const MAP_ELEMENT_REGISTRY = Object.freeze({
-  [MAP_ELEMENT_TYPES.gooPatch]: Object.freeze({
-    type: MAP_ELEMENT_TYPES.gooPatch,
-    terrain: true,
-  }),
-  [MAP_ELEMENT_TYPES.hazardPatch]: Object.freeze({
-    type: MAP_ELEMENT_TYPES.hazardPatch,
-    terrain: true,
-  }),
-  [MAP_ELEMENT_TYPES.icePatch]: Object.freeze({
-    type: MAP_ELEMENT_TYPES.icePatch,
-    terrain: true,
-  }),
-  [MAP_ELEMENT_TYPES.obstacle]: Object.freeze({
-    type: MAP_ELEMENT_TYPES.obstacle,
-    obstacle: true,
-  }),
-  [MAP_ELEMENT_TYPES.roughPatch]: Object.freeze({
-    type: MAP_ELEMENT_TYPES.roughPatch,
-    terrain: true,
-  }),
-  [MAP_ELEMENT_TYPES.waterPatch]: Object.freeze({
-    type: MAP_ELEMENT_TYPES.waterPatch,
-    terrain: true,
-  }),
-});
+export const MAP_ELEMENT_TYPE_VALUES = Object.freeze([
+  MAP_ELEMENT_TYPES.gooPatch,
+  MAP_ELEMENT_TYPES.hazardPatch,
+  MAP_ELEMENT_TYPES.icePatch,
+  MAP_ELEMENT_TYPES.obstacle,
+  MAP_ELEMENT_TYPES.roughPatch,
+  MAP_ELEMENT_TYPES.waterPatch,
+]);
 
-export const MAP_ELEMENT_TYPE_VALUES = Object.freeze(
-  Object.keys(MAP_ELEMENT_REGISTRY),
-);
-
-export const MAP_TERRAIN_TYPES = Object.freeze(
-  MAP_ELEMENT_TYPE_VALUES.filter((type) => MAP_ELEMENT_REGISTRY[type].terrain),
-);
+export const MAP_TERRAIN_TYPES = Object.freeze([
+  MAP_ELEMENT_TYPES.gooPatch,
+  MAP_ELEMENT_TYPES.hazardPatch,
+  MAP_ELEMENT_TYPES.icePatch,
+  MAP_ELEMENT_TYPES.roughPatch,
+  MAP_ELEMENT_TYPES.waterPatch,
+]);
 
 function isElementType(element, type) {
   return element?.type === type;

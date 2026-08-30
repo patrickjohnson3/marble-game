@@ -6,7 +6,41 @@ import {
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { circleObstacleContact } from "./physics-collisions.js";
 import { hasLikelyReachableGoal } from "./map-reachability.js";
-import { mapValidationMessages } from "./map-validation-messages.js";
+
+export const mapValidationMessages = Object.freeze({
+  configRequired: "map config is required",
+  elementsArray: "elements must be an array",
+  goalRequired: "goal is required",
+  goalRadiusPositive: "goal radius must be positive",
+  goalHoldPositive: "goal hold time must be positive",
+  goalInsideWorld: "goal must fit inside world bounds",
+  goalObstacleOverlap: "goal must not overlap obstacles",
+  goalReachable: "goal must appear reachable from spawn",
+  gridPositive: "grid size must be positive",
+  normalizedObstaclesArray: "normalized obstacles must be an array",
+  spawnRequired: "spawn is required",
+  spawnRadiusPositive: "spawn radius must be positive",
+  spawnInsideWorld: "spawn must fit inside world bounds",
+  spawnObstacleOverlap: "spawn must not overlap obstacles",
+  worldWidthPositive: "world width must be positive",
+  worldHeightPositive: "world height must be positive",
+  worldWidthGrid: "world width must align to grid",
+  worldHeightGrid: "world height must align to grid",
+  elementObject: (index) => "element " + index + " must be an object",
+  elementUnknownType: (index, type) =>
+    "element " + index + " has unknown type " + type,
+  kitchenObstacleFixture: (index) =>
+    "element " + index + " must use a supported kitchen fixture",
+  fieldNonFinite: (label, key) => label + " has non-finite " + key,
+  fieldPositive: (label, key) => label + " " + key + " must be positive",
+  rectPositiveDimensions: (label) => label + " must have positive dimensions",
+  rectInsideWorldStart: (label) => label + " must start inside world bounds",
+  rectInsideWorld: (label) => label + " must fit inside world bounds",
+  elementGrid: (index, key) =>
+    "element " + index + " " + key + " must align to grid",
+  normalizedObstacleObject: (index) =>
+    "normalized obstacle " + index + " must be an object",
+});
 
 function isMultipleOf(value, size) {
   return Math.abs(value / size - Math.round(value / size)) < 0.000001;

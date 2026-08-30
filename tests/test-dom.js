@@ -1,4 +1,4 @@
-import { domIds } from "../core/dom-ids.js";
+import { domIds } from "../core/dom.js";
 
 class FakeClassList {
   constructor() {

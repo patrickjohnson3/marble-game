@@ -268,27 +268,6 @@ function setupSensors({
   };
 }
 
-function setupInput({
-  els,
-  sensorController,
-  keyboardController,
-  cameraController,
-  gameController,
-}) {
-  return createInputManager({
-    gameEl: els.game,
-    startBtn: els.startBtn,
-    onOrientation: sensorController.onOrientation,
-    onMotion: sensorController.onMotion,
-    onKeyDown: keyboardController.onKeyDown,
-    onKeyUp: keyboardController.onKeyUp,
-    onPointerDown: cameraController.onPointerDown,
-    onPointerMove: cameraController.onPointerMove,
-    onPointerEnd: cameraController.onPointerEnd,
-    onStartClick: gameController.start,
-  });
-}
-
 function setupFeedback(haptics, windowRef) {
   const vibrate = windowRef.navigator?.vibrate;
   return createHapticsController(haptics, hapticTuning, {
@@ -500,14 +479,6 @@ export function createApp({
   const frameLoop = createFrameLoop();
   const viewport = createViewport(windowRef);
 
-  function scheduleFrame() {
-    frameLoop.schedule();
-  }
-
-  function requestRender() {
-    frameLoop.requestRender();
-  }
-
   let pwaUpdateStatus = "";
   function updatePwaStatus(status = "") {
     const displayStatus = fullscreenManagedByPwa
@@ -578,7 +549,7 @@ export function createApp({
     mapRenderer,
     marble,
     marbleView,
-    requestRender,
+    requestRender: frameLoop.requestRender,
     windowRef,
   });
 
@@ -643,7 +614,7 @@ export function createApp({
     copy: copy.hints,
     formatMapLabel: mapLevelLabel,
     mapLabelDurationMs: timing.mapLabelDurationMs,
-    requestRender,
+    requestRender: frameLoop.requestRender,
   });
   function retryCurrentMap() {
     mapRuntime.resetGoalProgress();
@@ -652,7 +623,7 @@ export function createApp({
     ui.setLevelLabel("");
     ui.setHint(copy.hints.mapOpen);
     gameController.closeSettings();
-    requestRender();
+    frameLoop.requestRender();
   }
   const goalController = createGoalController({
     copy: copy.hints,
@@ -670,7 +641,7 @@ export function createApp({
   const { sensorController, sensorWatchdog } = setupSensors({
     state,
     introSequence,
-    scheduleFrame,
+    scheduleFrame: frameLoop.schedule,
     ui,
     adjustScreen: (gamma, beta) =>
       screenAdjusted(gamma, beta, {
@@ -697,7 +668,7 @@ export function createApp({
       mapRuntime.resetGoalProgress();
       terrainView.updateGoalProgress(0);
     },
-    scheduleFrame,
+    scheduleFrame: frameLoop.schedule,
     settings,
     terrainView,
     timing,
@@ -718,7 +689,7 @@ export function createApp({
     mapRenderer,
     resetMap: () => setCurrentMap(resolvedMapConfig),
     resetCalibration: sensorController.resetCalibration,
-    scheduleFrame,
+    scheduleFrame: frameLoop.schedule,
     sensorWatchdog,
     settings,
     timing,
@@ -744,18 +715,23 @@ export function createApp({
     game,
     introSequence,
     keyboard,
-    scheduleFrame,
+    scheduleFrame: frameLoop.schedule,
     sensor,
     tilt,
     closeSettings: gameController.closeSettings,
     onInputReady: () => ui.setGameStatus(""),
   });
-  inputManager = setupInput({
-    els,
-    sensorController,
-    keyboardController,
-    cameraController,
-    gameController,
+  inputManager = createInputManager({
+    gameEl: els.game,
+    startBtn: els.startBtn,
+    onOrientation: sensorController.onOrientation,
+    onMotion: sensorController.onMotion,
+    onKeyDown: keyboardController.onKeyDown,
+    onKeyUp: keyboardController.onKeyUp,
+    onPointerDown: cameraController.onPointerDown,
+    onPointerMove: cameraController.onPointerMove,
+    onPointerEnd: cameraController.onPointerEnd,
+    onStartClick: gameController.start,
   });
 
   bindSettingsPanel({
@@ -774,7 +750,7 @@ export function createApp({
     onFpsChanged: ui.setFpsEnabled,
     onHitboxOverlayChanged: terrainView.setHitboxOverlayEnabled,
     onStatsChanged: ui.setStatsEnabled,
-    requestRender,
+    requestRender: frameLoop.requestRender,
     fullscreenManagedByPwa,
   });
 
@@ -787,7 +763,7 @@ export function createApp({
       inputManager,
       mapRenderer,
       marbleView,
-      requestRender,
+      requestRender: frameLoop.requestRender,
       windowRef,
     });
     ui.setLevelLabel(mapLevelLabel(mapState.activeMap));

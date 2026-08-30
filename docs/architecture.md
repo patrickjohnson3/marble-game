@@ -357,7 +357,7 @@ Use this section when deciding where a change belongs.
 - `boot.js`: browser entrypoint only.
 - `core/copy.js`: user-facing strings.
 - `core/debug.js`: debug/stat display formatting.
-- `core/dom.js` and `core/dom-ids.js`: DOM lookup and element ids.
+- `core/dom.js`: required DOM ids and lookup.
 - `core/frame-loop.js`: frame scheduling state.
 - `core/game-config.js`: numeric tuning for timing, physics, visuals, haptics,
   and general behavior.
@@ -374,8 +374,7 @@ Use this section when deciding where a change belongs.
 - `core/map-progression.js`: next-map selection on completion.
 - `core/map-reachability.js`: map playability/reachability helpers.
 - `core/map-runtime.js`: active-map derived state and goal progress state.
-- `core/map-validation.js` and `core/map-validation-messages.js`: map schema
-  and validation errors.
+- `core/map-validation.js`: map schema and validation errors.
 - `core/map-variants.js`: variant selection and resolution.
 - `core/physics.js`: input smoothing, velocity, drag, substeps, surfaces.
 - `core/physics-collisions.js`: wall and obstacle collision resolution.
