@@ -12,7 +12,6 @@ const movementKeys = new Set([
 ]);
 
 export function createKeyboardController({
-  calibration,
   game,
   introSequence,
   keyboard,
@@ -31,10 +30,9 @@ export function createKeyboardController({
     )
       return;
 
-    game.phase = GAME_PHASES.keyboard;
+    game.phase = GAME_PHASES.running;
     tilt.neutralX = 0;
     tilt.neutralY = 0;
-    calibration.autoNeutralDone = true;
     onInputReady();
     introSequence.schedule();
     scheduleFrame();

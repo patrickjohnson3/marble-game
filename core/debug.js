@@ -2,7 +2,7 @@ export function debugLines(
   { game, input, marble, camera, haptics, intro, perf },
   target = [],
 ) {
-  const { calibration, sensor, tilt } = input;
+  const { sensor, tilt } = input;
 
   target.length = 0;
   target.push(
@@ -10,11 +10,6 @@ export function debugLines(
     "paused: " + game.paused,
     "sensor: " + sensor.using,
     "permission: " + sensor.permission,
-    "orientation seen: " +
-      sensor.gotOrientation +
-      " | motion seen: " +
-      sensor.gotMotion,
-    "auto neutral: " + calibration.autoNeutralDone,
     "raw x/y: " + tilt.rawX.toFixed(2) + " / " + tilt.rawY.toFixed(2),
     "neutral x/y: " +
       (tilt.neutralX ?? 0).toFixed(2) +

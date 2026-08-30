@@ -1,5 +1,5 @@
 import { copy } from "../core/copy.js";
-import { GAME_PHASES } from "../core/runtime-states.js";
+import { GAME_PHASES, SENSOR_MODES } from "../core/runtime-states.js";
 
 export function createSensorController({
   calibration,
@@ -15,7 +15,7 @@ export function createSensorController({
 }) {
   function maybeAutoNeutral() {
     if (game.paused) return;
-    if (calibration.autoNeutralDone) return;
+    if (tilt.neutralX !== null && tilt.neutralY !== null) return;
 
     calibration.sampleX += tilt.rawX;
     calibration.sampleY += tilt.rawY;
@@ -24,7 +24,6 @@ export function createSensorController({
     if (calibration.sampleCount >= tuning.neutralSampleCount) {
       tilt.neutralX = calibration.sampleX / calibration.sampleCount;
       tilt.neutralY = calibration.sampleY / calibration.sampleCount;
-      calibration.autoNeutralDone = true;
       game.phase = GAME_PHASES.running;
       marble.vx = 0;
       marble.vy = 0;
@@ -36,8 +35,7 @@ export function createSensorController({
 
   function onOrientation(e) {
     if (e.beta == null || e.gamma == null) return;
-    sensor.gotOrientation = true;
-    sensor.using = "deviceorientation";
+    sensor.using = SENSOR_MODES.orientation;
     const [tx, ty] = adjustScreen(e.gamma, e.beta);
     tilt.rawX = tx;
     tilt.rawY = ty;
@@ -45,11 +43,10 @@ export function createSensorController({
   }
 
   function onMotion(e) {
-    if (sensor.gotOrientation) return;
+    if (sensor.using === SENSOR_MODES.orientation) return;
     const g = e.accelerationIncludingGravity;
     if (!g) return;
-    sensor.gotMotion = true;
-    sensor.using = "devicemotion fallback";
+    sensor.using = SENSOR_MODES.motion;
     tilt.rawX = -(g.x || 0) * tuning.motionGravityScale;
     tilt.rawY = (g.y || 0) * tuning.motionGravityScale;
     maybeAutoNeutral();
@@ -59,7 +56,6 @@ export function createSensorController({
     calibration.sampleCount = 0;
     calibration.sampleX = 0;
     calibration.sampleY = 0;
-    calibration.autoNeutralDone = false;
     tilt.neutralX = null;
     tilt.neutralY = null;
   }
@@ -67,7 +63,6 @@ export function createSensorController({
   function setNeutralNow() {
     tilt.neutralX = tilt.rawX;
     tilt.neutralY = tilt.rawY;
-    calibration.autoNeutralDone = true;
     if (game.phase === GAME_PHASES.calibrating)
       game.phase = GAME_PHASES.running;
     calibration.sampleCount = tuning.neutralSampleCount;

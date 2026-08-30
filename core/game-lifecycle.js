@@ -72,8 +72,6 @@ export function createLifecycleController({
     game.phase = GAME_PHASES.waiting;
     game.paused = false;
     settingsPausedGame = false;
-    sensor.gotOrientation = false;
-    sensor.gotMotion = false;
     sensor.permission = "unknown";
     sensor.using = SENSOR_MODES.none;
 

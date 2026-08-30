@@ -55,11 +55,8 @@ export function createGameState({
         sampleCount: 0,
         sampleX: 0,
         sampleY: 0,
-        autoNeutralDone: false,
       },
       sensor: {
-        gotOrientation: false,
-        gotMotion: false,
         permission: "unknown",
         using: SENSOR_MODES.none,
       },

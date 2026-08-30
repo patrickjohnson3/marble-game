@@ -8,9 +8,11 @@ function createHarness(phase = GAME_PHASES.waiting) {
   let introScheduled = 0;
   let inputReady = 0;
   const keyboard = { x: 0, y: 0 };
+  const game = { paused: false, phase };
+  const sensor = { using: SENSOR_MODES.none };
+  const tilt = { neutralX: 8, neutralY: 9 };
   const controller = createKeyboardController({
-    calibration: { autoNeutralDone: false },
-    game: { paused: false, phase },
+    game,
     introSequence: {
       schedule() {
         introScheduled++;
@@ -20,8 +22,8 @@ function createHarness(phase = GAME_PHASES.waiting) {
     scheduleFrame() {
       scheduled++;
     },
-    sensor: { using: SENSOR_MODES.none },
-    tilt: { neutralX: 8, neutralY: 9 },
+    sensor,
+    tilt,
     closeSettings() {},
     onInputReady() {
       inputReady++;
@@ -40,8 +42,11 @@ function createHarness(phase = GAME_PHASES.waiting) {
   return {
     controller,
     counts: () => ({ inputReady, introScheduled, prevented, scheduled }),
+    game,
     keyEvent,
     keyboard,
+    sensor,
+    tilt,
   };
 }
 
@@ -62,13 +67,18 @@ function testMovementKeysDoNotStartGameBeforeStart() {
 testMovementKeysDoNotStartGameBeforeStart();
 
 function testMovementKeysStillActivateKeyboardAfterStart() {
-  const { controller, counts, keyEvent, keyboard } = createHarness(
-    GAME_PHASES.calibrating,
-  );
+  const { controller, counts, game, keyEvent, keyboard, sensor, tilt } =
+    createHarness(GAME_PHASES.calibrating);
 
   controller.onKeyDown(keyEvent("ArrowRight"));
 
   assert.equal(keyboard.x, 1);
+  assert.equal(game.phase, GAME_PHASES.running);
+  assert.equal(sensor.using, SENSOR_MODES.keyboard);
+  assert.deepEqual(
+    { neutralX: tilt.neutralX, neutralY: tilt.neutralY },
+    { neutralX: 0, neutralY: 0 },
+  );
   assert.deepEqual(counts(), {
     inputReady: 1,
     introScheduled: 1,

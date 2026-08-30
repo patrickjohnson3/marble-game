@@ -246,10 +246,9 @@ function setupSensors({
       ui.setHint(copy.hints.noMotionSensor);
       ui.setGameStatus(copy.hints.noMotionSensor);
       sensor.using = SENSOR_MODES.keyboard;
-      game.phase = GAME_PHASES.keyboard;
+      game.phase = GAME_PHASES.running;
       tilt.neutralX = 0;
       tilt.neutralY = 0;
-      calibration.autoNeutralDone = true;
       introSequence.schedule();
       scheduleFrame();
     },
@@ -489,7 +488,7 @@ export function createApp({
     game,
     physics,
   } = state;
-  const { calibration, keyboard, sensor, tilt } = input;
+  const { keyboard, sensor, tilt } = input;
 
   const { saveSettings, settings } = createSettingsRuntime(storage);
   const fullscreenManagedByPwa = isInstalledPwa({
@@ -756,7 +755,6 @@ export function createApp({
   });
   const { gameController } = lifecycle;
   const keyboardController = createKeyboardController({
-    calibration,
     game,
     introSequence,
     keyboard,

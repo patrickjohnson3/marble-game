@@ -7,7 +7,6 @@ function createHarness() {
   let hint = "";
   let gameStatus = "calibrating";
   const calibration = {
-    autoNeutralDone: false,
     sampleCount: 0,
     sampleX: 0,
     sampleY: 0,
@@ -22,6 +21,7 @@ function createHarness() {
     smoothX: 1,
     smoothY: -1,
   };
+  const sensor = { using: "none" };
   const controller = createSensorController({
     calibration,
     game,
@@ -34,7 +34,7 @@ function createHarness() {
     scheduleFrame() {
       frameSchedules++;
     },
-    sensor: { gotMotion: false, gotOrientation: false, using: "none" },
+    sensor,
     tilt,
     tuning: {
       motionGravityScale: 3,
@@ -59,6 +59,7 @@ function createHarness() {
     gameStatus: () => gameStatus,
     hint: () => hint,
     marble,
+    sensor,
     tilt,
   };
 }
@@ -69,7 +70,6 @@ function testManualNeutralStartsIntroCountdown() {
   harness.controller.setNeutralNow();
 
   assert.equal(harness.game.phase, "running");
-  assert.equal(harness.calibration.autoNeutralDone, true);
   assert.equal(harness.tilt.neutralX, 3);
   assert.equal(harness.tilt.neutralY, -5);
   assert.deepEqual(harness.counts(), { frameSchedules: 1, introSchedules: 1 });
@@ -84,7 +84,7 @@ function testAutoNeutralStartsIntroCountdownOnce() {
   harness.controller.onOrientation({ beta: 10, gamma: 10 });
 
   assert.equal(harness.game.phase, "running");
-  assert.equal(harness.calibration.autoNeutralDone, true);
+  assert.equal(harness.sensor.using, "deviceorientation");
   assert.equal(harness.tilt.neutralX, 5);
   assert.equal(harness.tilt.neutralY, 5);
   assert.equal(harness.counts().introSchedules, 1);
@@ -93,5 +93,25 @@ function testAutoNeutralStartsIntroCountdownOnce() {
 
 testManualNeutralStartsIntroCountdown();
 testAutoNeutralStartsIntroCountdownOnce();
+
+function testOrientationTakesPriorityOverMotionFallback() {
+  const harness = createHarness();
+
+  harness.controller.onMotion({
+    accelerationIncludingGravity: { x: 1, y: 2 },
+  });
+  assert.equal(harness.sensor.using, "devicemotion fallback");
+  harness.controller.onOrientation({ beta: 4, gamma: 3 });
+  assert.equal(harness.sensor.using, "deviceorientation");
+  const raw = { x: harness.tilt.rawX, y: harness.tilt.rawY };
+
+  harness.controller.onMotion({
+    accelerationIncludingGravity: { x: 8, y: 9 },
+  });
+
+  assert.deepEqual({ x: harness.tilt.rawX, y: harness.tilt.rawY }, raw);
+}
+
+testOrientationTakesPriorityOverMotionFallback();
 
 console.log("Sensor controller tests passed.");
