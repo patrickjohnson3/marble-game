@@ -44,13 +44,9 @@ export function createResolvedMapState(
   ).map(prepareCollisionObstacle);
   return {
     activeMap,
-    elements,
     obstacles,
     obstacleBounds: rectBounds(obstacles),
     terrainByType,
-    goal: activeMap.goal,
-    spawn: activeMap.spawn,
-    world: activeMap.world,
   };
 }
 
@@ -60,13 +56,9 @@ export function createMapRuntime({
 }) {
   const state = {
     activeMap: null,
-    elements: [],
     obstacles: [],
     obstacleBounds: null,
     terrainByType: {},
-    goal: null,
-    spawn: null,
-    world: null,
     goalHoldMs: 0,
     goalCompleted: false,
   };
@@ -81,20 +73,17 @@ export function createMapRuntime({
       normalizeObstacles,
     });
     state.activeMap = derived.activeMap;
-    state.elements = derived.elements;
     state.obstacles = derived.obstacles;
     state.obstacleBounds = derived.obstacleBounds;
     state.terrainByType = derived.terrainByType;
-    state.goal = derived.goal;
-    state.spawn = derived.spawn;
-    state.world = derived.world;
     resetGoalProgress();
     return state;
   }
 
   function addGoalHold(ms) {
-    state.goalHoldMs = Math.min(state.goal.holdMs, state.goalHoldMs + ms);
-    return state.goalHoldMs / state.goal.holdMs;
+    const goal = state.activeMap.goal;
+    state.goalHoldMs = Math.min(goal.holdMs, state.goalHoldMs + ms);
+    return state.goalHoldMs / goal.holdMs;
   }
 
   function completeGoal() {

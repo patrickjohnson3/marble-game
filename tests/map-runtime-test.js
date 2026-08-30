@@ -48,8 +48,6 @@ const runtime = createMapRuntime({ initialMap: firstMap });
 const resolvedFirstMap = createResolvedMapState(firstMap);
 
 assert.equal(resolvedFirstMap.activeMap, firstMap);
-assert.equal(resolvedFirstMap.goal, firstMap.goal);
-assert.equal(resolvedFirstMap.spawn, firstMap.spawn);
 assert.equal(terrain(resolvedFirstMap, "gooPatch").elements.length, 1);
 assert.deepEqual(terrain(resolvedFirstMap, "gooPatch").bounds, {
   bottom: 24,
@@ -106,9 +104,6 @@ assert.deepEqual(terrain(resolvedFirstMap, "waterPatch").bounds, {
 });
 
 assert.equal(runtime.state.activeMap, firstMap);
-assert.equal(runtime.state.goal, firstMap.goal);
-assert.equal(runtime.state.spawn, firstMap.spawn);
-assert.equal(runtime.state.world, firstMap.world);
 assert.equal(terrain(runtime.state, "gooPatch").elements.length, 1);
 assert.equal(terrain(runtime.state, "hazardPatch").elements.length, 1);
 assert.equal(terrain(runtime.state, "icePatch").elements.length, 1);
@@ -122,9 +117,6 @@ assert.equal(runtime.state.goalCompleted, true);
 runtime.setActiveMap(secondMap);
 
 assert.equal(runtime.state.activeMap, secondMap);
-assert.equal(runtime.state.goal, secondMap.goal);
-assert.equal(runtime.state.spawn, secondMap.spawn);
-assert.equal(runtime.state.world, secondMap.world);
 assert.equal(runtime.state.obstacles.length, 3);
 const angledObstacle = runtime.state.obstacles.find((obstacle) =>
   Number.isFinite(obstacle.angle),

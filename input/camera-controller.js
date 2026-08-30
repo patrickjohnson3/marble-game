@@ -9,9 +9,8 @@ export function createCameraController({
   marble,
   tuning,
   viewport,
-  world,
+  mapState,
 }) {
-  let currentWorld = world;
   const boundsCache = {
     centerX: 0,
     centerY: 0,
@@ -36,8 +35,9 @@ export function createCameraController({
     )
       return;
 
-    const scaledWidth = currentWorld.width * camera.scale;
-    const scaledHeight = currentWorld.height * camera.scale;
+    const world = mapState.activeMap.world;
+    const scaledWidth = world.width * camera.scale;
+    const scaledHeight = world.height * camera.scale;
     boundsCache.scale = camera.scale;
     boundsCache.viewportWidth = viewportWidth;
     boundsCache.viewportHeight = viewportHeight;
@@ -79,8 +79,7 @@ export function createCameraController({
     applyTransform();
   }
 
-  function setWorld(nextWorld) {
-    currentWorld = nextWorld;
+  function invalidateWorldBounds() {
     boundsCache.scale = null;
     applyTransform();
   }
@@ -118,7 +117,7 @@ export function createCameraController({
     onPointerEnd: gestures.onPointerEnd,
     onPointerMove: gestures.onPointerMove,
     resetGesture: gestures.resetGesture,
-    setWorld,
+    invalidateWorldBounds,
     updateFollow,
   };
 }

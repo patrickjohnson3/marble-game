@@ -73,6 +73,22 @@ function kitchenDynamicsWith(overrides = {}) {
   });
 }
 
+function createMapState({
+  goal = { x: 100, y: 120, r: 50 },
+  mapConfig = {},
+  obstacleBounds = null,
+  obstacles = [],
+  terrainByType = {},
+  world = { width: 100, height: 100 },
+} = {}) {
+  return {
+    activeMap: { ...mapConfig, goal, world },
+    obstacleBounds,
+    obstacles,
+    terrainByType,
+  };
+}
+
 function updateAndRenderMapThemeDynamics({
   dynamics,
   mapConfig,
@@ -475,9 +491,7 @@ function testGoalProgressUsesRadialFillRadius() {
   const terrainView = createTerrainView({
     obstaclesEl: new FakeElement(),
     goalEl,
-    goal: { x: 100, y: 120, r: 50 },
-    terrainByType: {},
-    obstacles: [],
+    mapState: createMapState(),
     renderObstacleWalls() {},
     renderTerrainPatches() {},
   });
@@ -1428,10 +1442,12 @@ function testTerrainViewRedrawsWhenTerrainIsSet() {
     hitboxesEl: new FakeElement(),
     hitboxOverlayEnabled: true,
     goalEl: new FakeElement(),
-    goal,
-    terrainByType,
-    obstacles,
-    obstacleBounds,
+    mapState: createMapState({
+      goal,
+      terrainByType,
+      obstacles,
+      obstacleBounds,
+    }),
     renderObstacleWalls() {
       obstacleRenderCount++;
     },
@@ -1444,12 +1460,7 @@ function testTerrainViewRedrawsWhenTerrainIsSet() {
   });
 
   terrainView.renderTerrain();
-  terrainView.setTerrain({
-    goal,
-    obstacles,
-    obstacleBounds,
-    terrainByType,
-  });
+  terrainView.renderTerrain();
   terrainView.renderTerrainType("roughPatch");
   terrainView.renderMovedObstacles();
 
@@ -1469,17 +1480,17 @@ function testTerrainViewAllocatesHitboxesOnlyWhenEnabled() {
     hitboxesEl,
     hitboxOverlayEnabled: false,
     goalEl: new FakeElement(),
-    goal: { x: 100, y: 120, r: 50 },
-    terrainByType: {},
-    obstacles: [{ x: 10, y: 10, w: 20, h: 20 }],
-    obstacleBounds: {
-      left: 10,
-      top: 10,
-      right: 30,
-      bottom: 30,
-      width: 20,
-      height: 20,
-    },
+    mapState: createMapState({
+      obstacles: [{ x: 10, y: 10, w: 20, h: 20 }],
+      obstacleBounds: {
+        left: 10,
+        top: 10,
+        right: 30,
+        bottom: 30,
+        width: 20,
+        height: 20,
+      },
+    }),
     renderObstacleWalls() {},
     renderObstacleHitboxes(container) {
       hitboxRenderCount++;
@@ -1506,17 +1517,17 @@ testTerrainViewAllocatesHitboxesOnlyWhenEnabled();
 function testTerrainViewUsesUpdatedWorld() {
   const renderedWorlds = [];
   const goal = { x: 100, y: 120, r: 50 };
+  const mapState = createMapState({
+    goal,
+    world: { width: 100, height: 100 },
+  });
   const terrainView = createTerrainView({
     mapThemeEl: new FakeElement(),
     mapThemeOverlayEl: new FakeElement(),
     terrainContainers: {},
     obstaclesEl: new FakeElement(),
     goalEl: new FakeElement(),
-    goal,
-    world: { width: 100, height: 100 },
-    terrainByType: {},
-    obstacles: [],
-    obstacleBounds: null,
+    mapState,
     renderMapTheme({ world }) {
       renderedWorlds.push(world);
     },
@@ -1525,13 +1536,8 @@ function testTerrainViewUsesUpdatedWorld() {
   const nextWorld = { width: 220, height: 330 };
 
   terrainView.renderTerrain();
-  terrainView.setTerrain({
-    goal,
-    obstacles: [],
-    obstacleBounds: null,
-    terrainByType: {},
-    world: nextWorld,
-  });
+  mapState.activeMap.world = nextWorld;
+  terrainView.renderTerrain();
 
   assert.deepEqual(renderedWorlds, [{ width: 100, height: 100 }, nextWorld]);
 }
@@ -1543,6 +1549,7 @@ function testMapRendererUsesUpdatedWorld() {
   const trailEl = new FakeElement();
   const releasedWorlds = [];
   const edgeWorlds = [];
+  const mapState = createMapState({ world: { width: 100, height: 120 } });
   const renderer = createMapRenderer({
     worldEl,
     introWallsEl: new FakeElement(),
@@ -1551,7 +1558,7 @@ function testMapRendererUsesUpdatedWorld() {
     bounds: {},
     intro: {},
     marble: {},
-    world: { width: 100, height: 120 },
+    mapState,
     viewport: { width: () => 50, height: () => 60 },
     terrainView: { renderTerrain() {} },
     renderOuterWalls() {},
@@ -1568,7 +1575,8 @@ function testMapRendererUsesUpdatedWorld() {
   const nextWorld = { width: 240, height: 360 };
 
   renderer.setup();
-  renderer.setWorld(nextWorld);
+  mapState.activeMap.world = nextWorld;
+  renderer.syncWorld();
 
   assert.equal(worldEl.style.width, "240px");
   assert.equal(worldEl.style.height, "360px");

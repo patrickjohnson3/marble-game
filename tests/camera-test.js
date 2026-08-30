@@ -16,6 +16,7 @@ function createController({
     maxScale: 3,
   };
   const cameraEl = { style: {} };
+  const mapState = { activeMap: { world } };
   const controller = createCameraController({
     camera,
     cameraEl,
@@ -24,10 +25,10 @@ function createController({
     marble,
     tuning: { gestureCooldownFrames: 10 },
     viewport,
-    world,
+    mapState,
   });
 
-  return { camera, controller };
+  return { camera, controller, mapState };
 }
 
 function testFollowPreservesSmoothFollow() {
@@ -105,11 +106,12 @@ function testSmallScaledWorldCentersInViewport() {
 }
 
 function testWorldSizeCanChange() {
-  const { camera, controller } = createController({
+  const { camera, controller, mapState } = createController({
     marble: { x: 980, y: 980, vx: 0, vy: 0 },
   });
 
-  controller.setWorld({ width: 2000, height: 1600 });
+  mapState.activeMap.world = { width: 2000, height: 1600 };
+  controller.invalidateWorldBounds();
   controller.centerOnMarble();
 
   assert.equal(camera.x, -830);

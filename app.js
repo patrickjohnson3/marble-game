@@ -175,12 +175,7 @@ function setupRenderers({
     obstaclesEl,
     hitboxesEl,
     goalEl,
-    goal: mapState.goal,
-    mapConfig: mapState.activeMap,
-    world,
-    terrainByType: mapState.terrainByType,
-    obstacles: mapState.obstacles,
-    obstacleBounds: mapState.obstacleBounds,
+    mapState,
     dynamicsState: kitchenDynamicsState,
     renderTerrainPatches: (type, container, elements, bounds) => {
       const renderer = terrainPatchRenderers[type];
@@ -215,7 +210,7 @@ function setupRenderers({
     bounds,
     intro,
     marble,
-    world,
+    mapState,
     viewport,
     terrainView,
     renderOuterWalls,
@@ -473,7 +468,7 @@ export function createApp({
     mapConfig: mapState.activeMap,
     obstacles: mapState.obstacles,
     waterPatches: mapState.terrainByType[MAP_ELEMENT_TYPES.waterPatch].elements,
-    world,
+    mapState,
   });
 
   const state = createGameState({
@@ -553,7 +548,7 @@ export function createApp({
     marble,
     tuning,
     viewport,
-    world,
+    mapState,
   });
   const {
     effectsRenderer,
@@ -615,27 +610,19 @@ export function createApp({
       obstacles: mapState.obstacles,
       waterPatches:
         mapState.terrainByType[MAP_ELEMENT_TYPES.waterPatch].elements,
-      world: mapState.world,
+      world: mapState.activeMap.world,
     });
-    cameraController.setWorld(mapState.world);
-    effectsRenderer.setWorld(mapState.world);
-    marbleView.setWorld(mapState.world);
-    mapRenderer.setWorld(mapState.world);
-    terrainView.setTerrain({
-      goal: mapState.goal,
-      mapConfig: mapState.activeMap,
-      terrainByType: mapState.terrainByType,
-      obstacles: mapState.obstacles,
-      obstacleBounds: mapState.obstacleBounds,
-      dynamicsState: kitchenDynamics.state,
-      world: mapState.world,
-    });
+    cameraController.invalidateWorldBounds();
+    effectsRenderer.setWorld(mapState.activeMap.world);
+    marbleView.setWorld(mapState.activeMap.world);
+    mapRenderer.syncWorld();
+    terrainView.renderTerrain();
     ui.setMapObjects(mapObjectSummary(mapState.activeMap));
   }
 
   function resetForNextMap() {
-    marble.x = mapState.spawn.x;
-    marble.y = mapState.spawn.y;
+    marble.x = mapState.activeMap.spawn.x;
+    marble.y = mapState.activeMap.spawn.y;
     marble.vx = 0;
     marble.vy = 0;
     marble.roll = 0;
@@ -714,7 +701,7 @@ export function createApp({
     game,
     hapticFeedback,
     goalController,
-    goalTarget: () => mapState.goal,
+    goalTarget: () => mapState.activeMap.goal,
     kitchenDynamics,
     marble,
     marbleView,
@@ -726,7 +713,7 @@ export function createApp({
     },
     scheduleFrame,
     settings,
-    spawnTarget: () => mapState.spawn,
+    spawnTarget: () => mapState.activeMap.spawn,
     terrainView,
     timing,
     tuning,
@@ -752,7 +739,7 @@ export function createApp({
     timing,
     trailRenderer,
     ui,
-    getSpawn: () => mapState.spawn,
+    getSpawn: () => mapState.activeMap.spawn,
     enableMotion: () => inputManager.enableMotion(),
     requestFullscreen: (options) =>
       requestFullscreenMode({

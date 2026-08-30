@@ -75,9 +75,9 @@ function testGoalHoldResetAndMapProgression() {
     applyMap: (nextMap) => mapRuntime.setActiveMap(nextMap),
     resetForNextMap() {
       calls.resets++;
-      marble.x = mapRuntime.state.spawn.x;
-      marble.y = mapRuntime.state.spawn.y;
-      marble.r = mapRuntime.state.spawn.r;
+      marble.x = mapRuntime.state.activeMap.spawn.x;
+      marble.y = mapRuntime.state.activeMap.spawn.y;
+      marble.r = mapRuntime.state.activeMap.spawn.r;
     },
     terrainView,
     ui,

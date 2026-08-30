@@ -238,7 +238,7 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
       },
     },
     goalController: { update() {} },
-    goalTarget: () => mapRuntime.state.goal,
+    goalTarget: () => mapRuntime.state.activeMap.goal,
     kitchenDynamics: eventQueue
       ? {
           state: {},
@@ -257,7 +257,7 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
     },
     scheduleFrame() {},
     settings: { goalIndicatorEnabled: false },
-    spawnTarget: () => mapRuntime.state.spawn,
+    spawnTarget: () => mapRuntime.state.activeMap.spawn,
     terrainView: {
       renderMapThemeDynamics() {},
       renderMovedObstacles() {

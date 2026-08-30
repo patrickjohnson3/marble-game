@@ -5,12 +5,7 @@ export function createTerrainView({
   obstaclesEl,
   hitboxesEl,
   goalEl,
-  goal,
-  mapConfig,
-  world,
-  terrainByType = {},
-  obstacles,
-  obstacleBounds,
+  mapState,
   dynamicsState = { ants: [], cheerios: [] },
   renderTerrainPatches: drawTerrainPatches = () => {},
   renderMapTheme: drawMapTheme = () => {},
@@ -20,13 +15,6 @@ export function createTerrainView({
   goalFillEdgePercent = 70.8,
   hitboxOverlayEnabled = false,
 }) {
-  let currentGoal = goal;
-  let currentMapConfig = mapConfig;
-  let currentTerrainByType = terrainByType;
-  let currentObstacles = obstacles;
-  let currentObstacleBounds = obstacleBounds;
-  let currentDynamicsState = dynamicsState;
-  let currentWorld = world;
   let currentHitboxOverlayEnabled = hitboxOverlayEnabled;
   const themeState = {};
 
@@ -37,20 +25,20 @@ export function createTerrainView({
   function renderMapTheme() {
     drawMapTheme({
       container: mapThemeEl,
-      dynamicsState: currentDynamicsState,
+      dynamicsState,
       overlayContainer: mapThemeOverlayEl,
-      mapConfig: currentMapConfig,
+      mapConfig: mapState.activeMap,
       themeState,
-      world: currentWorld,
+      world: mapState.activeMap.world,
     });
   }
 
   function renderObstacles() {
     renderObstacleWalls(
       obstaclesEl,
-      currentObstacles,
-      currentObstacleBounds,
-      currentMapConfig,
+      mapState.obstacles,
+      mapState.obstacleBounds,
+      mapState.activeMap,
     );
   }
 
@@ -61,8 +49,8 @@ export function createTerrainView({
       return;
     }
 
-    renderObstacleHitboxes?.(hitboxesEl, currentObstacles, {
-      bounds: currentObstacleBounds,
+    renderObstacleHitboxes?.(hitboxesEl, mapState.obstacles, {
+      bounds: mapState.obstacleBounds,
     });
     applyHitboxOverlayVisibility();
   }
@@ -87,7 +75,7 @@ export function createTerrainView({
     const container = terrainContainers[type];
     if (!container) return;
 
-    const terrain = currentTerrainByType[type] ?? {
+    const terrain = mapState.terrainByType[type] ?? {
       bounds: null,
       elements: [],
     };
@@ -99,10 +87,11 @@ export function createTerrainView({
   }
 
   function renderGoal() {
-    goalEl.style.left = currentGoal.x - currentGoal.r + "px";
-    goalEl.style.top = currentGoal.y - currentGoal.r + "px";
-    goalEl.style.width = currentGoal.r * 2 + "px";
-    goalEl.style.height = currentGoal.r * 2 + "px";
+    const goal = mapState.activeMap.goal;
+    goalEl.style.left = goal.x - goal.r + "px";
+    goalEl.style.top = goal.y - goal.r + "px";
+    goalEl.style.width = goal.r * 2 + "px";
+    goalEl.style.height = goal.r * 2 + "px";
     updateGoalProgress(0);
   }
 
@@ -112,25 +101,6 @@ export function createTerrainView({
     renderTerrainPatches();
     renderObstacles();
     renderHitboxes();
-  }
-
-  function setTerrain({
-    goal,
-    mapConfig = currentMapConfig,
-    terrainByType = currentTerrainByType,
-    obstacles,
-    obstacleBounds,
-    dynamicsState = currentDynamicsState,
-    world = currentWorld,
-  }) {
-    currentGoal = goal;
-    currentMapConfig = mapConfig;
-    currentTerrainByType = terrainByType;
-    currentObstacles = obstacles;
-    currentObstacleBounds = obstacleBounds;
-    currentDynamicsState = dynamicsState;
-    currentWorld = world;
-    renderTerrain();
   }
 
   function updateGoalProgress(progress) {
@@ -144,8 +114,8 @@ export function createTerrainView({
 
   function renderMapThemeDynamics() {
     drawMapThemeDynamics({
-      dynamicsState: currentDynamicsState,
-      mapConfig: currentMapConfig,
+      dynamicsState,
+      mapConfig: mapState.activeMap,
       themeState,
     });
   }
@@ -154,7 +124,6 @@ export function createTerrainView({
     renderMovedObstacles,
     renderTerrain,
     renderTerrainType,
-    setTerrain,
     setHitboxOverlayEnabled,
     updateGoalProgress,
     renderMapThemeDynamics,
@@ -169,7 +138,7 @@ export function createMapRenderer({
   bounds,
   intro,
   marble,
-  world,
+  mapState,
   viewport,
   terrainView,
   renderOuterWalls,
@@ -178,31 +147,27 @@ export function createMapRenderer({
   setReleasedMapBounds,
   updateIntroMapBounds,
 }) {
-  let currentWorld = world;
-
   function updateIntroBounds() {
     updateIntroMapBounds({
       bounds,
       intro,
       marble,
       viewport: { width: viewport.width(), height: viewport.height() },
-      world: currentWorld,
+      world: mapState.activeMap.world,
     });
     renderOuterWalls(introWallsEl, introPenWalls(bounds, intro));
   }
 
   function setReleasedBounds() {
-    setReleasedMapBounds(bounds, currentWorld);
+    setReleasedMapBounds(bounds, mapState.activeMap.world);
   }
 
   function renderWorldFrame() {
-    worldEl.style.width = currentWorld.width + "px";
-    worldEl.style.height = currentWorld.height + "px";
-    trailEl.setAttribute(
-      "viewBox",
-      "0 0 " + currentWorld.width + " " + currentWorld.height,
-    );
-    renderOuterWalls(mapWallsEl, mapEdgeWalls(currentWorld, intro));
+    const world = mapState.activeMap.world;
+    worldEl.style.width = world.width + "px";
+    worldEl.style.height = world.height + "px";
+    trailEl.setAttribute("viewBox", "0 0 " + world.width + " " + world.height);
+    renderOuterWalls(mapWallsEl, mapEdgeWalls(world, intro));
   }
 
   function setup() {
@@ -224,8 +189,7 @@ export function createMapRenderer({
     updateIntroBounds();
   }
 
-  function setWorld(nextWorld) {
-    currentWorld = nextWorld;
+  function syncWorld() {
     renderWorldFrame();
     setReleasedBounds();
   }
@@ -233,7 +197,7 @@ export function createMapRenderer({
   return {
     openMap,
     resetIntroPen,
-    setWorld,
+    syncWorld,
     setup,
     updateIntroBounds,
   };

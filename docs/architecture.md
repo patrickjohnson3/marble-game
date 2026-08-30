@@ -189,7 +189,8 @@ Static or rarely changing map visuals:
 
 - `createMapRenderer()` sizes the world, renders intro walls, renders outer map
   walls, sets released bounds, and opens/resets the intro pen.
-- `createTerrainView()` owns the current terrain references and renders:
+- `createTerrainView()` reads the current map and derived terrain from
+  `mapRuntime.state` and renders:
   - goal DOM position and size
   - map theme underlay and overlay
   - goo patch canvas output
@@ -346,8 +347,8 @@ Ownership model:
 - `state.intro`: updated by lifecycle, intro sequence, and map controller.
 - `state.game`: updated by lifecycle/startup and read by most controllers.
 - `state.physics`: updated by settings applier and read by physics.
-- `mapRuntime.state`: active map, derived element arrays, spawn, goal, and goal
-  hold progress.
+- `mapRuntime.state`: active map, derived terrain and obstacle arrays, and goal
+  hold progress. World, spawn, and goal remain properties of the active map.
 - `kitchenDynamics.state`: Cheerios, crumbs, ants, collision scratch, and
   per-frame kitchen events. Rendering reads this state but does not advance it.
 - `settings`: runtime settings loaded from persisted settings and mutated by

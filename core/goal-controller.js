@@ -36,10 +36,8 @@ export function createGoalController({
   let goalHapticActive = false;
 
   function marbleInsideGoal() {
-    return (
-      intro.released &&
-      distance(marble, mapState.goal) + marble.r <= mapState.goal.r
-    );
+    const goal = mapState.activeMap.goal;
+    return intro.released && distance(marble, goal) + marble.r <= goal.r;
   }
 
   function update(frameDelta) {
@@ -60,17 +58,16 @@ export function createGoalController({
       hapticFeedback.pulseGoal("enter");
     }
 
-    const multiplier = goalHoldMultiplier(marble, mapState.goal);
+    const goal = mapState.activeMap.goal;
+    const multiplier = goalHoldMultiplier(marble, goal);
     const progress = mapRuntime.addGoalHold(
       frameDeltaToMs(frameDelta, timing) * multiplier,
     );
     terrainView.updateGoalProgress(progress);
-    ui.setHint(
-      goalHoldHint(mapState.goal.holdMs - mapState.goalHoldMs, multiplier),
-    );
+    ui.setHint(goalHoldHint(goal.holdMs - mapState.goalHoldMs, multiplier));
     hapticFeedback.pulseGoal("hold");
 
-    if (mapState.goalHoldMs >= mapState.goal.holdMs) {
+    if (mapState.goalHoldMs >= goal.holdMs) {
       onComplete(mapState.activeMap);
       mapRuntime.completeGoal();
       effectsRenderer.spawnGoalComplete();
