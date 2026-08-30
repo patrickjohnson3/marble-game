@@ -3,7 +3,6 @@ export function bindSettingsPanel({
   settings,
   controls,
   defaults,
-  applyRangeConfig,
   applySettings,
   applyFullscreenSetting,
   saveSettings,
@@ -18,6 +17,12 @@ export function bindSettingsPanel({
   requestRender,
   fullscreenManagedByPwa = false,
 }) {
+  function applyRangeConfig(input, range) {
+    input.min = range.min;
+    input.max = range.max;
+    input.step = range.step;
+  }
+
   const {
     neutralBtn,
     installApp,

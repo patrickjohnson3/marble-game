@@ -84,11 +84,6 @@ function createPanelHarness() {
       maxSpeed: 14,
       acceleration: 0.115,
     },
-    applyRangeConfig(input, range) {
-      input.min = range.min;
-      input.max = range.max;
-      input.step = range.step;
-    },
     applySettings() {
       applyCount++;
     },
@@ -314,11 +309,6 @@ function testInstalledPwaDisablesFullscreenToggle() {
     defaults: {
       maxSpeed: 14,
       acceleration: 0.115,
-    },
-    applyRangeConfig(input, range) {
-      input.min = range.min;
-      input.max = range.max;
-      input.step = range.step;
     },
     applySettings() {},
     applyFullscreenSetting() {

@@ -64,13 +64,9 @@ import {
   isInstalledPwa,
 } from "./platform/platform.js";
 import { bindSettingsPanel } from "./settings/settings-panel.js";
-import { createSettingsApplier } from "./settings/settings-applier.js";
 import {
-  applyRangeConfig,
   availableStorage,
-  createRuntimeSettings,
   loadSettings,
-  persistedSettingsFromRuntime,
   saveSettings as persistSettings,
 } from "./settings/settings-store.js";
 import {
@@ -306,20 +302,18 @@ function setupFeedback(haptics, windowRef) {
 
 function createSettingsRuntime(storage) {
   const storageKey = "marbleGameSettings";
-  const persistedSettings = loadSettings({
+  const settings = loadSettings({
     storage,
     storageKey,
     defaults: settingsConfig,
     controls: settingsControls,
     clamp,
   });
-  const settings = createRuntimeSettings(persistedSettings);
-
   function saveSettings() {
     persistSettings({
       storage,
       storageKey,
-      settings: persistedSettingsFromRuntime(settings),
+      settings,
     });
   }
 
@@ -555,22 +549,25 @@ export function createApp({
     mapState,
     kitchenDynamicsState: kitchenDynamics.state,
   });
-  const { applyFullscreenSetting, applySettings } = createSettingsApplier({
-    documentRef,
-    exitFullscreen: (options) =>
-      exitFullscreenMode({ ...options, documentRef }),
-    haptics,
-    physics,
-    requestFullscreen: (options) =>
+  function applySettings() {
+    physics.maxSpeed = settings.maxSpeed;
+    physics.accel = settings.acceleration;
+    haptics.enabled = settings.hapticsEnabled;
+    trailRenderer.setEnabled(settings.trailEnabled);
+  }
+
+  function applyFullscreenSetting() {
+    if (settings.fullscreenEnabled) {
       requestFullscreenMode({
-        ...options,
+        fullscreenOnStart: true,
         documentRef,
         navigatorRef: windowRef.navigator,
         windowRef,
-      }),
-    settings,
-    trailRenderer,
-  });
+      });
+    } else {
+      exitFullscreenMode({ documentRef });
+    }
+  }
 
   bindViewportEvents({
     bounds,
@@ -766,7 +763,6 @@ export function createApp({
     settings,
     controls: settingsControls,
     defaults: settingsConfig,
-    applyRangeConfig,
     applySettings,
     applyFullscreenSetting,
     saveSettings,

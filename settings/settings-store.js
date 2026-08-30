@@ -6,20 +6,6 @@ function copyPersistedSettings(settings) {
   );
 }
 
-export function applyRangeConfig(input, range) {
-  input.min = range.min;
-  input.max = range.max;
-  input.step = range.step;
-}
-
-export function createRuntimeSettings(persistedSettings) {
-  return copyPersistedSettings(persistedSettings);
-}
-
-export function persistedSettingsFromRuntime(settings) {
-  return copyPersistedSettings(settings);
-}
-
 function numberSetting(value, fallback, range, clamp) {
   if (!Number.isFinite(value)) return fallback;
   if (!range) return value;

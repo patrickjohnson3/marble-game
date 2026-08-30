@@ -47,7 +47,6 @@ export const runtimeScripts = [
   "rendering/wall-rendering.js",
   "rendering/water-patch-rendering.js",
   "rendering/ui.js",
-  "settings/settings-applier.js",
   "settings/settings-config.js",
   "settings/settings-panel.js",
   "settings/settings-store.js",

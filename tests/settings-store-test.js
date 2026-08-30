@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import {
   availableStorage,
-  createRuntimeSettings,
   loadSettings,
-  persistedSettingsFromRuntime,
   saveSettings,
 } from "../settings/settings-store.js";
 
@@ -78,19 +76,6 @@ function testTrailMigrationPreservesCurrentSavedTrailChoice() {
   assert.equal(settings.trailEnabled, true);
 }
 
-function testRuntimeSettingsAreIndependentFromPersistedSettings() {
-  const persisted = { ...defaults };
-  const runtime = createRuntimeSettings(persisted);
-
-  runtime.maxSpeed = 20;
-
-  assert.equal(persisted.maxSpeed, 14);
-  assert.deepEqual(persistedSettingsFromRuntime(runtime), {
-    ...persisted,
-    maxSpeed: 20,
-  });
-}
-
 function testPersistedSettingsFilterRuntimeOnlyKeys() {
   const runtime = {
     ...defaults,
@@ -99,11 +84,6 @@ function testPersistedSettingsFilterRuntimeOnlyKeys() {
     sensorPhase: "running",
   };
   const storage = storageWith(null);
-
-  assert.deepEqual(persistedSettingsFromRuntime(runtime), {
-    ...defaults,
-    maxSpeed: 18,
-  });
 
   saveSettings({
     storage,
@@ -306,7 +286,6 @@ function testNumericSettingsClampToControlRanges() {
 
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
-testRuntimeSettingsAreIndependentFromPersistedSettings();
 testPersistedSettingsFilterRuntimeOnlyKeys();
 testUnavailableStorageFallsBackToDefaults();
 testMalformedJsonFallsBackToDefaults();

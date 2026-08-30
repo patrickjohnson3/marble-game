@@ -42,13 +42,11 @@ The entrypoint is intentionally small:
    and active map metadata.
 5. `createGameState()` creates the mutable runtime state object: marble,
    bounds, intro, input, camera, haptics, game phase, and physics tuning.
-6. Settings are loaded from `localStorage` with `loadSettings()`, copied into a
-   runtime settings object, and later persisted through
-   `persistedSettingsFromRuntime()`.
+6. Settings are loaded from `localStorage` with `loadSettings()` into the
+   mutable runtime settings object.
 7. Controllers and renderers are composed in `app.js`:
    - camera controller
    - terrain/map/marble/trail/effects renderers
-   - settings applier
    - intro sequence
    - map progression and goal controller
    - sensor controller
@@ -290,13 +288,10 @@ Settings are split deliberately:
 - `settings/settings-config.js`: defaults, persisted keys, and control ranges.
 - `settings/settings-store.js`: load, migration, clamping, persistence, and
   filtering runtime-only keys out of saved settings.
-- `settings/settings-applier.js`: applies settings to runtime systems such as
-  haptics, physics tuning, fullscreen preference, and trail behavior.
 - `settings/settings-panel.js`: binds modal controls to settings changes.
 
-The runtime settings object is mutable. Persisted settings should always flow
-through `persistedSettingsFromRuntime()` before saving so transient debugging or
-runtime-only fields do not leak into localStorage.
+The runtime settings object is mutable. `settings/settings-store.js` writes only
+schema-owned keys so transient fields cannot leak into localStorage.
 
 ## PWA Updates
 
