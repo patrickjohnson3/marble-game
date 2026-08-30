@@ -115,7 +115,8 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
     w: 300,
     h: 200,
   };
-  const runtimeWaterPatches = [authoredWater];
+  const runtimeWater = { ...authoredWater };
+  const runtimeWaterPatches = [runtimeWater];
   const sponge = {
     type: "obstacle",
     fixture: "sponge",
@@ -133,7 +134,7 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
     collisionHalfWidth: 70,
     collisionHalfHeight: 35,
   };
-  const mapConfig = kitchenMap("kitchen-floor", [authoredWater, sponge]);
+  const mapConfig = kitchenMap("kitchen-floor", [runtimeWater, sponge]);
   const dynamics = createKitchenDynamics();
   dynamics.reset({
     mapConfig,
@@ -141,7 +142,11 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
     waterPatches: runtimeWaterPatches,
     world,
   });
-  const runtimeWater = runtimeWaterPatches[0];
+  assert.equal(
+    dynamics.state.waterPatch,
+    runtimeWater,
+    "kitchen behavior should mutate the authoritative runtime water patch",
+  );
 
   const events = update(
     dynamics,

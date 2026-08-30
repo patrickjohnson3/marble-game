@@ -47,7 +47,10 @@ const secondMap = {
 const runtime = createMapRuntime({ initialMap: firstMap });
 const resolvedFirstMap = createResolvedMapState(firstMap);
 
-assert.equal(resolvedFirstMap.activeMap, firstMap);
+assert.notEqual(resolvedFirstMap.activeMap, firstMap);
+assert.deepEqual(resolvedFirstMap.activeMap, firstMap);
+assert.notEqual(resolvedFirstMap.activeMap.elements, firstMap.elements);
+assert.notEqual(resolvedFirstMap.activeMap.elements[0], firstMap.elements[0]);
 assert.equal(terrain(resolvedFirstMap, "gooPatch").elements.length, 1);
 assert.deepEqual(terrain(resolvedFirstMap, "gooPatch").bounds, {
   bottom: 24,
@@ -103,7 +106,8 @@ assert.deepEqual(terrain(resolvedFirstMap, "waterPatch").bounds, {
   width: 90,
 });
 
-assert.equal(runtime.state.activeMap, firstMap);
+assert.notEqual(runtime.state.activeMap, firstMap);
+assert.deepEqual(runtime.state.activeMap, firstMap);
 assert.equal(terrain(runtime.state, "gooPatch").elements.length, 1);
 assert.equal(terrain(runtime.state, "hazardPatch").elements.length, 1);
 assert.equal(terrain(runtime.state, "icePatch").elements.length, 1);
@@ -116,7 +120,8 @@ runtime.completeGoal();
 assert.equal(runtime.state.goalCompleted, true);
 runtime.setActiveMap(secondMap);
 
-assert.equal(runtime.state.activeMap, secondMap);
+assert.notEqual(runtime.state.activeMap, secondMap);
+assert.deepEqual(runtime.state.activeMap, secondMap);
 assert.equal(runtime.state.obstacles.length, 3);
 const angledObstacle = runtime.state.obstacles.find((obstacle) =>
   Number.isFinite(obstacle.angle),
@@ -154,3 +159,12 @@ assert.equal(runtime.addGoalHold(5000), 1);
 runtime.completeGoal();
 runtime.clearGoalCompleted();
 assert.equal(runtime.state.goalCompleted, false);
+
+const runtimeWater =
+  runtime.setActiveMap(firstMap).terrainByType.waterPatch.elements[0];
+runtimeWater.w = 20;
+assert.equal(firstMap.elements.at(-1).w, 90);
+const resetRuntimeWater =
+  runtime.setActiveMap(firstMap).terrainByType.waterPatch.elements[0];
+assert.equal(resetRuntimeWater.w, 90);
+assert.notEqual(resetRuntimeWater, runtimeWater);

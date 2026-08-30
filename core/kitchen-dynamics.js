@@ -204,11 +204,10 @@ function elementCaches(elements = []) {
   return { obstacles, terrainElements };
 }
 
-function cloneRuntimeWaterPatch(state, waterPatches) {
+function useRuntimeWaterPatch(state, waterPatches) {
   if (!Array.isArray(waterPatches) || !waterPatches[0]) return;
 
-  const patch = { ...waterPatches[0] };
-  waterPatches[0] = patch;
+  const patch = waterPatches[0];
   state.waterPatch = patch;
   state.waterPatchOriginal = {
     h: patch.h,
@@ -216,12 +215,6 @@ function cloneRuntimeWaterPatch(state, waterPatches) {
     x: patch.x,
     y: patch.y,
   };
-  for (let i = 0; i < state.terrainElements.length; i++) {
-    if (state.terrainElements[i].type === MAP_ELEMENT_TYPES.waterPatch) {
-      state.terrainElements[i] = patch;
-      return;
-    }
-  }
 }
 
 export function resetKitchenDynamics(
@@ -274,7 +267,7 @@ export function resetKitchenDynamics(
       state.sponge.vy = 0;
       state.spongeOriginAngle = state.sponge.angle ?? 0;
     }
-    cloneRuntimeWaterPatch(state, waterPatches);
+    useRuntimeWaterPatch(state, waterPatches);
   }
   return state;
 }

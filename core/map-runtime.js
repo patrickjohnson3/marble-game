@@ -21,10 +21,21 @@ function prepareCollisionObstacle(obstacle) {
   };
 }
 
+function createRuntimeMap(sourceMap) {
+  return {
+    ...sourceMap,
+    world: { ...sourceMap.world },
+    goal: { ...sourceMap.goal },
+    spawn: { ...sourceMap.spawn },
+    elements: sourceMap.elements.map((element) => ({ ...element })),
+  };
+}
+
 export function createResolvedMapState(
-  activeMap,
+  sourceMap,
   { normalizeObstacles = normalizeJoinedObstacleRects } = {},
 ) {
+  const activeMap = createRuntimeMap(sourceMap);
   const elements = activeMap.elements;
   const elementsByType = mapElementsByType(elements);
   const terrainByType = Object.fromEntries(
