@@ -12,14 +12,16 @@ function setVelocityUnit(marble, target) {
   target.y = marble.vy / speed;
 }
 
-function configureCanvas(canvas, world, scale) {
+function configureCanvas(canvas, region, scale) {
   canvas.className = "effectsCanvas";
-  canvas.width = Math.ceil(world.width * scale);
-  canvas.height = Math.ceil(world.height * scale);
-  canvas.style.left = "0px";
-  canvas.style.top = "0px";
-  canvas.style.width = world.width + "px";
-  canvas.style.height = world.height + "px";
+  const pixelWidth = Math.ceil(region.width * scale);
+  const pixelHeight = Math.ceil(region.height * scale);
+  if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
+  if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
+  canvas.style.left = region.left + "px";
+  canvas.style.top = region.top + "px";
+  canvas.style.width = region.width + "px";
+  canvas.style.height = region.height + "px";
   canvas.setAttribute("aria-hidden", "true");
 }
 
@@ -101,16 +103,31 @@ function includeParticleBounds(bounds, particle, progress) {
   bounds.top = Math.min(bounds.top, y - radius);
 }
 
-function clearDirtyBounds(context, canvas, bounds, scale) {
+function clearDirtyBounds(context, canvas, bounds, region, scale) {
   if (!Number.isFinite(bounds.left)) return;
 
-  const left = Math.max(0, Math.floor(bounds.left * scale) - 1);
-  const top = Math.max(0, Math.floor(bounds.top * scale) - 1);
-  const right = Math.min(canvas.width, Math.ceil(bounds.right * scale) + 1);
-  const bottom = Math.min(canvas.height, Math.ceil(bounds.bottom * scale) + 1);
+  const left = Math.max(0, Math.floor((bounds.left - region.left) * scale) - 1);
+  const top = Math.max(0, Math.floor((bounds.top - region.top) * scale) - 1);
+  const right = Math.min(
+    canvas.width,
+    Math.ceil((bounds.right - region.left) * scale) + 1,
+  );
+  const bottom = Math.min(
+    canvas.height,
+    Math.ceil((bounds.bottom - region.top) * scale) + 1,
+  );
   if (right > left && bottom > top) {
     context.clearRect(left, top, right - left, bottom - top);
   }
+}
+
+function boundsFitRegion(bounds, region) {
+  return (
+    bounds.left >= region.left &&
+    bounds.top >= region.top &&
+    bounds.right <= region.left + region.width &&
+    bounds.bottom <= region.top + region.height
+  );
 }
 
 export function createEffectsRenderer({
@@ -127,8 +144,11 @@ export function createEffectsRenderer({
   const activeParticles = [];
   const direction = { x: 0, y: -1 };
   const canvasScale = config.canvasScale ?? 0.5;
+  const canvasWorldSize = config.canvasWorldSize ?? Number.POSITIVE_INFINITY;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
+  let currentWorld = world;
+  const region = { left: 0, top: 0, width: 0, height: 0 };
   let currentDirtyBounds = {
     bottom: Number.NEGATIVE_INFINITY,
     left: Number.POSITIVE_INFINITY,
@@ -138,7 +158,39 @@ export function createEffectsRenderer({
   let nextDirtyBounds = { ...currentDirtyBounds };
   let canvasDirty = false;
 
-  configureCanvas(canvas, world, canvasScale);
+  function positionRegion(bounds = null, allowShrink = false) {
+    const minimumWidth = Math.min(currentWorld.width, canvasWorldSize);
+    const minimumHeight = Math.min(currentWorld.height, canvasWorldSize);
+    const boundsWidth = bounds ? bounds.right - bounds.left : 0;
+    const boundsHeight = bounds ? bounds.bottom - bounds.top : 0;
+    region.width = Math.min(
+      currentWorld.width,
+      Math.max(allowShrink ? 0 : region.width, minimumWidth, boundsWidth),
+    );
+    region.height = Math.min(
+      currentWorld.height,
+      Math.max(allowShrink ? 0 : region.height, minimumHeight, boundsHeight),
+    );
+    const centerX = bounds
+      ? (bounds.left + bounds.right) / 2
+      : clamp(marble.x, 0, currentWorld.width);
+    const centerY = bounds
+      ? (bounds.top + bounds.bottom) / 2
+      : clamp(marble.y, 0, currentWorld.height);
+    region.left = clamp(
+      centerX - region.width / 2,
+      0,
+      Math.max(0, currentWorld.width - region.width),
+    );
+    region.top = clamp(
+      centerY - region.height / 2,
+      0,
+      Math.max(0, currentWorld.height - region.height),
+    );
+    configureCanvas(canvas, region, canvasScale);
+  }
+
+  positionRegion(null, true);
   effectsEl.replaceChildren(canvas);
 
   function prune(currentTime) {
@@ -265,7 +317,13 @@ export function createEffectsRenderer({
     activeParticles.length = 0;
     if (context && canvasDirty) {
       context.setTransform(1, 0, 0, 1, 0, 0);
-      clearDirtyBounds(context, canvas, currentDirtyBounds, canvasScale);
+      clearDirtyBounds(
+        context,
+        canvas,
+        currentDirtyBounds,
+        region,
+        canvasScale,
+      );
     }
     resetDirtyBounds(currentDirtyBounds);
     resetDirtyBounds(nextDirtyBounds);
@@ -277,7 +335,8 @@ export function createEffectsRenderer({
 
   function setWorld(nextWorld) {
     clear();
-    configureCanvas(canvas, nextWorld, canvasScale);
+    currentWorld = nextWorld;
+    positionRegion(null, true);
   }
 
   function render(currentTime = now()) {
@@ -286,18 +345,23 @@ export function createEffectsRenderer({
     prune(currentTime);
     if (activeParticles.length === 0 && !canvasDirty) return;
 
-    if (canvasDirty) {
-      context.setTransform(1, 0, 0, 1, 0, 0);
-      clearDirtyBounds(context, canvas, currentDirtyBounds, canvasScale);
-    }
     if (activeParticles.length === 0) {
+      if (canvasDirty) {
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        clearDirtyBounds(
+          context,
+          canvas,
+          currentDirtyBounds,
+          region,
+          canvasScale,
+        );
+      }
       resetDirtyBounds(currentDirtyBounds);
       canvasDirty = false;
       return;
     }
 
     resetDirtyBounds(nextDirtyBounds);
-    context.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
     for (let i = 0; i < activeParticles.length; i++) {
       const particle = activeParticles[i];
       const progress = clamp(
@@ -306,6 +370,37 @@ export function createEffectsRenderer({
         1,
       );
       includeParticleBounds(nextDirtyBounds, particle, progress);
+    }
+
+    const regionChanged = !boundsFitRegion(nextDirtyBounds, region);
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    if (regionChanged) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      positionRegion(nextDirtyBounds);
+    } else if (canvasDirty) {
+      clearDirtyBounds(
+        context,
+        canvas,
+        currentDirtyBounds,
+        region,
+        canvasScale,
+      );
+    }
+    context.setTransform(
+      canvasScale,
+      0,
+      0,
+      canvasScale,
+      -region.left * canvasScale,
+      -region.top * canvasScale,
+    );
+    for (let i = 0; i < activeParticles.length; i++) {
+      const particle = activeParticles[i];
+      const progress = clamp(
+        (currentTime - particle.bornAt) / particle.lifeMs,
+        0,
+        1,
+      );
       drawParticle(context, particle, progress);
     }
     const previousDirtyBounds = currentDirtyBounds;

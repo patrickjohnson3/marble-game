@@ -97,6 +97,7 @@ export const visualConfig = {
   },
   effects: {
     canvasScale: 0.5,
+    canvasWorldSize: 1024,
     impactMin: 1.9,
     impactReference: 10,
     impactCooldownMs: 70,

@@ -369,6 +369,10 @@ function testHapticAndVisualRanges() {
   );
   assertPositiveNumber(visualConfig.effects.canvasScale, "effect canvas scale");
   assertPositiveNumber(
+    visualConfig.effects.canvasWorldSize,
+    "effect canvas world size",
+  );
+  assertPositiveNumber(
     visualConfig.effects.gooSplatMinSpeed,
     "effect goo splat minimum speed",
   );

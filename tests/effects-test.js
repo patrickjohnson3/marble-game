@@ -56,6 +56,7 @@ async function testEffectsThrottleAndParticleCap() {
         waterRippleLifeMs: 150,
         waterRippleOpacity: 0.4,
         canvasScale: 0.5,
+        canvasWorldSize: 100,
         goalCompleteParticles: 4,
         goalCompleteDriftMin: 2,
         goalCompleteDriftRange: 0,
@@ -73,10 +74,10 @@ async function testEffectsThrottleAndParticleCap() {
     assert.equal(effectsEl.childNodes.length, 1);
     assert.equal(effects.canvas.className, "effectsCanvas");
     effects.setWorld({ width: 300, height: 120 });
-    assert.equal(effects.canvas.width, 150);
-    assert.equal(effects.canvas.height, 60);
-    assert.equal(effects.canvas.style.width, "300px");
-    assert.equal(effects.canvas.style.height, "120px");
+    assert.equal(effects.canvas.width, 50);
+    assert.equal(effects.canvas.height, 50);
+    assert.equal(effects.canvas.style.width, "100px");
+    assert.equal(effects.canvas.style.height, "100px");
     effects.render(currentTime);
     effects.render(currentTime);
     assert.equal(
@@ -103,6 +104,11 @@ async function testEffectsThrottleAndParticleCap() {
     assert.equal(
       effects.canvas.context.calls.some((call) => call[0] === "ellipse"),
       true,
+    );
+    assert.equal(
+      Number.parseFloat(effects.canvas.style.left) >= 0,
+      true,
+      "the bounded effects canvas should remain inside the world",
     );
 
     effects.clear();

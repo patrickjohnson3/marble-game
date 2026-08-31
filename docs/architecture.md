@@ -207,7 +207,9 @@ Per-frame visuals:
 - `createCameraController().updateFollow()` adjusts the world transform after
   the intro map opens, unless a recent gesture is cooling down.
 - `createTrailRenderer().update()` updates the optional fading trail.
-- `createEffectsRenderer()` manages short-lived impact/surface effects.
+- `createEffectsRenderer()` manages short-lived impact/surface effects on a
+  bounded canvas that follows the active particle cluster instead of allocating
+  a backing store for the entire map.
 - `createUi()` updates hints, FPS, and debug stats.
 
 Important rendering rule: terrain should be redrawn only when the active map
