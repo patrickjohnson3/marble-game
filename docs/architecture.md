@@ -196,6 +196,9 @@ Static or rarely changing map visuals:
   - rough patch canvas output
   - water patch canvas output
   - obstacle wall canvas output
+- Kitchen floor and terrain construction is synchronous, while the initial
+  Cheerios-and-ants canvas draw is scheduled for the next animation frame so a
+  map transition does not perform both heavy visual passes in one frame.
 - `renderOuterWalls()` draws the outside boundary.
 - Terrain-specific canvas renderers draw their respective map layers:
   goo, hazard, ice, rough, and water.

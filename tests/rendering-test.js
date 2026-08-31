@@ -66,6 +66,25 @@ function withFakeImage(callback) {
   }
 }
 
+function withFakeAnimationFrame(callback) {
+  const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+  const callbacks = [];
+
+  globalThis.requestAnimationFrame = (nextCallback) => {
+    callbacks.push(nextCallback);
+    return callbacks.length;
+  };
+  try {
+    callback(callbacks);
+  } finally {
+    if (originalRequestAnimationFrame === undefined) {
+      delete globalThis.requestAnimationFrame;
+    } else {
+      globalThis.requestAnimationFrame = originalRequestAnimationFrame;
+    }
+  }
+}
+
 function kitchenDynamicsWith(overrides = {}) {
   return createKitchenDynamics({
     ...createKitchenDynamicsState(),
@@ -672,6 +691,49 @@ function testKitchenThemeRendersDatedFloorDetails() {
 }
 
 testKitchenThemeRendersDatedFloorDetails();
+
+function testKitchenDynamicsInitialDrawUsesNextFrame() {
+  const container = new FakeElement();
+  const overlayContainer = new FakeElement();
+  const themeState = {};
+  const mapConfig = { theme: "kitchenFloor" };
+  const world = { width: 4400, height: 4400 };
+  const dynamics = kitchenDynamicsWith();
+  dynamics.reset({ mapConfig, world });
+
+  withFakeImage(() => {
+    withFakeDocument(() => {
+      withFakeAnimationFrame((callbacks) => {
+        renderMapTheme({
+          container,
+          dynamicsState: dynamics.state,
+          overlayContainer,
+          mapConfig,
+          themeState,
+          world,
+        });
+
+        const dynamicCanvas = overlayContainer.children[0].children.find(
+          (child) => child.className === "kitchenDynamicCanvas",
+        );
+        assert.equal(
+          dynamicCanvas.context.calls.some((call) => call[0] === "drawImage"),
+          false,
+          "kitchen objects should not extend synchronous map construction",
+        );
+        assert.equal(callbacks.length, 1);
+        callbacks[0](0);
+        assert.equal(
+          dynamicCanvas.context.calls.some((call) => call[0] === "drawImage"),
+          true,
+          "kitchen objects should draw on the next animation frame",
+        );
+      });
+    });
+  });
+}
+
+testKitchenDynamicsInitialDrawUsesNextFrame();
 
 function testKitchenCheeriosGiveWayToMarble() {
   const container = new FakeElement();

@@ -57,6 +57,18 @@ function appendCircle(parent, className, world, circle) {
   });
 }
 
+function scheduleKitchenDynamicsRender(themeState, dynamicsState, canvas) {
+  const render = () => {
+    if (themeState.kitchenDynamicCanvas !== canvas) return;
+    renderKitchenDynamics(themeState, dynamicsState);
+  };
+  if (typeof globalThis.requestAnimationFrame === "function") {
+    globalThis.requestAnimationFrame(render);
+  } else {
+    render();
+  }
+}
+
 function appendKitchenDynamicCanvas(parent, world, themeState, dynamicsState) {
   const canvas = document.createElement("canvas");
 
@@ -90,12 +102,12 @@ function appendKitchenDynamicCanvas(parent, world, themeState, dynamicsState) {
       "load",
       () => {
         themeState.kitchenDynamicNeedsFullRedraw = true;
-        renderKitchenDynamics(themeState, dynamicsState);
+        scheduleKitchenDynamicsRender(themeState, dynamicsState, canvas);
       },
       { once: true },
     );
   }
-  renderKitchenDynamics(themeState, dynamicsState);
+  scheduleKitchenDynamicsRender(themeState, dynamicsState, canvas);
 }
 
 function appendFloor(parent, theme, world, rect = {}) {
