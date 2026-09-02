@@ -5,22 +5,22 @@ import {
 } from "./physics-collisions.js";
 
 const cheerioRadiusRatio = 0.00525;
-const cheerioShovePadding = 18;
-const cheerioMaxPushRadiusMultiplier = 3.2;
 const collisionZeroDistanceEpsilon = 0.001;
 const defaultSurfaceInfluence = Object.freeze({
-  maxPush: 1,
-  shove: 0.78,
-  speed: 0.04,
+  dragRetention: 0.88,
+  momentumTransfer: 0.42,
 });
 const surfaceInfluences = Object.freeze({
-  gooPatch: Object.freeze({ maxPush: 0.55, shove: 0.36, speed: 0.015 }),
-  icePatch: Object.freeze({ maxPush: 1.35, shove: 1.08, speed: 0.08 }),
-  roughPatch: Object.freeze({ maxPush: 0.75, shove: 0.55, speed: 0.025 }),
-  waterPatch: Object.freeze({ maxPush: 1.18, shove: 0.92, speed: 0.06 }),
+  gooPatch: Object.freeze({ dragRetention: 0.55, momentumTransfer: 0.16 }),
+  icePatch: Object.freeze({ dragRetention: 0.985, momentumTransfer: 0.62 }),
+  roughPatch: Object.freeze({ dragRetention: 0.68, momentumTransfer: 0.28 }),
+  waterPatch: Object.freeze({ dragRetention: 0.82, momentumTransfer: 0.5 }),
 });
 const cheerioObstacleSeparation = 0.5;
 const obstacleResolvePasses = 2;
+const cerealLinearSettleSpeed = 0.02;
+const cerealMaxSpeed = 16;
+const crumbMomentumMultiplier = 1.2;
 const antRadius = 7;
 const antSpeed = 0.9;
 const antMunchDistance = 20;
@@ -125,6 +125,8 @@ function createCereal(world, point, options = {}) {
     originY: point.y * world.height,
     pushX: 0,
     pushY: 0,
+    vx: 0,
+    vy: 0,
     radius: (options.radiusRatio ?? cheerioRadiusRatio) * world.width,
     eaten: 0,
     active: true,
@@ -164,7 +166,7 @@ export function createKitchenDynamicsState() {
     frameIndex: 0,
     obstacles: [],
     terrainElements: [],
-    collisionCircle: { x: 0, y: 0, r: 0 },
+    collisionCircle: { x: 0, y: 0, r: 0, vx: 0, vy: 0 },
     collisionContact: {},
     events: {
       cerealHits: 0,
@@ -846,6 +848,11 @@ function resolveCerealObstacleCollision(circle, obstacle, contact) {
   const separation = Math.max(0, overlap) + cheerioObstacleSeparation;
   circle.x += nx * separation;
   circle.y += ny * separation;
+  const normalSpeed = (circle.vx ?? 0) * nx + (circle.vy ?? 0) * ny;
+  if (normalSpeed < 0) {
+    circle.vx -= normalSpeed * nx;
+    circle.vy -= normalSpeed * ny;
+  }
 }
 
 function resolveCerealObstacleCollisions(circle, obstacles, contact) {
@@ -854,6 +861,88 @@ function resolveCerealObstacleCollisions(circle, obstacles, contact) {
       resolveCerealObstacleCollision(circle, obstacles[i], contact);
     }
   }
+}
+
+function constrainCerealToWorld(circle, world) {
+  if (!world) return;
+
+  if (circle.x < circle.r) {
+    circle.x = circle.r;
+    if (circle.vx < 0) circle.vx = 0;
+  } else if (circle.x > world.width - circle.r) {
+    circle.x = world.width - circle.r;
+    if (circle.vx > 0) circle.vx = 0;
+  }
+  if (circle.y < circle.r) {
+    circle.y = circle.r;
+    if (circle.vy < 0) circle.vy = 0;
+  } else if (circle.y > world.height - circle.r) {
+    circle.y = world.height - circle.r;
+    if (circle.vy > 0) circle.vy = 0;
+  }
+}
+
+function setCerealFromCircle(cereal, circle) {
+  cereal.pushX = circle.x - cereal.originX;
+  cereal.pushY = circle.y - cereal.originY;
+  cereal.vx = circle.vx;
+  cereal.vy = circle.vy;
+}
+
+function advanceCereal(state, cereal, frameDelta) {
+  let vx = cereal.vx ?? 0;
+  let vy = cereal.vy ?? 0;
+  if (Math.hypot(vx, vy) < cerealLinearSettleSpeed) {
+    cereal.vx = 0;
+    cereal.vy = 0;
+    return;
+  }
+
+  const currentX = cereal.originX + cereal.pushX;
+  const currentY = cereal.originY + cereal.pushY;
+  const influence = surfaceInfluence(currentX, currentY, state.terrainElements);
+  const drag = Math.pow(influence.dragRetention, frameDelta);
+  vx *= drag;
+  vy *= drag;
+  if (Math.hypot(vx, vy) < cerealLinearSettleSpeed) {
+    cereal.vx = 0;
+    cereal.vy = 0;
+    return;
+  }
+
+  const circle = state.collisionCircle;
+  circle.x = currentX + vx * frameDelta;
+  circle.y = currentY + vy * frameDelta;
+  circle.r = cereal.radius;
+  circle.vx = vx;
+  circle.vy = vy;
+  resolveCerealObstacleCollisions(
+    circle,
+    state.obstacles,
+    state.collisionContact,
+  );
+  constrainCerealToWorld(circle, state.world);
+  setCerealFromCircle(cereal, circle);
+}
+
+function transferMarbleMomentum(cereal, marble, nx, ny, influence) {
+  const incomingSpeed = Math.max(
+    0,
+    (marble.vx ?? 0) * nx + (marble.vy ?? 0) * ny,
+  );
+  const kindMultiplier = cereal.kind === "crumb" ? crumbMomentumMultiplier : 1;
+  const targetSpeed =
+    incomingSpeed * influence.momentumTransfer * kindMultiplier;
+  const currentSpeed = (cereal.vx ?? 0) * nx + (cereal.vy ?? 0) * ny;
+  if (targetSpeed > currentSpeed) {
+    const addedSpeed = targetSpeed - currentSpeed;
+    cereal.vx = (cereal.vx ?? 0) + nx * addedSpeed;
+    cereal.vy = (cereal.vy ?? 0) + ny * addedSpeed;
+  }
+
+  const velocityScale = cappedVectorScale(cereal.vx, cereal.vy, cerealMaxSpeed);
+  cereal.vx *= velocityScale;
+  cereal.vy *= velocityScale;
 }
 
 function updateCereal(
@@ -868,6 +957,8 @@ function updateCereal(
     const cereal = state.cheerios[i];
     if (!cereal.active) continue;
 
+    advanceCereal(state, cereal, frameDelta);
+
     if (soakInWater) {
       soakPlayerDisturbedCheerio(cereal, state.terrainElements, frameDelta);
     }
@@ -875,7 +966,7 @@ function updateCereal(
     const { originX, originY, radius, pushX, pushY } = cereal;
     const currentX = originX + pushX;
     const currentY = originY + pushY;
-    const shoveDistance = marble.r + radius + cheerioShovePadding;
+    const shoveDistance = marble.r + radius;
     const minX = Math.min(previousMarble.x, marble.x) - shoveDistance;
     const maxX = Math.max(previousMarble.x, marble.x) + shoveDistance;
     const minY = Math.min(previousMarble.y, marble.y) - shoveDistance;
@@ -898,8 +989,6 @@ function updateCereal(
       currentY,
       state.terrainElements,
     );
-    const maxPush =
-      marble.r * cheerioMaxPushRadiusMultiplier * influence.maxPush;
     if (distance >= shoveDistance) continue;
 
     const speed = Math.hypot(marble.vx || 0, marble.vy || 0);
@@ -911,23 +1000,24 @@ function updateCereal(
       distance > collisionZeroDistanceEpsilon
         ? dy / distance
         : (marble.vy || 0) / Math.max(speed, 1);
-    const amount =
-      (shoveDistance - distance) * influence.shove + speed * influence.speed;
+    const amount = shoveDistance - distance + cheerioObstacleSeparation;
     const nextPushX = pushX + nx * amount;
     const nextPushY = pushY + ny * amount;
-    const pushScale = cappedVectorScale(nextPushX, nextPushY, maxPush);
+    transferMarbleMomentum(cereal, marble, nx, ny, influence);
     const cerealCircle = state.collisionCircle;
-    cerealCircle.x = originX + nextPushX * pushScale;
-    cerealCircle.y = originY + nextPushY * pushScale;
+    cerealCircle.x = originX + nextPushX;
+    cerealCircle.y = originY + nextPushY;
     cerealCircle.r = radius;
+    cerealCircle.vx = cereal.vx ?? 0;
+    cerealCircle.vy = cereal.vy ?? 0;
 
     resolveCerealObstacleCollisions(
       cerealCircle,
       state.obstacles,
       state.collisionContact,
     );
-    cereal.pushX = cerealCircle.x - originX;
-    cereal.pushY = cerealCircle.y - originY;
+    constrainCerealToWorld(cerealCircle, state.world);
+    setCerealFromCircle(cereal, cerealCircle);
     cereal.playerDisturbed = true;
     if (
       speed >= cerealHitMinSpeed &&

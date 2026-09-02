@@ -102,6 +102,59 @@ function testWaterSoakIsAuthoredForKitchenFloorOnly() {
 
 testWaterSoakIsAuthoredForKitchenFloorOnly();
 
+function testCerealWaitsForVisibleMarbleContact() {
+  for (const kind of ["cheerio", "crumb"]) {
+    const dynamics = createKitchenDynamics();
+    const mapConfig = kitchenMap("kitchen-floor", []);
+    dynamics.reset({ mapConfig, world });
+    const cereal = dynamics.state.cheerios.find(
+      (candidate) => candidate.kind === kind,
+    );
+    const marbleRadius = 29;
+
+    update(dynamics, mapConfig, {
+      x: cereal.originX - cereal.radius - marbleRadius - 5,
+      y: cereal.originY,
+      vx: 8,
+      vy: 0,
+      r: marbleRadius,
+    });
+
+    assert.equal(cereal.pushX, 0, `${kind} should not move before contact`);
+  }
+}
+
+testCerealWaitsForVisibleMarbleContact();
+
+function testCerealCarriesMomentumAfterMarbleContact() {
+  for (const kind of ["cheerio", "crumb"]) {
+    const dynamics = createKitchenDynamics();
+    const mapConfig = kitchenMap("kitchen-floor", []);
+    dynamics.reset({ mapConfig, world });
+    const cereal = dynamics.state.cheerios.find(
+      (candidate) => candidate.kind === kind,
+    );
+
+    update(dynamics, mapConfig, marbleAt(cereal, { vx: 8 }));
+    const pushAfterContact = cereal.pushX;
+    update(dynamics, mapConfig, {
+      x: 900,
+      y: 900,
+      vx: 0,
+      vy: 0,
+      r: 29,
+    });
+
+    assert.equal(
+      cereal.pushX > pushAfterContact,
+      true,
+      `${kind} should keep moving after the marble leaves contact`,
+    );
+  }
+}
+
+testCerealCarriesMomentumAfterMarbleContact();
+
 function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
   const authoredWater = {
     type: "waterPatch",

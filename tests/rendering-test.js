@@ -816,13 +816,14 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
     angle: -0.42,
   };
   const dynamics = kitchenDynamicsWith({ cheerios: [cheerioState] });
+  const mapConfig = {
+    theme: "kitchenFloor",
+    elements: [fork],
+  };
 
   updateAndRenderMapThemeDynamics({
     dynamics,
-    mapConfig: {
-      theme: "kitchenFloor",
-      elements: [fork],
-    },
+    mapConfig,
     marble: {
       x: cheerioState.originX,
       y: cheerioState.originY,
@@ -832,6 +833,14 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
     },
     themeState: {},
   });
+  for (let frame = 0; frame < 10; frame++) {
+    updateAndRenderMapThemeDynamics({
+      dynamics,
+      mapConfig,
+      marble: { x: -500, y: -500, vx: 0, vy: 0, r: 29 },
+      themeState: {},
+    });
+  }
 
   const contact = circleOrientedRectContact(
     {
@@ -842,7 +851,7 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
     fork,
   );
 
-  assert.equal(contact.intersects, false, "fork should block shoved Cheerios");
+  assert.equal(contact.intersects, false, "fork should block moving Cheerios");
 }
 
 testKitchenCheeriosDoNotSlideUnderFork();
@@ -1158,15 +1167,21 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
     h: 20,
   };
   const marble = { ...origin, vx: 24, vy: 0, r: 29 };
+  const distantMarble = { x: 4000, y: 4000, vx: 0, vy: 0, r: 29 };
+  const waterMapConfig = {
+    theme: "kitchenFloor",
+    elements: [{ ...patch, type: "waterPatch" }],
+  };
+  const gooMapConfig = {
+    theme: "kitchenFloor",
+    elements: [{ ...patch, type: "gooPatch" }],
+  };
 
   updateAndRenderMapThemeDynamics({
     container: waterContainer,
     dynamics: waterCheerio.dynamics,
     overlayContainer: waterOverlay,
-    mapConfig: {
-      theme: "kitchenFloor",
-      elements: [{ ...patch, type: "waterPatch" }],
-    },
+    mapConfig: waterMapConfig,
     marble,
     themeState: waterCheerio.themeState,
   });
@@ -1174,11 +1189,24 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
     container: gooContainer,
     dynamics: gooCheerio.dynamics,
     overlayContainer: gooOverlay,
-    mapConfig: {
-      theme: "kitchenFloor",
-      elements: [{ ...patch, type: "gooPatch" }],
-    },
+    mapConfig: gooMapConfig,
     marble,
+    themeState: gooCheerio.themeState,
+  });
+  updateAndRenderMapThemeDynamics({
+    container: waterContainer,
+    dynamics: waterCheerio.dynamics,
+    overlayContainer: waterOverlay,
+    mapConfig: waterMapConfig,
+    marble: distantMarble,
+    themeState: waterCheerio.themeState,
+  });
+  updateAndRenderMapThemeDynamics({
+    container: gooContainer,
+    dynamics: gooCheerio.dynamics,
+    overlayContainer: gooOverlay,
+    mapConfig: gooMapConfig,
+    marble: distantMarble,
     themeState: gooCheerio.themeState,
   });
 
