@@ -23,6 +23,7 @@ import {
   updatePhysicsInput,
 } from "../core/physics.js";
 import { MAP_ELEMENT_TYPES } from "../core/map-elements.js";
+import { physicsConfig } from "../core/game-config.js";
 
 function assertNear(actual, expected, tolerance = 1e-9) {
   assert.equal(
@@ -1091,6 +1092,358 @@ function testTiltSmoothingIsFrameRateIndependent() {
   assertNear(split.tilt.smoothX, once.tilt.smoothX);
 }
 
+function roughMotionContext({ marble = {}, tilt = {}, physics = {} } = {}) {
+  return {
+    marble: { x: 0, y: 0, vx: 0, vy: 0, r: 10, ...marble },
+    bounds: { left: -1e6, right: 1e6, top: -1e6, bottom: 1e6 },
+    intro: { released: true },
+    tilt: {
+      rawX: 0,
+      rawY: 0,
+      neutralX: 0,
+      neutralY: 0,
+      smoothX: 0,
+      smoothY: 0,
+      ...tilt,
+    },
+    keyboard: { x: 0, y: 0 },
+    roughPatches: [{ x: -5e5, y: -5e5, w: 1e6, h: 1e6 }],
+    physics: { ...physicsConfig, ...physics },
+  };
+}
+
+function testRoughTerrainDistanceWithSmoothedInputAcrossFrameRates() {
+  function simulate(fps) {
+    const context = roughMotionContext({ tilt: { rawX: 5 } });
+    const dt = 60 / fps;
+    for (let frame = 0; frame < fps * 2; frame++) {
+      updatePhysicsInput(context, dt);
+      updateTestPhysics(context, dt, {
+        onImpact() {},
+        onSurface() {},
+      });
+    }
+    return context.marble;
+  }
+
+  const reference = simulate(60);
+  // Preserve the original two-second 60 Hz trajectory recorded in the
+  // improvement pass, including input smoothing and post-move rough drag.
+  assertNear(reference.x, 208.81733322993196);
+  assertNear(reference.vx, 1.6065631780143774);
+  for (const fps of [30, 120]) {
+    const marble = simulate(fps);
+    assert.ok(
+      Math.abs(marble.x - reference.x) < reference.x * 0.01,
+      `${fps} Hz rough distance ${marble.x} differs from 60 Hz ${reference.x}`,
+    );
+    assert.ok(
+      Math.abs(marble.vx - reference.vx) < reference.vx * 0.01,
+      `${fps} Hz rough speed ${marble.vx} differs from 60 Hz ${reference.vx}`,
+    );
+    assertNear(marble.y, 0);
+    assertNear(marble.vy, 0);
+  }
+}
+
+function testRoughMotionMatchesReferenceFramesAcrossPartitions() {
+  const inputPhases = [
+    { smoothX: 5, smoothY: -3 },
+    { smoothX: 0, smoothY: 0 },
+    { smoothX: -5, smoothY: 3 },
+  ];
+  const feedback = { onImpact() {}, onSurface() {} };
+
+  for (const maxStepDistance of [physicsConfig.maxStepDistance, 0.4]) {
+    for (const frameDeltas of [[2], [1], [0.5], [0.25, 0.75, 1.5, 0.5]]) {
+      const context = roughMotionContext({
+        marble: { vx: 12, vy: -4 },
+        // Keep tiny coasting momentum observable instead of snapping to rest.
+        physics: { maxStepDistance, settleSpeed: 0 },
+      });
+      const reference = { ...context.marble };
+      for (const tilt of inputPhases) {
+        Object.assign(context.tilt, tilt);
+        // The historical whole-frame recurrence is an independent reference:
+        // acceleration, floor drag, movement, then rough drag.
+        for (let frame = 0; frame < 24; frame++) {
+          reference.vx += tilt.smoothX * physicsConfig.accel;
+          reference.vy += tilt.smoothY * physicsConfig.accel;
+          reference.vx *= physicsConfig.baseDragRetention;
+          reference.vy *= physicsConfig.baseDragRetention;
+          reference.x += reference.vx;
+          reference.y += reference.vy;
+          reference.vx *= physicsConfig.roughPatchDragRetention;
+          reference.vy *= physicsConfig.roughPatchDragRetention;
+        }
+        let elapsed = 0;
+        let frame = 0;
+        while (elapsed < 24) {
+          const dt = Math.min(
+            frameDeltas[frame % frameDeltas.length],
+            24 - elapsed,
+          );
+          updateTestPhysics(context, dt, feedback);
+          elapsed += dt;
+          frame++;
+        }
+        for (const field of ["x", "y", "vx", "vy"]) {
+          assertNear(context.marble[field], reference[field], 1e-8);
+        }
+      }
+      assert.ok(
+        context.marble.vx < 0,
+        "opposite tilt must reverse horizontal momentum",
+      );
+      assert.ok(
+        context.marble.vy > 0,
+        "opposite tilt must reverse vertical momentum",
+      );
+    }
+  }
+}
+
+function testTerrainSweepUsesCorrectedMovement() {
+  for (const { dt, radius, hazardX, expectedHazards } of [
+    { dt: 2, radius: 0.1, hazardX: 37.4, expectedHazards: 0 },
+    { dt: 0.5, radius: 0.01, hazardX: 24.95, expectedHazards: 1 },
+  ]) {
+    const context = roughMotionContext({
+      marble: { x: 20, y: 50, vx: 10, r: radius },
+      physics: { accel: 0, maxStepDistance: 100 },
+    });
+    context.hazardPatches = [{ x: hazardX, y: 49, w: 0.01, h: 2 }];
+    let hazards = 0;
+    updateTestPhysics(context, dt, {
+      onImpact() {},
+      onSurface() {},
+      onHazard() {
+        hazards++;
+      },
+    });
+    assert.equal(
+      hazards,
+      expectedHazards,
+      `dt=${dt} must sweep the actual corrected path against the hazard`,
+    );
+  }
+}
+
+function testMotionWithAlmostNoDragRemainsAccurate() {
+  for (const [baseDragRetention, roughPatchDragRetention] of [
+    [1 - 1e-8, 1],
+    [0.99999, 0.9999999],
+  ]) {
+    for (const dt of [2, 0.5, 0.25]) {
+      const context = roughMotionContext({
+        marble: { vx: 1, vy: 2 },
+        tilt: { smoothX: 0.5, smoothY: -0.25 },
+        physics: {
+          baseDragRetention,
+          roughPatchDragRetention,
+          maxStepDistance: 100,
+        },
+      });
+      const reference = { ...context.marble };
+      for (let frame = 0; frame < 24; frame++) {
+        reference.vx += context.tilt.smoothX * physicsConfig.accel;
+        reference.vy += context.tilt.smoothY * physicsConfig.accel;
+        reference.vx *= context.physics.baseDragRetention;
+        reference.vy *= context.physics.baseDragRetention;
+        reference.x += reference.vx;
+        reference.y += reference.vy;
+        reference.vx *= roughPatchDragRetention;
+        reference.vy *= roughPatchDragRetention;
+      }
+      for (let elapsed = 0; elapsed < 24; elapsed += dt) {
+        updateTestPhysics(context, dt, { onImpact() {}, onSurface() {} });
+      }
+      for (const field of ["x", "y", "vx", "vy"]) {
+        assertNear(context.marble[field], reference[field], 1e-7);
+      }
+    }
+  }
+}
+
+function testFractionalSettlingStopsPositionAndVelocity() {
+  const context = roughMotionContext({
+    marble: { x: 50, y: 50, vx: 0.02, vy: 0.01 },
+    tilt: { smoothX: 0.1, smoothY: 0.1 },
+    physics: { accel: 0 },
+  });
+  updateTestPhysics(context, 0.5, { onImpact() {}, onSurface() {} });
+  assert.deepEqual(context.marble, {
+    x: 50,
+    y: 50,
+    vx: 0,
+    vy: 0,
+    r: 10,
+  });
+}
+
+function testFractionalHardCapConstrainsDisplacement() {
+  for (const maxSpeed of [0, 5]) {
+    const context = roughMotionContext({
+      marble: { x: 50, y: 50, vx: 12, vy: -8 },
+      physics: {
+        accel: 0,
+        roughPatchDragRetention: 1,
+        maxStepDistance: 100,
+        maxSpeed,
+        overspeedRetention: 0,
+      },
+    });
+    updateTestPhysics(context, 0.5, { onImpact() {}, onSurface() {} });
+    const { x, y, vx, vy } = context.marble;
+    assertNear(Math.hypot(vx, vy), maxSpeed);
+    if (maxSpeed === 0) {
+      assert.equal(x, 50);
+      assert.equal(y, 50);
+    } else {
+      assert.ok(Number.isFinite(x) && Number.isFinite(y));
+      assert.ok(x > 50 && y < 50, "capped travel must remain forward");
+      assertNear(Math.hypot(x - 50, y - 50), maxSpeed * 0.5);
+    }
+  }
+}
+
+function testSpeedCapUsesCappedVelocityForTravel() {
+  for (const overspeedRetention of [0, physicsConfig.overspeedRetention]) {
+    for (const { dt, marble, tilt, maxStepDistance } of [
+      {
+        dt: 0.5,
+        marble: { vx: 14 },
+        tilt: { smoothX: 18 },
+        maxStepDistance: physicsConfig.maxStepDistance,
+      },
+      {
+        dt: 2,
+        marble: { vx: 16, vy: -12 },
+        tilt: {},
+        maxStepDistance: 100,
+      },
+    ]) {
+      const context = roughMotionContext({
+        marble,
+        tilt,
+        physics: { overspeedRetention, maxStepDistance },
+      });
+      context.roughPatches = [];
+      const uncapped = JSON.parse(JSON.stringify(context));
+      uncapped.physics.maxSpeed = Infinity;
+      updateTestPhysics(uncapped, dt, { onImpact() {}, onSurface() {} });
+      const uncappedSpeed = Math.hypot(uncapped.marble.vx, uncapped.marble.vy);
+      assert.ok(uncappedSpeed > context.physics.maxSpeed);
+      const expectedSpeed =
+        context.physics.maxSpeed +
+        (uncappedSpeed - context.physics.maxSpeed) *
+          Math.pow(overspeedRetention, dt);
+
+      updateTestPhysics(context, dt, { onImpact() {}, onSurface() {} });
+
+      assertNear(
+        Math.hypot(context.marble.vx, context.marble.vy),
+        expectedSpeed,
+      );
+      for (const [position, velocity] of [
+        ["x", "vx"],
+        ["y", "vy"],
+      ]) {
+        const expectedVelocity =
+          (uncapped.marble[velocity] * expectedSpeed) / uncappedSpeed;
+        assertNear(context.marble[velocity], expectedVelocity);
+        assertNear(context.marble[position], expectedVelocity * dt);
+      }
+      if (overspeedRetention === 0 && dt === 0.5) {
+        assert.equal(context.marble.vx, 14);
+        assert.equal(context.marble.x, 7);
+      }
+    }
+  }
+}
+
+function testStoppingTerrainRetentionKeepsMovementFinite() {
+  for (const roughPatchDragRetention of [0, 1e-309]) {
+    const context = roughMotionContext({
+      marble: { x: 50, y: 50, vx: 10, vy: -3 },
+      physics: { accel: 0, roughPatchDragRetention, maxStepDistance: 100 },
+    });
+    updateTestPhysics(context, 2, { onImpact() {}, onSurface() {} });
+    // Instantaneous terrain stopping keeps the historical move-then-stop path;
+    // extremely small retentions must not overflow the acceleration factor.
+    const displacementFactor = Math.pow(physicsConfig.baseDragRetention, 2) * 2;
+    assertNear(context.marble.x, 50 + 10 * displacementFactor);
+    assertNear(context.marble.y, 50 - 3 * displacementFactor);
+    assert.equal(context.marble.vx, 0);
+    assertNear(context.marble.vy, 0);
+  }
+}
+
+function testExtremeIntegrationFallsBackToFiniteReferenceStep() {
+  for (const { dt, roughPatchDragRetention, overRough } of [
+    { dt: 2, roughPatchDragRetention: 1e-308, overRough: true },
+    {
+      dt: 11410,
+      roughPatchDragRetention: physicsConfig.roughPatchDragRetention,
+      overRough: false,
+    },
+  ]) {
+    const context = roughMotionContext({
+      tilt: { smoothX: 26, smoothY: -13 },
+      physics: { roughPatchDragRetention },
+    });
+    if (!overRough) context.roughPatches = [];
+    // Starting at rest guarantees one substep even for the large frame delta.
+    assert.equal(physicsSubstepCount(0, dt, context.physics), 1);
+    const reference = { ...context.marble };
+    reference.vx += context.tilt.smoothX * context.physics.accel * dt;
+    reference.vy += context.tilt.smoothY * context.physics.accel * dt;
+    reference.vx *= Math.pow(context.physics.baseDragRetention, dt);
+    reference.vy *= Math.pow(context.physics.baseDragRetention, dt);
+    assert.ok(
+      Math.hypot(reference.vx, reference.vy) < context.physics.maxSpeed,
+    );
+    reference.x += reference.vx * dt;
+    reference.y += reference.vy * dt;
+    if (overRough) {
+      reference.vx *= Math.pow(roughPatchDragRetention, dt);
+      reference.vy *= Math.pow(roughPatchDragRetention, dt);
+    }
+
+    updateTestPhysics(context, dt, { onImpact() {}, onSurface() {} });
+
+    for (const field of ["x", "y", "vx", "vy"]) {
+      assert.ok(Number.isFinite(context.marble[field]), `${field}, dt=${dt}`);
+      // Relative tolerances keep the very small large-delta result observable.
+      assertNear(
+        context.marble[field],
+        reference[field],
+        Math.abs(reference[field]) * 1e-12,
+      );
+    }
+  }
+}
+
+function testHugeCoastingStepDoesNotMultiplyInfiniteForceSumByZero() {
+  const dt = 1e160;
+  const context = roughMotionContext({
+    marble: { vx: 1, vy: -0.5 },
+    physics: { baseDragRetention: 1, roughPatchDragRetention: 1 },
+  });
+  context.roughPatches = [];
+  context.bounds = { left: -1e170, right: 1e170, top: -1e170, bottom: 1e170 };
+
+  updateTestPhysics(context, dt, { onImpact() {}, onSurface() {} });
+
+  for (const field of ["x", "y", "vx", "vy"]) {
+    assert.ok(Number.isFinite(context.marble[field]), field);
+  }
+  assert.equal(context.marble.vx, 1);
+  assert.equal(context.marble.vy, -0.5);
+  assertNear(context.marble.x, dt, dt * 1e-12);
+  assertNear(context.marble.y, -0.5 * dt, dt * 1e-12);
+}
+
 function testVelocityDragIsFrameRateIndependent() {
   function context() {
     return {
@@ -1129,6 +1482,7 @@ function testVelocityDragIsFrameRateIndependent() {
   });
 
   assertNear(split.marble.vx, once.marble.vx);
+  assertNear(split.marble.x, once.marble.x);
 }
 
 function testAccelerationIsFrameRateIndependent() {
@@ -1170,6 +1524,8 @@ function testAccelerationIsFrameRateIndependent() {
 
   assertNear(split.marble.vx, once.marble.vx);
   assertNear(split.marble.vy, once.marble.vy);
+  assertNear(split.marble.x, once.marble.x);
+  assertNear(split.marble.y, once.marble.y);
 }
 
 function testRoughPatchDragIsFrameRateIndependent() {
@@ -1210,6 +1566,7 @@ function testRoughPatchDragIsFrameRateIndependent() {
   });
 
   assertNear(split.marble.vx, once.marble.vx);
+  assertNear(split.marble.x, once.marble.x);
 }
 
 function testOverspeedRetentionEasesDown() {
@@ -1321,6 +1678,76 @@ function testWallCollisionAppliesTangentialDrag() {
   assert.equal(marble.x, 10);
   assert.equal(marble.vx, 2);
   assert.equal(marble.vy, 5);
+}
+
+function testFractionalWorldBoundsRespectEndpointVelocity() {
+  for (const [position, tangent, velocity, tangentVelocity, smoothTilt] of [
+    ["x", "y", "vx", "vy", "smoothX"],
+    ["y", "x", "vy", "vx", "smoothY"],
+  ]) {
+    for (const inwardDirection of [1, -1]) {
+      const edge = inwardDirection === 1 ? 10 : 190;
+      for (const incoming of [false, true]) {
+        const context = roughMotionContext({
+          marble: {
+            [position]: edge,
+            [tangent]: 50,
+            [velocity]: (incoming ? -1.2 : 1.2) * inwardDirection,
+            [tangentVelocity]: 0.7,
+          },
+          tilt: { [smoothTilt]: incoming ? 0 : -18 * inwardDirection },
+        });
+        context.roughPatches = [];
+        const unconstrained = JSON.parse(JSON.stringify(context));
+        updateTestPhysics(unconstrained, 0.5, {
+          onImpact() {},
+          onSurface() {},
+        });
+        assert.ok(
+          (unconstrained.marble[position] - edge) * inwardDirection < 0,
+          "the fractional path must penetrate the tested boundary",
+        );
+        assert.ok(
+          unconstrained.marble[velocity] *
+            inwardDirection *
+            (incoming ? -1 : 1) >
+            0,
+          "the unconstrained endpoint must have the tested velocity direction",
+        );
+        context.bounds = { left: 0, right: 200, top: 0, bottom: 200 };
+        const impacts = [];
+
+        updateTestPhysics(context, 0.5, {
+          onImpact: (impact) => impacts.push(impact),
+          onSurface() {},
+        });
+
+        assert.equal(context.marble[position], edge);
+        assertNear(context.marble[tangent], unconstrained.marble[tangent]);
+        assertNear(
+          context.marble[velocity],
+          unconstrained.marble[velocity] *
+            (incoming ? -context.physics.bounce : 1),
+        );
+        assertNear(
+          context.marble[tangentVelocity],
+          unconstrained.marble[tangentVelocity] *
+            (incoming ? context.physics.wallTangentialDragRetention : 1),
+        );
+        if (incoming) {
+          assert.equal(impacts.length, 1);
+          assertNear(
+            impacts[0],
+            Math.abs(unconstrained.marble[velocity]) +
+              Math.abs(unconstrained.marble[tangentVelocity]) *
+                context.physics.scrapeHapticScale,
+          );
+        } else {
+          assert.deepEqual(impacts, []);
+        }
+      }
+    }
+  }
 }
 
 function testCornerWallCollisionResolvesBothAxes() {
@@ -1663,12 +2090,23 @@ testLowSpeedDriftDoesNotSettleAboveSpeedThreshold();
 testLowSpeedDriftDoesNotSettleAboveTiltThreshold();
 testTiltCurveSoftensSmallSensorInput();
 testTiltSmoothingIsFrameRateIndependent();
+testRoughTerrainDistanceWithSmoothedInputAcrossFrameRates();
+testRoughMotionMatchesReferenceFramesAcrossPartitions();
+testTerrainSweepUsesCorrectedMovement();
+testMotionWithAlmostNoDragRemainsAccurate();
+testFractionalSettlingStopsPositionAndVelocity();
+testFractionalHardCapConstrainsDisplacement();
+testSpeedCapUsesCappedVelocityForTravel();
+testStoppingTerrainRetentionKeepsMovementFinite();
+testExtremeIntegrationFallsBackToFiniteReferenceStep();
+testHugeCoastingStepDoesNotMultiplyInfiniteForceSumByZero();
 testVelocityDragIsFrameRateIndependent();
 testAccelerationIsFrameRateIndependent();
 testRoughPatchDragIsFrameRateIndependent();
 testOverspeedRetentionEasesDown();
 testOverspeedClampIsFrameRateIndependent();
 testWallCollisionAppliesTangentialDrag();
+testFractionalWorldBoundsRespectEndpointVelocity();
 testCornerWallCollisionResolvesBothAxes();
 testWallCollisionsIgnoreObstaclesBeforeIntroRelease();
 testStaticWallResolutionSkipsRuntimeDynamicObstacles();

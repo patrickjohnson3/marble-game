@@ -75,17 +75,64 @@ function updateTilt({ tilt, keyboard, physics }, dt) {
   tilt.smoothY += (targetY - tilt.smoothY) * smoothingStep;
 }
 
-function updateVelocity(
+function updateMotion(
   { marble, tilt, physics },
   dt,
   drag,
+  dragRetention,
+  surfaceRetention,
   overspeedRetentionFactor,
 ) {
-  marble.vx += tilt.smoothX * physics.accel * dt;
-  marble.vy += tilt.smoothY * physics.accel * dt;
+  const ax = tilt.smoothX * physics.accel;
+  const ay = tilt.smoothY * physics.accel;
+  const retention = dragRetention * surfaceRetention;
+  // Keep the reference update as the fallback for singular or overflowing
+  // fractional motion. Do not mutate the marble until a complete result exists.
+  let vx = (marble.vx + ax * dt) * drag;
+  let vy = (marble.vy + ay * dt) * drag;
+  let dx = vx * dt;
+  let dy = vy * dt;
 
-  marble.vx *= drag;
-  marble.vy *= drag;
+  if (dt !== 1 && retention > 0) {
+    // Extend the existing 60 Hz map, v' = q(v + a), x' = x + b(v + a),
+    // to fractional steps (b = base/ice retention, q = b * surface retention).
+    // Exponentiating drag alone does not integrate its interaction with force
+    // or displacement. These sums compose exactly for constant force/terrain.
+    const loss = 1 - retention;
+    let velocitySum;
+    let accelerationSum;
+    if (Math.abs(loss) * Math.max(1, dt) < 1e-5) {
+      // Binomial limits avoid cancellation near q=1, including no drag.
+      const slope = (dt - 1) * loss;
+      const curve = slope * (dt - 2) * loss;
+      velocitySum = dt * (1 - slope / 2 + curve / 6);
+      accelerationSum = (dt * (dt + 1) * (1 - slope / 3 + curve / 12)) / 2;
+    } else {
+      velocitySum = -Math.expm1(dt * Math.log(retention)) / loss;
+      accelerationSum = (dt - retention * velocitySum) / loss;
+    }
+    const scaledAccelerationStep = Math.pow(retention, 1 - dt) * velocitySum;
+    const candidateVx = (marble.vx + ax * scaledAccelerationStep) * drag;
+    const candidateVy = (marble.vy + ay * scaledAccelerationStep) * drag;
+    const candidateDx =
+      dragRetention * (velocitySum * marble.vx + accelerationSum * ax);
+    const candidateDy =
+      dragRetention * (velocitySum * marble.vy + accelerationSum * ay);
+    if (
+      // A finite magnitude also keeps the subsequent speed cap well-defined.
+      Number.isFinite(Math.hypot(candidateVx, candidateVy)) &&
+      Number.isFinite(candidateDx) &&
+      Number.isFinite(candidateDy)
+    ) {
+      vx = candidateVx;
+      vy = candidateVy;
+      dx = candidateDx;
+      dy = candidateDy;
+    }
+  }
+
+  marble.vx = vx;
+  marble.vy = vy;
 
   let speed = Math.hypot(marble.vx, marble.vy);
   if (speed > physics.maxSpeed) {
@@ -94,6 +141,10 @@ function updateVelocity(
     const scale = easedSpeed / speed;
     marble.vx *= scale;
     marble.vy *= scale;
+    // The integrated displacement is not proportional to endpoint velocity.
+    // Capped steps keep the original movement from the capped velocity.
+    dx = marble.vx * dt;
+    dy = marble.vy * dt;
     speed = easedSpeed;
   }
 
@@ -104,12 +155,11 @@ function updateVelocity(
   ) {
     marble.vx = 0;
     marble.vy = 0;
+    return;
   }
-}
 
-function updatePosition(marble, dt) {
-  marble.x += marble.vx * dt;
-  marble.y += marble.vy * dt;
+  marble.x += dx;
+  marble.y += dy;
 }
 
 function finitePositive(value, fallback) {
@@ -349,14 +399,29 @@ function physicsStep(context, dt, feedback) {
     terrainCandidates(context, SURFACE_TYPES.icePatch),
     context.physics,
   );
-  updateVelocity(
+  updatePreviousTerrainMarble(context, physicsScratch);
+  let surfaceRetention = 1;
+  if (dt !== 1) {
+    // Use the same shapes as the sweep to integrate terrain already under the
+    // marble. Newly entered patches still apply their drag after movement.
+    const startingHits = updateSurfaceHits(context, physicsScratch);
+    if (startingHits.gooPatch)
+      surfaceRetention *= context.physics.gooPatchDragRetention ?? 1;
+    if (startingHits.roughPatch)
+      surfaceRetention *= context.physics.roughPatchDragRetention;
+    if (startingHits.waterPatch)
+      surfaceRetention *= context.physics.waterPatchDragRetention ?? 1;
+  }
+  updateMotion(
     context,
     dt,
     overIcePatch ? factors.icePatchDrag : factors.baseDrag,
+    overIcePatch
+      ? context.physics.icePatchDragRetention
+      : context.physics.baseDragRetention,
+    surfaceRetention,
     factors.overspeedRetention,
   );
-  updatePreviousTerrainMarble(context, physicsScratch);
-  updatePosition(context.marble, dt);
   const hits = updateSurfaceHits(context, physicsScratch);
   hits.icePatch = overIcePatch;
   // A reset invalidates this movement and its surface hits. Stop the frame so

@@ -115,10 +115,18 @@ whenever a runtime asset changes.
    calibration retains the old screen-space neutral.
 3. Compare braking, neutral drift, terrain crossings, wall slides and object
    pushing on real 30/60/120 Hz devices before retuning. A deterministic
-   two-second rough-terrain run at constant 5-degree virtual tilt produced
+   two-second rough-terrain run at constant 5-degree raw tilt produced
    distances 218.82 / 208.82 / 203.55 world pixels at 30 / 60 / 120 Hz; final
    speeds were 1.436 / 1.607 / 1.697 per target frame. Drag exponentiation alone
    does not make combined acceleration and position integration invariant.
+   A subsequent integration correction preserves this 60 Hz result and yields
+   distances of 209.65 / 208.82 / 208.09, with final speed 1.607 at every
+   cadence. The remaining 0.75% distance spread includes frame-sampled input
+   smoothing and settling; constant smoothed-input motion agrees across frame
+   partitions. See the physics pipeline in [architecture.md](architecture.md).
+   After preserving capped-step movement, a two-second 60 Hz keyboard floor
+   run travels 1666.80 pixels versus 1668.45 before the integration correction
+   (-0.099%), instead of the reviewed 1694.07 (+1.535%).
    Also check sponge height/contact and overlap with other fixtures before
    extending the object interactions.
 

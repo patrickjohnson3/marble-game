@@ -161,24 +161,43 @@ Each active frame does:
 
 Inside one `physicsStep()`:
 
-1. Check whether the marble starts the substep over ice.
-2. Apply acceleration from smoothed tilt.
-3. Apply ice or base drag.
-4. Apply the soft speed cap if velocity exceeds max speed.
-5. Zero tiny drift when both speed and tilt are below settle thresholds.
-6. Record the pre-move marble position for terrain sweep checks.
-7. Move the marble.
-8. Sweep the marble segment against goo, rough, water, and hazard patches.
-9. Resolve the current surface using priority:
+1. Check whether the marble starts the substep over ice and record its position.
+2. For non-unit substeps, query starting goo, rough, and water contact using
+   the same shapes as the later sweep.
+3. Integrate acceleration, base/ice drag, and displacement together using the
+   equivalent fractional form of the original 60 Hz update. Starting terrain
+   drag contributes to those coefficients; its velocity multiplier still
+   applies after movement.
+4. Apply the soft speed cap. Capped steps derive displacement from the capped
+   velocity, preserving the original movement limit.
+5. Stop both velocity and displacement below the existing settle thresholds.
+6. Move the marble and sweep its actual segment against goo, rough, water,
+   and hazard patches. If hazard feedback resets the marble, abort the frame.
+7. Report the current surface using priority:
    goo, rough, water, ice, floor.
-10. Apply post-move drag for goo, rough, and water patches.
-11. Resolve world bounds and obstacle collisions in `handleWallCollisions()`.
-12. Emit hazard, terrain-change, surface, haptic, and visual feedback.
+8. Apply post-move drag for goo, rough, and water patches.
+9. Resolve world bounds and obstacle collisions in `handleWallCollisions()`.
+10. Emit impact and surface feedback.
+
+With constant smoothed tilt and unchanged terrain, unclipped motion now composes
+across different substep durations. A unit step still uses the original order:
+acceleration, base/ice drag, movement, then terrain drag. Near-unity retention
+uses binomial limits to avoid cancellation. Zero retention or nonfinite
+fractional velocity/displacement keeps the original step. Complete candidate
+motion is checked before mutating the marble, including velocity magnitude.
+
+This is not a fixed-timestep simulation. Input smoothing is sampled once per
+frame; speed caps, settling, collisions, and terrain crossings remain discrete.
+New terrain contacts still apply drag for the entire crossing substep. Fast
+60 Hz frames already subdivided by distance can also change slightly, since
+their fractional steps now use the normalized integration.
 
 Collision handling uses circle-rectangle contact from `core/geometry.js`.
 Obstacle collision pushes the marble out along the contact normal, reflects
 velocity when moving into the obstacle, and sends impact strength to the
-feedback pipeline. Bounds are resolved before obstacles on each pass.
+feedback pipeline. Bounds are resolved before obstacles on each pass. Both
+always correct penetration but only reflect approaching velocity; fractional
+braking can move into a boundary while endpoint velocity points away from it.
 
 The physics context is reused across frames in `app.js`; only the map-dependent
 arrays are refreshed before each physics update. Small scratch objects are also

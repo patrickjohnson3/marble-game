@@ -311,44 +311,52 @@ export function handleWallCollisions(
     physics.collisionResolvePasses ?? defaultCollisionResolvePasses;
   for (let pass = 0; pass < passes; pass++) {
     if (marble.x < bounds.left + marble.r) {
-      onImpact(
-        collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics),
-      );
+      if (marble.vx < 0) {
+        onImpact(
+          collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics),
+        );
+        marble.vx = -marble.vx * physics.bounce;
+        marble.vy *=
+          physics.wallTangentialDragRetention ??
+          defaultWallTangentialDragRetention;
+      }
       marble.x = bounds.left + marble.r;
-      marble.vx = -marble.vx * physics.bounce;
-      marble.vy *=
-        physics.wallTangentialDragRetention ??
-        defaultWallTangentialDragRetention;
     }
     if (marble.x > bounds.right - marble.r) {
-      onImpact(
-        collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics),
-      );
+      if (marble.vx > 0) {
+        onImpact(
+          collisionFeedback(Math.abs(marble.vx), Math.abs(marble.vy), physics),
+        );
+        marble.vx = -marble.vx * physics.bounce;
+        marble.vy *=
+          physics.wallTangentialDragRetention ??
+          defaultWallTangentialDragRetention;
+      }
       marble.x = bounds.right - marble.r;
-      marble.vx = -marble.vx * physics.bounce;
-      marble.vy *=
-        physics.wallTangentialDragRetention ??
-        defaultWallTangentialDragRetention;
     }
     if (marble.y < bounds.top + marble.r) {
-      onImpact(
-        collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics),
-      );
+      if (marble.vy < 0) {
+        onImpact(
+          collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics),
+        );
+        marble.vy = -marble.vy * physics.bounce;
+        marble.vx *=
+          physics.wallTangentialDragRetention ??
+          defaultWallTangentialDragRetention;
+      }
       marble.y = bounds.top + marble.r;
-      marble.vy = -marble.vy * physics.bounce;
-      marble.vx *=
-        physics.wallTangentialDragRetention ??
-        defaultWallTangentialDragRetention;
     }
     if (marble.y > bounds.bottom - marble.r) {
-      onImpact(
-        collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics),
-      );
+      if (marble.vy > 0) {
+        onImpact(
+          collisionFeedback(Math.abs(marble.vy), Math.abs(marble.vx), physics),
+        );
+        marble.vy = -marble.vy * physics.bounce;
+        marble.vx *=
+          physics.wallTangentialDragRetention ??
+          defaultWallTangentialDragRetention;
+      }
       marble.y = bounds.bottom - marble.r;
-      marble.vy = -marble.vy * physics.bounce;
-      marble.vx *=
-        physics.wallTangentialDragRetention ??
-        defaultWallTangentialDragRetention;
     }
 
     if (intro.released) {
