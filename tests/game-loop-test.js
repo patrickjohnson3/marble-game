@@ -144,10 +144,10 @@ function testActiveFrameRunsGameplayBeforeRendering() {
   loop.tick();
 
   assert.deepEqual(calls, [
-    "goal",
-    "camera",
     "kitchen",
     "terrain",
+    "goal",
+    "camera",
     "marble",
     "trail",
     "effects",
@@ -157,7 +157,11 @@ function testActiveFrameRunsGameplayBeforeRendering() {
 
 testActiveFrameRunsGameplayBeforeRendering();
 
-function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
+function createBehaviorHarness({
+  activeMap,
+  kitchenEvents = null,
+  onGoalUpdate = () => {},
+}) {
   const state = createGameState({
     world: resolvedMapConfig.world,
     resolvedMapConfig,
@@ -174,6 +178,7 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
     hapticImpacts: [],
     hapticSurfaces: [],
     hints: [],
+    kitchenSweeps: [],
     obstacleRenders: 0,
     terrainTypeRenders: [],
     trailClears: 0,
@@ -234,15 +239,22 @@ function createBehaviorHarness({ activeMap, kitchenEvents = null }) {
         calls.hapticSurfaces.push([speed, surfaceType]);
       },
     },
-    goalController: { update() {} },
-    kitchenDynamics: eventQueue
-      ? {
-          state: {},
-          update() {
-            return eventQueue.shift() ?? {};
-          },
-        }
-      : null,
+    goalController: {
+      update() {
+        onGoalUpdate(mapRuntime, state);
+      },
+    },
+    kitchenDynamics: {
+      state: {},
+      update(map, marble, previous) {
+        calls.kitchenSweeps.push({
+          map,
+          previous: { ...previous },
+          current: { x: marble.x, y: marble.y },
+        });
+        return eventQueue?.shift() ?? {};
+      },
+    },
     mapState: mapRuntime.state,
     marble: state.marble,
     marbleView: { render() {} },
@@ -305,9 +317,10 @@ function testHazardRecoveryResetsGameplayFeedbackAndRearms() {
   const { calls, state } = harness;
   state.marble.x = 200;
   state.marble.y = 200;
-  state.marble.vx = 4;
+  state.marble.vx = 30;
   state.marble.vy = -3;
   state.marble.roll = 2;
+  state.input.keyboard.x = 1;
 
   harness.tick();
 
@@ -328,6 +341,13 @@ function testHazardRecoveryResetsGameplayFeedbackAndRearms() {
   assert.deepEqual(calls.hapticImpacts, [tuning.hazardResetImpactFeedback]);
   assert.deepEqual(calls.hints, [copy.hints.hazardPatch]);
   assert.equal(calls.centered, 1);
+  assert.deepEqual(
+    calls.kitchenSweeps[0].previous,
+    { x: 50, y: 50 },
+    "respawning must not sweep objects between the hazard and spawn",
+  );
+  assert.deepEqual(calls.kitchenSweeps[0].current, { x: 50, y: 50 });
+  state.input.keyboard.x = 0;
 
   harness.tick();
   assert.equal(calls.goalResets, 1, "the hazard must remain disarmed at spawn");
@@ -341,6 +361,39 @@ function testHazardRecoveryResetsGameplayFeedbackAndRearms() {
   state.marble.y = 200;
   harness.tick();
   assert.equal(calls.goalResets, 2, "leaving spawn must rearm the hazard");
+}
+
+function testMapTransitionDoesNotSweepAcrossTheNewMap() {
+  const firstMap = {
+    ...resolvedMapConfig,
+    world: { width: 400, height: 400 },
+    spawn: { x: 50, y: 50, r: 8 },
+    goal: { x: 350, y: 350, r: 30, holdMs: 5000 },
+    elements: [],
+  };
+  const nextMap = { ...firstMap, variantId: "next-map" };
+  let advanced = false;
+  const harness = createBehaviorHarness({
+    activeMap: firstMap,
+    onGoalUpdate(mapRuntime, state) {
+      if (advanced) return;
+      advanced = true;
+      mapRuntime.setActiveMap(nextMap);
+      Object.assign(state.marble, nextMap.spawn);
+    },
+  });
+  harness.state.marble.x = 350;
+  harness.state.marble.y = 350;
+  harness.tick();
+  const firstSweep = harness.calls.kitchenSweeps[0];
+  assert.equal(firstSweep.map.variantId, firstMap.variantId);
+  assert.deepEqual(firstSweep.previous, { x: 350, y: 350 });
+  assert.deepEqual(firstSweep.current, firstSweep.previous);
+  harness.tick();
+  const nextSweep = harness.calls.kitchenSweeps[1];
+  assert.equal(nextSweep.map.variantId, nextMap.variantId);
+  assert.deepEqual(nextSweep.previous, { x: 50, y: 50 });
+  assert.deepEqual(nextSweep.current, nextSweep.previous);
 }
 
 function testKitchenFeedbackRoutesOnePriorityImpactPerFrame() {
@@ -405,6 +458,7 @@ function testSpongeAbsorptionRoutesFocusedRenderingAndFeedback() {
 }
 
 testHazardRecoveryResetsGameplayFeedbackAndRearms();
+testMapTransitionDoesNotSweepAcrossTheNewMap();
 testKitchenFeedbackRoutesOnePriorityImpactPerFrame();
 testSpongeAbsorptionRoutesFocusedRenderingAndFeedback();
 

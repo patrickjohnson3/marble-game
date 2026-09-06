@@ -584,6 +584,7 @@ export function createApp({
     marble.vx = 0;
     marble.vy = 0;
     marble.roll = 0;
+    marble.impactSquash = 0;
     trailRenderer.clear();
     effectsRenderer.clear();
     cameraController.centerOnMarble();
@@ -617,13 +618,10 @@ export function createApp({
     requestRender: frameLoop.requestRender,
   });
   function retryCurrentMap() {
-    mapRuntime.resetGoalProgress();
-    terrainView.updateGoalProgress(0);
-    resetForNextMap();
+    mapProgression.retryCurrentMap();
+    if (!intro.released) mapRenderer.updateIntroBounds();
     ui.setLevelLabel("");
-    ui.setHint(copy.hints.mapOpen);
     gameController.closeSettings();
-    frameLoop.requestRender();
   }
   const goalController = createGoalController({
     copy: copy.hints,

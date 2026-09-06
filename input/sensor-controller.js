@@ -14,7 +14,7 @@ export function createSensorController({
   adjustScreen,
 }) {
   function maybeAutoNeutral() {
-    if (game.paused) return;
+    if (game.paused || game.phase === GAME_PHASES.waiting) return;
     if (tilt.neutralX !== null && tilt.neutralY !== null) return;
 
     calibration.sampleX += tilt.rawX;
@@ -24,32 +24,53 @@ export function createSensorController({
     if (calibration.sampleCount >= tuning.neutralSampleCount) {
       tilt.neutralX = calibration.sampleX / calibration.sampleCount;
       tilt.neutralY = calibration.sampleY / calibration.sampleCount;
+      // Keyboard play may have started while sensor samples were pending.
+      if (game.phase !== GAME_PHASES.running) {
+        marble.vx = 0;
+        marble.vy = 0;
+      }
       game.phase = GAME_PHASES.running;
-      marble.vx = 0;
-      marble.vy = 0;
       ui.setHint(copy.hints.neutralSet);
       ui.setGameStatus("");
       introSequence.schedule();
     }
   }
 
-  function onOrientation(e) {
-    if (e.beta == null || e.gamma == null) return;
-    sensor.using = SENSOR_MODES.orientation;
-    const [tx, ty] = adjustScreen(e.gamma, e.beta);
-    tilt.rawX = tx;
-    tilt.rawY = ty;
+  function acceptSample(mode, rawX, rawY) {
+    if (game.phase === GAME_PHASES.waiting) return;
+    if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) return;
+
+    if (sensor.using !== mode) {
+      // Each source has its own units and neutral. In particular, a sensor
+      // arriving after keyboard fallback must calibrate the holding angle.
+      resetCalibration();
+      tilt.smoothX = 0;
+      tilt.smoothY = 0;
+      sensor.using = mode;
+      game.phase = GAME_PHASES.calibrating;
+      ui.setHint(copy.hints.calibrating);
+      ui.setGameStatus(copy.hints.calibrating);
+    }
+    tilt.rawX = rawX;
+    tilt.rawY = rawY;
     maybeAutoNeutral();
+  }
+
+  function onOrientation(e) {
+    if (!Number.isFinite(e.beta) || !Number.isFinite(e.gamma)) return;
+    const [tx, ty] = adjustScreen(e.gamma, e.beta);
+    acceptSample(SENSOR_MODES.orientation, tx, ty);
   }
 
   function onMotion(e) {
     if (sensor.using === SENSOR_MODES.orientation) return;
     const g = e.accelerationIncludingGravity;
-    if (!g) return;
-    sensor.using = SENSOR_MODES.motion;
-    tilt.rawX = -(g.x || 0) * tuning.motionGravityScale;
-    tilt.rawY = (g.y || 0) * tuning.motionGravityScale;
-    maybeAutoNeutral();
+    if (!Number.isFinite(g?.x) || !Number.isFinite(g?.y)) return;
+    const [tx, ty] = adjustScreen(
+      -g.x * tuning.motionGravityScale,
+      g.y * tuning.motionGravityScale,
+    );
+    acceptSample(SENSOR_MODES.motion, tx, ty);
   }
 
   function resetCalibration() {
@@ -61,6 +82,8 @@ export function createSensorController({
   }
 
   function setNeutralNow() {
+    if (game.phase === GAME_PHASES.waiting) return;
+
     tilt.neutralX = tilt.rawX;
     tilt.neutralY = tilt.rawY;
     if (game.phase === GAME_PHASES.calibrating)

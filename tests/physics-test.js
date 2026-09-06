@@ -45,7 +45,7 @@ function updateTestPhysics(context, dt, feedback) {
     [MAP_ELEMENT_TYPES.waterPatch]: terrainBucket(context.waterPatches),
   };
 
-  updatePhysics(
+  return updatePhysics(
     {
       ...context,
       mapState: {
@@ -233,6 +233,39 @@ function testObstacleCollisionDoesNotBounceWhenMovingAway() {
   assert.equal(marble.x, 88);
   assert.equal(marble.vx, -8);
   assert.deepEqual(impacts, []);
+}
+
+function testAxisAlignedCollisionIgnoresReusedOrientedInsideNormal() {
+  for (const orientedPosition of [
+    { x: 0, y: 0 },
+    { x: 150, y: 150 },
+  ]) {
+    const contact = {};
+    resolveObstacleCollision(
+      { ...orientedPosition, vx: 0, vy: 0, r: 10 },
+      { x: 100, y: 100, w: 100, h: 100, angle: Math.PI / 2 },
+      { bounce: 0.5 },
+      () => {},
+      contact,
+    );
+    const marble = { x: 105, y: 115, vx: 4, vy: 2, r: 10 };
+    const impacts = [];
+
+    resolveObstacleCollision(
+      marble,
+      { x: 100, y: 100, w: 50, h: 50 },
+      { bounce: 0.5 },
+      (impact) => impacts.push(impact),
+      contact,
+    );
+
+    assert.deepEqual(
+      marble,
+      { x: 90, y: 115, vx: -2, vy: 2, r: 10 },
+      "a previous rotated hit or miss must not change the nearest exit edge",
+    );
+    assert.deepEqual(impacts, [4]);
+  }
 }
 
 function testObstacleCollisionHonorsBounceExtremes() {
@@ -796,6 +829,54 @@ function testHazardPatchReportsResetFeedback() {
   );
 
   assert.equal(hazards, 1);
+}
+
+function testHazardResetStopsRemainingMovementAndSurfaceFeedback() {
+  const marble = { x: 50, y: 50, vx: 40, vy: 0, r: 10 };
+  const calls = [];
+
+  const reset = updateTestPhysics(
+    {
+      marble,
+      bounds: { left: 0, right: 400, top: 0, bottom: 400 },
+      intro: { released: true },
+      tilt: { smoothX: 10, smoothY: -5 },
+      obstacles: [],
+      hazardPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      roughPatches: [{ x: 40, y: 40, w: 40, h: 40 }],
+      physics: {
+        accel: 0.5,
+        baseDragRetention: 0.94,
+        roughPatchDragRetention: 0.86,
+        bounce: 0.5,
+        maxSpeed: 100,
+        maxStepDistance: 5,
+      },
+    },
+    2,
+    {
+      onHazard: () => {
+        calls.push("reset");
+        Object.assign(marble, { x: 300, y: 300, vx: 0, vy: 0 });
+        return true;
+      },
+      onImpact: () => calls.push("impact"),
+      onSurface: () => calls.push("surface"),
+      onTerrain: () => calls.push("terrain"),
+    },
+  );
+
+  assert.equal(reset, true);
+  assert.deepEqual(
+    marble,
+    { x: 300, y: 300, vx: 0, vy: 0, r: 10 },
+    "held tilt must not move the marble again during its reset frame",
+  );
+  assert.deepEqual(
+    calls,
+    ["reset"],
+    "terrain from the failed move must not overwrite hazard feedback",
+  );
 }
 
 function testRoughPatchDragAppliesWhenEnteringPatch() {
@@ -1553,6 +1634,7 @@ testCircleOrientedRectContactUsesCachedCollisionFields();
 testMarbleOverRectHonorsEpsilon();
 testObstacleBounce();
 testObstacleCollisionDoesNotBounceWhenMovingAway();
+testAxisAlignedCollisionIgnoresReusedOrientedInsideNormal();
 testObstacleCollisionHonorsBounceExtremes();
 testCollisionPositionSlopCanLeaveSmallOverlap();
 testObstacleCornerBounceUsesDiagonalNormal();
@@ -1573,6 +1655,7 @@ testWaterPatchSweepMatchesVisibleShape();
 testTerrainFeedbackReportsSurfaceTypes();
 testOverlappingTerrainUsesExplicitSurfacePriority();
 testHazardPatchReportsResetFeedback();
+testHazardResetStopsRemainingMovementAndSurfaceFeedback();
 testRoughPatchDragAppliesWhenEnteringPatch();
 testTerrainSweepPreventsThinPatchTunneling();
 testLowSpeedDriftSettles();

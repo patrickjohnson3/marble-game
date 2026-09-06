@@ -85,7 +85,7 @@ export function createCameraController({
   }
 
   function updateFollow(dt) {
-    if (!intro.released) return;
+    if (!intro.released || gestures.isActive()) return;
 
     camera.gestureCooldown = Math.max(0, camera.gestureCooldown - dt);
     if (camera.gestureCooldown > 0) return;

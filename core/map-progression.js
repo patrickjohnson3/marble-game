@@ -49,7 +49,20 @@ export function createMapProgression({
     return true;
   }
 
+  function retryCurrentMap() {
+    const currentMap = getCurrentMap();
+    const freshMap = resolveMapVariantConfig(
+      baseMapConfig,
+      currentMap.variantId,
+    );
+    applyMap(freshMap);
+    resetForNextMap();
+    ui.setHint(copy.mapOpen);
+    requestRender();
+  }
+
   return {
     advanceToNextMap,
+    retryCurrentMap,
   };
 }

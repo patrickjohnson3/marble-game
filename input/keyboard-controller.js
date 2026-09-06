@@ -31,8 +31,12 @@ export function createKeyboardController({
       return;
 
     game.phase = GAME_PHASES.running;
-    tilt.neutralX = 0;
-    tilt.neutralY = 0;
+    // A partial sensor stream must not block keyboard startup, or lose its
+    // pending calibration if readings resume after the player switches inputs.
+    if (sensor.using === SENSOR_MODES.keyboard) {
+      tilt.neutralX = 0;
+      tilt.neutralY = 0;
+    }
     onInputReady();
     introSequence.schedule();
     scheduleFrame();

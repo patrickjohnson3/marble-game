@@ -70,12 +70,14 @@ export function createGoalController({
     if (mapState.goalHoldMs >= goal.holdMs) {
       onComplete(mapState.activeMap);
       mapRuntime.completeGoal();
-      effectsRenderer.spawnGoalComplete();
       hapticFeedback.pulseGoal("complete");
       goalHapticActive = false;
       if (!mapProgression.advanceToNextMap()) {
         mapRuntime.clearGoalCompleted();
       }
+      // Map activation clears old particles. Celebrate at the new spawn so
+      // completion remains visible when the destination renders.
+      effectsRenderer.spawnGoalComplete();
     }
   }
 

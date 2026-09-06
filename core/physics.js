@@ -359,7 +359,9 @@ function physicsStep(context, dt, feedback) {
   updatePosition(context.marble, dt);
   const hits = updateSurfaceHits(context, physicsScratch);
   hits.icePatch = overIcePatch;
-  if (hits.hazardPatch) feedback.onHazard?.();
+  // A reset invalidates this movement and its surface hits. Stop the frame so
+  // remaining substeps cannot accelerate the marble away from its new spawn.
+  if (hits.hazardPatch && feedback.onHazard?.() === true) return true;
   const currentSurfaceType = surfaceType(hits);
   feedback.onTerrain?.(currentSurfaceType);
   applySurfaceDrag(context, hits, factors);
@@ -407,7 +409,7 @@ export function updatePhysics(context, dt, feedback) {
   );
 
   for (let i = 0; i < steps; i++) {
-    physicsStep(context, stepDt, feedback);
+    if (physicsStep(context, stepDt, feedback)) return true;
   }
 }
 

@@ -5,7 +5,11 @@ import { createLifecycleController } from "../core/game-lifecycle.js";
 import { GAME_PHASES, SENSOR_MODES } from "../core/runtime-states.js";
 import { createGameState } from "../core/state.js";
 
-function createLifecycleHarness() {
+function createLifecycleHarness({
+  requestMotionPermission = () => Promise.resolve(true),
+  setTimeoutFn,
+  clearTimeoutFn,
+} = {}) {
   const state = createGameState({
     world: resolvedMapConfig.world,
     resolvedMapConfig,
@@ -21,6 +25,7 @@ function createLifecycleHarness() {
     sensorPause: 0,
     sensorResume: 0,
   };
+  const messages = { hint: "", gameStatus: "" };
   let settingsOpen = false;
 
   const lifecycle = createLifecycleController({
@@ -72,21 +77,28 @@ function createLifecycleHarness() {
       openSettingsModal() {
         settingsOpen = true;
       },
-      setGameStatus() {},
-      setHint() {},
+      setGameStatus(message) {
+        messages.gameStatus = message;
+      },
+      setHint(message) {
+        messages.hint = message;
+      },
       setStartControls() {},
     },
     getSpawn: () => resolvedMapConfig.spawn,
     enableMotion() {},
     requestFullscreen() {},
-    requestMotionPermission: () => Promise.resolve(true),
+    requestMotionPermission,
     keepDisplayAwake() {},
+    setTimeoutFn,
+    clearTimeoutFn,
   });
 
   return {
     calls,
     controller: lifecycle.gameController,
     isSettingsOpen: () => settingsOpen,
+    messages,
     state,
   };
 }
@@ -378,6 +390,42 @@ async function testMotionPermissionDenialKeepsKeyboardFallbackActive() {
   assert.equal(gameStatus, hint);
 }
 
+async function testLatePermissionResultDoesNotOverwriteReadyInputStatus() {
+  for (const result of [false, "timeout"]) {
+    for (const mode of [SENSOR_MODES.keyboard, SENSOR_MODES.orientation]) {
+      let finishPermission;
+      let timeoutCallback;
+      const harness = createLifecycleHarness({
+        requestMotionPermission: () =>
+          new Promise((resolve) => {
+            finishPermission = resolve;
+          }),
+        setTimeoutFn(callback) {
+          timeoutCallback = callback;
+          return 1;
+        },
+        clearTimeoutFn() {},
+      });
+      const start = harness.controller.start();
+      await Promise.resolve();
+      harness.state.game.phase = GAME_PHASES.running;
+      harness.state.input.sensor.using = mode;
+      harness.messages.hint = "ready to play";
+      harness.messages.gameStatus = "";
+
+      if (result === "timeout") timeoutCallback();
+      else finishPermission(result);
+      await start;
+
+      assert.equal(harness.state.game.phase, GAME_PHASES.running);
+      assert.deepEqual(harness.messages, {
+        hint: "ready to play",
+        gameStatus: "",
+      });
+    }
+  }
+}
+
 function testResumeResetsFrameClock() {
   const state = createGameState({
     world: resolvedMapConfig.world,
@@ -444,6 +492,7 @@ await testStartPauseResumeReset();
 await testStartRequestsFullscreenFromClickPath();
 await testStartContinuesWhenMotionPermissionStalls();
 await testMotionPermissionDenialKeepsKeyboardFallbackActive();
+await testLatePermissionResultDoesNotOverwriteReadyInputStatus();
 testResumeResetsFrameClock();
 
 console.log("Lifecycle tests passed.");

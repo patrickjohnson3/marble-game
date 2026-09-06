@@ -24,11 +24,11 @@ export function createCameraGestureController({
     const [a, b] = gesturePoints();
     if (!a || !b) return;
 
+    const center = midpoint(a, b);
     gesture = {
       distance: Math.max(distance(a, b), 1),
-      midpoint: midpoint(a, b),
-      x: camera.x,
-      y: camera.y,
+      worldX: (center.x - camera.x) / camera.scale,
+      worldY: (center.y - camera.y) / camera.scale,
       scale: camera.scale,
     };
   }
@@ -45,12 +45,14 @@ export function createCameraGestureController({
     );
     if (!intro.released) {
       centerOnMarble();
+      gesture.worldX = (nextMidpoint.x - camera.x) / camera.scale;
+      gesture.worldY = (nextMidpoint.y - camera.y) / camera.scale;
       return;
     }
 
-    camera.x = gesture.x + nextMidpoint.x - gesture.midpoint.x;
-    camera.y = gesture.y + nextMidpoint.y - gesture.midpoint.y;
-    camera.gestureCooldown = tuning.gestureCooldownFrames;
+    // Keep the same map point between the fingers, including at zoom limits.
+    camera.x = nextMidpoint.x - gesture.worldX * camera.scale;
+    camera.y = nextMidpoint.y - gesture.worldY * camera.scale;
     applyTransform();
   }
 
@@ -77,9 +79,13 @@ export function createCameraGestureController({
   }
 
   function onPointerEnd(e) {
-    pointers.delete(e.pointerId);
+    if (!pointers.delete(e.pointerId)) return;
+
+    if (gesture && pointers.size < 2 && intro.released) {
+      camera.gestureCooldown = tuning.gestureCooldownFrames;
+    }
     gesture = null;
-    if (pointers.size === 2) startGesture();
+    if (pointers.size >= 2) startGesture();
   }
 
   function resetGesture() {
@@ -88,6 +94,7 @@ export function createCameraGestureController({
   }
 
   return {
+    isActive: () => gesture !== null,
     onPointerDown,
     onPointerEnd,
     onPointerMove,

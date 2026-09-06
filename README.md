@@ -35,6 +35,10 @@ Then open `http://localhost:8000/`.
 - Phone: tap start, hold the phone normally, then tilt.
 - Desktop fallback: use arrow keys or WASD.
 - Settings: use the gear button.
+- Camera: pinch to zoom and drag with two fingers to pan.
+- Goal: hold inside the green circle to visit the next map.
+- Retry map in Settings restores the current map and its objects to their
+  starting state, while keeping your control settings and neutral position.
 
 ## Mobile Browser Targets
 
@@ -58,6 +62,7 @@ The browser smoke test uses local Chrome; set `CHROME_PATH` if Chrome is install
 ## Developer Docs
 
 - [Architecture](docs/architecture.md)
+- [Focused improvement pass and remaining playtests](docs/improvement-pass.md)
 
 ## Runtime Cache
 

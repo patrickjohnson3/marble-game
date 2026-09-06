@@ -154,6 +154,8 @@ export function createLifecycleController({
     sensor.permission =
       permission === "timeout" ? "timeout" : permission ? "granted" : "denied";
 
+    if (game.phase !== GAME_PHASES.calibrating) return;
+
     if (permission === false) {
       ui.setHint(copy.hints.motionDenied);
       ui.setGameStatus(copy.hints.motionDenied);

@@ -22,6 +22,7 @@ export const domIds = {
   gameStatus: "gameStatus",
   controls: "controls",
   startBtn: "start",
+  startHelp: "startHelp",
   neutralBtn: "neutral",
   settingsToggle: "settingsToggle",
   settingsOverlay: "settingsOverlay",

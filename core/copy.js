@@ -1,6 +1,8 @@
 export const copy = {
   bootError: "game failed to load. refresh and try again.",
   title: "marble tilt",
+  startHelp:
+    "Tilt your phone to roll, or use arrows/WASD. Explore, then hold inside the green goal to visit the next map. Pinch to zoom; use two fingers to pan.",
   initialHint: "",
   hints: {
     mapOpen: "",
@@ -76,6 +78,7 @@ export function applyDocumentCopy({ document, els }) {
 
   els.hint.textContent = copy.initialHint;
   els.startBtn.textContent = copy.buttons.start;
+  els.startHelp.textContent = copy.startHelp;
   els.settingsToggle.setAttribute("aria-label", copy.settings.toggleLabel);
   els.settingsToggle.title = copy.settings.title;
   els.settingsTitle.textContent = copy.settings.title;

@@ -89,4 +89,31 @@ function testMovementKeysStillActivateKeyboardAfterStart() {
 
 testMovementKeysStillActivateKeyboardAfterStart();
 
+function testKeyboardStartsWithoutReplacingPendingSensorCalibration() {
+  for (const source of [SENSOR_MODES.motion, SENSOR_MODES.orientation]) {
+    const { controller, counts, game, keyEvent, keyboard, sensor, tilt } =
+      createHarness(GAME_PHASES.calibrating);
+    sensor.using = source;
+    tilt.neutralX = null;
+    tilt.neutralY = null;
+
+    controller.onKeyDown(keyEvent("ArrowRight"));
+    controller.onKeyDown(keyEvent("ArrowRight"));
+
+    assert.equal(keyboard.x, 1);
+    assert.equal(sensor.using, source);
+    assert.equal(game.phase, GAME_PHASES.running);
+    assert.equal(tilt.neutralX, null);
+    assert.equal(tilt.neutralY, null);
+    assert.deepEqual(counts(), {
+      inputReady: 1,
+      introScheduled: 1,
+      prevented: 2,
+      scheduled: 1,
+    });
+  }
+}
+
+testKeyboardStartsWithoutReplacingPendingSensorCalibration();
+
 console.log("Keyboard controller tests passed.");

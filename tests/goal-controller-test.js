@@ -7,6 +7,8 @@ import {
 import { createMapProgression } from "../core/map-progression.js";
 import { createMapRuntime } from "../core/map-runtime.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
+import { baseMapConfig } from "../core/map-config.js";
+import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
 
 const goal = { x: 100, y: 100, r: 50 };
 const marble = { x: 100, y: 100, r: 10 };
@@ -52,6 +54,7 @@ function testGoalHoldResetAndMapProgression() {
   const calls = {
     completedMaps: [],
     effects: 0,
+    effectPositions: [],
     haptics: [],
     hints: [],
     progress: [],
@@ -74,6 +77,7 @@ function testGoalHoldResetAndMapProgression() {
     applyMap: (nextMap) => mapRuntime.setActiveMap(nextMap),
     resetForNextMap() {
       calls.resets++;
+      calls.effects = 0;
       marble.x = mapRuntime.state.activeMap.spawn.x;
       marble.y = mapRuntime.state.activeMap.spawn.y;
       marble.r = mapRuntime.state.activeMap.spawn.r;
@@ -89,6 +93,7 @@ function testGoalHoldResetAndMapProgression() {
     effectsRenderer: {
       spawnGoalComplete() {
         calls.effects++;
+        calls.effectPositions.push({ x: marble.x, y: marble.y });
       },
     },
     hapticFeedback: {
@@ -138,6 +143,11 @@ function testGoalHoldResetAndMapProgression() {
   );
   assert.deepEqual(calls.completedMaps, ["first"]);
   assert.equal(calls.effects, 1);
+  assert.deepEqual(
+    calls.effectPositions,
+    [{ x: 40, y: 50 }],
+    "completion particles must survive map reset and appear at the arrival position",
+  );
   assert.equal(calls.resets, 1);
   assert.equal(calls.renders, 1);
   assert.equal(calls.haptics.includes("complete"), true);
@@ -147,6 +157,67 @@ function testGoalHoldResetAndMapProgression() {
   assert.equal(calls.effects, 1);
 }
 
+function testRetryRestoresTheCurrentKitchen() {
+  const sourceMap = resolveMapVariantConfig(baseMapConfig, "kitchen-floor");
+  const sourceSnapshot = JSON.stringify(sourceMap);
+  const mapRuntime = createMapRuntime({ initialMap: sourceMap });
+  const kitchen = createKitchenDynamics();
+  const marble = { ...sourceMap.spawn, vx: 0, vy: 0 };
+  let renders = 0;
+  function applyMap(map) {
+    const state = mapRuntime.setActiveMap(map);
+    kitchen.reset({
+      mapConfig: state.activeMap,
+      obstacles: state.obstacles,
+      waterPatches: state.terrainByType.waterPatch.elements,
+      world: state.activeMap.world,
+    });
+  }
+  applyMap(sourceMap);
+  const initialWater = { ...kitchen.state.waterPatch };
+  const initialSponge = { ...kitchen.state.sponge };
+  const initialCereal = { ...kitchen.state.cheerios[0] };
+  const initialAnt = { ...kitchen.state.ants[0] };
+  const oldActiveMap = mapRuntime.state.activeMap;
+  kitchen.state.waterPatch.w /= 2;
+  kitchen.state.sponge.x += 120;
+  kitchen.state.sponge.saturation = 0.8;
+  kitchen.state.cheerios[0].pushX = 200;
+  kitchen.state.cheerios[0].active = false;
+  kitchen.state.cheerios[0].eaten = 1;
+  kitchen.state.ants[0].alive = false;
+  mapRuntime.addGoalHold(1000);
+  mapRuntime.completeGoal();
+  marble.x += 200;
+  marble.vx = 10;
+  const progression = createMapProgression({
+    baseMapConfig,
+    getCurrentMap: () => mapRuntime.state.activeMap,
+    applyMap,
+    resetForNextMap() {
+      Object.assign(marble, mapRuntime.state.activeMap.spawn, { vx: 0, vy: 0 });
+    },
+    terrainView: { updateGoalProgress() {} },
+    ui: { setHint() {} },
+    requestRender() {
+      renders++;
+    },
+  });
+  progression.retryCurrentMap();
+  assert.notEqual(mapRuntime.state.activeMap, oldActiveMap);
+  assert.equal(mapRuntime.state.activeMap.variantId, "kitchen-floor");
+  assert.deepEqual(kitchen.state.waterPatch, initialWater);
+  assert.deepEqual(kitchen.state.sponge, initialSponge);
+  assert.deepEqual(kitchen.state.cheerios[0], initialCereal);
+  assert.deepEqual(kitchen.state.ants[0], initialAnt);
+  assert.deepEqual(marble, { ...sourceMap.spawn, vx: 0, vy: 0 });
+  assert.equal(mapRuntime.state.goalHoldMs, 0);
+  assert.equal(mapRuntime.state.goalCompleted, false);
+  assert.equal(JSON.stringify(sourceMap), sourceSnapshot);
+  assert.equal(renders, 1);
+}
+
 testGoalHoldResetAndMapProgression();
+testRetryRestoresTheCurrentKitchen();
 
 console.log("Goal controller tests passed.");

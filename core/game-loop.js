@@ -100,6 +100,8 @@ export function createGameLoop({
     marble.vx = 0;
     marble.vy = 0;
     marble.roll = 0;
+    previousMarble.x = spawn.x;
+    previousMarble.y = spawn.y;
     resetGoalProgress();
     trailRenderer.clear();
     effectsRenderer.clear();
@@ -107,6 +109,7 @@ export function createGameLoop({
     hapticFeedback.pulseImpact(tuning.hazardResetImpactFeedback);
     ui.setHint(copy.hints.hazardPatch);
     cameraController.centerOnMarble();
+    return true;
   }
 
   function updateGoalIndicator(context) {
@@ -177,10 +180,6 @@ export function createGameLoop({
         marble.impactSquash -
           visualConfig.marble.impactSquashDecay * frameDelta,
       );
-      goalController?.update(frameDelta, currentTime);
-      cameraController.updateFollow(frameDelta);
-      updateGoalIndicator(context);
-      updateHazardArmed();
       const themeBudgetStart = performance.now();
       const themeEvents = kitchenDynamics?.update(
         mapState.activeMap,
@@ -215,6 +214,12 @@ export function createGameLoop({
         "themeMs",
         performance.now() - themeBudgetStart,
       );
+      // Finish object contacts before testing the goal. Progression may replace
+      // the map and teleport the marble; that jump is never a collision sweep.
+      goalController?.update(frameDelta, currentTime);
+      cameraController.updateFollow(frameDelta);
+      updateGoalIndicator(context);
+      updateHazardArmed();
     }
 
     const renderBudgetStart = performance.now();

@@ -272,6 +272,9 @@ export function resolveObstacleCollision(
       defaultCollisionZeroDistanceEpsilon)
   ) {
     if (
+      // Axis-aligned contacts do not populate these optional scratch fields.
+      // They may still contain a normal from a previous oriented obstacle.
+      Number.isFinite(obstacle.angle) &&
       Number.isFinite(contact.insideNx) &&
       Number.isFinite(contact.insideNy)
     ) {

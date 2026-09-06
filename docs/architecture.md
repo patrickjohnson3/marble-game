@@ -85,8 +85,9 @@ When the start button is pressed:
 6. Motion permission is requested with a timeout. This supports iOS-like
    permission flows without blocking desktop keyboard fallback forever.
 7. The permission result is recorded as `granted`, `denied`, or `timeout`. A
-   denial or timeout changes the hint, while the watchdog remains responsible
-   for switching to keyboard mode if no sensor input arrives.
+   denial or timeout changes the hint only while input is still calibrating;
+   it cannot overwrite successful input readiness. The watchdog switches to
+   keyboard mode if no usable sensor input arrives.
 
 On mobile, sensor events normally auto-neutralize through
 `input/sensor-controller.js`. On desktop, keyboard input is enabled immediately
@@ -118,10 +119,10 @@ Frame scheduling is split between `core/frame-loop.js` and `core/game-loop.js`.
    - update smoothed input with `updatePhysicsInput()`
    - update physics with `updatePhysics()`
    - advance marble roll and impact squash animation
-   - update goal hold/progression
-   - update camera follow
    - advance kitchen dynamics and emit kitchen haptic feedback
    - redraw changed kitchen dynamic regions
+   - update goal hold/progression using the final object-contact position
+   - update camera follow and the optional goal indicator
 6. Render the marble, trail, and active effects.
 7. Update FPS and debug stats.
 8. Mark the frame rendered.
@@ -133,6 +134,11 @@ are reused across frames. Trail points and segments are pooled; effect particles
 remain short-lived allocations. The runtime is not assumed to be
 allocation-free. Profile before adding more pooling or scratch state. Pure
 helpers are tested in isolation where practical.
+
+Kitchen contacts finish before goal progression can replace the map and move
+the marble to its next spawn. Hazard recovery resets the previous position to
+the spawn and returns `true` from `onHazard`, stopping the rest of the physics
+frame. Teleports must never be treated as swept contact paths.
 
 ## Physics Pipeline
 
@@ -256,8 +262,12 @@ Key modules:
 
 When a goal completes, `core/map-progression.js` selects the next variant,
 resolves it into a full map, applies it, resets the marble to the new spawn,
-and requests a render. Map validation is kept in tests and development checks,
-outside the player-facing progression path.
+and requests a render. Completion particles spawn after this reset, at the new
+arrival position. Retry resolves the current variant from its authored data
+and runs the same map activation/reset path: moved objects, absorbed water,
+cereal, ants, and goal progress all reset. Calibration and camera zoom remain
+available; an unfinished intro countdown keeps its remaining time. Map
+validation stays in tests and development checks, outside progression.
 
 ## Input Responsibilities
 
@@ -272,17 +282,20 @@ interpret gameplay.
 
 `input/sensor-controller.js` owns device orientation/motion:
 
-- updates raw tilt
+- accepts complete finite readings and transforms both sources to screen axes
 - tracks whether orientation or motion events arrived
-- handles neutral calibration
-- schedules frames when sensor input changes
+- collects fresh neutral samples on a source change, including delayed sensors
+  after keyboard fallback, without mixing the two sources' units
+- keeps raw readings current while paused for manual Set neutral
 
 `input/sensor-watchdog.js` owns fallback timing when motion sensors do not
 arrive. It switches the game into keyboard mode and starts the intro countdown.
 
 Camera transforms and gestures are handled in `input/camera-controller.js` and
 `input/camera-gestures.js`. Pinch zoom is an input/camera concern, not a physics
-concern.
+concern. Zoom preserves the map point under the finger midpoint, subject to
+world bounds. Following stays suspended throughout a two-finger gesture; its
+cooldown begins when the gesture ends.
 
 ## Settings Responsibilities
 
