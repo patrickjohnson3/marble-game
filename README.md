@@ -63,6 +63,7 @@ The browser smoke test uses local Chrome; set `CHROME_PATH` if Chrome is install
 
 - [Architecture](docs/architecture.md)
 - [Focused improvement pass and remaining playtests](docs/improvement-pass.md)
+- [Ants and liquids: behavior, measurements, and phone playtests](docs/ants-and-liquids.md)
 
 ## Runtime Cache
 

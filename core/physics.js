@@ -1,5 +1,8 @@
 import { clamp } from "./geometry.js";
-import { MAP_ELEMENT_TYPES } from "./map-elements.js";
+import {
+  ELLIPTICAL_SURFACE_SHAPES,
+  MAP_ELEMENT_TYPES,
+} from "./map-elements.js";
 import { handleWallCollisions, marbleOverRect } from "./physics-collisions.js";
 
 const defaultOverspeedRetention = 0;
@@ -14,24 +17,6 @@ export const SURFACE_TYPES = Object.freeze({
   roughPatch: MAP_ELEMENT_TYPES.roughPatch,
   hazardPatch: MAP_ELEMENT_TYPES.hazardPatch,
   waterPatch: MAP_ELEMENT_TYPES.waterPatch,
-});
-const ELLIPTICAL_SURFACE_SHAPES = Object.freeze({
-  [SURFACE_TYPES.gooPatch]: Object.freeze({
-    centerX: 0.52,
-    centerY: 0.5,
-    radiusX: 0.5,
-    radiusY: 0.47,
-    cos: Math.cos(0.1),
-    sin: Math.sin(0.1),
-  }),
-  [SURFACE_TYPES.waterPatch]: Object.freeze({
-    centerX: 0.5,
-    centerY: 0.52,
-    radiusX: 0.44,
-    radiusY: 0.35,
-    cos: 1,
-    sin: 0,
-  }),
 });
 export const PRE_MOVE_SURFACE_TYPES = Object.freeze([SURFACE_TYPES.icePatch]);
 export const SWEPT_SURFACE_TYPES = Object.freeze([

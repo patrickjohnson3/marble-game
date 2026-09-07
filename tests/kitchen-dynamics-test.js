@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import { antConfig } from "../core/game-config.js";
+import { pointInEllipsePatch } from "../core/geometry.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
+import { ELLIPTICAL_SURFACE_SHAPES } from "../core/map-elements.js";
+import { circleOrientedRectContact } from "../core/physics-collisions.js";
 
 const world = { width: 1000, height: 1000 };
 const waterPatch = { type: "waterPatch", x: 100, y: 420, w: 300, h: 180 };
@@ -586,5 +590,336 @@ function testAntSteersAroundWaterTowardDryFood() {
 }
 
 testAntSteersAroundWaterTowardDryFood();
+
+const farFromAnts = { x: -1000, y: -1000, vx: 0, vy: 0, r: 29 };
+
+function antScene({ elements = [], cheerios = [cerealAt(800, 500)] } = {}) {
+  const mapConfig = kitchenMap("kitchen-breakfast-spill", elements);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({ mapConfig, world });
+  const ant = dynamics.state.ants[0];
+  Object.assign(ant, { x: 300, y: 500, angle: 0, probeInFrames: 150 });
+  dynamics.state.ants = [ant];
+  dynamics.state.cheerios = cheerios;
+  return { dynamics, mapConfig, ant };
+}
+
+function testAntsProbeWithoutSlidingTheirFeetAndResumeSearching() {
+  const { dynamics, mapConfig, ant } = antScene({ cheerios: [] });
+  ant.probeInFrames = 1;
+  const gaitBefore = ant.gaitPhase;
+  const antennaBefore = ant.antennaPhase;
+  update(dynamics, mapConfig, farFromAnts);
+  assert.equal(ant.mode, "probe");
+  assert.equal(ant.x, 300);
+  assert.equal(ant.y, 500);
+  assert.equal(ant.gaitPhase, gaitBefore);
+  assert.notEqual(ant.antennaPhase, antennaBefore);
+
+  update(dynamics, mapConfig, farFromAnts, 30);
+  assert.equal(ant.mode, "forage");
+  assert.equal(ant.x > 300, true, "an ant without food keeps exploring");
+  assert.notEqual(ant.gaitPhase, gaitBefore);
+  const beforeZeroTime = { ...ant };
+  update(dynamics, mapConfig, farFromAnts, 0);
+  assert.deepEqual(ant, beforeZeroTime, "zero time must not animate an ant");
+}
+
+testAntsProbeWithoutSlidingTheirFeetAndResumeSearching();
+
+function testAntHesitatesThenEscapesButCanBeCaught() {
+  const { dynamics, mapConfig, ant } = antScene();
+  const marble = { x: 220, y: 500, vx: 4, vy: 0, r: 29 };
+  update(dynamics, mapConfig, marble);
+  assert.equal(ant.mode, "probe", "the ant needs time to sense the approach");
+  assert.equal(ant.x, 300, "threat sensing should read as a brief hesitation");
+  update(dynamics, mapConfig, marble, Math.ceil(ant.reactionFrames));
+  assert.equal(ant.mode, "flee");
+  assert.equal(ant.x > 300, true);
+
+  let squishes = 0;
+  for (let frame = 0; frame < 60; frame++) {
+    const previousMarble = { ...marble };
+    marble.x += marble.vx;
+    squishes += dynamics.update(mapConfig, marble, previousMarble).squishedAnts;
+  }
+  assert.equal(ant.squished, true, "a committed pursuit must catch the ant");
+  assert.equal(squishes, 1, "pursuit must produce only one fresh crush");
+}
+
+testAntHesitatesThenEscapesButCanBeCaught();
+
+function testAntRemembersNearMissThenReturnsToForaging() {
+  const { dynamics, mapConfig, ant } = antScene();
+  ant.x = 500;
+  const marble = { x: 650, y: 460, vx: 14, vy: 0, r: 29 };
+  const events = dynamics.update(mapConfig, marble, { x: 350, y: 460 });
+  assert.equal(events.squishedAnts, 0, "a clear near miss is not a kill");
+  assert.equal(ant.mode, "probe");
+  update(dynamics, mapConfig, farFromAnts, Math.ceil(ant.reactionFrames));
+  assert.equal(ant.mode, "flee", "the delayed reaction survives a fast pass");
+  update(dynamics, mapConfig, farFromAnts, antConfig.fleeDurationFrames + 30);
+  assert.equal(ant.fleeFrames, 0, "escape has a finite duration");
+  assert.equal(ant.mode, "forage", "a missed ant resumes its food search");
+  assert.equal(ant.alive, true);
+}
+
+testAntRemembersNearMissThenReturnsToForaging();
+
+function testSweptAntCrushSettlesOnceAndPersistsUntilReset() {
+  const { dynamics, mapConfig, ant } = antScene({ cheerios: [] });
+  const events = dynamics.update(
+    mapConfig,
+    { x: 400, y: 500, vx: 12, vy: 0, r: 29 },
+    { x: 200, y: 500 },
+  );
+  const crushList = events.antCrushes;
+  assert.equal(events.squishedAnts, 1);
+  assert.deepEqual(crushList, [ant]);
+  assert.equal(ant.mode, "squished");
+  assert.equal(ant.squishAge, 0);
+  assert.equal(ant.squishAngle, 0);
+  assert.equal(ant.squishStrength, 1);
+  update(dynamics, mapConfig, farFromAnts, antConfig.squishDurationFrames);
+  assert.equal(events.antCrushes, crushList, "the small event list is reused");
+  assert.equal(crushList.length, 0, "crush events must not replay next frame");
+  assert.equal(ant.squishAge, antConfig.squishDurationFrames);
+  const settled = { ...ant };
+  update(dynamics, mapConfig, farFromAnts, 120);
+  assert.deepEqual(ant, settled, "settled remains neither move nor animate");
+
+  dynamics.state.frameIndex = 100;
+  update(dynamics, mapConfig, { x: ant.x, y: ant.y, vx: 1, vy: 0, r: 29 });
+  assert.equal(events.splatHits, 1);
+  assert.equal(events.squishedAnts, 0);
+  assert.equal(events.antCrushes.length, 0);
+  dynamics.reset({ mapConfig, world });
+  assert.equal(
+    dynamics.state.ants.every((next) => next.alive && !next.squished),
+    true,
+  );
+  assert.equal(events.antCrushes.length, 0);
+}
+
+testSweptAntCrushSettlesOnceAndPersistsUntilReset();
+
+function testAntCrushUsesTravelBeforeTheMarbleStops() {
+  const { dynamics, mapConfig, ant } = antScene({ cheerios: [] });
+  const marble = { x: 308, y: 500, vx: -0.2, vy: 0, r: 29 };
+  const events = dynamics.update(mapConfig, marble, { x: 292, y: 500 });
+  assert.equal(
+    events.squishedAnts,
+    1,
+    "a later wall impact cannot undo rolling over an ant",
+  );
+  assert.equal(
+    ant.squishAngle,
+    0,
+    "the imprint follows the contact travel, not the rebound",
+  );
+
+  const slowScene = antScene({ cheerios: [] });
+  update(slowScene.dynamics, slowScene.mapConfig, marble);
+  assert.equal(
+    slowScene.ant.alive,
+    true,
+    "mere stationary overlap is not a crush",
+  );
+}
+
+testAntCrushUsesTravelBeforeTheMarbleStops();
+
+function testAntRoutesAroundRotatedUtensilWithoutCrossingIt() {
+  const obstacle = {
+    type: "obstacle",
+    x: 420,
+    y: 420,
+    w: 80,
+    h: 160,
+    angle: 0.45,
+  };
+  const food = cerealAt(800, 500);
+  const { dynamics, mapConfig, ant } = antScene({
+    elements: [obstacle],
+    cheerios: [food],
+  });
+  for (let frame = 0; frame < 1100; frame++) {
+    update(dynamics, mapConfig, farFromAnts);
+    const contact = circleOrientedRectContact(
+      { x: ant.x, y: ant.y, r: antConfig.radius },
+      obstacle,
+    );
+    assert.equal(
+      contact.intersects,
+      false,
+      "the ant must stay outside the utensil hitbox",
+    );
+  }
+  assert.equal(
+    food.eaten > 0,
+    true,
+    "obstacle avoidance must still reach the food",
+  );
+}
+
+testAntRoutesAroundRotatedUtensilWithoutCrossingIt();
+
+function testAntAvoidsEveryKitchenLiquidAndFindsDryFood() {
+  for (const type of ["waterPatch", "gooPatch"]) {
+    const patch = { type, x: 350, y: 400, w: 240, h: 200 };
+    const food = cerealAt(800, 500);
+    const inaccessible = cerealAt(470, 500);
+    const { dynamics, mapConfig, ant } = antScene({
+      elements: [patch],
+      cheerios: [inaccessible, food],
+    });
+    for (let frame = 0; frame < 1100; frame++) {
+      update(dynamics, mapConfig, farFromAnts);
+      assert.equal(
+        pointInEllipsePatch(
+          ant.x,
+          ant.y,
+          patch,
+          ELLIPTICAL_SURFACE_SHAPES[type],
+        ),
+        false,
+        `an ant must not walk through ${type} on the second kitchen map`,
+      );
+    }
+    assert.equal(inaccessible.eaten, 0);
+    assert.equal(
+      food.eaten > 0,
+      true,
+      "dry food must remain reachable around the spill",
+    );
+  }
+}
+
+testAntAvoidsEveryKitchenLiquidAndFindsDryFood();
+
+function testAntCaughtInsideSpillSlowsAndCanEscape() {
+  const distances = {};
+  for (const type of [null, "waterPatch", "gooPatch"]) {
+    const patch = { type, x: 350, y: 400, w: 240, h: 200 };
+    const { dynamics, mapConfig, ant } = antScene({
+      elements: type ? [patch] : [],
+    });
+    ant.x = 470;
+    update(dynamics, mapConfig, farFromAnts);
+    distances[type ?? "floor"] = Math.hypot(ant.x - 470, ant.y - 500);
+    for (let frame = 0; frame < 1400; frame++)
+      update(dynamics, mapConfig, farFromAnts);
+    if (type) {
+      assert.equal(
+        pointInEllipsePatch(
+          ant.x,
+          ant.y,
+          patch,
+          ELLIPTICAL_SURFACE_SHAPES[type],
+        ),
+        false,
+        "an ant stranded inside a spill must be able to walk out",
+      );
+    }
+    assert.equal(ant.alive, true, "a spill itself does not count as a crush");
+  }
+  assert.equal(distances.gooPatch > 0, true);
+  assert.equal(distances.gooPatch < distances.waterPatch, true);
+  assert.equal(distances.waterPatch < distances.floor, true);
+}
+
+testAntCaughtInsideSpillSlowsAndCanEscape();
+
+function testNearbyAntsShareFoodWithoutMarchingInLockstep() {
+  const { dynamics, mapConfig, ant } = antScene();
+  ant.y = 492;
+  const other = {
+    ...ant,
+    y: 508,
+    speedScale: 1.01,
+    turnBias: -1,
+    wobble: 1.7,
+    antennaPhase: 1.3,
+    probeInFrames: 190,
+  };
+  dynamics.state.ants.push(other);
+  let differentActivities = false;
+  let sharedMeal = false;
+  for (let frame = 0; frame < 900; frame++) {
+    update(dynamics, mapConfig, farFromAnts);
+    differentActivities ||= ant.mode !== other.mode;
+    sharedMeal ||= ant.mode === "eat" && other.mode === "eat";
+    assert.equal(
+      Math.hypot(ant.x - other.x, ant.y - other.y) > antConfig.radius,
+      true,
+      "neighboring foragers should not collapse onto the same point",
+    );
+  }
+  assert.equal(
+    differentActivities,
+    true,
+    "nearby ants keep individual rhythms",
+  );
+  assert.equal(
+    sharedMeal,
+    true,
+    "separation should still let both ants reach food",
+  );
+}
+
+testNearbyAntsShareFoodWithoutMarchingInLockstep();
+
+function testAntColonyIsDeterministicIndividualAndContained() {
+  const mapConfig = kitchenMap("kitchen-floor", []);
+  const first = createKitchenDynamics();
+  const second = createKitchenDynamics();
+  for (const dynamics of [first, second]) {
+    dynamics.reset({ mapConfig, world });
+    dynamics.state.cheerios = [];
+  }
+  const initialAnts = first.state.ants.map((ant) => ({ ...ant }));
+  const pausedAnts = new Set();
+  for (let frame = 0; frame < 420; frame++) {
+    for (const dynamics of [first, second])
+      update(dynamics, mapConfig, farFromAnts);
+    first.state.ants.forEach((ant, index) => {
+      if (ant.mode === "probe") pausedAnts.add(index);
+      assert.equal(
+        ant.x >= antConfig.radius && ant.x <= world.width - antConfig.radius,
+        true,
+      );
+      assert.equal(
+        ant.y >= antConfig.radius && ant.y <= world.height - antConfig.radius,
+        true,
+      );
+    });
+  }
+  assert.deepEqual(first.state.ants, second.state.ants);
+  assert.equal(pausedAnts.size, initialAnts.length);
+  assert.equal(
+    new Set(initialAnts.map((ant) => ant.probeInFrames)).size,
+    initialAnts.length,
+  );
+  assert.equal(
+    new Set(initialAnts.map((ant) => ant.speedScale)).size,
+    initialAnts.length,
+  );
+  assert.equal(
+    first.state.ants.every(
+      (ant, index) =>
+        Math.hypot(ant.x - initialAnts[index].x, ant.y - initialAnts[index].y) >
+        10,
+    ),
+    true,
+  );
+  first.reset({ mapConfig, world });
+  assert.deepEqual(
+    first.state.ants,
+    initialAnts,
+    "retry restores the same colony and phases",
+  );
+}
+
+testAntColonyIsDeterministicIndividualAndContained();
 
 console.log("Kitchen dynamics tests passed.");

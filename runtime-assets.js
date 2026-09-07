@@ -36,6 +36,7 @@ export const runtimeScripts = [
   "rendering/effects.js",
   "rendering/goo-patch-rendering.js",
   "rendering/hazard-patch-rendering.js",
+  "rendering/liquid-patch-shape.js",
   "rendering/map-renderer.js",
   "rendering/map-theme-rendering.js",
   "rendering/marble-view.js",

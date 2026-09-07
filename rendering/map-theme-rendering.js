@@ -1,6 +1,8 @@
+import { antConfig } from "../core/game-config.js";
+
 const kitchenFloorCanvasScale = 0.4;
 const kitchenDynamicCanvasScale = 0.5;
-const kitchenAntDrawRadius = 18;
+const kitchenAntDrawRadius = 22;
 const kitchenCheerioMinScale = 0.45;
 const kitchenCheerioOpacityFloor = 0.18;
 const kitchenCheerioSpriteUrl = "assets/sprites/cheerio.png";
@@ -472,143 +474,140 @@ const renderers = {
   sandLot: renderSandLot,
 };
 
-function drawAnt(context, ant) {
-  const cos = Math.cos(ant.angle);
-  const sin = Math.sin(ant.angle);
-  const sideX = -sin;
-  const sideY = cos;
-
-  context.save();
+function transformAnt(context, ant) {
+  const size = ant.size ?? 1;
+  const cos = Math.cos(ant.angle) * size;
+  const sin = Math.sin(ant.angle) * size;
+  context.transform(cos, sin, -sin, cos, ant.x, ant.y);
   context.lineCap = "round";
   context.lineJoin = "round";
-  context.strokeStyle = "#110d09";
+}
+
+function drawAntBody(context, flatten, headOffset, squished) {
+  // The thin waist and neck keep the three segments distinct at half resolution.
+  context.strokeStyle = "#25170f";
+  context.lineWidth = 1.8;
+  context.beginPath();
+  context.moveTo(-7, 0);
+  context.lineTo(7 + headOffset, 0);
+  context.stroke();
+
+  context.fillStyle = squished ? "#30231a" : "#21160f";
+  context.beginPath();
+  context.ellipse(-9, 0, squished ? 6 : 5.3, 4.2 * flatten, 0, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.ellipse(0, 0, 2.7, 2.3 * flatten, 0, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = squished ? "#39291c" : "#302016";
+  context.beginPath();
+  context.ellipse(7 + headOffset, 0, 3.5, 3 * flatten, 0, 0, Math.PI * 2);
+  context.fill();
+}
+
+function drawAnt(context, ant, detail) {
+  const gait = ant.gaitPhase ?? 0;
+  const antenna = ant.antennaPhase ?? 0;
+  const headOffset = ant.mode === "eat" ? Math.sin(antenna * 2) * 0.35 : 0;
+
+  context.save();
+  transformAnt(context, ant);
+  context.fillStyle = "#4d32171a";
+  context.beginPath();
+  context.ellipse(-2, 1.8, 11.5, 4.6, 0, 0, Math.PI * 2);
+  context.fill();
+
+  context.strokeStyle = "#281a11";
+  context.lineWidth = 1.8;
+  context.beginPath();
+  for (let side = -1; side <= 1; side += 2) {
+    for (let leg = -1; leg <= 1; leg++) {
+      // Opposite front/rear legs and the middle leg form alternating tripods.
+      const stride = Math.sin(gait + (leg === 0 ? Math.PI : 0)) * side * 1.9;
+      const root = leg * 2.5;
+      context.moveTo(root, side * 1.3);
+      context.lineTo(root + leg * 2.3 + stride * 0.5, side * 5.8);
+      context.lineTo(
+        root + leg * 5 + stride,
+        side * (9.5 - Math.abs(stride) * 0.3),
+      );
+    }
+  }
+  context.stroke();
+
   context.lineWidth = 1.6;
   context.beginPath();
-  for (let leg = -1; leg <= 1; leg++) {
-    const along = leg * 4;
-    const baseX = ant.x + cos * along;
-    const baseY = ant.y + sin * along;
-    context.moveTo(baseX + sideX * 2.4, baseY + sideY * 2.4);
-    context.lineTo(
-      baseX - cos * 3 + sideX * (8.5 + leg * 0.8),
-      baseY - sin * 3 + sideY * (8.5 + leg * 0.8),
-    );
-    context.moveTo(baseX - sideX * 2.4, baseY - sideY * 2.4);
-    context.lineTo(
-      baseX - cos * 3 - sideX * (8.5 - leg * 0.8),
-      baseY - sin * 3 - sideY * (8.5 - leg * 0.8),
-    );
+  for (let side = -1; side <= 1; side += 2) {
+    const feeler = Math.sin(antenna + side * 0.9) * 0.9;
+    context.moveTo(8 + headOffset, side * 1.6);
+    context.lineTo(12 + headOffset, side * (3 + feeler * 0.3));
+    context.lineTo(15.3 + headOffset - feeler * 0.4, side * (5.4 + feeler));
   }
-  context.moveTo(ant.x + cos * 8, ant.y + sin * 8);
-  context.lineTo(ant.x + cos * 13 + sideX * 4, ant.y + sin * 13 + sideY * 4);
-  context.moveTo(ant.x + cos * 8, ant.y + sin * 8);
-  context.lineTo(ant.x + cos * 13 - sideX * 4, ant.y + sin * 13 - sideY * 4);
   context.stroke();
+  drawAntBody(context, 1, headOffset, false);
 
-  context.fillStyle = "#1a120c";
-  context.strokeStyle = "#3a2615";
-  context.lineWidth = 0.8;
-  context.beginPath();
-  context.ellipse(
-    ant.x - cos * 6,
-    ant.y - sin * 6,
-    5.4,
-    3.8,
-    ant.angle,
-    0,
-    Math.PI * 2,
-  );
-  context.ellipse(ant.x, ant.y, 4.1, 3.1, ant.angle, 0, Math.PI * 2);
-  context.ellipse(
-    ant.x + cos * 6,
-    ant.y + sin * 6,
-    3.4,
-    2.8,
-    ant.angle,
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
-  context.stroke();
-
-  context.fillStyle = "#6f4a21";
-  context.globalAlpha = 0.5;
-  context.beginPath();
-  context.ellipse(
-    ant.x - cos * 7 - sideX * 1.2,
-    ant.y - sin * 7 - sideY * 1.2,
-    1.2,
-    0.8,
-    ant.angle,
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
-  context.globalAlpha = 1;
+  if (detail) {
+    context.fillStyle = "#98704780";
+    context.beginPath();
+    context.ellipse(-10, -1.3, 2.7, 0.85, -0.12, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#a980534d";
+    context.beginPath();
+    context.ellipse(6.5 + headOffset, -1, 1.4, 0.7, 0, 0, Math.PI * 2);
+    context.fill();
+  }
   context.restore();
 }
 
 function drawSquishedAnt(context, ant) {
-  const cos = Math.cos(ant.angle);
-  const sin = Math.sin(ant.angle);
-  const sideX = -sin;
-  const sideY = cos;
+  const age = ant.squishAge ?? antConfig.squishDurationFrames;
+  const progress = Math.min(
+    1,
+    Math.max(0, age / antConfig.squishDurationFrames),
+  );
+  const settle = 1 - Math.pow(1 - progress, 3);
+  const strength = ant.squishStrength ?? 0.5;
+  const imprintAngle = (ant.squishAngle ?? ant.angle) - ant.angle;
+  const spread = 12 + strength * 4 + settle;
 
   context.save();
-  context.globalAlpha = 0.82;
-  context.fillStyle = "#56611f";
+  transformAnt(context, ant);
+  // A dry contact imprint anchors the flattened silhouette without a goo puddle.
+  context.fillStyle = "#70532b26";
   context.beginPath();
-  context.ellipse(ant.x, ant.y, 13, 7, ant.angle, 0, Math.PI * 2);
   context.ellipse(
-    ant.x - cos * 7 + sideX * 2,
-    ant.y - sin * 7 + sideY * 2,
-    6,
-    3.5,
-    ant.angle + 0.4,
-    0,
-    Math.PI * 2,
-  );
-  context.ellipse(
-    ant.x + cos * 6 - sideX * 2,
-    ant.y + sin * 6 - sideY * 2,
-    5,
-    3,
-    ant.angle - 0.35,
+    Math.cos(imprintAngle) * strength * 3,
+    Math.sin(imprintAngle) * strength * 3,
+    spread,
+    4.5,
+    imprintAngle,
     0,
     Math.PI * 2,
   );
   context.fill();
 
-  context.globalAlpha = 0.96;
-  context.fillStyle = "#1b100a";
+  context.strokeStyle = "#3b2a1b";
+  context.lineWidth = 1.7;
   context.beginPath();
-  context.ellipse(
-    ant.x - cos * 3,
-    ant.y - sin * 3,
-    5,
-    2.2,
-    ant.angle,
-    0,
-    Math.PI * 2,
-  );
-  context.ellipse(
-    ant.x + cos * 5,
-    ant.y + sin * 5,
-    3.8,
-    1.8,
-    ant.angle,
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
-  context.strokeStyle = "#0e0905";
-  context.lineWidth = 1;
-  context.beginPath();
-  context.moveTo(ant.x - sideX * 8, ant.y - sideY * 8);
-  context.lineTo(ant.x + sideX * 8, ant.y + sideY * 8);
-  context.moveTo(ant.x - cos * 8 - sideX * 5, ant.y - sin * 8 - sideY * 5);
-  context.lineTo(ant.x + cos * 7 + sideX * 5, ant.y + sin * 7 + sideY * 5);
+  for (let side = -1; side <= 1; side += 2) {
+    for (let leg = -1; leg <= 1; leg++) {
+      const root = leg * 2.5;
+      const splay = 9 + settle * 2 + leg * side * 0.8;
+      context.moveTo(root, side);
+      context.lineTo(root + leg * 3.5 + side * 0.8, side * splay);
+      context.lineTo(root + leg * 4.5 - side * 1.6, side * (splay - 2.8));
+    }
+    context.moveTo(8, side * 1.1);
+    context.lineTo(13, side * 4.5);
+    context.lineTo(12 + side, side * 6.4);
+  }
   context.stroke();
+  drawAntBody(
+    context,
+    0.76 - settle * 0.3,
+    Math.sin(ant.wobble ?? 0) * 0.2,
+    true,
+  );
   context.restore();
 }
 
@@ -656,7 +655,12 @@ function setCheerioBounds(target, cheerio) {
 }
 
 function setAntBounds(target, ant) {
-  setDynamicBounds(target, ant.x, ant.y, kitchenAntDrawRadius);
+  setDynamicBounds(
+    target,
+    ant.x,
+    ant.y,
+    kitchenAntDrawRadius * (ant.size ?? 1),
+  );
 }
 
 function boundsChanged(a, b) {
@@ -689,6 +693,8 @@ function clearDynamicRect(context, scale, rect) {
   const bottom = Math.ceil(rect.bottom * scale) + 1;
 
   context.clearRect(left, top, right - left, bottom - top);
+  // Redraw only the pixels cleared, including their antialiasing border.
+  context.rect(left, top, right - left, bottom - top);
 }
 
 function createDynamicEntry(object, kind) {
@@ -699,6 +705,8 @@ function createDynamicEntry(object, kind) {
     nextBounds: { bottom: 0, left: 0, right: 0, top: 0 },
     object,
     revision: Number.NEGATIVE_INFINITY,
+    angle: null,
+    squished: null,
     visible: false,
   };
 }
@@ -750,6 +758,9 @@ function dynamicDirtyRects(entries, dirtyRects) {
     if (
       entry.visible !== nextVisible ||
       entry.revision !== entry.object.revision ||
+      (entry.kind === "ant" &&
+        (entry.angle !== entry.object.angle ||
+          entry.squished !== entry.object.squished)) ||
       (nextVisible && boundsChanged(entry.bounds, entry.nextBounds))
     ) {
       const previousVisible = entry.visible;
@@ -758,6 +769,10 @@ function dynamicDirtyRects(entries, dirtyRects) {
       entry.nextBounds = previousBounds;
       entry.visible = nextVisible;
       entry.revision = entry.object.revision;
+      if (entry.kind === "ant") {
+        entry.angle = entry.object.angle;
+        entry.squished = entry.object.squished;
+      }
       if (previousVisible && entry.visible) {
         entry.dirtyBounds.bottom = Math.max(
           previousBounds.bottom,
@@ -784,13 +799,13 @@ function dynamicDirtyRects(entries, dirtyRects) {
   return dirtyRects;
 }
 
-function drawDynamicEntry(context, entry) {
+function drawDynamicEntry(context, entry, scale) {
   if (entry.kind === "cheerio") {
     drawCheerio(context, entry.object);
   } else if (entry.object.squished) {
     drawSquishedAnt(context, entry.object);
   } else if (entry.object.alive) {
-    drawAnt(context, entry.object);
+    drawAnt(context, entry.object, scale >= 0.45);
   }
 }
 
@@ -968,8 +983,12 @@ function renderKitchenDynamics(themeState, dynamicsState) {
     entries,
     (themeState.kitchenDynamicDirtyRects ??= []),
   );
+  if (!themeState.kitchenDynamicNeedsFullRedraw && dirtyRects.length === 0) {
+    return;
+  }
 
   context.setTransform(1, 0, 0, 1, 0, 0);
+  context.save();
   if (themeState.kitchenDynamicNeedsFullRedraw) {
     context.clearRect(0, 0, canvas.width, canvas.height);
     const fullBounds = (themeState.kitchenDynamicFullBounds ??= {});
@@ -980,13 +999,13 @@ function renderKitchenDynamics(themeState, dynamicsState) {
     dirtyRects.length = 1;
     dirtyRects[0] = fullBounds;
     themeState.kitchenDynamicNeedsFullRedraw = false;
-  } else if (dirtyRects.length === 0) {
-    return;
   } else {
     const scale = themeState.kitchenDynamicRenderScale;
+    context.beginPath();
     for (let i = 0; i < dirtyRects.length; i++) {
       clearDynamicRect(context, scale, dirtyRects[i]);
     }
+    context.clip();
   }
 
   context.setTransform(
@@ -1003,10 +1022,11 @@ function renderKitchenDynamics(themeState, dynamicsState) {
     if (!entry.visible) continue;
     for (let j = 0; j < dirtyRects.length; j++) {
       if (!rectsIntersect(entry.bounds, dirtyRects[j])) continue;
-      drawDynamicEntry(context, entry);
+      drawDynamicEntry(context, entry, themeState.kitchenDynamicRenderScale);
       break;
     }
   }
+  context.restore();
 }
 
 export function renderMapThemeDynamics({

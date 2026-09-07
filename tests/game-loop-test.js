@@ -173,6 +173,7 @@ function createBehaviorHarness({
   const calls = {
     centered: 0,
     effectClears: 0,
+    antCrushes: [],
     effectImpacts: [],
     goalResets: 0,
     hapticImpacts: [],
@@ -219,6 +220,9 @@ function createBehaviorHarness({
         calls.effectClears++;
       },
       render() {},
+      spawnAntSquish(ant) {
+        calls.antCrushes.push(ant);
+      },
       spawnGooSplat() {},
       spawnImpact(impact) {
         calls.effectImpacts.push(impact);
@@ -397,6 +401,7 @@ function testMapTransitionDoesNotSweepAcrossTheNewMap() {
 }
 
 function testKitchenFeedbackRoutesOnePriorityImpactPerFrame() {
+  const crushedAnt = { x: 190, y: 200, squished: true };
   const activeMap = {
     ...resolvedMapConfig,
     world: { width: 400, height: 400 },
@@ -407,13 +412,22 @@ function testKitchenFeedbackRoutesOnePriorityImpactPerFrame() {
   const harness = createBehaviorHarness({
     activeMap,
     kitchenEvents: [
-      { squishedAnts: 1, splatHits: 1, cerealHits: 1 },
+      {
+        squishedAnts: 1,
+        antCrushes: [crushedAnt],
+        splatHits: 1,
+        cerealHits: 1,
+      },
       { splatHits: 1, cerealHits: 1 },
       { cerealHits: 1 },
     ],
   });
 
   harness.tick();
+  assert.ok(
+    harness.state.marble.impactSquash > 0,
+    "a fresh crush should visibly compress the marble",
+  );
   harness.tick();
   harness.tick();
 
@@ -422,6 +436,11 @@ function testKitchenFeedbackRoutesOnePriorityImpactPerFrame() {
     tuning.antSplatImpactFeedback,
     tuning.cerealBumpImpactFeedback,
   ]);
+  assert.deepEqual(
+    harness.calls.antCrushes,
+    [crushedAnt],
+    "only fresh crushes should emit localized visual feedback",
+  );
 }
 
 function testSpongeAbsorptionRoutesFocusedRenderingAndFeedback() {

@@ -198,6 +198,13 @@ export function createGameLoop({
         onImpact(themeEvents.spongeImpact);
       }
       if (themeEvents?.squishedAnts > 0) {
+        marble.impactSquash = Math.max(
+          marble.impactSquash,
+          visualConfig.effects.antSquishMarbleSquash,
+        );
+        for (const ant of themeEvents.antCrushes ?? []) {
+          effectsRenderer.spawnAntSquish(ant);
+        }
         hapticFeedback.pulseImpact(tuning.antSquishImpactFeedback);
       } else if (themeEvents?.splatHits > 0) {
         hapticFeedback.pulseImpact(tuning.antSplatImpactFeedback);

@@ -1,4 +1,9 @@
-import { clamp } from "../core/geometry.js";
+import { clamp, pointInEllipsePatch } from "../core/geometry.js";
+import {
+  ELLIPTICAL_SURFACE_SHAPES,
+  MAP_ELEMENT_TYPES,
+} from "../core/map-elements.js";
+import { traceLiquidPatchPath } from "./liquid-patch-shape.js";
 
 function setVelocityUnit(marble, target) {
   const speed = Math.hypot(marble.vx, marble.vy);
@@ -50,32 +55,87 @@ function drawWaterRipple(context, particle, progress) {
   const size = particle.size * (0.7 + progress * 0.75);
 
   context.globalAlpha = particle.opacity * fade;
-  context.strokeStyle = "rgba(205, 247, 255, 0.72)";
-  context.lineWidth = 3;
+  context.strokeStyle = "rgba(40, 93, 104, 0.32)";
+  context.lineWidth = 2.8;
+  context.beginPath();
+  context.ellipse(
+    particle.x,
+    particle.y + 1,
+    size / 2,
+    size * 0.37,
+    particle.angle,
+    -Math.PI * 0.3,
+    Math.PI * 1.3,
+  );
+  context.stroke();
+  context.strokeStyle = "rgba(235, 255, 255, 0.88)";
+  context.lineWidth = 1.5;
   context.beginPath();
   context.ellipse(
     particle.x,
     particle.y,
     size / 2,
-    size / 2,
-    0,
-    0,
-    Math.PI * 2,
+    size * 0.37,
+    particle.angle,
+    -Math.PI * 0.28,
+    Math.PI * 1.28,
   );
   context.stroke();
   context.globalAlpha = 1;
 }
 
+function drawGooWake(context, particle, progress) {
+  const cos = Math.cos(particle.angle);
+  const sin = Math.sin(particle.angle);
+  const length = particle.size * (0.85 - progress * 0.25);
+  context.save();
+  context.transform(
+    cos,
+    sin,
+    -sin,
+    cos,
+    particle.x + particle.dx * progress,
+    particle.y + particle.dy * progress,
+  );
+  context.globalAlpha = particle.opacity * (1 - progress);
+  context.lineCap = "round";
+  context.strokeStyle = "rgba(29, 77, 28, 0.7)";
+  context.lineWidth = particle.size * 0.23;
+  context.beginPath();
+  context.moveTo(-length * 0.55, 0);
+  context.quadraticCurveTo(0, 3, length * 0.35, 0);
+  context.stroke();
+  context.strokeStyle = "rgba(204, 236, 142, 0.8)";
+  context.lineWidth = 2.2;
+  context.beginPath();
+  context.moveTo(-length * 0.42, -2);
+  context.quadraticCurveTo(0, 0, length * 0.3, -2);
+  context.stroke();
+  context.restore();
+}
+
+function clipLiquid(context, particle) {
+  if (!particle.patch) return;
+  const patch = particle.patch;
+  traceLiquidPatchPath(context, patch, patch.type);
+  context.clip();
+}
+
 function drawParticle(context, particle, progress) {
+  context.save();
+  clipLiquid(context, particle);
   if (particle.kind === "waterRipple") {
     drawWaterRipple(context, particle, progress);
   } else if (particle.kind === "gooSplat") {
-    drawCircle(context, particle, progress, "#80e93a");
+    drawGooWake(context, particle, progress);
+  } else if (particle.kind === "antFragment") {
+    drawCircle(context, particle, progress, "#543a24");
   } else if (particle.kind === "celebrate") {
     drawCircle(context, particle, progress, "#88f7c5");
   } else {
     drawCircle(context, particle, progress, "#ffd166");
   }
+  context.restore();
 }
 
 function resetDirtyBounds(bounds) {
@@ -87,7 +147,8 @@ function resetDirtyBounds(bounds) {
 
 function includeParticleBounds(bounds, particle, progress) {
   const size = particle.size * (0.7 + progress * 0.75);
-  const radius = size / 2 + 4;
+  const radius =
+    particle.kind === "gooSplat" ? particle.size * 0.7 + 4 : size / 2 + 4;
   const x =
     particle.kind === "waterRipple"
       ? particle.x
@@ -133,6 +194,7 @@ function boundsFitRegion(bounds, region) {
 export function createEffectsRenderer({
   effectsEl,
   marble,
+  mapState = null,
   config,
   random = Math.random,
   now = () => performance.now(),
@@ -207,7 +269,8 @@ export function createEffectsRenderer({
     while (activeParticles.length >= config.maxParticles) {
       activeParticles.shift();
     }
-    activeParticles.push({
+    const particle = {
+      angle: 0,
       bornAt: currentTime,
       dx,
       dy,
@@ -217,7 +280,41 @@ export function createEffectsRenderer({
       size,
       x,
       y,
-    });
+      patch: null,
+    };
+    activeParticles.push(particle);
+    return particle;
+  }
+
+  function liquidAtMarble(type) {
+    const patches = mapState?.terrainByType[type]?.elements;
+    if (!patches) return null;
+    const shape = ELLIPTICAL_SURFACE_SHAPES[type];
+    for (const patch of patches) {
+      if (pointInEllipsePatch(marble.x, marble.y, patch, shape, marble.r)) {
+        return patch;
+      }
+    }
+    return null;
+  }
+
+  function spawnAntSquish(ant) {
+    const angle = ant.squishAngle ?? ant.angle;
+    const strength = ant.squishStrength ?? 0.5;
+    for (let i = 0; i < config.antSquishParticles; i++) {
+      const scatter = angle + (random() - 0.5) * Math.PI * 1.6;
+      const drift = config.antSquishDrift * (0.4 + strength * random());
+      spawn(
+        "antFragment",
+        ant.x,
+        ant.y,
+        Math.cos(scatter) * drift,
+        Math.sin(scatter) * drift,
+        1.4 + random() * 1.8,
+        config.antSquishLifeMs,
+        0.65,
+      );
+    }
   }
 
   function spawnImpact(impact) {
@@ -277,18 +374,23 @@ export function createEffectsRenderer({
     )
       return;
 
+    const patch = liquidAtMarble(MAP_ELEMENT_TYPES.gooPatch);
+    if (mapState && !patch) return;
     lastGooSplatAt = currentTime;
     const intensity = clamp(speed / config.gooSplatReferenceSpeed, 0, 1);
-    spawn(
+    setVelocityUnit(marble, direction);
+    const particle = spawn(
       "gooSplat",
-      marble.x + (random() - 0.5) * marble.r * 0.8,
-      marble.y + (random() - 0.5) * marble.r * 0.8,
-      (random() - 0.5) * 8,
-      (random() - 0.5) * 8,
+      marble.x - direction.x * marble.r * 0.65,
+      marble.y - direction.y * marble.r * 0.65,
+      -direction.x * 8,
+      -direction.y * 8,
       config.gooSplatSizeBase + intensity * config.gooSplatSizeRange,
       config.gooSplatLifeMs,
       config.gooSplatOpacity,
     );
+    particle.angle = Math.atan2(direction.y, direction.x);
+    particle.patch = patch;
   }
 
   function spawnWaterRipple(speed) {
@@ -299,18 +401,23 @@ export function createEffectsRenderer({
     )
       return;
 
+    const patch = liquidAtMarble(MAP_ELEMENT_TYPES.waterPatch);
+    if (mapState && !patch) return;
     lastWaterRippleAt = currentTime;
     const intensity = clamp(speed / config.waterRippleReferenceSpeed, 0, 1);
-    spawn(
+    setVelocityUnit(marble, direction);
+    const particle = spawn(
       "waterRipple",
-      marble.x,
-      marble.y,
+      marble.x - direction.x * marble.r * 0.35,
+      marble.y - direction.y * marble.r * 0.35,
       0,
       0,
       config.waterRippleSizeBase + intensity * config.waterRippleSizeRange,
       config.waterRippleLifeMs,
       config.waterRippleOpacity,
     );
+    particle.angle = Math.atan2(direction.y, direction.x) + Math.PI / 2;
+    particle.patch = patch;
   }
 
   function clear() {
@@ -415,6 +522,7 @@ export function createEffectsRenderer({
     clear,
     render,
     setWorld,
+    spawnAntSquish,
     spawnGooSplat,
     spawnGoalComplete,
     spawnImpact,

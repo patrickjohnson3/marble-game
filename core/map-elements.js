@@ -7,6 +7,27 @@ export const MAP_ELEMENT_TYPES = Object.freeze({
   waterPatch: "waterPatch",
 });
 
+// Shared by movement, tiny-creature avoidance, and liquid rendering. These
+// footprints describe gameplay contact; decorative menisci stay close to them.
+export const ELLIPTICAL_SURFACE_SHAPES = Object.freeze({
+  [MAP_ELEMENT_TYPES.gooPatch]: Object.freeze({
+    centerX: 0.52,
+    centerY: 0.5,
+    radiusX: 0.5,
+    radiusY: 0.47,
+    cos: Math.cos(0.1),
+    sin: Math.sin(0.1),
+  }),
+  [MAP_ELEMENT_TYPES.waterPatch]: Object.freeze({
+    centerX: 0.5,
+    centerY: 0.52,
+    radiusX: 0.44,
+    radiusY: 0.35,
+    cos: 1,
+    sin: 0,
+  }),
+});
+
 export const KITCHEN_FIXTURES = Object.freeze({
   fork: "fork",
   spoon: "spoon",

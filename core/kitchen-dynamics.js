@@ -1,4 +1,10 @@
-import { KITCHEN_FIXTURES, MAP_ELEMENT_TYPES } from "./map-elements.js";
+import { antConfig } from "./game-config.js";
+import { pointInEllipsePatch } from "./geometry.js";
+import {
+  ELLIPTICAL_SURFACE_SHAPES,
+  KITCHEN_FIXTURES,
+  MAP_ELEMENT_TYPES,
+} from "./map-elements.js";
 import {
   circleOrientedRectContact,
   circleOrientedRoundedRectContact,
@@ -21,17 +27,10 @@ const obstacleResolvePasses = 2;
 const cerealLinearSettleSpeed = 0.02;
 const cerealMaxSpeed = 16;
 const crumbMomentumMultiplier = 1.2;
-const antRadius = 7;
-const antSpeed = 0.9;
-const antMunchDistance = 20;
-const antMunchRate = 0.006;
-const antSquishMinSpeed = 1.2;
-const antSplatMinSpeed = 0.7;
-const antSplatFeedbackCooldownFrames = 24;
-const antWaterAvoidanceFrames = 18;
-const antWaterAvoidancePadding = 10;
 const antWaterOutwardBias = 0.35;
 const antWaterSoakRejectionThreshold = 0.05;
+const antNeighborAvoidanceWeight = 1.7;
+const antLiquidSpeedScales = Object.freeze({ gooPatch: 0.5, waterPatch: 0.75 });
 const crumbRadiusRatio = 0.0032;
 const cerealHitMinSpeed = 0.8;
 const cerealHitFeedbackCooldownFrames = 20;
@@ -109,13 +108,13 @@ const antSpawnPoints = Object.freeze([
   { x: 0.04, y: 0.24 },
   { x: 0.08, y: 0.82 },
   { x: 0.18, y: 0.96 },
-  { x: 0.36, y: 0.05 },
+  { x: 0.23, y: 0.79 },
   { x: 0.54, y: 0.94 },
   { x: 0.72, y: 0.07 },
   { x: 0.9, y: 0.26 },
   { x: 0.96, y: 0.52 },
   { x: 0.86, y: 0.92 },
-  { x: 0.47, y: 0.02 },
+  { x: 0.31, y: 0.72 },
 ]);
 
 function createCereal(world, point, options = {}) {
@@ -144,12 +143,28 @@ function createCereal(world, point, options = {}) {
 }
 
 function createAnt(world, point, index) {
+  const individuality = ((index * 37 + 17) % 101) / 100;
   return {
     x: point.x * world.width,
     y: point.y * world.height,
-    angle: (index % 2) * Math.PI,
+    angle: Math.atan2(0.55 - point.y, 0.5 - point.x),
     alive: true,
     squished: false,
+    mode: "forage",
+    size: 0.92 + individuality * 0.16,
+    speedScale: 0.88 + individuality * 0.24,
+    turnBias: index % 2 ? -1 : 1,
+    gaitPhase: index * 2.1,
+    antennaPhase: index * 1.3,
+    probeInFrames: antConfig.probeIntervalFrames * (0.5 + individuality),
+    probeFrames: 0,
+    alertFrames: 0,
+    reactionFrames: antConfig.reactionFrames * (0.7 + individuality * 0.6),
+    fleeFrames: 0,
+    recoverFrames: 0,
+    squishAge: 0,
+    squishAngle: 0,
+    squishStrength: 0,
     lastSplatFeedbackFrame: Number.NEGATIVE_INFINITY,
     targetIndex: -1,
     waterAvoidanceFrames: 0,
@@ -169,6 +184,7 @@ export function createKitchenDynamicsState() {
     collisionCircle: { x: 0, y: 0, r: 0, vx: 0, vy: 0 },
     collisionContact: {},
     events: {
+      antCrushes: [],
       cerealHits: 0,
       splatHits: 0,
       spongeChanges: 0,
@@ -227,6 +243,9 @@ export function resetKitchenDynamics(
   state.cheerios = [];
   state.elementCacheSource = null;
   state.frameIndex = 0;
+  state.events.antCrushes.length = 0;
+  state.events.squishedAnts = 0;
+  state.events.splatHits = 0;
   state.obstacles = [];
   state.terrainElements = [];
   state.lastWaterRenderStep = 0;
@@ -655,33 +674,41 @@ function setDistanceToSegment(pointX, pointY, start, end, target) {
 
 function pointInPuddle(x, y, patch, padding = 0) {
   if (!patch) return false;
-
-  const centerX = patch.x + patch.w * 0.5;
-  const centerY = patch.y + patch.h * 0.52;
-  const radiusX = patch.w * 0.44 + padding;
-  const radiusY = patch.h * 0.35 + padding;
-  const dx = (x - centerX) / Math.max(1, radiusX);
-  const dy = (y - centerY) / Math.max(1, radiusY);
-  return dx * dx + dy * dy <= 1;
-}
-
-function cerealUnavailableToAnt(cereal, waterPatch) {
-  if ((cereal.waterSoak ?? 0) >= antWaterSoakRejectionThreshold) return true;
-
-  return pointInPuddle(
-    cereal.originX + cereal.pushX,
-    cereal.originY + cereal.pushY,
-    waterPatch,
+  return pointInEllipsePatch(
+    x,
+    y,
+    patch,
+    ELLIPTICAL_SURFACE_SHAPES.waterPatch,
+    padding,
   );
 }
 
-function nearestActiveCheerio(ant, cheerios, waterPatch) {
+function antLiquidAt(state, x, y, padding = 0) {
+  for (const patch of state.terrainElements) {
+    const shape = ELLIPTICAL_SURFACE_SHAPES[patch.type];
+    if (shape && pointInEllipsePatch(x, y, patch, shape, padding)) return patch;
+  }
+  return null;
+}
+
+function cerealUnavailableToAnt(cereal, state) {
+  if ((cereal.waterSoak ?? 0) >= antWaterSoakRejectionThreshold) return true;
+  return Boolean(
+    antLiquidAt(
+      state,
+      cereal.originX + cereal.pushX,
+      cereal.originY + cereal.pushY,
+    ),
+  );
+}
+
+function nearestActiveCheerio(ant, state) {
   let bestIndex = -1;
   let bestDistanceSq = Number.POSITIVE_INFINITY;
 
-  for (let i = 0; i < cheerios.length; i++) {
-    const cheerio = cheerios[i];
-    if (!cheerio.active || cerealUnavailableToAnt(cheerio, waterPatch)) {
+  for (let i = 0; i < state.cheerios.length; i++) {
+    const cheerio = state.cheerios[i];
+    if (!cheerio.active || cerealUnavailableToAnt(cheerio, state)) {
       continue;
     }
 
@@ -689,7 +716,11 @@ function nearestActiveCheerio(ant, cheerios, waterPatch) {
     const y = cheerio.originY + cheerio.pushY;
     const dx = x - ant.x;
     const dy = y - ant.y;
-    const distanceSq = dx * dx + dy * dy;
+    let neighbors = 0;
+    for (const other of state.ants) {
+      if (other !== ant && other.alive && other.targetIndex === i) neighbors++;
+    }
+    const distanceSq = (dx * dx + dy * dy) * (1 + neighbors * 0.3);
     if (distanceSq < bestDistanceSq) {
       bestDistanceSq = distanceSq;
       bestIndex = i;
@@ -699,128 +730,302 @@ function nearestActiveCheerio(ant, cheerios, waterPatch) {
   return bestIndex;
 }
 
-function antTarget(ant, cheerios, waterPatch) {
-  if (
-    ant.targetIndex < 0 ||
-    !cheerios[ant.targetIndex] ||
-    !cheerios[ant.targetIndex].active
-  ) {
-    ant.targetIndex = nearestActiveCheerio(ant, cheerios, waterPatch);
-  }
-
-  return cheerios[ant.targetIndex] ?? null;
+function turnAntToward(ant, angle, limit) {
+  const difference = Math.atan2(
+    Math.sin(angle - ant.angle),
+    Math.cos(angle - ant.angle),
+  );
+  ant.angle += Math.max(-limit, Math.min(limit, difference));
+  ant.angle = Math.atan2(Math.sin(ant.angle), Math.cos(ant.angle));
 }
 
-function updateAnts(state, marble, frameDelta, events) {
-  const marbleSpeed = Math.hypot(marble.vx || 0, marble.vy || 0);
-  const squishDistance = marble.r + antRadius;
-  const squishDistanceSq = squishDistance * squishDistance;
+function antSurfaceTangent(ant, normalX, normalY, desiredAngle) {
+  const dot =
+    -normalY * Math.cos(desiredAngle) + normalX * Math.sin(desiredAngle);
+  const direction = Math.abs(dot) < 0.01 ? (ant.turnBias ?? 1) : Math.sign(dot);
+  return Math.atan2(
+    normalX * direction + normalY * antWaterOutwardBias,
+    -normalY * direction + normalX * antWaterOutwardBias,
+  );
+}
 
-  for (let i = 0; i < state.ants.length; i++) {
-    const ant = state.ants[i];
-    const marbleDx = ant.x - marble.x;
-    const marbleDy = ant.y - marble.y;
+function moveAnt(state, ant, desiredAngle, speed, frameDelta) {
+  const oldX = ant.x;
+  const oldY = ant.y;
+  const step = speed * frameDelta;
+  const feelDistance = Math.max(antConfig.feelAhead, step);
+  const feelX = ant.x + Math.cos(ant.angle) * feelDistance;
+  const feelY = ant.y + Math.sin(ant.angle) * feelDistance;
+  const liquid = antLiquidAt(state, feelX, feelY, antConfig.liquidPadding);
+  if (liquid) {
+    const shape = ELLIPTICAL_SURFACE_SHAPES[liquid.type];
+    const dx = ant.x - liquid.x - liquid.w * shape.centerX;
+    const dy = ant.y - liquid.y - liquid.h * shape.centerY;
+    const localX = shape.cos * dx + shape.sin * dy;
+    const localY = -shape.sin * dx + shape.cos * dy;
+    const nx =
+      localX / Math.pow(liquid.w * shape.radiusX + antConfig.liquidPadding, 2);
+    const ny =
+      localY / Math.pow(liquid.h * shape.radiusY + antConfig.liquidPadding, 2);
+    const length = Math.hypot(nx, ny) || 1;
+    ant.angle = antSurfaceTangent(
+      ant,
+      (shape.cos * nx - shape.sin * ny) / length,
+      (shape.sin * nx + shape.cos * ny) / length,
+      desiredAngle,
+    );
+  }
+
+  const circle = state.collisionCircle;
+  circle.x = ant.x + Math.cos(ant.angle) * feelDistance;
+  circle.y = ant.y + Math.sin(ant.angle) * feelDistance;
+  circle.r = antConfig.radius;
+  for (const obstacle of state.obstacles) {
+    const contact = circleOrientedRectContact(
+      circle,
+      obstacle,
+      0,
+      state.collisionContact,
+      collisionZeroDistanceEpsilon,
+    );
+    if (!contact.intersects) continue;
+    const distance = Math.sqrt(contact.distanceSq);
+    ant.angle = antSurfaceTangent(
+      ant,
+      distance > collisionZeroDistanceEpsilon
+        ? contact.dx / distance
+        : contact.insideNx,
+      distance > collisionZeroDistanceEpsilon
+        ? contact.dy / distance
+        : contact.insideNy,
+      desiredAngle,
+    );
+    break;
+  }
+
+  circle.x = ant.x + Math.cos(ant.angle) * step;
+  circle.y = ant.y + Math.sin(ant.angle) * step;
+  circle.vx = 0;
+  circle.vy = 0;
+  resolveCerealObstacleCollisions(
+    circle,
+    state.obstacles,
+    state.collisionContact,
+  );
+  constrainCerealToWorld(circle, state.world);
+  const nextLiquid = antLiquidAt(state, circle.x, circle.y, antConfig.radius);
+  if (!nextLiquid || antLiquidAt(state, oldX, oldY, antConfig.radius)) {
+    ant.x = circle.x;
+    ant.y = circle.y;
+  }
+  // Feet advance with distance traveled, including short recoil and escape steps.
+  ant.gaitPhase =
+    ((ant.gaitPhase ?? 0) +
+      Math.hypot(ant.x - oldX, ant.y - oldY) / antConfig.gaitDistance) %
+    (Math.PI * 2);
+}
+
+function advanceAnt(state, ant, marble, frameDelta) {
+  ant.mode = "forage";
+  ant.antennaPhase =
+    ((ant.antennaPhase ?? 0) + 0.16 * frameDelta) % (Math.PI * 2);
+  ant.wobble = ((ant.wobble ?? 0) + 0.07 * frameDelta) % (Math.PI * 2);
+  ant.recoverFrames = Math.max(0, (ant.recoverFrames ?? 0) - frameDelta);
+
+  const awayX = ant.x - marble.x;
+  const awayY = ant.y - marble.y;
+  const distance = Math.hypot(awayX, awayY);
+  const approach =
+    ((marble.vx ?? 0) * awayX + (marble.vy ?? 0) * awayY) /
+    Math.max(1, distance);
+  const threatened =
+    distance < marble.r + antConfig.threatDistance &&
+    (approach > 0.25 || distance < marble.r + antConfig.radius * 3);
+  if (
+    !(ant.fleeFrames > 0) &&
+    (threatened || ant.alertFrames > 0) &&
+    ant.recoverFrames === 0
+  ) {
+    ant.alertFrames = (ant.alertFrames ?? 0) + frameDelta;
+    if (ant.alertFrames < (ant.reactionFrames ?? antConfig.reactionFrames)) {
+      ant.mode = "probe";
+      return;
+    }
+    ant.fleeFrames = antConfig.fleeDurationFrames * (ant.speedScale ?? 1);
+    ant.alertFrames = 0;
+    ant.probeFrames = 0;
+  }
+
+  let desiredAngle;
+  let speed =
+    antConfig.speed * (ant.speedScale ?? 1) * (1 + Math.sin(ant.wobble) * 0.1);
+  if (ant.fleeFrames > 0) {
+    ant.mode = "flee";
+    desiredAngle = Math.atan2(awayY, awayX) + (ant.turnBias ?? 1) * 0.28;
+    speed = antConfig.fleeSpeed * (ant.speedScale ?? 1);
+    ant.fleeFrames = Math.max(0, ant.fleeFrames - frameDelta);
+    if (ant.fleeFrames === 0) {
+      ant.recoverFrames = antConfig.recoverFrames;
+      ant.probeFrames = antConfig.probeDurationFrames;
+    }
+  } else if ((ant.waterAvoidanceFrames ?? 0) > 0) {
+    ant.waterAvoidanceFrames = Math.max(
+      0,
+      ant.waterAvoidanceFrames - frameDelta,
+    );
+    desiredAngle = ant.angle;
+  } else {
+    let target = state.cheerios[ant.targetIndex];
+    if (target?.active && cerealUnavailableToAnt(target, state)) {
+      ant.targetIndex = -1;
+      ant.waterAvoidanceFrames = antConfig.waterAvoidanceFrames;
+      ant.angle = Math.atan2(
+        ant.y - target.originY - target.pushY,
+        ant.x - target.originX - target.pushX,
+      );
+      desiredAngle = ant.angle;
+    } else {
+      if (!target?.active) {
+        ant.targetIndex = nearestActiveCheerio(ant, state);
+        target = state.cheerios[ant.targetIndex];
+      }
+      const dx = target
+        ? target.originX + target.pushX - ant.x
+        : Math.cos(ant.angle);
+      const dy = target
+        ? target.originY + target.pushY - ant.y
+        : Math.sin(ant.angle);
+      desiredAngle = Math.atan2(dy, dx) + Math.sin(ant.wobble) * 0.16;
+      if (
+        target &&
+        Math.hypot(dx, dy) <= target.radius + antConfig.munchDistance
+      ) {
+        ant.mode = "eat";
+        turnAntToward(ant, Math.atan2(dy, dx), antConfig.turnRate * frameDelta);
+        target.eaten = Math.min(
+          1,
+          target.eaten + antConfig.munchRate * frameDelta,
+        );
+        if (target.eaten >= 1) target.active = false;
+        return;
+      }
+      ant.probeInFrames =
+        (ant.probeInFrames ?? antConfig.probeIntervalFrames) - frameDelta;
+      if (ant.probeInFrames <= 0) {
+        ant.probeFrames = antConfig.probeDurationFrames * (ant.speedScale ?? 1);
+        ant.probeInFrames =
+          antConfig.probeIntervalFrames *
+          (1 + Math.sin(ant.antennaPhase) * 0.35);
+      }
+      if (ant.probeFrames > 0) {
+        ant.probeFrames = Math.max(0, ant.probeFrames - frameDelta);
+        ant.mode = "probe";
+        turnAntToward(ant, desiredAngle, antConfig.turnRate * frameDelta * 0.2);
+        return;
+      }
+      let headingX = Math.cos(desiredAngle);
+      let headingY = Math.sin(desiredAngle);
+      for (const other of state.ants) {
+        if (other === ant || !other.alive) continue;
+        const gapX = ant.x - other.x;
+        const gapY = ant.y - other.y;
+        const gap = Math.hypot(gapX, gapY);
+        if (gap > 0 && gap < antConfig.radius * 3) {
+          const weight =
+            (1 - gap / (antConfig.radius * 3)) * antNeighborAvoidanceWeight;
+          headingX += (gapX / gap) * weight;
+          headingY += (gapY / gap) * weight;
+        }
+      }
+      desiredAngle = Math.atan2(headingY, headingX);
+    }
+  }
+  turnAntToward(
+    ant,
+    desiredAngle,
+    (ant.mode === "flee" ? antConfig.fleeTurnRate : antConfig.turnRate) *
+      frameDelta,
+  );
+  const liquidUnderAnt = antLiquidAt(state, ant.x, ant.y);
+  if (liquidUnderAnt) speed *= antLiquidSpeedScales[liquidUnderAnt.type];
+  moveAnt(state, ant, desiredAngle, speed, frameDelta);
+}
+
+function updateAnts(state, marble, previousMarble, frameDelta, events) {
+  if (frameDelta <= 0) return;
+  const sweepX = marble.x - previousMarble.x;
+  const sweepY = marble.y - previousMarble.y;
+  const sweepLength = Math.hypot(sweepX, sweepY);
+  // A utensil can stop the marble after it has already rolled over an ant.
+  const marbleSpeed = Math.max(
+    Math.hypot(marble.vx || 0, marble.vy || 0),
+    sweepLength / frameDelta,
+  );
+  for (const ant of state.ants) {
+    setDistanceToSegment(
+      ant.x,
+      ant.y,
+      previousMarble,
+      marble,
+      state.collisionContact,
+    );
     const overlapsMarble =
-      marbleDx * marbleDx + marbleDy * marbleDy <= squishDistanceSq;
+      state.collisionContact.sweptDistance <= marble.r + antConfig.radius;
     if (ant.squished) {
+      const oldAge = ant.squishAge ?? antConfig.squishDurationFrames;
+      ant.squishAge = Math.min(
+        antConfig.squishDurationFrames,
+        oldAge + frameDelta,
+      );
+      if (ant.squishAge !== oldAge) ant.revision = (ant.revision ?? 0) + 1;
       if (
         overlapsMarble &&
-        marbleSpeed >= antSplatMinSpeed &&
+        marbleSpeed >= antConfig.splatMinSpeed &&
         state.frameIndex -
           (ant.lastSplatFeedbackFrame ?? Number.NEGATIVE_INFINITY) >=
-          antSplatFeedbackCooldownFrames
+          antConfig.splatFeedbackCooldownFrames
       ) {
         ant.lastSplatFeedbackFrame = state.frameIndex;
         events.splatHits += 1;
       }
       continue;
     }
-
-    if (marbleSpeed >= antSquishMinSpeed && overlapsMarble) {
+    if (!ant.alive) continue;
+    if (overlapsMarble && marbleSpeed >= antConfig.squishMinSpeed) {
       ant.alive = false;
       ant.squished = true;
+      ant.mode = "squished";
+      ant.squishAge = 0;
+      ant.squishAngle =
+        sweepLength > collisionZeroDistanceEpsilon
+          ? Math.atan2(sweepY, sweepX)
+          : Math.atan2(marble.vy || 0, marble.vx || 0);
+      ant.squishStrength = Math.min(
+        1,
+        marbleSpeed / (antConfig.squishMinSpeed * 6),
+      );
+      ant.targetIndex = -1;
       ant.lastSplatFeedbackFrame = state.frameIndex;
       ant.revision = (ant.revision ?? 0) + 1;
       events.squishedAnts += 1;
+      events.antCrushes.push(ant);
       continue;
     }
-
-    if ((ant.waterAvoidanceFrames ?? 0) > 0) {
-      const avoidanceStep = antSpeed * frameDelta;
-      ant.x += Math.cos(ant.angle) * avoidanceStep;
-      ant.y += Math.sin(ant.angle) * avoidanceStep;
-      ant.waterAvoidanceFrames = Math.max(
-        0,
-        ant.waterAvoidanceFrames - frameDelta,
-      );
-      continue;
-    }
-
-    const target = antTarget(ant, state.cheerios, state.waterPatch);
-    if (!target) continue;
-
-    const targetX = target.originX + target.pushX;
-    const targetY = target.originY + target.pushY;
-    const dx = targetX - ant.x;
-    const dy = targetY - ant.y;
-    const targetUnavailable = cerealUnavailableToAnt(target, state.waterPatch);
-    const munchDistance = target.radius + antMunchDistance;
     if (
-      !targetUnavailable &&
-      dx * dx + dy * dy <= munchDistance * munchDistance
+      marbleSpeed >= antConfig.splatMinSpeed &&
+      state.collisionContact.sweptDistance < marble.r + antConfig.radius * 3 &&
+      !(ant.fleeFrames > 0) &&
+      !(ant.recoverFrames > 0)
     ) {
-      target.eaten = Math.min(1, target.eaten + antMunchRate * frameDelta);
-      if (target.eaten >= 1) target.active = false;
-      continue;
+      // A close pass can already be behind an ant when its reaction begins.
+      ant.alertFrames = Math.max(ant.alertFrames ?? 0, Number.EPSILON);
     }
-
-    const desiredAngle = Math.atan2(dy, dx) + Math.sin(ant.wobble) * 0.18;
-    ant.wobble += 0.11 * frameDelta;
-    const step = antSpeed * frameDelta;
-    const proposedX = ant.x + Math.cos(desiredAngle) * step;
-    const proposedY = ant.y + Math.sin(desiredAngle) * step;
-    if (
-      state.waterPatch &&
-      pointInPuddle(
-        proposedX,
-        proposedY,
-        state.waterPatch,
-        antWaterAvoidancePadding,
-      )
-    ) {
-      const centerX = state.waterPatch.x + state.waterPatch.w * 0.5;
-      const centerY = state.waterPatch.y + state.waterPatch.h * 0.52;
-      const radialX =
-        (ant.x - centerX) /
-        Math.max(1, state.waterPatch.w * 0.44 + antWaterAvoidancePadding);
-      const radialY =
-        (ant.y - centerY) /
-        Math.max(1, state.waterPatch.h * 0.35 + antWaterAvoidancePadding);
-      const radialLength = Math.hypot(radialX, radialY) || 1;
-      const normalX = radialX / radialLength;
-      const normalY = radialY / radialLength;
-
-      if (targetUnavailable) {
-        ant.targetIndex = -1;
-        ant.waterAvoidanceFrames = antWaterAvoidanceFrames;
-        ant.angle = Math.atan2(normalY, normalX);
-      } else {
-        let tangentX = -normalY;
-        let tangentY = normalX;
-        if (tangentX * dx + tangentY * dy < 0) {
-          tangentX = -tangentX;
-          tangentY = -tangentY;
-        }
-        ant.angle = Math.atan2(
-          tangentY + normalY * antWaterOutwardBias,
-          tangentX + normalX * antWaterOutwardBias,
-        );
-      }
-    } else {
-      ant.angle = desiredAngle;
+    // Normal play is at most two frame units; slicing also keeps long updates
+    // from stepping over a utensil or skipping an entire hesitation.
+    for (let remaining = frameDelta; remaining > 0; remaining -= 2) {
+      advanceAnt(state, ant, marble, Math.min(2, remaining));
     }
-    ant.x += Math.cos(ant.angle) * step;
-    ant.y += Math.sin(ant.angle) * step;
+    ant.revision = (ant.revision ?? 0) + 1;
   }
 }
 
@@ -1038,6 +1243,7 @@ export function updateKitchenDynamics(
   frameDelta = 1,
 ) {
   const events = state.events;
+  events.antCrushes.length = 0;
   events.cerealHits = 0;
   events.splatHits = 0;
   events.spongeChanges = 0;
@@ -1057,7 +1263,7 @@ export function updateKitchenDynamics(
     events,
     mapConfig.variantId === kitchenFloorMapId,
   );
-  updateAnts(state, marble, frameDelta, events);
+  updateAnts(state, marble, previousMarble, frameDelta, events);
   state.frameIndex += 1;
   return events;
 }

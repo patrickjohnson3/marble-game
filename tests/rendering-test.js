@@ -961,6 +961,221 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
 
 testKitchenDynamicsUseDirtyRedrawsAfterInitialRender();
 
+function antRenderingFixture(overrides = {}) {
+  const canvas = new FakeCanvasElement();
+  canvas.width = 1000;
+  canvas.height = 1000;
+  const ant = {
+    x: 300,
+    y: 300,
+    angle: 0,
+    alive: true,
+    squished: false,
+    gaitPhase: 0,
+    antennaPhase: 0,
+    size: 1,
+    mode: "forage",
+    revision: 0,
+    ...overrides,
+  };
+  const dynamicsState = { ants: [ant], cheerios: [] };
+  const themeState = {
+    kitchenDynamicCanvas: canvas,
+    kitchenDynamicContext: canvas.context,
+    kitchenDynamicWorld: { width: 2000, height: 2000 },
+    kitchenDynamicRenderScale: 0.5,
+    kitchenDynamicNeedsFullRedraw: true,
+  };
+  const render = () =>
+    renderMapThemeDynamics({
+      dynamicsState,
+      mapConfig: { theme: "kitchenFloor" },
+      themeState,
+    });
+  return { ant, canvas, dynamicsState, render, themeState };
+}
+
+function canvasPolylines(calls) {
+  const paths = [];
+  let path = null;
+  for (const call of calls) {
+    if (call[0] === "moveTo") {
+      path = [call.slice(1)];
+      paths.push(path);
+    } else if (call[0] === "lineTo" && path) {
+      path.push(call.slice(1));
+    } else if (call[0] === "beginPath") {
+      path = null;
+    }
+  }
+  return paths;
+}
+
+function testKitchenAntAnatomyFacesItsHeading() {
+  const fixture = antRenderingFixture({ angle: 0.7, size: 1.06 });
+  const before = globalThis.structuredClone(fixture.dynamicsState);
+  fixture.render();
+  const calls = fixture.canvas.context.calls;
+  const transform = calls.find((call) => call[0] === "transform");
+  assert.deepEqual(transform.slice(1), [
+    Math.cos(fixture.ant.angle) * fixture.ant.size,
+    Math.sin(fixture.ant.angle) * fixture.ant.size,
+    -Math.sin(fixture.ant.angle) * fixture.ant.size,
+    Math.cos(fixture.ant.angle) * fixture.ant.size,
+    fixture.ant.x,
+    fixture.ant.y,
+  ]);
+
+  const segments = calls.filter(
+    (call) => call[0] === "ellipse" && call[2] === 0,
+  );
+  assert.equal(
+    segments.length,
+    3,
+    "ants should retain three distinct body segments",
+  );
+  const [abdomen, thorax, head] = segments;
+  assert.equal(abdomen[1] < thorax[1] && thorax[1] < head[1], true);
+  assert.equal(
+    abdomen[4] > head[4] && head[4] > thorax[4],
+    true,
+    "the abdomen and head should be separated by a narrow thorax",
+  );
+
+  const appendages = canvasPolylines(calls).filter((path) => path.length === 3);
+  assert.equal(
+    appendages.length,
+    8,
+    "six legs and two feelers should each have a bend",
+  );
+  const legs = appendages.filter((path) => Math.abs(path[0][0]) <= thorax[3]);
+  assert.equal(
+    legs.length,
+    6,
+    "all six jointed legs should attach at the thorax",
+  );
+  assert.equal(legs.filter((path) => path[0][1] > 0).length, 3);
+  assert.equal(legs.filter((path) => path[0][1] < 0).length, 3);
+  assert.deepEqual(
+    fixture.dynamicsState,
+    before,
+    "rendering must not advance ant state",
+  );
+}
+
+testKitchenAntAnatomyFacesItsHeading();
+
+function testKitchenAntPoseRedrawsWithinItsDirtyBounds() {
+  const fixture = antRenderingFixture();
+  fixture.render();
+  const initialPose = canvasPolylines(fixture.canvas.context.calls);
+  fixture.canvas.context.calls.length = 0;
+  fixture.render();
+  assert.equal(
+    fixture.canvas.context.calls.length,
+    0,
+    "unchanged ants need no canvas work",
+  );
+
+  fixture.ant.gaitPhase = Math.PI / 2;
+  fixture.ant.antennaPhase = 1.8;
+  fixture.ant.revision += 1;
+  fixture.render();
+  const calls = fixture.canvas.context.calls;
+  assert.notDeepEqual(
+    canvasPolylines(calls),
+    initialPose,
+    "simulation phases should articulate legs and feelers",
+  );
+  const clear = calls.find((call) => call[0] === "clearRect");
+  assert.equal(
+    clear[3] < 100 && clear[4] < 100,
+    true,
+    "a stationary pose change should repaint only the ant's small area",
+  );
+  assert.deepEqual(
+    calls.find((call) => call[0] === "rect").slice(1),
+    clear.slice(1),
+    "the repaint clip must match the cleared pixel bounds so shadows cannot accumulate",
+  );
+  assert.equal(
+    calls.some((call) => call[0] === "clip"),
+    true,
+  );
+
+  calls.length = 0;
+  fixture.ant.angle = Math.PI / 2;
+  fixture.render();
+  assert.equal(
+    calls.some((call) => call[0] === "transform"),
+    true,
+    "turning in place must invalidate the previous ant silhouette",
+  );
+}
+
+testKitchenAntPoseRedrawsWithinItsDirtyBounds();
+
+function testKitchenAntRemainsSettleThenStayStill() {
+  const fixture = antRenderingFixture();
+  fixture.render();
+  const liveAbdomen = fixture.canvas.context.calls.find(
+    (call) => call[0] === "ellipse" && call[1] < 0 && call[2] === 0,
+  );
+  fixture.canvas.context.calls.length = 0;
+  Object.assign(fixture.ant, {
+    alive: false,
+    squished: true,
+    squishAge: 0,
+    squishAngle: 0.6,
+    squishStrength: 0.8,
+  });
+  fixture.render();
+  const firstAbdomen = fixture.canvas.context.calls.find(
+    (call) => call[0] === "ellipse" && call[1] < 0 && call[2] === 0,
+  );
+  fixture.canvas.context.calls.length = 0;
+  fixture.ant.squishAge = 24;
+  fixture.ant.revision += 1;
+  fixture.render();
+  const calls = fixture.canvas.context.calls;
+  const segments = calls.filter(
+    (call) => call[0] === "ellipse" && call[2] === 0,
+  );
+  assert.equal(
+    segments.length,
+    3,
+    "remains should preserve recognizable ant anatomy",
+  );
+  assert.equal(
+    segments[0][4] < firstAbdomen[4] && firstAbdomen[4] < liveAbdomen[4],
+    true,
+    "the crushed body should visibly compress and settle against the floor",
+  );
+  assert.equal(
+    canvasPolylines(calls).filter((path) => path.length === 3).length,
+    8,
+    "flattened remains should retain six bent legs and two crumpled feelers",
+  );
+  const imprint = calls.find((call) => call[0] === "ellipse");
+  assert.equal(
+    imprint[5],
+    fixture.ant.squishAngle - fixture.ant.angle,
+    "the contact imprint should follow the marble's travel direction",
+  );
+
+  calls.length = 0;
+  const before = globalThis.structuredClone(fixture.ant);
+  fixture.render();
+  assert.equal(
+    calls.length,
+    0,
+    "settled remains should persist without per-frame painting",
+  );
+  assert.deepEqual(fixture.ant, before);
+}
+
+testKitchenAntRemainsSettleThenStayStill();
+
 function testKitchenDynamicsContinueOutsideCameraView() {
   const antCanvas = new FakeCanvasElement();
   const dynamics = kitchenDynamicsWith({
@@ -1735,10 +1950,10 @@ try {
   assert.equal(
     gooPatchCanvas.context.calls.some(
       (call) =>
-        call[0] === "addColorStop" && call[2] === "rgba(142,199,74,.68)",
+        call[0] === "addColorStop" && call[2] === "rgba(125,163,57,.88)",
     ),
     true,
-    "goo should use a subdued translucent highlight",
+    "goo should have a dense pooled body",
   );
 
   renderHazardPatches(hazardPatchContainer, [{ x: 30, y: 40, w: 100, h: 70 }], {

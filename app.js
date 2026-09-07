@@ -148,6 +148,7 @@ function setupRenderers({
   const effectsRenderer = createEffectsRenderer({
     effectsEl,
     marble,
+    mapState,
     config: visualConfig.effects,
     world,
   });

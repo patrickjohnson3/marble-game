@@ -120,6 +120,23 @@ class FakeCanvasContext {
     return this;
   }
 
+  createRadialGradient(x1, y1, r1, x2, y2, r2) {
+    this.calls.push(["createRadialGradient", x1, y1, r1, x2, y2, r2]);
+    return this;
+  }
+
+  closePath() {
+    this.calls.push(["closePath"]);
+  }
+
+  quadraticCurveTo(cx, cy, x, y) {
+    this.calls.push(["quadraticCurveTo", cx, cy, x, y]);
+  }
+
+  bezierCurveTo(c1x, c1y, c2x, c2y, x, y) {
+    this.calls.push(["bezierCurveTo", c1x, c1y, c2x, c2y, x, y]);
+  }
+
   clearRect(x, y, w, h) {
     this.calls.push(["clearRect", x, y, w, h]);
   }
@@ -179,6 +196,10 @@ class FakeCanvasContext {
 
   setTransform(a, b, c, d, e, f) {
     this.calls.push(["setTransform", a, b, c, d, e, f]);
+  }
+
+  transform(a, b, c, d, e, f) {
+    this.calls.push(["transform", a, b, c, d, e, f]);
   }
 
   stroke() {
