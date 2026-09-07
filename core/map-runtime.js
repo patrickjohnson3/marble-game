@@ -1,9 +1,13 @@
 import {
+  KITCHEN_FIXTURES,
   MAP_ELEMENT_TYPES,
   MAP_TERRAIN_TYPES,
   mapElementsByType,
 } from "./map-elements.js";
-import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
+import {
+  createForkCollisionRects,
+  normalizeJoinedObstacleRects,
+} from "./map-obstacles.js";
 import { rectBounds } from "./rect-bounds.js";
 
 function prepareCollisionObstacle(obstacle) {
@@ -52,7 +56,11 @@ export function createResolvedMapState(
   );
   const obstacles = normalizeObstacles(
     elementsByType[MAP_ELEMENT_TYPES.obstacle],
-  ).map(prepareCollisionObstacle);
+  ).flatMap((obstacle) =>
+    obstacle.fixture === KITCHEN_FIXTURES.fork
+      ? createForkCollisionRects(obstacle).map(prepareCollisionObstacle)
+      : [prepareCollisionObstacle(obstacle)],
+  );
   return {
     activeMap,
     obstacles,

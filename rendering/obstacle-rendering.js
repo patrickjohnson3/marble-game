@@ -1,6 +1,6 @@
 import { rectBounds } from "../core/rect-bounds.js";
-import { createCanvas } from "./wall-rendering.js";
-import { KITCHEN_FIXTURES } from "../core/map-elements.js";
+import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
+import { KITCHEN_FIXTURES, KITCHEN_FORK_SPRITE } from "../core/map-elements.js";
 
 function rectPath(x, y, w, h) {
   return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
@@ -163,6 +163,33 @@ function hitboxCorners(rect) {
 }
 
 function drawHitbox(context, rect) {
+  if (rect.cornerRadius > 0) {
+    const cos = Math.cos(rect.angle ?? 0);
+    const sin = Math.sin(rect.angle ?? 0);
+    context.save();
+    context.transform(
+      cos,
+      sin,
+      -sin,
+      cos,
+      rect.x + rect.w / 2,
+      rect.y + rect.h / 2,
+    );
+    context.beginPath();
+    drawRoundedRect(
+      context,
+      {
+        x: -rect.hitboxW / 2,
+        y: -rect.hitboxH / 2,
+        w: rect.hitboxW,
+        h: rect.hitboxH,
+      },
+      rect.cornerRadius,
+    );
+    context.stroke();
+    context.restore();
+    return;
+  }
   const corners = hitboxCorners(rect);
 
   context.beginPath();
@@ -230,7 +257,15 @@ function syncKitchenFixtureSprite(
 }
 
 function syncKitchenForkSprite(layer, forkParts) {
-  syncKitchenFixtureSprite(layer, forkParts, "kitchenForkSprite", 760, 110);
+  // Collision pieces retain the authored fixture's unchanged display box.
+  const source = forkParts[0]?.fixtureSource;
+  syncKitchenFixtureSprite(
+    layer,
+    source ? [source] : forkParts,
+    "kitchenForkSprite",
+    KITCHEN_FORK_SPRITE.minWidth,
+    KITCHEN_FORK_SPRITE.minHeight,
+  );
 }
 
 function syncKitchenSpongeSprite(layer, spongeParts) {

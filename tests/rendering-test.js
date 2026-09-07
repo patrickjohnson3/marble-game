@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
+import { createForkCollisionRects } from "../core/map-obstacles.js";
 import {
   createKitchenDynamics,
   createKitchenDynamicsState,
@@ -842,16 +843,21 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
     });
   }
 
-  const contact = circleOrientedRectContact(
-    {
-      x: cheerioState.originX + cheerioState.pushX,
-      y: cheerioState.originY + cheerioState.pushY,
-      r: cheerioState.radius,
-    },
-    fork,
-  );
-
-  assert.equal(contact.intersects, false, "fork should block moving Cheerios");
+  for (const part of dynamics.state.obstacles) {
+    const contact = circleOrientedRectContact(
+      {
+        x: cheerioState.originX + cheerioState.pushX,
+        y: cheerioState.originY + cheerioState.pushY,
+        r: cheerioState.radius,
+      },
+      part,
+    );
+    assert.equal(
+      contact.intersects,
+      false,
+      "fork metal should block moving Cheerios",
+    );
+  }
 }
 
 testKitchenCheeriosDoNotSlideUnderFork();
@@ -1675,6 +1681,66 @@ function testKitchenObstaclesRenderAsFixtures() {
 }
 
 testKitchenObstaclesRenderAsFixtures();
+
+function testForkCollisionPartsPreserveSpritePlacement() {
+  withFakeDocument(() => {
+    for (const angle of [0, -0.42, 0.52]) {
+      // The second kitchen uses hitboxW 720, but the image still displays at 760.
+      // Also check contain sizing when height, rather than width, limits scale.
+      for (const hitboxW of [720, 760, 1500]) {
+        const fork = {
+          type: "obstacle",
+          fixture: "fork",
+          x: 680,
+          y: 1520,
+          w: 840,
+          h: 360,
+          hitboxW,
+          hitboxH: 60,
+          angle,
+        };
+        const original = new FakeElement();
+        const split = new FakeElement();
+        const parts = createForkCollisionRects(fork);
+        renderObstacleWalls(original, [fork], {
+          mapConfig: { theme: "kitchenFloor" },
+        });
+        renderObstacleWalls(split, parts, {
+          mapConfig: { theme: "kitchenFloor" },
+        });
+        assert.equal(
+          split.firstChild.children.length,
+          1,
+          "collision parts must produce one sprite",
+        );
+        const oldStyle = original.firstChild.firstChild.style;
+        const newStyle = split.firstChild.firstChild.style;
+        for (const key of ["left", "top", "width", "height"]) {
+          assert.equal(
+            newStyle[key],
+            oldStyle[key],
+            `fork sprite ${key} must not change`,
+          );
+        }
+        assert.equal(
+          newStyle.properties["--fixture-angle"],
+          oldStyle.properties["--fixture-angle"],
+        );
+        const debug = new FakeElement();
+        renderObstacleHitboxes(debug, parts);
+        assert.equal(
+          debug.firstChild.context.calls.filter(
+            ([name]) => name === "roundRect",
+          ).length,
+          parts.length,
+          "opt-in hitbox overlay must show the actual rounded primitives",
+        );
+      }
+    }
+  });
+}
+
+testForkCollisionPartsPreserveSpritePlacement();
 
 function testObstacleHitboxesRenderDebugCanvas() {
   const container = new FakeElement();

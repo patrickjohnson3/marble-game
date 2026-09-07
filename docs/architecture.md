@@ -199,6 +199,15 @@ feedback pipeline. Bounds are resolved before obstacles on each pass. Both
 always correct penetration but only reflect approaching velocity; fractional
 braking can move into a boundary while endpoint velocity points away from it.
 
+Fork fixtures expand into eight rounded rectangles in `core/map-obstacles.js`
+when a map is prepared. Their source-image coordinates follow the tapered
+handle, neck, and wider head. Collision and rendering share the PNG dimensions
+and minimum display box, including CSS `contain` scaling and rotation about
+the fixture center. Each part keeps `fixtureSource` so the sprite's placement
+does not depend on the collision pieces' bounds. Marble, ant, and cereal contacts
+use the same fitted shapes through the existing oriented/rounded contact code.
+The optional hitbox overlay draws these primitives; it remains off by default.
+
 The physics context is reused across frames in `app.js`; only the map-dependent
 arrays are refreshed before each physics update. Small scratch objects are also
 reused to avoid hot-loop allocation.
@@ -276,7 +285,7 @@ Key modules:
 - `core/map-runtime.js`: owns derived active-map state used by rendering,
   physics, and goal progression.
 - `core/map-elements.js`: filters elements by type.
-- `core/map-obstacles.js`: snaps and normalizes obstacle rectangles.
+- `core/map-obstacles.js`: snaps/normalizes rectangles and fits fork collision parts.
 - `core/map-bounds.js`: computes intro pen and released-map walls/bounds.
 
 When a goal completes, `core/map-progression.js` selects the next variant,
@@ -407,7 +416,7 @@ Use this section when deciding where a change belongs.
 - `core/map-bounds.js`: intro pen and released-map bounds/walls.
 - `core/map-config.js`: resolved map config and combined variants.
 - `core/map-elements.js`: element type filters.
-- `core/map-obstacles.js`: obstacle snapping and joining.
+- `core/map-obstacles.js`: obstacle snapping, joining, and fork collision geometry.
 - `core/map-progression.js`: next-map selection on completion.
 - `core/map-reachability.js`: map playability/reachability helpers.
 - `core/map-runtime.js`: active-map derived state and goal progress state.

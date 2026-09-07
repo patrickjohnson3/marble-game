@@ -63,6 +63,17 @@ export function circleOrientedRectContact(
   const centerY = rect.collisionCenterY ?? rect.y + rect.h / 2;
   const halfWidth = rect.collisionHalfWidth ?? (rect.hitboxW ?? rect.w) / 2;
   const halfHeight = rect.collisionHalfHeight ?? (rect.hitboxH ?? rect.h) / 2;
+  const cornerRadius = Math.min(rect.cornerRadius ?? 0, halfWidth, halfHeight);
+  if (cornerRadius > 0) {
+    return circleOrientedRoundedRectContact(
+      circle,
+      rect,
+      cornerRadius,
+      epsilon,
+      target,
+      zeroDistanceEpsilon,
+    );
+  }
   const cos = rect.collisionCos ?? Math.cos(angle);
   const sin = rect.collisionSin ?? Math.sin(angle);
   const dx = circle.x - centerX;

@@ -1,5 +1,6 @@
 import { antConfig } from "./game-config.js";
 import { pointInEllipsePatch } from "./geometry.js";
+import { createForkCollisionRects } from "./map-obstacles.js";
 import {
   ELLIPTICAL_SURFACE_SHAPES,
   KITCHEN_FIXTURES,
@@ -213,7 +214,11 @@ function elementCaches(elements = []) {
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (element.type === MAP_ELEMENT_TYPES.obstacle) {
-      obstacles.push(element);
+      if (element.fixture === KITCHEN_FIXTURES.fork) {
+        obstacles.push(...createForkCollisionRects(element));
+      } else {
+        obstacles.push(element);
+      }
     } else if (surfaceInfluences[element.type]) {
       terrainElements.push(element);
     }
