@@ -76,6 +76,7 @@ function drawGooFolds(context, patch) {
 }
 
 function drawGooPatch(context, patch) {
+  const smallDrop = Math.max(patch.w, patch.h) < 140;
   const thickness = Math.min(10, Math.min(patch.w, patch.h) * 0.024);
   const body = context.createLinearGradient(
     patch.x,
@@ -107,11 +108,12 @@ function drawGooPatch(context, patch) {
   pooledLight.addColorStop(1, "rgba(28,56,27,.2)");
   context.fillStyle = pooledLight;
   context.fillRect(patch.x - 8, patch.y - 8, patch.w + 24, patch.h + 24);
-  drawGooFolds(context, patch);
+  if (!smallDrop) drawGooFolds(context, patch);
 
   // Golden-angle placement avoids the old grid of identical bubbles. Count
   // stays fixed even on large patches, and all details live in the cached layer.
-  for (let index = 0; index < 18; index++) {
+  const bubbleCount = smallDrop ? 0 : 18;
+  for (let index = 0; index < bubbleCount; index++) {
     const angle = index * 2.39996 + 0.45;
     const distance = Math.sqrt((index + 0.5) / 18) * 0.83;
     const x = patch.x + patch.w * (0.52 + Math.cos(angle) * distance * 0.46);

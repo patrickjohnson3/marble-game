@@ -1,3 +1,4 @@
+import { drawKitchenFloorDetails } from "./kitchen-floor-details.js";
 import { antConfig } from "../core/game-config.js";
 
 const kitchenFloorCanvasScale = 0.4;
@@ -121,17 +122,17 @@ function appendFloor(parent, theme, world, rect = {}) {
   });
 }
 
-function appendKitchenFloorCanvas(parent, world) {
+function appendKitchenFloorCanvas(parent, world, mapConfig) {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
-  const tileSize = 220;
+  const tileSize = 550;
+  const tileTones = ["#e6e1d5", "#e8e3d8", "#e4dfd2", "#e7e2d6", "#e5e0d4"];
 
   canvas.className = "kitchenFloorCanvas";
   canvas.width = Math.ceil(world.width * kitchenFloorCanvasScale);
   canvas.height = Math.ceil(world.height * kitchenFloorCanvasScale);
   applyBox(canvas, { x: 0, y: 0, w: world.width, h: world.height });
   canvas.setAttribute("aria-hidden", "true");
-  canvas.setAttribute("data-kitchen-landmarks", "5");
   parent.appendChild(canvas);
   if (!context) return;
 
@@ -143,131 +144,109 @@ function appendKitchenFloorCanvas(parent, world) {
     0,
     0,
   );
-  context.fillStyle = "#dec684";
+  context.fillStyle = "#c5bfb2";
   context.fillRect(0, 0, world.width, world.height);
 
-  for (let y = 0; y < world.height; y += tileSize) {
-    for (let x = 0; x < world.width; x += tileSize) {
-      const alternate = (x / tileSize + y / tileSize) % 2 === 0;
-      context.fillStyle = alternate ? "#ead9a8" : "#cdb16d";
-      context.fillRect(x, y, tileSize, tileSize);
-      context.fillStyle = alternate ? "#fff2bc26" : "#7a622626";
-      context.fillRect(x + 12, y + 12, tileSize - 24, tileSize - 24);
-    }
-  }
+  // Glazed ceramic has broad, quiet variation; all detail is baked on map load.
+  for (let y = 0, row = 0; y < world.height; y += tileSize, row += 1) {
+    for (let x = 0, column = 0; x < world.width; x += tileSize, column += 1) {
+      const toneIndex =
+        (column * 17 + row * 11 + Math.floor(column * row * 0.37)) %
+        tileTones.length;
+      context.fillStyle = tileTones[toneIndex];
+      context.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
 
-  context.strokeStyle = "#7e6a3a4d";
-  context.lineWidth = 3;
-  for (let x = 0; x <= world.width; x += tileSize) {
-    context.beginPath();
-    context.moveTo(x, 0);
-    context.lineTo(x, world.height);
-    context.stroke();
-  }
-  for (let y = 0; y <= world.height; y += tileSize) {
-    context.beginPath();
-    context.moveTo(0, y);
-    context.lineTo(world.width, y);
-    context.stroke();
-  }
+      const glaze = context.createLinearGradient(
+        x,
+        y,
+        x + tileSize,
+        y + tileSize,
+      );
+      glaze.addColorStop(0, "#fffdf61a");
+      glaze.addColorStop(0.5, "#fffdf600");
+      glaze.addColorStop(1, "#685e4f06");
+      context.fillStyle = glaze;
+      context.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
 
-  for (let y = 70; y < world.height; y += 275) {
-    for (let x = 70; x < world.width; x += 335) {
-      context.fillStyle = (x + y) % 2 === 0 ? "#fff8d94a" : "#745d2a26";
+      context.strokeStyle = "#fffdf64a";
+      context.lineWidth = 1.5;
       context.beginPath();
-      context.ellipse(x, y, 3, 3, 0, 0, Math.PI * 2);
-      context.fill();
+      context.moveTo(x + 3.5, y + tileSize - 3.5);
+      context.lineTo(x + 3.5, y + 3.5);
+      context.lineTo(x + tileSize - 3.5, y + 3.5);
+      context.stroke();
     }
   }
 
-  [
-    { x: 0.18, y: 0.58, rx: 30, ry: 8, angle: 0.22 },
-    { x: 0.32, y: 0.72, rx: 42, ry: 10, angle: -0.18 },
-    { x: 0.64, y: 0.44, rx: 28, ry: 7, angle: 0.35 },
-    { x: 0.78, y: 0.68, rx: 36, ry: 9, angle: -0.28 },
-  ].forEach((smudge) => {
-    context.fillStyle = "#7b633026";
+  // Sparse marks break repetition without carpeting the floor in tiny noise.
+  context.strokeStyle = "#786d5b14";
+  context.lineWidth = 3;
+  for (const scuff of [
+    { x: 0.18, y: 0.58, rx: 34, ry: 8, angle: 0.22 },
+    { x: 0.32, y: 0.72, rx: 48, ry: 10, angle: -0.18 },
+    { x: 0.78, y: 0.68, rx: 39, ry: 9, angle: -0.28 },
+  ]) {
     context.beginPath();
     context.ellipse(
-      smudge.x * world.width,
-      smudge.y * world.height,
-      smudge.rx,
-      smudge.ry,
-      smudge.angle,
-      0,
-      Math.PI * 2,
+      scuff.x * world.width,
+      scuff.y * world.height,
+      scuff.rx,
+      scuff.ry,
+      scuff.angle,
+      0.25,
+      Math.PI * 1.3,
     );
-    context.fill();
-  });
-
-  // Sparse, unique floor wear gives the large repeating tile field location cues.
-  const sunX = world.width * 0.08;
-  const sunY = world.height * 0.12;
-  context.fillStyle = "#fff8d72b";
-  context.beginPath();
-  context.moveTo(sunX, sunY);
-  context.lineTo(sunX + 720, sunY + 90);
-  context.lineTo(sunX + 620, sunY + 610);
-  context.lineTo(sunX - 100, sunY + 520);
-  context.fill();
-  context.fillStyle = "#fffdf044";
-  context.fillRect(sunX + 100, sunY + 145, 520, 34);
-  context.fillRect(sunX + 48, sunY + 335, 520, 34);
-
-  const repairX = Math.floor((world.width * 0.82) / tileSize) * tileSize;
-  const repairY = Math.floor((world.height * 0.18) / tileSize) * tileSize;
-  context.fillStyle = "#c9b98566";
-  context.fillRect(repairX + 8, repairY + 8, tileSize - 16, tileSize - 16);
-  context.strokeStyle = "#f0e4bd73";
-  context.lineWidth = 5;
-  context.strokeRect(repairX + 8, repairY + 8, tileSize - 16, tileSize - 16);
-
-  const crackCenters = [
-    { x: world.width * 0.13, y: world.height * 0.82 },
-    { x: world.width * 0.72, y: world.height * 0.88 },
-  ];
-  context.strokeStyle = "#6f593752";
-  context.lineWidth = 4;
-  crackCenters.forEach((center, index) => {
-    const direction = index === 0 ? 1 : -1;
-    context.beginPath();
-    context.moveTo(center.x - 72 * direction, center.y - 28);
-    context.lineTo(center.x - 22 * direction, center.y - 5);
-    context.lineTo(center.x + 18 * direction, center.y + 42);
-    context.lineTo(center.x + 76 * direction, center.y + 62);
-    context.moveTo(center.x - 18 * direction, center.y - 2);
-    context.lineTo(center.x + 30 * direction, center.y - 52);
-    context.moveTo(center.x + 16 * direction, center.y + 40);
-    context.lineTo(center.x - 8 * direction, center.y + 94);
     context.stroke();
-  });
+  }
 
-  context.fillStyle = "#8b71361f";
-  context.beginPath();
-  context.ellipse(
-    world.width * 0.52,
-    world.height * 0.84,
-    380,
-    96,
-    -0.18,
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
+  context.strokeStyle = "#8277652a";
+  context.lineWidth = 1.6;
+  for (const crack of [
+    { x: world.width * 0.13, y: world.height * 0.82, direction: 1 },
+    { x: world.width * 0.72, y: world.height * 0.88, direction: -1 },
+  ]) {
+    context.beginPath();
+    context.moveTo(crack.x - 60 * crack.direction, crack.y - 23);
+    context.lineTo(crack.x - 22 * crack.direction, crack.y - 5);
+    context.lineTo(crack.x + 14 * crack.direction, crack.y + 36);
+    context.lineTo(crack.x + 48 * crack.direction, crack.y + 50);
+    context.moveTo(crack.x - 22 * crack.direction, crack.y - 5);
+    context.lineTo(crack.x - 6 * crack.direction, crack.y - 29);
+    context.stroke();
+  }
 
-  context.strokeStyle = "#7a64302e";
-  context.lineWidth = 14;
+  context.fillStyle = "#a79b8747";
+  for (const chip of [
+    { column: 2, row: 3 },
+    { column: 6, row: 1 },
+    { column: 5, row: 7 },
+  ]) {
+    const x = chip.column * tileSize + 2;
+    const y = chip.row * tileSize + 2;
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(x + 10, y);
+    context.lineTo(x + 4, y + 5);
+    context.lineTo(x, y + 9);
+    context.closePath();
+    context.fill();
+  }
+
+  // A faded cup ring is a floor stain, not a new obstacle or liquid surface.
+  context.strokeStyle = "#8c79601a";
+  context.lineWidth = 4;
   context.beginPath();
   context.ellipse(
     world.width * 0.9,
     world.height * 0.54,
-    150,
-    92,
+    75,
+    58,
     0.24,
-    0,
-    Math.PI * 2,
+    0.1,
+    Math.PI * 1.8,
   );
   context.stroke();
+  drawKitchenFloorDetails(context, world, mapConfig);
 }
 
 function renderHockeyRink({ underlay, overlay, world }) {
@@ -321,8 +300,8 @@ function renderHockeyRink({ underlay, overlay, world }) {
   );
 }
 
-function renderKitchenStaticFloor({ underlay, world }) {
-  appendKitchenFloorCanvas(underlay, world);
+function renderKitchenStaticFloor({ underlay, world, mapConfig }) {
+  appendKitchenFloorCanvas(underlay, world, mapConfig);
 }
 
 function renderKitchenDynamicObjects({
@@ -335,13 +314,14 @@ function renderKitchenDynamicObjects({
 }
 
 function renderKitchenFloor({
+  mapConfig,
   dynamicsState,
   underlay,
   overlay,
   themeState,
   world,
 }) {
-  renderKitchenStaticFloor({ underlay, world });
+  renderKitchenStaticFloor({ underlay, world, mapConfig });
   renderKitchenDynamicObjects({ dynamicsState, overlay, themeState, world });
 }
 
@@ -1069,7 +1049,14 @@ export function renderMapTheme({
   underlay.setAttribute("aria-hidden", "true");
   overlay.setAttribute("aria-hidden", "true");
 
-  renderers[theme]({ dynamicsState, overlay, underlay, themeState, world });
+  renderers[theme]({
+    mapConfig,
+    dynamicsState,
+    overlay,
+    underlay,
+    themeState,
+    world,
+  });
   container.replaceChildren(underlay);
   overlayContainer.replaceChildren(overlay);
 }

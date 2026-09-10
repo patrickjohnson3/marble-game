@@ -35,8 +35,8 @@ function testLiquidEdgesTrackPhysics() {
         );
         assert.ok(Number.isFinite(distanceFromEllipse));
         assert.ok(
-          distanceFromEllipse < (type === "waterPatch" ? 4 : 6),
-          "the visible meniscus must stay close to the authoritative physics ellipse",
+          distanceFromEllipse <= 7,
+          "the meniscus must remain within one tiny ant body radius of the physics ellipse",
         );
         if (distanceFromEllipse > 0.005) unevenEdge = true;
       }

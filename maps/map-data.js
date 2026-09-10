@@ -47,6 +47,12 @@ const hockeyRinkElements = [
 const kitchenFloorElements = [
   { type: "gooPatch", x: 1240, y: 1800, w: 560, h: 460 },
   { type: "waterPatch", x: 2060, y: 1280, w: 1120, h: 760 },
+  // Detached splash drops use the same wet footprint as their visible bodies.
+  // Keep the main water patch first: the sponge absorbs that puddle.
+  { type: "waterPatch", x: 2120, y: 1350, w: 110, h: 70 },
+  { type: "waterPatch", x: 2910, y: 1940, w: 90, h: 60 },
+  { type: "gooPatch", x: 1250, y: 2170, w: 80, h: 50 },
+  { type: "gooPatch", x: 1730, y: 2200, w: 70, h: 60 },
   {
     type: "obstacle",
     fixture: "sponge",
@@ -85,6 +91,10 @@ const kitchenFloorElements = [
 const kitchenBreakfastElements = [
   { type: "waterPatch", x: 1380, y: 2360, w: 1040, h: 660 },
   { type: "gooPatch", x: 2740, y: 1440, w: 500, h: 420 },
+  { type: "waterPatch", x: 1430, y: 2390, w: 80, h: 60 },
+  { type: "waterPatch", x: 2220, y: 2880, w: 100, h: 70 },
+  { type: "gooPatch", x: 2740, y: 1440, w: 60, h: 50 },
+  { type: "gooPatch", x: 3170, y: 1810, w: 70, h: 50 },
   {
     type: "obstacle",
     fixture: "fork",

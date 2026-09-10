@@ -595,7 +595,7 @@ function testMapThemeRendersRealWorldVisualMarkers() {
 
 testMapThemeRendersRealWorldVisualMarkers();
 
-function testKitchenThemeRendersDatedFloorDetails() {
+function testKitchenThemeRendersQuietCeramicFloor() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
   const themeState = {};
@@ -628,14 +628,21 @@ function testKitchenThemeRendersDatedFloorDetails() {
   assert.equal(floor.style.width, "4400px");
   assert.equal(floor.style.height, "4400px");
   assert.equal(
-    floor.attributes["data-kitchen-landmarks"],
-    "5",
-    "kitchen floor should include distributed orientation landmarks",
+    floor.width,
+    1760,
+    "static floor should retain its backing resolution",
   );
-  assert.equal(
-    floor.context.calls.some((call) => call[0] === "fillRect"),
-    true,
-    "kitchen floor canvas should draw tile fills",
+  assert.equal(floor.height, 1760);
+  const tileFills = floor.context.calls.filter(
+    (call) =>
+      call[0] === "fillRect" &&
+      call[3] >= 440 &&
+      call[3] <= 660 &&
+      call[4] === call[3],
+  );
+  assert.ok(
+    tileFills.length > 0 && tileFills.length <= 200,
+    "ceramic tiles should be substantially larger than the former 220px checker",
   );
   assert.equal(
     underlayChildren.some((child) =>
@@ -691,7 +698,56 @@ function testKitchenThemeRendersDatedFloorDetails() {
   );
 }
 
-testKitchenThemeRendersDatedFloorDetails();
+testKitchenThemeRendersQuietCeramicFloor();
+
+function testKitchenFloorIsDeterministicAndDoesNotRedrawWithAnts() {
+  const drawFloor = () => {
+    const container = new FakeElement();
+    const overlayContainer = new FakeElement();
+    const themeState = {};
+    const dynamics = kitchenDynamicsWith();
+    const mapConfig = { theme: "kitchenFloor", elements: [] };
+    const world = { width: 4400, height: 4400 };
+    dynamics.reset({ mapConfig, world });
+    withFakeDocument(() => {
+      renderMapTheme({
+        container,
+        dynamicsState: dynamics.state,
+        overlayContainer,
+        mapConfig,
+        themeState,
+        world,
+      });
+    });
+    const floor = container.children[0].children.find(
+      (child) => child.className === "kitchenFloorCanvas",
+    );
+    return { floor, dynamics, mapConfig, themeState };
+  };
+  const first = drawFloor();
+  const second = drawFloor();
+  assert.deepEqual(
+    first.floor.context.calls,
+    second.floor.context.calls,
+    "floor wear and tile variation should be reproducible across map loads",
+  );
+
+  const callsBeforeUpdate = first.floor.context.calls.length;
+  updateAndRenderMapThemeDynamics({
+    dynamics: first.dynamics,
+    mapConfig: first.mapConfig,
+    marble: { x: 2200, y: 2200, vx: 0, vy: 0, r: 29 },
+    frameDelta: 1,
+    themeState: first.themeState,
+  });
+  assert.equal(
+    first.floor.context.calls.length,
+    callsBeforeUpdate,
+    "walking ants must not repaint the static floor",
+  );
+}
+
+testKitchenFloorIsDeterministicAndDoesNotRedrawWithAnts();
 
 function testKitchenDynamicsInitialDrawUsesNextFrame() {
   const container = new FakeElement();
@@ -2009,9 +2065,9 @@ try {
   assert.equal(gooPatchCanvas.style.width, "140px");
   assert.equal(gooPatchCanvas.style.height, "116px");
   assert.equal(
-    gooPatchCanvas.context.calls.some((call) => call[0] === "ellipse"),
+    gooPatchCanvas.context.calls.some((call) => call[0] === "closePath"),
     true,
-    "goo patch canvas should draw a blob and bubbles",
+    "small goo drops should have a closed wet contour",
   );
   assert.equal(
     gooPatchCanvas.context.calls.some(
@@ -2100,9 +2156,9 @@ try {
   assert.equal(waterPatchCanvas.style.width, "144px");
   assert.equal(waterPatchCanvas.style.height, "120px");
   assert.equal(
-    waterPatchCanvas.context.calls.some((call) => call[0] === "ellipse"),
+    waterPatchCanvas.context.calls.some((call) => call[0] === "stroke"),
     true,
-    "water patch canvas should draw reflections and droplets",
+    "small water drops should retain a reflected edge glint",
   );
   assert.equal(
     waterPatchCanvas.context.calls.some((call) => call[0] === "lineTo"),

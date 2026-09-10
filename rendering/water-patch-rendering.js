@@ -1,53 +1,6 @@
 import { traceLiquidPatchPath } from "./liquid-patch-shape.js";
 import { renderPatchCanvas } from "./wall-rendering.js";
 
-const kitchenTileSize = 220;
-
-function drawRefractedGrout(context, patch) {
-  context.lineWidth = 1.3;
-  context.lineCap = "round";
-  for (let axis = 0; axis < 2; axis++) {
-    const origin = axis === 0 ? patch.x : patch.y;
-    const length = axis === 0 ? patch.w : patch.h;
-    const firstLine = Math.ceil(origin / kitchenTileSize) * kitchenTileSize;
-    for (
-      let line = firstLine;
-      line <= origin + length;
-      line += kitchenTileSize
-    ) {
-      const bend = Math.sin(((line - origin) / length) * Math.PI + 0.6) * 5;
-      for (let edge = 0; edge < 2; edge++) {
-        const offset = edge === 0 ? -1.5 : 2;
-        context.strokeStyle =
-          edge === 0 ? "rgba(241,255,255,.24)" : "rgba(40,80,81,.12)";
-        context.beginPath();
-        if (axis === 0) {
-          context.moveTo(line + offset, patch.y);
-          context.bezierCurveTo(
-            line + bend + offset,
-            patch.y + patch.h * 0.34,
-            line - bend * 0.4 + offset,
-            patch.y + patch.h * 0.68,
-            line + offset,
-            patch.y + patch.h,
-          );
-        } else {
-          context.moveTo(patch.x, line + offset);
-          context.bezierCurveTo(
-            patch.x + patch.w * 0.34,
-            line + bend + offset,
-            patch.x + patch.w * 0.68,
-            line - bend * 0.4 + offset,
-            patch.x + patch.w,
-            line + offset,
-          );
-        }
-        context.stroke();
-      }
-    }
-  }
-}
-
 function drawWaterReflections(context, patch) {
   const light = context.createLinearGradient(
     patch.x + patch.w * 0.12,
@@ -127,6 +80,7 @@ function drawWaterReflections(context, patch) {
 }
 
 function drawWaterPatch(context, patch) {
+  const smallDrop = Math.max(patch.w, patch.h) < 140;
   const depth = context.createLinearGradient(
     patch.x,
     patch.y,
@@ -157,8 +111,9 @@ function drawWaterPatch(context, patch) {
   reflectedSky.addColorStop(1, "rgba(99,162,178,0)");
   context.fillStyle = reflectedSky;
   context.fillRect(patch.x, patch.y, patch.w, patch.h);
-  drawRefractedGrout(context, patch);
-  drawWaterReflections(context, patch);
+  // The actual floor stays visible through the water; do not paint a second
+  // grout grid that can drift out of alignment with the underlying tiles.
+  if (!smallDrop) drawWaterReflections(context, patch);
 
   // A narrow wet meniscus, with light only on the facing edge, avoids the
   // thick uniform outline that made the old puddle read like a glass disc.
@@ -172,7 +127,7 @@ function drawWaterPatch(context, patch) {
   edge.addColorStop(0.55, "rgba(48,90,96,.07)");
   edge.addColorStop(1, "rgba(30,70,77,.3)");
   context.strokeStyle = edge;
-  context.lineWidth = 3.2;
+  context.lineWidth = smallDrop ? 1.4 : 3.2;
   traceLiquidPatchPath(context, patch, "waterPatch", { inset: 0.7 });
   context.stroke();
   context.restore();
@@ -187,6 +142,10 @@ function drawWaterPatch(context, patch) {
     endAngle: Math.PI * 1.58,
   });
   context.stroke();
+  if (smallDrop) {
+    context.restore();
+    return;
+  }
   context.strokeStyle = "rgba(226,253,253,.28)";
   context.lineWidth = 1;
   traceLiquidPatchPath(context, patch, "waterPatch", {

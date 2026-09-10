@@ -1,3 +1,4 @@
+import { kitchenLayouts, kitchenPoint } from "../maps/kitchen-layout.js";
 import assert from "node:assert/strict";
 import { existsSync, readFile } from "node:fs";
 import { createServer } from "node:http";
@@ -125,23 +126,27 @@ async function testSyntheticOrientationWorkflow(browser, baseUrl) {
         document.getElementById("hint").textContent === expectedHint,
       copy.hints.neutralSet,
     );
-    await page.waitForFunction(() => {
-      const canvas = document.querySelector(".kitchenDynamicCanvas");
-      const context = canvas?.getContext("2d");
-      if (!canvas || !context) return false;
+    const firstCluster = kitchenLayouts["kitchen-floor"][0];
+    await page.waitForFunction(
+      ({ x, y }) => {
+        const canvas = document.querySelector(".kitchenDynamicCanvas");
+        const context = canvas?.getContext("2d");
+        if (!canvas || !context) return false;
 
-      const sampleSize = 80;
-      const pixels = context.getImageData(
-        Math.floor(canvas.width * 0.16 - sampleSize / 2),
-        Math.floor(canvas.height * 0.49 - sampleSize / 2),
-        sampleSize,
-        sampleSize,
-      ).data;
-      for (let index = 3; index < pixels.length; index += 4) {
-        if (pixels[index] > 0) return true;
-      }
-      return false;
-    });
+        const sampleSize = 80;
+        const pixels = context.getImageData(
+          Math.floor(canvas.width * x - sampleSize / 2),
+          Math.floor(canvas.height * y - sampleSize / 2),
+          sampleSize,
+          sampleSize,
+        ).data;
+        for (let index = 3; index < pixels.length; index += 4) {
+          if (pixels[index] > 0) return true;
+        }
+        return false;
+      },
+      kitchenPoint(firstCluster, firstCluster.cheerios[0]),
+    );
 
     const neutralTransform = await marbleTransform(page);
     await dispatchOrientation(page, { beta: 0, gamma: 24 });

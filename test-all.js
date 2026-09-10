@@ -8,6 +8,8 @@ const tests = [
   "tests/runtime-assets-test.js",
   "tests/game-loop-test.js",
   "tests/kitchen-dynamics-test.js",
+  "tests/kitchen-spills-test.js",
+  "tests/kitchen-layout-test.js",
   "tests/physics-test.js",
   "tests/fork-collision-test.js",
   "tests/haptics-test.js",

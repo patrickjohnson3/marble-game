@@ -1,3 +1,4 @@
+import { kitchenLayouts, kitchenPoint } from "../maps/kitchen-layout.js";
 import { antConfig } from "./game-config.js";
 import { pointInEllipsePatch } from "./geometry.js";
 import { createForkCollisionRects } from "./map-obstacles.js";
@@ -52,71 +53,6 @@ const spongeCollisionSeparation = 0.5;
 const spongeWaterSoakRate = 0.01;
 const spongeMaxPuddleLinearShrink = 0.2;
 const spongeWaterRedrawSteps = 20;
-
-const cheerioLayout = Object.freeze([
-  { x: 0.16, y: 0.49 },
-  { x: 0.19, y: 0.52 },
-  { x: 0.22, y: 0.48 },
-  { x: 0.24, y: 0.55 },
-  { x: 0.27, y: 0.51 },
-  { x: 0.31, y: 0.57 },
-  { x: 0.36, y: 0.46 },
-  { x: 0.39, y: 0.5 },
-  { x: 0.42, y: 0.55 },
-  { x: 0.44, y: 0.61 },
-  { x: 0.6, y: 0.37 },
-  { x: 0.63, y: 0.39 },
-  { x: 0.66, y: 0.36 },
-  { x: 0.69, y: 0.4 },
-  { x: 0.47, y: 0.68 },
-  { x: 0.49, y: 0.71 },
-  { x: 0.52, y: 0.69 },
-  { x: 0.54, y: 0.73 },
-  { x: 0.57, y: 0.7 },
-  { x: 0.59, y: 0.75 },
-  { x: 0.51, y: 0.77 },
-  { x: 0.45, y: 0.74 },
-  { x: 0.61, y: 0.8 },
-  { x: 0.64, y: 0.76 },
-  { x: 0.67, y: 0.82 },
-  { x: 0.7, y: 0.78 },
-  { x: 0.74, y: 0.84 },
-  { x: 0.78, y: 0.8 },
-  { x: 0.8, y: 0.87 },
-  { x: 0.73, y: 0.69 },
-  { x: 0.78, y: 0.64 },
-  { x: 0.83, y: 0.71 },
-  { x: 0.86, y: 0.59 },
-  { x: 0.88, y: 0.67 },
-]);
-
-const crumbLayout = Object.freeze([
-  { x: 0.2, y: 0.5, rotation: 0.3 },
-  { x: 0.25, y: 0.49, rotation: -0.4 },
-  { x: 0.29, y: 0.55, rotation: 0.8 },
-  { x: 0.36, y: 0.53, rotation: -0.1 },
-  { x: 0.41, y: 0.59, rotation: 0.55 },
-  { x: 0.62, y: 0.35, rotation: -0.65 },
-  { x: 0.67, y: 0.39, rotation: 0.18 },
-  { x: 0.48, y: 0.73, rotation: -0.75 },
-  { x: 0.56, y: 0.76, rotation: 0.42 },
-  { x: 0.66, y: 0.79, rotation: -0.22 },
-  { x: 0.76, y: 0.82, rotation: 0.66 },
-  { x: 0.83, y: 0.65, rotation: -0.3 },
-]);
-
-const antSpawnPoints = Object.freeze([
-  { x: 0.04, y: 0.24 },
-  { x: 0.08, y: 0.82 },
-  { x: 0.18, y: 0.96 },
-  { x: 0.23, y: 0.79 },
-  { x: 0.54, y: 0.94 },
-  { x: 0.72, y: 0.07 },
-  { x: 0.9, y: 0.26 },
-  { x: 0.96, y: 0.52 },
-  { x: 0.86, y: 0.92 },
-  { x: 0.31, y: 0.72 },
-]);
 
 function createCereal(world, point, options = {}) {
   return {
@@ -264,19 +200,29 @@ export function resetKitchenDynamics(
   state.world = world ?? null;
   if (mapConfig?.theme !== "kitchenFloor" || !world) return state;
 
-  state.cheerios = cheerioLayout.map((point) => createCereal(world, point));
-  state.cheerios.push(
-    ...crumbLayout.map((point) =>
-      createCereal(world, point, {
-        kind: "crumb",
-        radiusRatio: crumbRadiusRatio,
-        rotation: point.rotation,
-      }),
-    ),
-  );
-  state.ants = antSpawnPoints.map((point, index) =>
-    createAnt(world, point, index),
-  );
+  const clusters =
+    kitchenLayouts[mapConfig.variantId] ?? kitchenLayouts["kitchen-floor"];
+  for (const cluster of clusters) {
+    for (const point of cluster.cheerios) {
+      state.cheerios.push(createCereal(world, kitchenPoint(cluster, point)));
+    }
+  }
+  for (const cluster of clusters) {
+    for (const point of cluster.crumbs) {
+      state.cheerios.push(
+        createCereal(world, kitchenPoint(cluster, point), {
+          kind: "crumb",
+          radiusRatio: crumbRadiusRatio,
+          rotation: cluster.angle + point[0] * 0.01,
+        }),
+      );
+    }
+    for (const point of cluster.ants) {
+      state.ants.push(
+        createAnt(world, kitchenPoint(cluster, point), state.ants.length),
+      );
+    }
+  }
   const caches = elementCaches(mapConfig.elements);
   state.elementCacheSource = mapConfig.elements;
   state.obstacles = Array.isArray(obstacles) ? obstacles : caches.obstacles;

@@ -32,6 +32,8 @@ function testCheerioOnlySoaksAfterPlayerDisturbsIt() {
   const mapConfig = kitchenMap();
   dynamics.reset({ mapConfig, world });
   const cheerio = dynamics.state.cheerios[0];
+  cheerio.originX = 250;
+  cheerio.originY = 510;
   const distantMarble = { x: 900, y: 900, vx: 0, vy: 0, r: 29 };
 
   update(dynamics, mapConfig, distantMarble, 120);
@@ -65,6 +67,8 @@ function testWaterSoakPersistsAndClamps() {
   const mapConfig = kitchenMap();
   dynamics.reset({ mapConfig, world });
   const cheerio = dynamics.state.cheerios[0];
+  cheerio.originX = 250;
+  cheerio.originY = 510;
 
   update(dynamics, mapConfig, marbleAt(cheerio));
   update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 }, 500);
@@ -94,6 +98,8 @@ function testWaterSoakIsAuthoredForKitchenFloorOnly() {
   const mapConfig = kitchenMap("kitchen-breakfast-spill");
   dynamics.reset({ mapConfig, world });
   const cheerio = dynamics.state.cheerios[0];
+  cheerio.originX = 250;
+  cheerio.originY = 510;
 
   update(dynamics, mapConfig, marbleAt(cheerio));
   update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 }, 120);
