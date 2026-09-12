@@ -9,6 +9,11 @@ import { createMapRuntime } from "../core/map-runtime.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { baseMapConfig } from "../core/map-config.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
+import {
+  getObjectiveRegion,
+  livingAntCount,
+  marbleInsideRegion,
+} from "../core/map-objectives.js";
 
 const goal = { x: 100, y: 100, r: 50 };
 const marble = { x: 100, y: 100, r: 10 };
@@ -219,5 +224,246 @@ function testRetryRestoresTheCurrentKitchen() {
 
 testGoalHoldResetAndMapProgression();
 testRetryRestoresTheCurrentKitchen();
+
+function objectiveHarness(sourceMap, nextMap = null) {
+  const runtime = createMapRuntime({ initialMap: sourceMap });
+  const kitchen = createKitchenDynamics();
+  const marble = { ...sourceMap.spawn, vx: 0, vy: 0 };
+  const intro = { released: true };
+  const calls = { completed: [], advances: 0, effects: 0, statuses: [] };
+  function applyMap(map) {
+    runtime.setActiveMap(map);
+    kitchen.reset({
+      mapConfig: runtime.state.activeMap,
+      obstacles: runtime.state.obstacles,
+      waterPatches: runtime.state.terrainByType.waterPatch.elements,
+      world: runtime.state.activeMap.world,
+    });
+  }
+  function resetForNextMap() {
+    Object.assign(marble, runtime.state.activeMap.spawn, { vx: 0, vy: 0 });
+  }
+  applyMap(sourceMap);
+  const controller = createGoalController({
+    copy: { mapOpen: "" },
+    effectsRenderer: {
+      spawnGoalComplete() {
+        calls.effects++;
+      },
+    },
+    hapticFeedback: { pulseGoal() {} },
+    intro,
+    kitchenState: kitchen.state,
+    mapRuntime: runtime,
+    mapProgression: {
+      advanceToNextMap() {
+        calls.advances++;
+        if (!nextMap) return false;
+        applyMap(nextMap);
+        resetForNextMap();
+        return true;
+      },
+    },
+    marble,
+    onComplete(map) {
+      calls.completed.push(map.variantId);
+      assert.equal(runtime.state.goalCompleted, true, "latch before callbacks");
+    },
+    terrainView: { updateGoalProgress() {} },
+    timing: { targetFrameMs: 1000 / 60 },
+    ui: {
+      setHint() {},
+      setObjectiveStatus(status) {
+        calls.statuses.push(status);
+      },
+    },
+  });
+  return {
+    applyMap,
+    calls,
+    controller,
+    intro,
+    kitchen,
+    marble,
+    resetForNextMap,
+    runtime,
+  };
+}
+
+const kitchenObjectiveMap = {
+  ...resolveMapVariantConfig(baseMapConfig, "kitchen-floor"),
+  objective: { type: "eliminate", target: "ant", count: "all" },
+  goal: null,
+};
+const reachObjectiveMap = {
+  variantId: "living-test",
+  world: { width: 500, height: 500 },
+  spawn: { x: 50, y: 450, r: 10 },
+  objective: { type: "reach", region: "exit-door" },
+  regions: [{ id: "exit-door", x: 350, y: 20, w: 100, h: 100 }],
+  elements: [],
+};
+
+function testEliminationUsesActualCrushStateAndCompletesOnce() {
+  const { calls, controller, kitchen, marble, runtime } = objectiveHarness(
+    kitchenObjectiveMap,
+    reachObjectiveMap,
+  );
+  assert.equal(kitchen.state.ants.length > 0, true);
+  controller.update(1);
+  assert.equal(calls.completed.length, 0);
+  assert.equal(calls.statuses.at(-1), "Kill all ants · 10 left");
+
+  while (kitchen.state.ants.some((ant) => ant.alive)) {
+    const ant = kitchen.state.ants.find((candidate) => candidate.alive);
+    marble.x = ant.x;
+    marble.y = ant.y;
+    marble.vx = 6;
+    const events = kitchen.update(
+      runtime.state.activeMap,
+      marble,
+      { x: marble.x - 6, y: marble.y },
+      1,
+    );
+    assert.equal(
+      events.squishedAnts > 0,
+      true,
+      "use the real crush interaction",
+    );
+    const remaining = livingAntCount(kitchen.state.ants);
+    controller.update(1);
+    if (remaining > 0) {
+      assert.equal(
+        calls.completed.length,
+        0,
+        "any surviving ant blocks completion",
+      );
+      assert.equal(
+        calls.statuses.at(-1),
+        "Kill all ants · " + remaining + " left",
+      );
+    } else {
+      assert.deepEqual(calls.completed, ["kitchen-floor"]);
+      break;
+    }
+  }
+  assert.equal(runtime.state.activeMap.variantId, "living-test");
+  assert.equal(calls.advances, 1);
+  assert.equal(calls.effects, 1);
+  assert.equal(
+    kitchen.state.ants.length,
+    0,
+    "new room resets kitchen dynamics",
+  );
+  assert.equal(calls.statuses.at(-1), "Reach the exit doorway");
+  controller.update(1);
+  assert.equal(
+    calls.completed.length,
+    1,
+    "old final-ant state cannot complete the next map",
+  );
+}
+
+function testEliminationRetryAndMissingSuccessor() {
+  const harness = objectiveHarness(kitchenObjectiveMap);
+  const {
+    applyMap,
+    calls,
+    controller,
+    intro,
+    kitchen,
+    resetForNextMap,
+    runtime,
+  } = harness;
+  // Unrelated live objects and consumed food cannot keep an ant objective open.
+  kitchen.state.cheerios[0].active = false;
+  for (const ant of kitchen.state.ants) ant.alive = false;
+  intro.released = false;
+  controller.update(1);
+  assert.equal(calls.completed.length, 0, "intro still gates completion");
+  intro.released = true;
+  controller.update(1);
+  controller.update(1);
+  assert.equal(calls.completed.length, 1);
+  assert.equal(
+    calls.advances,
+    1,
+    "a failed advance must not complete every frame",
+  );
+  assert.equal(runtime.state.goalCompleted, true);
+
+  const progression = createMapProgression({
+    baseMapConfig: {
+      variants: [{ ...kitchenObjectiveMap, id: "kitchen-floor" }],
+    },
+    getCurrentMap: () => runtime.state.activeMap,
+    applyMap,
+    resetForNextMap,
+    terrainView: { updateGoalProgress() {} },
+    ui: { setHint() {} },
+    requestRender() {},
+  });
+  progression.retryCurrentMap();
+  assert.equal(runtime.state.goalCompleted, false);
+  assert.equal(livingAntCount(kitchen.state.ants), 10);
+  controller.update(1);
+  assert.equal(calls.completed.length, 1, "Retry must restore living targets");
+  assert.equal(calls.statuses.at(-1), "Kill all ants · 10 left");
+  for (const ant of kitchen.state.ants) ant.alive = false;
+  controller.update(1);
+  assert.equal(calls.completed.length, 2, "a new run can complete again");
+}
+
+function testReachRequiresTheDeclaredRegionAndResets() {
+  const { applyMap, calls, controller, intro, marble, runtime } =
+    objectiveHarness(reachObjectiveMap);
+  const region = getObjectiveRegion(runtime.state.activeMap);
+  assert.equal(marbleInsideRegion(marble, region), false);
+  controller.update(1);
+  assert.equal(calls.completed.length, 0);
+
+  // Center entry alone is insufficient: the whole marble must cross the edge.
+  marble.x = region.x + marble.r - 0.01;
+  marble.y = region.y + region.h / 2;
+  controller.update(1);
+  assert.equal(calls.completed.length, 0);
+  marble.x += 0.01;
+  intro.released = false;
+  controller.update(1);
+  assert.equal(calls.completed.length, 0);
+  intro.released = true;
+  controller.update(1);
+  controller.update(1);
+  assert.deepEqual(calls.completed, ["living-test"]);
+  assert.equal(
+    runtime.state.goalHoldMs,
+    0,
+    "reach objectives do not inherit hold timers",
+  );
+  assert.equal(calls.effects, 1);
+
+  applyMap(reachObjectiveMap);
+  Object.assign(marble, reachObjectiveMap.spawn);
+  controller.update(1);
+  assert.equal(calls.completed.length, 1);
+  assert.equal(runtime.state.goalCompleted, false);
+  marble.x = 400;
+  marble.y = 70;
+  controller.update(1);
+  assert.equal(calls.completed.length, 2);
+
+  assert.throws(
+    () => getObjectiveRegion({ ...reachObjectiveMap, regions: [] }),
+    /Unknown objective region: exit-door/,
+  );
+  assert.throws(
+    () => getObjectiveRegion({ objective: { type: "unknown" } }),
+    /Unknown objective type/,
+  );
+}
+
+testEliminationUsesActualCrushStateAndCompletesOnce();
+testEliminationRetryAndMissingSuccessor();
+testReachRequiresTheDeclaredRegionAndResets();
 
 console.log("Goal controller tests passed.");

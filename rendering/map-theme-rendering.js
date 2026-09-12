@@ -1,4 +1,5 @@
 import { drawKitchenFloorDetails } from "./kitchen-floor-details.js";
+import { renderLivingRoom } from "./living-room-rendering.js";
 import { antConfig } from "../core/game-config.js";
 
 const kitchenFloorCanvasScale = 0.4;
@@ -323,37 +324,6 @@ function renderKitchenFloor({
 }) {
   renderKitchenStaticFloor({ underlay, world, mapConfig });
   renderKitchenDynamicObjects({ dynamicsState, overlay, themeState, world });
-}
-
-function renderLivingRoom({ underlay, overlay, world }) {
-  appendFloor(underlay, "livingRoom", world);
-  appendBox(underlay, "themeRug", world, { x: 0.25, y: 0.3, w: 0.42, h: 0.34 });
-  [
-    { x: 0.1, y: 0.16, w: 0.34, h: 0.11 },
-    { x: 0.7, y: 0.14, w: 0.12, h: 0.3 },
-    { x: 0.35, y: 0.47, w: 0.24, h: 0.11 },
-  ].forEach((rect) => appendBox(overlay, "themeObject sofa", world, rect));
-  [
-    { x: 0.13, y: 0.75, w: 0.22, h: 0.06 },
-    { x: 0.69, y: 0.7, w: 0.2, h: 0.06 },
-  ].forEach((rect) => appendBox(overlay, "themeObject shelf", world, rect));
-  appendBox(overlay, "themeObject coffeeTable", world, {
-    x: 0.4,
-    y: 0.53,
-    w: 0.18,
-    h: 0.08,
-  });
-  [
-    { x: 0.22, y: 0.62, w: 0.045, h: 0.045 },
-    { x: 0.63, y: 0.38, w: 0.04, h: 0.04 },
-    { x: 0.74, y: 0.82, w: 0.05, h: 0.05 },
-  ].forEach((rect) => appendBox(overlay, "themeObject toyBlock", world, rect));
-  appendBox(overlay, "themeObject sock", world, {
-    x: 0.54,
-    y: 0.73,
-    w: 0.09,
-    h: 0.045,
-  });
 }
 
 function renderParkingLot({ underlay, overlay, world }) {

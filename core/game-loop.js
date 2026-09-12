@@ -2,6 +2,7 @@ import { copy } from "./copy.js";
 import { clamp } from "./geometry.js";
 import { SURFACE_TYPES, updatePhysicsInput, updatePhysics } from "./physics.js";
 import { GAME_PHASES } from "./runtime-states.js";
+import { getObjectiveRegion } from "./map-objectives.js";
 
 export function elapsedMsToFrameDelta(elapsedMs, timing) {
   // Long frames intentionally run as capped slow-motion instead of catching up
@@ -113,17 +114,23 @@ export function createGameLoop({
   }
 
   function updateGoalIndicator(context) {
-    const goal = mapState.activeMap?.goal;
-    if (!settings.goalIndicatorEnabled || !context.intro.released || !goal) {
+    if (!settings.goalIndicatorEnabled || !context.intro.released) {
       ui.setGoalIndicator(false);
       return;
     }
 
-    const dx = goal.x - marble.x;
-    const dy = goal.y - marble.y;
+    const goal = getObjectiveRegion(mapState.activeMap);
+    if (!goal) {
+      ui.setGoalIndicator(false);
+      return;
+    }
+
+    const radius = goal.r ?? Math.min(goal.w, goal.h) / 2;
+    const dx = goal.x + (goal.r ? 0 : goal.w / 2) - marble.x;
+    const dy = goal.y + (goal.r ? 0 : goal.h / 2) - marble.y;
     const distance = Math.hypot(dx, dy);
     ui.setGoalIndicator(
-      distance > goal.r * tuning.goalIndicatorDistanceMultiplier,
+      distance > radius * tuning.goalIndicatorDistanceMultiplier,
       Math.atan2(dy, dx),
     );
   }

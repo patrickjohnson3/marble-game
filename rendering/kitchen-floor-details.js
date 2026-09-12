@@ -1,5 +1,3 @@
-import { kitchenLayouts } from "../maps/kitchen-layout.js";
-
 // Flat, authored litter, baked into the existing floor canvas at map load.
 // Raised food remains in kitchen-dynamics, where the marble and ants affect it.
 const riceGrains = [
@@ -153,8 +151,7 @@ function drawDrinkRing(context) {
 }
 
 export function drawKitchenFloorDetails(context, world, mapConfig) {
-  const clusters =
-    kitchenLayouts[mapConfig?.variantId] ?? kitchenLayouts["kitchen-floor"];
+  const clusters = mapConfig?.clusters ?? [];
   context.save();
   context.transform(world.width / 4400, 0, 0, world.height / 4400, 0, 0);
   for (let index = 0; index < clusters.length; index++) {
@@ -163,10 +160,10 @@ export function drawKitchenFloorDetails(context, world, mapConfig) {
     const sin = Math.sin(cluster.angle);
     context.save();
     context.transform(cos, sin, -sin, cos, cluster.x * 4400, cluster.y * 4400);
-    if (index === 0) drawPacket(context);
-    if (index === 1) drawNapkin(context);
-    if (index === 2) drawCleanupMarks(context);
-    if (index === 3) drawDrinkRing(context);
+    if (cluster.kind === "cerealPacket") drawPacket(context);
+    if (cluster.kind === "breakfastNapkin") drawNapkin(context);
+    if (cluster.kind === "cleanupScraps") drawCleanupMarks(context);
+    if (cluster.kind === "drinkSpill") drawDrinkRing(context);
 
     // Individual rice and toast flakes bridge the size gap to the live food.
     // Keep them confined to spills, with a sparse tail toward open floor.

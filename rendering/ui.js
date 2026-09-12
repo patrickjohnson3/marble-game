@@ -4,6 +4,7 @@ export function createUi({
   goalIndicator,
   hint,
   levelLabel,
+  objectiveStatus,
   fpsCounter,
   debug,
   installApp,
@@ -41,6 +42,13 @@ export function createUi({
 
     gameStatus.textContent = message;
     gameStatus.hidden = !message;
+  }
+
+  function setObjectiveStatus(message) {
+    if (!objectiveStatus || objectiveStatus.textContent === message) return;
+
+    objectiveStatus.textContent = message;
+    objectiveStatus.hidden = !message;
   }
 
   function setLevelLabel(message) {
@@ -182,6 +190,7 @@ export function createUi({
     setLevelLabel,
     showLevelLabel,
     setMapObjects,
+    setObjectiveStatus,
     setPwaInstallAvailable,
     setPwaStatus,
     setStartControls,

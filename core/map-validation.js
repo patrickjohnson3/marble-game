@@ -5,6 +5,13 @@ import {
 } from "./map-elements.js";
 import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
 import { circleObstacleContact } from "./physics-collisions.js";
+import { createResolvedMapState } from "./map-runtime.js";
+import {
+  authoredThemes,
+  sceneryKinds,
+  fixtureKinds,
+} from "../maps/map-authoring.js";
+import { kitchenPoint } from "../maps/kitchen-layout.js";
 import { hasLikelyReachableGoal } from "./map-reachability.js";
 
 export const mapValidationMessages = Object.freeze({
@@ -171,7 +178,13 @@ function mapValidationContext(config, normalizedObstacles) {
   );
   const checkedObstaclesSource =
     normalizedObstacles ??
-    normalizeJoinedObstacleRects(mapObstacleElements(objectElements));
+    (config?.objective
+      ? createResolvedMapState({
+          world,
+          spawn: config.spawn,
+          elements: objectElements,
+        }).obstacles
+      : normalizeJoinedObstacleRects(mapObstacleElements(objectElements)));
   const checkedObstacles = Array.isArray(checkedObstaclesSource)
     ? checkedObstaclesSource.filter(
         (obstacle) => obstacle && typeof obstacle === "object",
@@ -340,8 +353,308 @@ function validateReachableGoal({
   }
 }
 
+function validateAuthoredObjective(
+  config,
+  { world, obstacles, errors, spawn },
+) {
+  for (const key of ["variantId", "name", "theme"]) {
+    if (typeof config[key] !== "string" || !config[key].trim())
+      errors.push(`${key} is required for an authored map`);
+  }
+  if (!authoredThemes.includes(config.theme))
+    errors.push(`unknown authoring theme '${config.theme}'`);
+  const objective = config.objective;
+  if (objective.type === "eliminate") {
+    if (objective.target !== "ant" || objective.count !== "all")
+      errors.push("eliminate supports target 'ant' and count 'all'");
+    const antCount = (config.clusters ?? []).reduce(
+      (count, cluster) => count + (cluster.ants?.length ?? 0),
+      0,
+    );
+    if (config.theme !== "kitchenFloor" || antCount === 0)
+      errors.push("eliminate objective requires authored ant targets");
+  } else if (objective.type === "reach") {
+    const region = config.regions?.find((item) => item.id === objective.region);
+    if (!region) {
+      errors.push(
+        `reach objective references missing region '${objective.region}'`,
+      );
+      return;
+    }
+    validateRect(region, {
+      world,
+      label: `destination '${region.id}'`,
+      errors,
+    });
+    const goal = {
+      x: region.x + region.w / 2,
+      y: region.y + region.h / 2,
+      r: Math.min(region.w, region.h) / 2,
+    };
+    if (!Number.isFinite(goal.r) || goal.r <= (spawn?.r ?? 0))
+      errors.push("destination must have room for the marble");
+    if (
+      obstacles.some(
+        (obstacle) => circleObstacleContact(goal, obstacle).intersects,
+      )
+    )
+      errors.push("destination apron must be clear of obstacles");
+    if (
+      errors.length === 0 &&
+      !hasLikelyReachableGoal({
+        world,
+        obstacles,
+        spawn,
+        goal,
+        cellSize: 20,
+      })
+    ) {
+      errors.push(
+        "destination must appear reachable from spawn (20-unit sampled grid)",
+      );
+    }
+  } else {
+    errors.push(`unknown objective type '${objective.type}'`);
+  }
+}
+
+function validateComposition(config, { world, obstacles, errors, spawn }) {
+  if (!config?.objective) return;
+  const regionIds = new Set();
+  for (const region of config.regions ?? []) {
+    if (Object.hasOwn(region, "r"))
+      errors.push(
+        `region '${region.id}' must be rectangular; r belongs only to legacy goals`,
+      );
+    if (typeof region.id !== "string" || !region.id || regionIds.has(region.id))
+      errors.push("regions need unique nonempty ids");
+    regionIds.add(region.id);
+    validateRect(region, { world, label: `region '${region.id}'`, errors });
+  }
+  if (config.scenery?.length > 0 && config.theme !== "livingRoom")
+    errors.push("generic scenery needs the livingRoom theme");
+  for (const item of config.scenery ?? []) {
+    if (!sceneryKinds.includes(item.kind))
+      errors.push(`unknown scenery '${item.kind}'`);
+    validateRect(item, { world, label: `scenery '${item.kind}'`, errors });
+    validateRotatedBounds(item, {
+      world,
+      errors,
+      label: `scenery '${item.kind}'`,
+    });
+  }
+  for (const item of config.elements ?? []) {
+    if (item.fixture && !fixtureKinds.includes(item.fixture))
+      errors.push(`unknown fixture '${item.fixture}'`);
+    if (
+      item.fixture &&
+      (config.theme === "kitchenFloor") !== isKitchenFixture(item.fixture)
+    )
+      errors.push(
+        `fixture '${item.fixture}' is not supported by theme '${config.theme}'`,
+      );
+    if (
+      item.material &&
+      !(item.type === "roughPatch" && item.material === "shag")
+    )
+      errors.push(`unknown surface material '${item.material}'`);
+    if (item.type === "obstacle") {
+      if (
+        config.theme === "livingRoom" &&
+        ((item.hitboxW !== undefined && item.hitboxW !== item.w) ||
+          (item.hitboxH !== undefined && item.hitboxH !== item.h))
+      )
+        errors.push(
+          "living-room hitbox dimensions must match the visible footprint",
+        );
+      if (
+        item.cornerRadius !== undefined &&
+        (!Number.isFinite(item.cornerRadius) ||
+          item.cornerRadius < 0 ||
+          item.cornerRadius >
+            Math.min(item.hitboxW ?? item.w, item.hitboxH ?? item.h) / 2)
+      )
+        errors.push("fixture cornerRadius must fit its footprint");
+      if (item.cornerRadius > 0 && !Number.isFinite(item.angle))
+        errors.push(
+          "rounded obstacles require a finite angle (use 0 for unrotated)",
+        );
+      // Kitchen sprite boxes intentionally include transparent space. Their
+      // fitted collision parts are checked by the existing fixture tests.
+      if (!isKitchenFixture(item.fixture))
+        validateRotatedBounds(item, {
+          world,
+          errors,
+          label: `fixture '${item.fixture ?? "wall"}'`,
+        });
+    }
+  }
+  for (const cluster of config.clusters ?? []) {
+    if (cluster.kind === "readingPile" && config.theme !== "livingRoom")
+      errors.push("readingPile needs the livingRoom theme");
+    for (const points of [cluster.ants, cluster.cheerios, cluster.crumbs]) {
+      if (points !== undefined && !Array.isArray(points)) {
+        errors.push(`cluster '${cluster.kind}' placement must be an array`);
+        continue;
+      }
+      for (const point of points ?? []) {
+        if (
+          !Array.isArray(point) ||
+          point.length !== 2 ||
+          !point.every(Number.isFinite)
+        ) {
+          errors.push(
+            `cluster '${cluster.kind}' placement needs two finite coordinates`,
+          );
+          continue;
+        }
+        const placed = kitchenPoint(cluster, point);
+        if (
+          ![placed.x, placed.y].every(Number.isFinite) ||
+          placed.x < 0 ||
+          placed.x > 1 ||
+          placed.y < 0 ||
+          placed.y > 1
+        )
+          errors.push(
+            `cluster '${cluster.kind}' places content outside the room`,
+          );
+      }
+    }
+  }
+  const viewIds = new Set(["overview", "spawn", "objective"]);
+  for (const view of config.views ?? []) {
+    if (
+      typeof view.id !== "string" ||
+      !/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(view.id) ||
+      viewIds.has(view.id)
+    )
+      errors.push(
+        "inspection view ids must be unique, filename-safe, and not overview/spawn/objective",
+      );
+    viewIds.add(view.id);
+    if (
+      !Number.isFinite(view.x) ||
+      !Number.isFinite(view.y) ||
+      view.x < 0 ||
+      view.x > world.width ||
+      view.y < 0 ||
+      view.y > world.height
+    )
+      errors.push("inspection views need an in-bounds center");
+    if (
+      view.scale !== undefined &&
+      (!Number.isFinite(view.scale) || view.scale <= 0)
+    )
+      errors.push(
+        `inspection view '${view.id}' scale must be positive and finite`,
+      );
+  }
+  if (config.route && errors.length === 0)
+    validateAuthoredRoute(config, obstacles, errors, spawn);
+}
+
+function validateRotatedBounds(rect, { world, errors, label }) {
+  if (rect.angle !== undefined && !Number.isFinite(rect.angle)) {
+    errors.push(`${label} has non-finite angle`);
+    return;
+  }
+  const cos = Math.abs(Math.cos(rect.angle ?? 0)),
+    sin = Math.abs(Math.sin(rect.angle ?? 0));
+  const halfW = (rect.w * cos + rect.h * sin) / 2;
+  const halfH = (rect.w * sin + rect.h * cos) / 2;
+  const x = rect.x + rect.w / 2,
+    y = rect.y + rect.h / 2;
+  if (
+    x - halfW < 0 ||
+    y - halfH < 0 ||
+    x + halfW > world.width ||
+    y + halfH > world.height
+  )
+    errors.push(`${label} rotated footprint leaves the room`);
+}
+
+// Authored waypoints are a clearance certificate, not runtime pathfinding.
+// Samples every five units reserve an extra marble radius for steering room.
+function validateAuthoredRoute(config, obstacles, errors, spawn) {
+  if (!Array.isArray(config.route) || config.route.length < 2) {
+    errors.push("route needs at least two waypoints");
+    return;
+  }
+  const radius = spawn.r * 2;
+  let previous = spawn;
+  for (const point of config.route) {
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+      errors.push("route waypoints must have finite coordinates");
+      return;
+    }
+    const steps = Math.max(
+      1,
+      Math.ceil(Math.hypot(point.x - previous.x, point.y - previous.y) / 5),
+    );
+    for (let step = 0; step <= steps; step++) {
+      const circle = {
+        x: previous.x + ((point.x - previous.x) * step) / steps,
+        y: previous.y + ((point.y - previous.y) * step) / steps,
+        r: radius,
+      };
+      if (
+        circle.x < radius ||
+        circle.y < radius ||
+        circle.x + radius > config.world.width ||
+        circle.y + radius > config.world.height ||
+        obstacles.some(
+          (obstacle) => circleObstacleContact(circle, obstacle).intersects,
+        )
+      ) {
+        errors.push(
+          `route lacks steering clearance near (${Math.round(circle.x)}, ${Math.round(circle.y)})`,
+        );
+        return;
+      }
+    }
+    previous = point;
+  }
+  if (config.objective.type === "reach") {
+    const region = config.regions.find(
+      (item) => item.id === config.objective.region,
+    );
+    if (
+      previous.x - spawn.r < region.x ||
+      previous.y - spawn.r < region.y ||
+      previous.x + spawn.r > region.x + region.w ||
+      previous.y + spawn.r > region.y + region.h
+    )
+      errors.push("route must finish inside the destination region");
+  }
+}
+
 export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
   const errors = [];
+  if (config?.objective) {
+    if (typeof config.objective !== "object" || Array.isArray(config.objective))
+      return ["objective must be an object"];
+    // Reject malformed authored lists before resolving geometry or walking refs.
+    for (const key of [
+      "elements",
+      "regions",
+      "clusters",
+      "scenery",
+      "views",
+      "route",
+    ]) {
+      if (config[key] === undefined) continue;
+      if (!Array.isArray(config[key])) {
+        errors.push(`${key} must be an array`);
+        continue;
+      }
+      config[key].forEach((item, index) => {
+        if (!item || typeof item !== "object" || Array.isArray(item))
+          errors.push(`${key} ${index} must be an object`);
+      });
+    }
+    if (errors.length > 0) return errors;
+  }
   const allowedTypes = new Set(MAP_ELEMENT_TYPE_VALUES);
   const {
     checkedObstacles,
@@ -368,24 +681,41 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
     world,
   });
 
-  validateGoal(config?.goal, {
-    world,
-    obstacles: checkedObstacles,
-    errors,
-  });
-  validateSpawn(checkedSpawn, {
-    world,
-    obstacles: checkedObstacles,
-    errors,
-  });
-  validateReachableGoal({
-    checkedObstacles,
-    checkedSpawn,
-    config,
-    errors,
-    gridSize,
-    world,
-  });
+  if (config?.objective) {
+    validateSpawn(checkedSpawn, {
+      world,
+      obstacles: checkedObstacles,
+      errors,
+    });
+    validateAuthoredObjective(config, {
+      world,
+      obstacles: checkedObstacles,
+      errors,
+      spawn: checkedSpawn,
+    });
+  } else {
+    validateGoal(config?.goal, { world, obstacles: checkedObstacles, errors });
+    validateSpawn(checkedSpawn, {
+      world,
+      obstacles: checkedObstacles,
+      errors,
+    });
+  }
+  if (!config?.objective)
+    validateReachableGoal({
+      checkedObstacles,
+      checkedSpawn,
+      config,
+      errors,
+      gridSize,
+      world,
+    });
 
+  validateComposition(config, {
+    world,
+    obstacles: checkedObstacles,
+    errors,
+    spawn: checkedSpawn,
+  });
   return errors;
 }

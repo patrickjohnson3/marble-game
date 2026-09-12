@@ -1,3 +1,4 @@
+import { resolvedMapConfig } from "../core/map-config.js";
 import assert from "node:assert/strict";
 import { antConfig } from "../core/game-config.js";
 import { pointInEllipsePatch } from "../core/geometry.js";
@@ -9,7 +10,12 @@ const world = { width: 1000, height: 1000 };
 const waterPatch = { type: "waterPatch", x: 100, y: 420, w: 300, h: 180 };
 
 function kitchenMap(id = "kitchen-floor", elements = [waterPatch]) {
-  return { variantId: id, theme: "kitchenFloor", elements };
+  return {
+    variantId: id,
+    theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
+    elements,
+  };
 }
 
 function marbleAt(cheerio, overrides = {}) {

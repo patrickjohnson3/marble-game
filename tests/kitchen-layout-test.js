@@ -6,7 +6,6 @@ import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { pointInEllipsePatch } from "../core/geometry.js";
 import { ELLIPTICAL_SURFACE_SHAPES } from "../core/map-elements.js";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
-import { kitchenLayouts } from "../maps/kitchen-layout.js";
 import { renderMapTheme } from "../rendering/map-theme-rendering.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
@@ -75,7 +74,7 @@ try {
       .map(([, , , , , x, y]) => [x, y]);
     assert.deepEqual(
       clusterOrigins,
-      kitchenLayouts[id].map(({ x, y }) => [x * 4400, y * 4400]),
+      config.clusters.map(({ x, y }) => [x * 4400, y * 4400]),
       "each variant must paint its litter at the anchors used to place its food",
     );
     floorCalls.push(calls);
@@ -111,11 +110,11 @@ try {
             `${id}: the food resources and ants should start on dry floor`,
           );
       }
-      for (const reserved of [config.spawn, config.goal]) {
+      for (const reserved of [config.spawn]) {
         assert.ok(
           Math.hypot(circle.x - reserved.x, circle.y - reserved.y) >
             circle.r + reserved.r + 29,
-          "spawn and goal should keep a clear marble-width apron",
+          "spawn should keep a clear marble-width apron",
         );
       }
     }

@@ -1,3 +1,4 @@
+import { resolvedMapConfig } from "../core/map-config.js";
 import assert from "node:assert/strict";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
 import { createForkCollisionRects } from "../core/map-obstacles.js";
@@ -527,6 +528,52 @@ function testGoalProgressUsesRadialFillRadius() {
 
 testGoalProgressUsesRadialFillRadius();
 
+function testObjectiveMarkerFollowsMapSemantics() {
+  const goalEl = new FakeElement();
+  const mapState = createMapState({
+    mapConfig: {
+      objective: { type: "eliminate", target: "ant", count: "all" },
+    },
+  });
+  const terrainView = createTerrainView({
+    obstaclesEl: new FakeElement(),
+    goalEl,
+    mapState,
+    renderObstacleWalls() {},
+  });
+  terrainView.renderTerrain();
+  assert.equal(
+    goalEl.hidden,
+    true,
+    "ant objectives cannot show an unrelated goal circle",
+  );
+
+  mapState.activeMap.objective = { type: "reach", region: "door" };
+  mapState.activeMap.regions = [
+    { id: "door", x: 20, y: 30, w: 70, h: 80, label: "Next room" },
+  ];
+  terrainView.renderTerrain();
+  assert.equal(goalEl.hidden, false);
+  assert.equal(goalEl.classList.contains("destination"), true);
+  assert.equal(goalEl.textContent, "Next room");
+  assert.equal(goalEl.style.left, "20px");
+  assert.equal(goalEl.style.top, "30px");
+  assert.equal(goalEl.style.width, "70px");
+  assert.equal(goalEl.style.height, "80px");
+
+  delete mapState.activeMap.objective;
+  terrainView.renderTerrain();
+  assert.equal(goalEl.classList.contains("destination"), false);
+  assert.equal(goalEl.textContent, "");
+  assert.equal(
+    goalEl.style.width,
+    "100px",
+    "legacy goal remains a held circle",
+  );
+}
+
+testObjectiveMarkerFollowsMapSemantics();
+
 function testMapThemeRendersRealWorldVisualMarkers() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
@@ -567,7 +614,6 @@ function testMapThemeRendersRealWorldVisualMarkers() {
   );
 
   [
-    ["livingRoom", "toyBlock"],
     ["parkingLot", "trafficCone"],
     ["sandLot", "sandBucket"],
   ].forEach(([theme, expectedClass]) => {
@@ -599,7 +645,10 @@ function testKitchenThemeRendersQuietCeramicFloor() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
   const themeState = {};
-  const mapConfig = { theme: "kitchenFloor" };
+  const mapConfig = {
+    theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
+  };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
   dynamics.reset({ mapConfig, world });
@@ -706,7 +755,11 @@ function testKitchenFloorIsDeterministicAndDoesNotRedrawWithAnts() {
     const overlayContainer = new FakeElement();
     const themeState = {};
     const dynamics = kitchenDynamicsWith();
-    const mapConfig = { theme: "kitchenFloor", elements: [] };
+    const mapConfig = {
+      theme: "kitchenFloor",
+      clusters: resolvedMapConfig.clusters,
+      elements: [],
+    };
     const world = { width: 4400, height: 4400 };
     dynamics.reset({ mapConfig, world });
     withFakeDocument(() => {
@@ -753,7 +806,10 @@ function testKitchenDynamicsInitialDrawUsesNextFrame() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
   const themeState = {};
-  const mapConfig = { theme: "kitchenFloor" };
+  const mapConfig = {
+    theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
+  };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
   dynamics.reset({ mapConfig, world });
@@ -796,7 +852,10 @@ function testKitchenCheeriosGiveWayToMarble() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
   const themeState = {};
-  const mapConfig = { theme: "kitchenFloor" };
+  const mapConfig = {
+    theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
+  };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
   dynamics.reset({ mapConfig, world });
@@ -875,6 +934,7 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
   const dynamics = kitchenDynamicsWith({ cheerios: [cheerioState] });
   const mapConfig = {
     theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
     elements: [fork],
   };
 
@@ -957,7 +1017,11 @@ function testKitchenAntsMunchCheerios() {
 
   updateAndRenderMapThemeDynamics({
     dynamics,
-    mapConfig: { theme: "kitchenFloor", elements: [] },
+    mapConfig: {
+      theme: "kitchenFloor",
+      clusters: resolvedMapConfig.clusters,
+      elements: [],
+    },
     marble: { x: 300, y: 300, vx: 0, vy: 0, r: 29 },
     frameDelta: 20,
     themeState,
@@ -977,7 +1041,11 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
   const container = new FakeElement();
   const overlayContainer = new FakeElement();
   const themeState = {};
-  const mapConfig = { theme: "kitchenFloor", elements: [] };
+  const mapConfig = {
+    theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
+    elements: [],
+  };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
   dynamics.reset({ mapConfig, world });
@@ -1051,7 +1119,10 @@ function antRenderingFixture(overrides = {}) {
   const render = () =>
     renderMapThemeDynamics({
       dynamicsState,
-      mapConfig: { theme: "kitchenFloor" },
+      mapConfig: {
+        theme: "kitchenFloor",
+        clusters: resolvedMapConfig.clusters,
+      },
       themeState,
     });
   return { ant, canvas, dynamicsState, render, themeState };
@@ -1279,7 +1350,11 @@ function testKitchenDynamicsContinueOutsideCameraView() {
 
   updateAndRenderMapThemeDynamics({
     dynamics,
-    mapConfig: { theme: "kitchenFloor", elements: [] },
+    mapConfig: {
+      theme: "kitchenFloor",
+      clusters: resolvedMapConfig.clusters,
+      elements: [],
+    },
     marble: { x: 1000, y: 1000, vx: 3, vy: 0, r: 29 },
     frameDelta: 20,
     themeState,
@@ -1326,7 +1401,11 @@ function testMarbleSquishesKitchenAnts() {
 
   const events = updateAndRenderMapThemeDynamics({
     dynamics,
-    mapConfig: { theme: "kitchenFloor", elements: [] },
+    mapConfig: {
+      theme: "kitchenFloor",
+      clusters: resolvedMapConfig.clusters,
+      elements: [],
+    },
     marble: { x: 100, y: 100, vx: 3, vy: 0, r: 29 },
     themeState,
   });
@@ -1374,7 +1453,11 @@ function testMarbleGetsFeedbackOnSquishedKitchenAnts() {
 
   const events = updateAndRenderMapThemeDynamics({
     dynamics,
-    mapConfig: { theme: "kitchenFloor", elements: [] },
+    mapConfig: {
+      theme: "kitchenFloor",
+      clusters: resolvedMapConfig.clusters,
+      elements: [],
+    },
     marble: { x: 100, y: 100, vx: 1, vy: 0, r: 29 },
     themeState,
   });
@@ -1395,7 +1478,10 @@ testMarbleGetsFeedbackOnSquishedKitchenAnts();
 
 function firstKitchenCheerio({ container, overlayContainer }) {
   const themeState = {};
-  const mapConfig = { theme: "kitchenFloor" };
+  const mapConfig = {
+    theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
+  };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
   dynamics.reset({ mapConfig, world });
@@ -1447,10 +1533,12 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
   const distantMarble = { x: 4000, y: 4000, vx: 0, vy: 0, r: 29 };
   const waterMapConfig = {
     theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
     elements: [{ ...patch, type: "waterPatch" }],
   };
   const gooMapConfig = {
     theme: "kitchenFloor",
+    clusters: resolvedMapConfig.clusters,
     elements: [{ ...patch, type: "gooPatch" }],
   };
 
@@ -1512,7 +1600,7 @@ function testWaterloggedCheerioVisiblyCloudsThePuddle() {
 
   renderMapThemeDynamics({
     dynamicsState: { ants: [], cheerios: [state] },
-    mapConfig: { theme: "kitchenFloor" },
+    mapConfig: { theme: "kitchenFloor", clusters: resolvedMapConfig.clusters },
     themeState,
   });
 
@@ -1554,7 +1642,7 @@ function testKitchenCheerioUsesActualPreviousMarblePosition() {
     container,
     dynamics,
     overlayContainer,
-    mapConfig: { theme: "kitchenFloor" },
+    mapConfig: { theme: "kitchenFloor", clusters: resolvedMapConfig.clusters },
     marble,
     previousMarble,
     themeState,
@@ -1611,7 +1699,12 @@ function testKitchenObstaclesRenderAsFixtures() {
         { x: 1040, y: 2760, w: 440, h: 440 },
         { x: 2920, y: 2640, w: 520, h: 520 },
       ],
-      { mapConfig: { theme: "kitchenFloor" } },
+      {
+        mapConfig: {
+          theme: "kitchenFloor",
+          clusters: resolvedMapConfig.clusters,
+        },
+      },
     );
   });
 
@@ -1722,7 +1815,12 @@ function testKitchenObstaclesRenderAsFixtures() {
           angle: 0.34,
         },
       ],
-      { mapConfig: { theme: "kitchenFloor" } },
+      {
+        mapConfig: {
+          theme: "kitchenFloor",
+          clusters: resolvedMapConfig.clusters,
+        },
+      },
     );
   });
   assert.equal(container.children[0], originalLayer);
@@ -1759,10 +1857,16 @@ function testForkCollisionPartsPreserveSpritePlacement() {
         const split = new FakeElement();
         const parts = createForkCollisionRects(fork);
         renderObstacleWalls(original, [fork], {
-          mapConfig: { theme: "kitchenFloor" },
+          mapConfig: {
+            theme: "kitchenFloor",
+            clusters: resolvedMapConfig.clusters,
+          },
         });
         renderObstacleWalls(split, parts, {
-          mapConfig: { theme: "kitchenFloor" },
+          mapConfig: {
+            theme: "kitchenFloor",
+            clusters: resolvedMapConfig.clusters,
+          },
         });
         assert.equal(
           split.firstChild.children.length,

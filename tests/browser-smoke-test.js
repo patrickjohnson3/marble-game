@@ -1,78 +1,16 @@
-import { kitchenLayouts, kitchenPoint } from "../maps/kitchen-layout.js";
+import { kitchenPoint } from "../maps/kitchen-layout.js";
+import { resolvedMapConfig } from "../core/map-config.js";
 import assert from "node:assert/strict";
-import { existsSync, readFile } from "node:fs";
-import { createServer } from "node:http";
-import { extname, resolve, sep } from "node:path";
-import { URL } from "node:url";
-import { chromium } from "playwright-core";
+import {
+  closeServer,
+  collectBrowserErrors,
+  createStaticServer,
+  launchBrowser,
+  listen,
+} from "../tools/browser-support.js";
 import { timing, tuning } from "../core/game-config.js";
 import { copy } from "../core/copy.js";
-
-const root = process.cwd();
-const contentTypes = {
-  ".css": "text/css; charset=utf-8",
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".webmanifest": "application/manifest+json; charset=utf-8",
-};
-
-function chromeExecutable() {
-  const candidates = [
-    process.env.CHROME_PATH,
-    "/usr/bin/google-chrome",
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-  ].filter(Boolean);
-  const executable = candidates.find(existsSync);
-  if (!executable) {
-    throw new Error("Chrome not found. Set CHROME_PATH to run browser tests.");
-  }
-  return executable;
-}
-
-function createStaticServer() {
-  return createServer((request, response) => {
-    const requestUrl = new URL(request.url, "http://127.0.0.1");
-    const pathname = decodeURIComponent(requestUrl.pathname);
-    const relativePath = pathname === "/" ? "index.html" : pathname.slice(1);
-    const filePath = resolve(root, relativePath);
-
-    if (filePath !== root && !filePath.startsWith(root + sep)) {
-      response.writeHead(403).end();
-      return;
-    }
-
-    readFile(filePath, (error, content) => {
-      if (error) {
-        response.writeHead(error.code === "ENOENT" ? 404 : 500).end();
-        return;
-      }
-
-      response.writeHead(200, {
-        "cache-control": "no-store",
-        "content-type":
-          contentTypes[extname(filePath)] ?? "application/octet-stream",
-      });
-      response.end(content);
-    });
-  });
-}
-
-function listen(server) {
-  return new Promise((resolveListen, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => resolveListen(server.address().port));
-  });
-}
-
-function closeServer(server) {
-  return new Promise((resolveClose, reject) => {
-    server.close((error) => (error ? reject(error) : resolveClose()));
-  });
-}
+import { prepareMapCapture } from "../tools/render-map.js";
 
 async function marbleTransform(page) {
   return page.locator("#marble").evaluate((element) => element.style.transform);
@@ -105,11 +43,7 @@ async function dispatchOrientation(page, { beta, gamma, count = 1 }) {
 
 async function testSyntheticOrientationWorkflow(browser, baseUrl) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const browserErrors = [];
-  page.on("console", (message) => {
-    if (message.type() === "error") browserErrors.push(message.text());
-  });
-  page.on("pageerror", (error) => browserErrors.push(error.message));
+  const browserErrors = collectBrowserErrors(page);
 
   try {
     await page.goto(baseUrl, { waitUntil: "networkidle" });
@@ -126,7 +60,7 @@ async function testSyntheticOrientationWorkflow(browser, baseUrl) {
         document.getElementById("hint").textContent === expectedHint,
       copy.hints.neutralSet,
     );
-    const firstCluster = kitchenLayouts["kitchen-floor"][0];
+    const firstCluster = resolvedMapConfig.clusters[0];
     await page.waitForFunction(
       ({ x, y }) => {
         const canvas = document.querySelector(".kitchenDynamicCanvas");
@@ -238,11 +172,7 @@ async function testSyntheticPinchWorkflow(page) {
 
 async function testSyntheticLateSensorRecovery(browser, baseUrl) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const browserErrors = [];
-  page.on("console", (message) => {
-    if (message.type() === "error") browserErrors.push(message.text());
-  });
-  page.on("pageerror", (error) => browserErrors.push(error.message));
+  const browserErrors = collectBrowserErrors(page);
 
   try {
     await page.goto(baseUrl, { waitUntil: "networkidle" });
@@ -356,20 +286,68 @@ async function testShortViewportSettingsRemainReachable(browser, baseUrl) {
   }
 }
 
+async function testPreviewRejectsCompletedMap(browser, baseUrl) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const browserErrors = collectBrowserErrors(page);
+  try {
+    // An author can accidentally put spawn in the exit. Let the real game
+    // complete that map during startup, rather than faking a progression flag.
+    await page.route("**/boot.js*", (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: `import { createApp } from "./app.js";
+import { baseMapConfig } from "./core/map-config.js";
+import { resolveMapVariantConfig } from "./core/map-variants.js";
+const initialMap = resolveMapVariantConfig(baseMapConfig, "living-room");
+const exit = initialMap.regions.find(region => region.id === initialMap.objective.region);
+initialMap.spawn = { ...initialMap.spawn, x: exit.x + exit.w / 2, y: exit.y + exit.h / 2 };
+window.__mapPreview = createApp({ initialMap });`,
+      }),
+    );
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.locator("#start").click();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(
+      () =>
+        window.__mapPreview.mapRuntime.state.activeMap.variantId ===
+        "parking-lot",
+      null,
+      { timeout: timing.introReleaseDelayMs + 5000 },
+    );
+    await page.evaluate(() => {
+      window.__previewRetryCalls = 0;
+      const progression = window.__mapPreview.mapProgression;
+      const retry = progression.retryCurrentMap;
+      progression.retryCurrentMap = () => {
+        window.__previewRetryCalls++;
+        return retry();
+      };
+    });
+    await assert.rejects(
+      page.evaluate(prepareMapCapture, "living-room"),
+      /Cannot capture 'living-room': preview has already advanced to 'parking-lot'/,
+    );
+    assert.deepEqual(
+      await page.evaluate(() => ({
+        paused: window.__mapPreview.state.game.paused,
+        retries: window.__previewRetryCalls,
+      })),
+      { paused: false, retries: 0 },
+      "reject the wrong map before changing its run state",
+    );
+    assert.deepEqual(browserErrors, []);
+  } finally {
+    await page.close();
+  }
+}
+
 const server = createStaticServer();
 const port = await listen(server);
-const browser = await chromium.launch({
-  executablePath: chromeExecutable(),
-  headless: true,
-});
+const browser = await launchBrowser();
 
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const browserErrors = [];
-  page.on("console", (message) => {
-    if (message.type() === "error") browserErrors.push(message.text());
-  });
-  page.on("pageerror", (error) => browserErrors.push(error.message));
+  const browserErrors = collectBrowserErrors(page);
 
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "networkidle" });
   await page.waitForFunction(() => window.__marbleAppBooted === true);
@@ -505,6 +483,7 @@ try {
     browser,
     `http://127.0.0.1:${port}/`,
   );
+  await testPreviewRejectsCompletedMap(browser, `http://127.0.0.1:${port}/`);
   console.log("Browser smoke test passed.");
 } finally {
   await browser.close();

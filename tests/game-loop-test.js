@@ -161,6 +161,7 @@ function createBehaviorHarness({
   activeMap,
   kitchenEvents = null,
   onGoalUpdate = () => {},
+  settings = { goalIndicatorEnabled: false },
 }) {
   const state = createGameState({
     world: resolvedMapConfig.world,
@@ -176,6 +177,7 @@ function createBehaviorHarness({
     antCrushes: [],
     effectImpacts: [],
     goalResets: 0,
+    goalIndicators: [],
     hapticImpacts: [],
     hapticSurfaces: [],
     hints: [],
@@ -269,7 +271,7 @@ function createBehaviorHarness({
       calls.goalResets++;
     },
     scheduleFrame() {},
-    settings: { goalIndicatorEnabled: false },
+    settings,
     terrainView: {
       renderMapThemeDynamics() {},
       renderMovedObstacles() {
@@ -288,7 +290,9 @@ function createBehaviorHarness({
       update() {},
     },
     ui: {
-      setGoalIndicator() {},
+      setGoalIndicator(visible, angle) {
+        calls.goalIndicators.push({ visible, angle });
+      },
       setHint(hint) {
         calls.hints.push(hint);
       },
@@ -308,6 +312,43 @@ function createBehaviorHarness({
     },
   };
 }
+
+function testGoalIndicatorUsesTheCurrentObjective() {
+  const activeMap = {
+    ...resolvedMapConfig,
+    objective: { type: "reach", region: "door" },
+    regions: [{ id: "door", x: 700, y: 100, w: 200, h: 200 }],
+    world: { width: 1000, height: 1000 },
+    spawn: { x: 100, y: 800, r: 10 },
+    elements: [],
+  };
+  const { calls, mapRuntime, state, tick } = createBehaviorHarness({
+    activeMap,
+    settings: { goalIndicatorEnabled: true },
+  });
+  tick();
+  assert.equal(calls.goalIndicators.at(-1).visible, true);
+  assert.equal(calls.goalIndicators.at(-1).angle, Math.atan2(-600, 700));
+  state.marble.x = 800;
+  state.marble.y = 200;
+  tick();
+  assert.equal(calls.goalIndicators.at(-1).visible, false);
+
+  mapRuntime.setActiveMap({
+    ...activeMap,
+    objective: { type: "eliminate", target: "ant", count: "all" },
+  });
+  state.marble.x = 100;
+  state.marble.y = 800;
+  tick();
+  assert.equal(
+    calls.goalIndicators.at(-1).visible,
+    false,
+    "ant hunting must not point toward a stale coordinate goal",
+  );
+}
+
+testGoalIndicatorUsesTheCurrentObjective();
 
 function testHazardRecoveryResetsGameplayFeedbackAndRearms() {
   const activeMap = {

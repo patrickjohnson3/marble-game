@@ -114,7 +114,6 @@ body {
 .rinkLine,
 .rinkCircle,
 .goalCrease,
-.themeRug,
 .parkingStripe,
 .parkingDriveLine,
 .parkingTireMark,
@@ -281,49 +280,165 @@ body {
 }
 .livingRoomSurface {
   background:
-    radial-gradient(ellipse at 70% 24%, #ffe6c21c 0 9%, transparent 10%),
-    repeating-linear-gradient(90deg, #5b3723 0 84px, #6b422a 84px 168px),
-    linear-gradient(#00000018, transparent);
-  box-shadow: inset 0 0 0 6px #ffffff18;
+    linear-gradient(116deg, transparent 38%, #fff4d518 48%, transparent 69%),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 1048px,
+      #6b4e3633 1048px 1050px
+    ),
+    repeating-linear-gradient(
+        90deg,
+        #c8a174 0 208px,
+        #795d4133 208px 210px,
+        #c39b6d 210px 418px,
+        #795d4133 418px 420px
+      )
+      #c39b6d;
+  box-shadow: inset 0 0 0 8px #765a3e2b;
 }
-.themeRug {
-  border-radius: 22px;
-  background:
-    radial-gradient(ellipse at center, #9a6bff36 0 46%, transparent 47%),
-    repeating-linear-gradient(45deg, #d04a6a55 0 34px, #5c8ed655 34px 68px),
-    linear-gradient(135deg, #b83f5f, #2f67a4);
-  box-shadow: inset 0 0 0 8px #ffffff28;
+.livingRoomObstacleLayer {
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
 }
-.sofa {
-  border-radius: 24px;
-  background: linear-gradient(135deg, #496987, #26394f);
-  box-shadow: inset 0 0 0 5px #ffffff20;
+.livingRoomFixture {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+  background: #a58360;
+  transform-origin: center;
+  box-shadow: 7px 12px 14px #34291c48;
 }
-.shelf {
-  border-radius: 8px;
-  background: linear-gradient(135deg, #9b6a3f, #57341f);
+.livingRoomFixture::before,
+.livingRoomFixture::after {
+  position: absolute;
+  box-sizing: border-box;
+  content: "";
 }
-.coffeeTable {
-  border-radius: 14px;
-  background: linear-gradient(135deg, #d8a66e, #6a3f24);
-  box-shadow: 0 10px 22px #0008;
-}
-.toyBlock {
-  border-radius: 7px;
-  background:
-    radial-gradient(circle at 32% 30%, #ffffff80 0 9%, transparent 10%),
-    linear-gradient(135deg, #ffd166, #ef476f);
+.livingRoomFixture.sofa {
+  background: linear-gradient(140deg, #748473, #455b4c);
   box-shadow:
-    0 8px 16px #0007,
-    inset 0 0 0 4px #ffffff33;
+    7px 14px 18px #302f234d,
+    inset 0 0 0 5px #a2ad972b;
 }
-.sock {
+.livingRoomFixture.sofa::before {
+  inset: 4% 3% 70%;
+  border-radius: 20px;
+  background: linear-gradient(#84917d, #566c59);
+  box-shadow: 0 9px 12px #26372747;
+}
+.livingRoomFixture.sofa::after {
+  inset: 33% 8% 10%;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 32.7%,
+      #2d463980 32.8% 33.2%,
+      #b0bda54d 33.3% 33.5%
+    ),
+    linear-gradient(#91a08a, #6d826d);
+  box-shadow:
+    0 5px 8px #2c432b40,
+    inset 0 0 0 3px #c9d0b824;
+}
+.livingRoomFixture.coffeeTable {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 23.9%,
+      #6c452c57 24% 24.2%,
+      transparent 24.3% 25%
+    ),
+    linear-gradient(135deg, #b98b59, #966438);
+  box-shadow:
+    9px 14px 17px #35291855,
+    inset 0 0 0 10px #6f482e;
+}
+.livingRoomFixture.coffeeTable::before {
+  inset: 5%;
+  border: 2px solid #e5c4945c;
+  border-radius: 8px;
+}
+.livingRoomFixture.coffeeTable::after {
+  width: 9%;
+  height: 4%;
+  left: 45.5%;
+  bottom: 1.5%;
+  border-radius: 4px;
+  background: #594a35;
+}
+.livingRoomFixture.bookcase {
+  background: linear-gradient(90deg, #815c3b, #a57c50 10% 90%, #785137);
+  box-shadow:
+    7px 12px 14px #34291c48,
+    inset 0 0 0 12px #725136;
+}
+.livingRoomFixture.bookcase::before {
+  inset: 4% 10%;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 23%, #674d35 23% 25%),
+    repeating-linear-gradient(
+      0deg,
+      #7e9386 0 28px,
+      #caab70 28px 45px,
+      #ad725b 45px 76px,
+      #52667a 76px 103px,
+      #d6c6a1 103px 119px
+    );
+  box-shadow: inset 8px 0 8px #4737214a;
+}
+.livingRoomFixture.toyBlock {
+  background: var(--block-color, #b35643);
+  box-shadow:
+    5px 8px 8px #41312055,
+    inset 0 0 0 6px #e6c78a;
+}
+.livingRoomFixture.toyBlock::after {
+  content: attr(data-letter);
+  inset: 12%;
+  display: grid;
+  place-items: center;
+  border: 2px solid #f0dab380;
+  color: #ead4a9;
+  font:
+    700 64px Georgia,
+    serif;
+}
+.livingRoomDressing {
+  transform-origin: center;
+}
+.livingRoomDressing.sock {
   border-radius: 999px 999px 999px 18px;
   background:
-    linear-gradient(90deg, #ffffff 0 18%, #7bc6ff 18% 30%, #ffffff 30%),
-    linear-gradient(135deg, #f7f7f1, #b7c0c8);
-  box-shadow: 0 8px 16px #0006;
-  transform: rotate(-0.32rad);
+    linear-gradient(
+      90deg,
+      transparent 0 11%,
+      #637e886e 12% 18%,
+      transparent 19% 24%,
+      #637e886e 25% 30%,
+      transparent 31%
+    ),
+    linear-gradient(155deg, #e8e3d4, #c9c6b9);
+  box-shadow: 1px 2px 2px #4d41312b;
+}
+.livingRoomDressing.magazine {
+  background:
+    linear-gradient(90deg, #6d776b 0 5%, transparent 6%),
+    linear-gradient(0deg, #e6dfce 0 18%, transparent 19%),
+    linear-gradient(145deg, #82978c 0 51%, #b8bf9e 52% 71%, #c88f6d 72%);
+  box-shadow: 1px 2px 1px #4d413140;
+  border: 3px solid #e8e0c9;
+}
+.livingRoomDressing.magazine::after {
+  position: absolute;
+  content: "";
+  top: 10%;
+  left: 13%;
+  width: 72%;
+  height: 8%;
+  background: #f4ecdc;
 }
 .parkingLotSurface {
   background:
@@ -1019,4 +1134,50 @@ button.primaryAction {
 }
 .settingRow:has(input:disabled) {
   opacity: 0.48;
+}
+
+#objectiveStatus {
+  justify-self: start;
+  border-radius: 9px;
+  padding: 7px 10px;
+  background: #222a2bdd;
+  color: #fffdf2;
+  font-size: 12px;
+  font-weight: 700;
+}
+#objectiveStatus:empty {
+  display: none;
+}
+#goal.destination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-bottom: 5px solid #b9996e80;
+  border-radius: 0;
+  background: linear-gradient(#f4edcf 0%, #f5e9bccf 64%, #f7e9bc24 100%);
+  box-shadow: inset 0 12px 14px #69533b20;
+  color: #294b40;
+  font-size: 30px;
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 1px #fff9dc;
+}
+#goal.destination::before {
+  content: "↑";
+  font-size: 66px;
+  line-height: 1;
+}
+#goal.destination::after {
+  display: block;
+  inset: -34px -18px auto;
+  height: 164px;
+  border: solid #f4f0e4;
+  border-width: 34px 18px 0;
+  border-radius: 3px 3px 0 0;
+  box-shadow: 2px 4px 3px #493e302b;
+  opacity: 1;
+  transform: none;
 }

@@ -1,0 +1,65 @@
+// All authored placement for this kitchen. Cluster recipes live in kitchen-layout.js.
+export const kitchenFloorMap = {
+  id: "kitchen-floor",
+  name: "kitchen floor",
+  theme: "kitchenFloor",
+  difficulty: 2,
+  world: { width: 4400, height: 4400 },
+  spawn: { x: 840, y: 3640, r: 29 },
+  objective: { type: "eliminate", target: "ant", count: "all" },
+  objectSummary:
+    "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
+  surfaces: [
+    { kind: "goo", x: 1240, y: 1800, w: 560, h: 460 },
+    // The existing sponge interaction absorbs the first water patch.
+    { kind: "water", x: 2060, y: 1280, w: 1120, h: 760 },
+    { kind: "water", x: 2120, y: 1350, w: 110, h: 70 },
+    { kind: "water", x: 2910, y: 1940, w: 90, h: 60 },
+    { kind: "goo", x: 1250, y: 2170, w: 80, h: 50 },
+    { kind: "goo", x: 1730, y: 2200, w: 70, h: 60 },
+  ],
+  fixtures: [
+    {
+      kind: "sponge",
+      x: 1490,
+      y: 1860,
+      w: 600,
+      h: 140,
+      hitboxW: 264,
+      hitboxH: 112,
+      angle: 0.16,
+    },
+    {
+      kind: "spoon",
+      x: 2480,
+      y: 2180,
+      w: 720,
+      h: 90,
+      hitboxW: 620,
+      hitboxH: 54,
+      angle: 0.34,
+    },
+    {
+      kind: "fork",
+      x: 1920,
+      y: 2900,
+      w: 880,
+      h: 420,
+      hitboxW: 760,
+      hitboxH: 62,
+      angle: -0.42,
+    },
+  ],
+  clusters: [
+    { kind: "cerealPacket", x: 1113.2, y: 3498, angle: -0.25 },
+    { kind: "breakfastNapkin", x: 2934.8, y: 3374.8, angle: 0.12 },
+    { kind: "cleanupScraps", x: 1078, y: 2340.8, angle: 0.42 },
+    { kind: "drinkSpill", x: 3366, y: 1628, angle: -0.62 },
+  ],
+  views: [
+    { id: "cerealPacket", x: 1113.2, y: 3498 },
+    { id: "breakfastNapkin", x: 2934.8, y: 3374.8 },
+    { id: "cleanupScraps", x: 1078, y: 2340.8 },
+    { id: "drinkSpill", x: 3366, y: 1628 },
+  ],
+};

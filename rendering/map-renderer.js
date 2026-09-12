@@ -1,3 +1,5 @@
+import { getObjectiveRegion } from "../core/map-objectives.js";
+
 export function createTerrainView({
   mapThemeEl,
   mapThemeOverlayEl,
@@ -87,11 +89,17 @@ export function createTerrainView({
   }
 
   function renderGoal() {
-    const goal = mapState.activeMap.goal;
-    goalEl.style.left = goal.x - goal.r + "px";
-    goalEl.style.top = goal.y - goal.r + "px";
-    goalEl.style.width = goal.r * 2 + "px";
-    goalEl.style.height = goal.r * 2 + "px";
+    const goal = getObjectiveRegion(mapState.activeMap);
+    goalEl.hidden = !goal;
+    const reach = mapState.activeMap.objective?.type === "reach";
+    goalEl.classList.toggle("destination", reach);
+    goalEl.textContent = reach ? (goal.label ?? "Exit") : "";
+    if (!goal) return;
+
+    goalEl.style.left = (reach ? goal.x : goal.x - goal.r) + "px";
+    goalEl.style.top = (reach ? goal.y : goal.y - goal.r) + "px";
+    goalEl.style.width = (reach ? goal.w : goal.r * 2) + "px";
+    goalEl.style.height = (reach ? goal.h : goal.r * 2) + "px";
     updateGoalProgress(0);
   }
 

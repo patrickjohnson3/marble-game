@@ -1,4 +1,4 @@
-import { kitchenLayouts, kitchenPoint } from "../maps/kitchen-layout.js";
+import { kitchenPoint } from "../maps/kitchen-layout.js";
 import { antConfig } from "./game-config.js";
 import { pointInEllipsePatch } from "./geometry.js";
 import { createForkCollisionRects } from "./map-obstacles.js";
@@ -200,8 +200,7 @@ export function resetKitchenDynamics(
   state.world = world ?? null;
   if (mapConfig?.theme !== "kitchenFloor" || !world) return state;
 
-  const clusters =
-    kitchenLayouts[mapConfig.variantId] ?? kitchenLayouts["kitchen-floor"];
+  const clusters = mapConfig.clusters ?? [];
   for (const cluster of clusters) {
     for (const point of cluster.cheerios) {
       state.cheerios.push(createCereal(world, kitchenPoint(cluster, point)));

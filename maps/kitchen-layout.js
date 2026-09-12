@@ -91,23 +91,11 @@ const breakfastScatter = [
   },
 ];
 
-export const kitchenLayouts = {
-  "kitchen-floor": [
-    // Open packet by the entry; food trails toward the cutlery.
-    { x: 0.253, y: 0.795, angle: -0.25, ...breakfastScatter[0] },
-    // Scattered breakfast beneath the fork head, across the lower floor.
-    { x: 0.667, y: 0.767, angle: 0.12, ...breakfastScatter[1] },
-    // Wiped-up scraps just below the sponge and sticky spill.
-    { x: 0.245, y: 0.532, angle: 0.42, ...breakfastScatter[2] },
-    // A drink ring and food on the dry side of the water.
-    { x: 0.765, y: 0.37, angle: -0.62, ...breakfastScatter[3] },
-  ],
-  "kitchen-breakfast-spill": [
-    { x: 0.213, y: 0.805, angle: -0.18, ...breakfastScatter[0] },
-    { x: 0.19, y: 0.48, angle: 0.64, ...breakfastScatter[1] },
-    { x: 0.585, y: 0.613, angle: -0.45, ...breakfastScatter[2] },
-    { x: 0.79, y: 0.48, angle: -0.15, ...breakfastScatter[3] },
-  ],
+export const kitchenClusterPatterns = {
+  cerealPacket: breakfastScatter[0],
+  breakfastNapkin: breakfastScatter[1],
+  cleanupScraps: breakfastScatter[2],
+  drinkSpill: breakfastScatter[3],
 };
 
 export function kitchenPoint(cluster, [x, y]) {

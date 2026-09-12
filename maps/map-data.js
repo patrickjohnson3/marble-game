@@ -1,3 +1,14 @@
+import { expandMap } from "./map-authoring.js";
+import { kitchenFloorMap } from "./kitchen-floor.js";
+import { kitchenBreakfastMap } from "./kitchen-breakfast.js";
+import { livingRoomMap } from "./living-room.js";
+
+export const mapDefinitions = [
+  kitchenFloorMap,
+  livingRoomMap,
+  kitchenBreakfastMap,
+];
+
 const defaultElements = [
   { type: "obstacle", x: 520, y: 660, w: 1020, h: 40 },
   { type: "obstacle", x: 1440, y: 500, w: 50, h: 720 },
@@ -42,104 +53,6 @@ const hockeyRinkElements = [
   { type: "obstacle", x: 3820, y: 2280, w: 50, h: 720 },
   { type: "hazardPatch", x: 2000, y: 1960, w: 400, h: 400 },
   { type: "roughPatch", x: 920, y: 3160, w: 520, h: 340 },
-];
-
-const kitchenFloorElements = [
-  { type: "gooPatch", x: 1240, y: 1800, w: 560, h: 460 },
-  { type: "waterPatch", x: 2060, y: 1280, w: 1120, h: 760 },
-  // Detached splash drops use the same wet footprint as their visible bodies.
-  // Keep the main water patch first: the sponge absorbs that puddle.
-  { type: "waterPatch", x: 2120, y: 1350, w: 110, h: 70 },
-  { type: "waterPatch", x: 2910, y: 1940, w: 90, h: 60 },
-  { type: "gooPatch", x: 1250, y: 2170, w: 80, h: 50 },
-  { type: "gooPatch", x: 1730, y: 2200, w: 70, h: 60 },
-  {
-    type: "obstacle",
-    fixture: "sponge",
-    x: 1490,
-    y: 1860,
-    w: 600,
-    h: 140,
-    hitboxW: 264,
-    hitboxH: 112,
-    angle: 0.16,
-  },
-  {
-    type: "obstacle",
-    fixture: "spoon",
-    x: 2480,
-    y: 2180,
-    w: 720,
-    h: 90,
-    hitboxW: 620,
-    hitboxH: 54,
-    angle: 0.34,
-  },
-  {
-    type: "obstacle",
-    fixture: "fork",
-    x: 1920,
-    y: 2900,
-    w: 880,
-    h: 420,
-    hitboxW: 760,
-    hitboxH: 62,
-    angle: -0.42,
-  },
-];
-
-const kitchenBreakfastElements = [
-  { type: "waterPatch", x: 1380, y: 2360, w: 1040, h: 660 },
-  { type: "gooPatch", x: 2740, y: 1440, w: 500, h: 420 },
-  { type: "waterPatch", x: 1430, y: 2390, w: 80, h: 60 },
-  { type: "waterPatch", x: 2220, y: 2880, w: 100, h: 70 },
-  { type: "gooPatch", x: 2740, y: 1440, w: 60, h: 50 },
-  { type: "gooPatch", x: 3170, y: 1810, w: 70, h: 50 },
-  {
-    type: "obstacle",
-    fixture: "fork",
-    x: 680,
-    y: 1520,
-    w: 840,
-    h: 360,
-    hitboxW: 720,
-    hitboxH: 60,
-    angle: 0.52,
-  },
-  {
-    type: "obstacle",
-    fixture: "spoon",
-    x: 2600,
-    y: 2920,
-    w: 680,
-    h: 90,
-    hitboxW: 580,
-    hitboxH: 52,
-    angle: -0.26,
-  },
-  {
-    type: "obstacle",
-    fixture: "sponge",
-    x: 660,
-    y: 3040,
-    w: 560,
-    h: 130,
-    hitboxW: 264,
-    hitboxH: 104,
-    angle: -0.18,
-  },
-];
-
-const livingRoomElements = [
-  { type: "obstacle", x: 440, y: 720, w: 1400, h: 150 },
-  { type: "obstacle", x: 3080, y: 600, w: 110, h: 1120 },
-  { type: "obstacle", x: 1560, y: 2040, w: 1040, h: 180 },
-  { type: "obstacle", x: 560, y: 3240, w: 960, h: 100 },
-  { type: "obstacle", x: 2920, y: 3080, w: 860, h: 90 },
-  { type: "roughPatch", x: 1120, y: 1320, w: 1640, h: 1240 },
-  { type: "roughPatch", x: 2560, y: 2360, w: 840, h: 560 },
-  { type: "icePatch", x: 840, y: 2560, w: 440, h: 360 },
-  { type: "hazardPatch", x: 3320, y: 1800, w: 440, h: 480 },
 ];
 
 const parkingLotElements = [
@@ -288,27 +201,8 @@ export const frozenGeneratedMapVariants = [
 ];
 
 export const authoredMapVariants = [
-  {
-    id: "kitchen-floor",
-    name: "kitchen floor",
-    theme: "kitchenFloor",
-    objectSummary:
-      "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
-    difficulty: 2,
-    spawn: { x: 840, y: 3640, r: 29 },
-    goal: { x: 3520, y: 840, r: 95, holdMs: 5000 },
-    elements: kitchenFloorElements,
-  },
-  {
-    id: "living-room",
-    name: "living room",
-    theme: "livingRoom",
-    objectSummary: "objects: sofa, shelves, coffee table, rug, blocks, sock.",
-    difficulty: 2,
-    spawn: { x: 720, y: 3720, r: 29 },
-    goal: { x: 3640, y: 880, r: 95, holdMs: 5000 },
-    elements: livingRoomElements,
-  },
+  expandMap(kitchenFloorMap),
+  expandMap(livingRoomMap),
   {
     id: "parking-lot",
     name: "parking lot",
@@ -330,17 +224,7 @@ export const authoredMapVariants = [
     goal: { x: 3760, y: 3680, r: 84, holdMs: 5000 },
     elements: sandLotElements,
   },
-  {
-    id: "kitchen-breakfast-spill",
-    name: "kitchen breakfast spill",
-    theme: "kitchenFloor",
-    objectSummary:
-      "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
-    difficulty: 2,
-    spawn: { x: 640, y: 3680, r: 29 },
-    goal: { x: 3680, y: 720, r: 95, holdMs: 5000 },
-    elements: kitchenBreakfastElements,
-  },
+  expandMap(kitchenBreakfastMap),
   {
     id: "parking-lot-puddles",
     name: "parking lot puddles",

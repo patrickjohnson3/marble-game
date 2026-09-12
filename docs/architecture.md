@@ -121,7 +121,7 @@ Frame scheduling is split between `core/frame-loop.js` and `core/game-loop.js`.
    - advance marble roll and impact squash animation
    - advance kitchen dynamics and emit kitchen haptic feedback
    - redraw changed kitchen dynamic regions
-   - update goal hold/progression using the final object-contact position
+   - evaluate the map objective (or legacy goal hold) using final object state
    - update camera follow and the optional goal indicator
 6. Render the marble, trail, and active effects.
 7. Update FPS and debug stats.
@@ -258,6 +258,20 @@ effect lists, and optional debug text.
 Map configuration starts in `maps/map-data.js` and is assembled in
 `core/map-config.js`.
 
+The kitchen and living-room definitions live in their own `maps/*.js` files.
+`maps/map-authoring.js` expands concrete surfaces, fixtures, and scenery clusters
+once when the catalog loads, into the existing element and kitchen layout
+representations. There is no authoring work in the frame loop. Other maps keep
+their existing element arrays and held circular goals. See
+[Map authoring](map-authoring.md) for the vocabulary, commands, and real examples.
+
+`core/map-objectives.js` resolves explicit objectives. `core/goal-controller.js`
+reads authoritative live ants for `eliminate`, checks full marble containment in
+a named rectangular region for `reach`, and retains the held-circle behavior
+when no explicit objective exists. Completion latches before progression and
+uses the existing haptics, particles, map reset, and level label. The persistent
+objective HUD caches its rendered text; it owns no progress state.
+
 The map system supports:
 
 - authored variants
@@ -286,6 +300,9 @@ Key modules:
   physics, and goal progression.
 - `core/map-elements.js`: filters elements by type.
 - `core/map-obstacles.js`: snaps/normalizes rectangles and fits fork collision parts.
+- `maps/map-authoring.js`: expands the small authoring vocabulary at catalog load.
+- `tools/validate-map.js`, `tools/render-map.js`: agent-facing validation and
+  screenshots using the same game app and renderer as normal play.
 - `core/map-bounds.js`: computes intro pen and released-map walls/bounds.
 
 When a goal completes, `core/map-progression.js` selects the next variant,
@@ -385,8 +402,9 @@ Ownership model:
 - `state.intro`: updated by lifecycle, intro sequence, and map controller.
 - `state.game`: updated by lifecycle/startup and read by most controllers.
 - `state.physics`: updated by settings applier and read by physics.
-- `mapRuntime.state`: active map, derived terrain and obstacle arrays, and goal
-  hold progress. World, spawn, and goal remain properties of the active map.
+- `mapRuntime.state`: active map, derived terrain and obstacle arrays, goal
+  hold progress, and completion latch. Objective, regions, world, spawn, and
+  legacy goal remain properties of the active map.
 - `kitchenDynamics.state`: Cheerios, crumbs, ants, collision scratch, and
   per-frame kitchen events. Rendering reads this state but does not advance it.
 - `settings`: runtime settings loaded from persisted settings and mutated by
@@ -410,7 +428,8 @@ Use this section when deciding where a change belongs.
 - `core/game-lifecycle.js`: start, reset, pause, resume, settings-modal pause.
 - `core/game-loop.js`: per-frame orchestration.
 - `core/geometry.js`: pure geometry utilities.
-- `core/goal-controller.js`: goal hold progress, goal haptics, and map advance.
+- `core/goal-controller.js`: objective evaluation, legacy goal hold, feedback,
+  and map advance.
 - `core/haptics.js`: haptic request throttling and gameplay feedback patterns.
 - `core/intro-sequence.js`: intro countdown state and pause/resume handling.
 - `core/map-bounds.js`: intro pen and released-map bounds/walls.

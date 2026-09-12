@@ -11,7 +11,8 @@ Live version: [https://patrickjohnson3.github.io/marble-game/](https://patrickjo
 - Large scrollable maps with real-world themes and obstacle layouts.
 - Terrain surfaces including ice, rough ground, water, and sticky goo.
 - Kitchen-floor objects including a fork obstacle and pushable Cheerios.
-- Goal zones that advance to the next map after a hold timer.
+- Map-specific objectives: eliminate kitchen ants, cross the living room to its
+  exit, or hold in the older maps' goal zones.
 - Haptic feedback for impacts, terrain, and goals where supported.
 - Settings modal for calibration, fullscreen, haptics, FPS, and stats.
 
@@ -36,7 +37,8 @@ Then open `http://localhost:8000/`.
 - Desktop fallback: use arrow keys or WASD.
 - Settings: use the gear button.
 - Camera: pinch to zoom and drag with two fingers to pan.
-- Goal: hold inside the green circle to visit the next map.
+- Objective: follow the top-left status. Kill all kitchen ants; reach the living
+  room doorway; hold inside the green circle on the older maps.
 - Retry map in Settings restores the current map and its objects to their
   starting state, while keeping your control settings and neutral position.
 
@@ -62,6 +64,7 @@ The browser smoke test uses local Chrome; set `CHROME_PATH` if Chrome is install
 ## Developer Docs
 
 - [Architecture](docs/architecture.md)
+- [Map authoring, validation, and real-game screenshots](docs/map-authoring.md)
 - [Focused improvement pass and remaining playtests](docs/improvement-pass.md)
 - [Ants and liquids: behavior, measurements, and phone playtests](docs/ants-and-liquids.md)
 

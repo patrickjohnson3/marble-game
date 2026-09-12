@@ -1,6 +1,7 @@
 import { rectBounds } from "../core/rect-bounds.js";
 import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
 import { KITCHEN_FIXTURES, KITCHEN_FORK_SPRITE } from "../core/map-elements.js";
+import { renderLivingRoomFixtures } from "./living-room-rendering.js";
 
 function rectPath(x, y, w, h) {
   return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
@@ -176,13 +177,15 @@ function drawHitbox(context, rect) {
       rect.y + rect.h / 2,
     );
     context.beginPath();
+    const width = rect.hitboxW ?? rect.w;
+    const height = rect.hitboxH ?? rect.h;
     drawRoundedRect(
       context,
       {
-        x: -rect.hitboxW / 2,
-        y: -rect.hitboxH / 2,
-        w: rect.hitboxW,
-        h: rect.hitboxH,
+        x: -width / 2,
+        y: -height / 2,
+        w: width,
+        h: height,
       },
       rect.cornerRadius,
     );
@@ -358,6 +361,10 @@ export function renderObstacleWalls(
   }
   if (mapConfig?.theme === "kitchenFloor") {
     renderKitchenObstacleWalls(container, obstacles);
+    return;
+  }
+  if (mapConfig?.theme === "livingRoom") {
+    renderLivingRoomFixtures(container, obstacles);
     return;
   }
 

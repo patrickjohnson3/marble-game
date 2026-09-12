@@ -1,3 +1,20 @@
+// Clone only composed map content; global variant catalogs are shared definitions.
+export function cloneMapComposition(map) {
+  const fields = {};
+  for (const key of [
+    "objective",
+    "regions",
+    "clusters",
+    "scenery",
+    "views",
+    "route",
+  ]) {
+    if (map[key] !== undefined)
+      fields[key] = globalThis.structuredClone(map[key]);
+  }
+  return fields;
+}
+
 export function validMapVariants(variants) {
   return Array.isArray(variants)
     ? variants.filter((variant) => variant && typeof variant === "object")
@@ -23,13 +40,16 @@ function resolveMapConfig(config, variant) {
 
   return {
     ...config,
+    ...cloneMapComposition(variant),
+    objective: variant.objective ? { ...variant.objective } : undefined,
+    regions: variant.regions?.map((region) => ({ ...region })),
     variantId: variant.id,
     name: variant.name,
     theme: variant.theme,
     objectSummary: variant.objectSummary,
     difficulty: variant.difficulty,
     world: { ...(variant.world ?? config.world) },
-    goal: { ...variant.goal },
+    goal: variant.goal ? { ...variant.goal } : undefined,
     spawn: { ...(variant.spawn ?? config.spawn) },
     elements,
   };

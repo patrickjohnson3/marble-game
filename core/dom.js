@@ -55,6 +55,7 @@ export const domIds = {
   statsSetting: "statsSetting",
   hint: "hint",
   levelLabel: "levelLabel",
+  objectiveStatus: "objectiveStatus",
   fpsCounter: "fpsCounter",
   debug: "debug",
 };

@@ -1,4 +1,10 @@
 import { distance } from "./geometry.js";
+import {
+  getObjectiveRegion,
+  livingAntCount,
+  marbleInsideRegion,
+  objectiveStatusText,
+} from "./map-objectives.js";
 
 const maxGoalCenterHoldBonus = 1;
 
@@ -24,6 +30,7 @@ export function createGoalController({
   effectsRenderer = { spawnGoalComplete() {} },
   hapticFeedback,
   intro,
+  kitchenState = { ants: [] },
   mapProgression,
   mapRuntime,
   marble,
@@ -35,15 +42,53 @@ export function createGoalController({
   const mapState = mapRuntime.state;
   let goalHapticActive = false;
 
-  function marbleInsideGoal() {
-    const goal = mapState.activeMap.goal;
-    return intro.released && distance(marble, goal) + marble.r <= goal.r;
+  function refreshStatus() {
+    const remaining = livingAntCount(kitchenState.ants);
+    ui.setObjectiveStatus?.(
+      mapState.goalCompleted
+        ? "Map complete"
+        : objectiveStatusText(mapState.activeMap, remaining),
+    );
+    return remaining;
+  }
+
+  function complete() {
+    // Latch before callbacks: a final-ant objective stays true after completion,
+    // including when this map has no available successor.
+    mapRuntime.completeGoal();
+    onComplete(mapState.activeMap);
+    hapticFeedback.pulseGoal("complete");
+    goalHapticActive = false;
+    mapProgression.advanceToNextMap();
+    refreshStatus();
+    // Map activation clears old particles. Celebrate at the new spawn so
+    // completion remains visible when the destination renders.
+    effectsRenderer.spawnGoalComplete();
   }
 
   function update(frameDelta) {
+    const remaining = refreshStatus();
     if (mapState.goalCompleted) return;
 
-    if (!marbleInsideGoal()) {
+    const objective = mapState.activeMap.objective;
+    if (objective?.type === "eliminate") {
+      goalHapticActive = false;
+      // Validation rejects empty populations; don't treat uninitialized dynamics
+      // as a victory if a caller updates before map activation has finished.
+      if (intro.released && kitchenState.ants.length > 0 && remaining === 0) {
+        complete();
+      }
+      return;
+    }
+
+    const region = getObjectiveRegion(mapState.activeMap);
+    if (objective?.type === "reach") {
+      goalHapticActive = false;
+      if (intro.released && marbleInsideRegion(marble, region)) complete();
+      return;
+    }
+
+    if (!intro.released || !marbleInsideRegion(marble, region)) {
       if (mapState.goalHoldMs > 0) {
         mapRuntime.resetGoalProgress();
         terrainView.updateGoalProgress(0);
@@ -68,20 +113,12 @@ export function createGoalController({
     hapticFeedback.pulseGoal("hold");
 
     if (mapState.goalHoldMs >= goal.holdMs) {
-      onComplete(mapState.activeMap);
-      mapRuntime.completeGoal();
-      hapticFeedback.pulseGoal("complete");
-      goalHapticActive = false;
-      if (!mapProgression.advanceToNextMap()) {
-        mapRuntime.clearGoalCompleted();
-      }
-      // Map activation clears old particles. Celebrate at the new spawn so
-      // completion remains visible when the destination renders.
-      effectsRenderer.spawnGoalComplete();
+      complete();
     }
   }
 
   return {
+    refreshStatus,
     update,
   };
 }

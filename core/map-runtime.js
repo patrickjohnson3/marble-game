@@ -1,3 +1,4 @@
+import { cloneMapComposition } from "./map-variants.js";
 import {
   KITCHEN_FIXTURES,
   MAP_ELEMENT_TYPES,
@@ -28,8 +29,9 @@ function prepareCollisionObstacle(obstacle) {
 function createRuntimeMap(sourceMap) {
   return {
     ...sourceMap,
+    ...cloneMapComposition(sourceMap),
     world: { ...sourceMap.world },
-    goal: { ...sourceMap.goal },
+    ...(sourceMap.goal ? { goal: { ...sourceMap.goal } } : {}),
     spawn: { ...sourceMap.spawn },
     elements: sourceMap.elements.map((element) => ({ ...element })),
   };
@@ -101,6 +103,7 @@ export function createMapRuntime({
 
   function addGoalHold(ms) {
     const goal = state.activeMap.goal;
+    if (!goal) return 0;
     state.goalHoldMs = Math.min(goal.holdMs, state.goalHoldMs + ms);
     return state.goalHoldMs / goal.holdMs;
   }

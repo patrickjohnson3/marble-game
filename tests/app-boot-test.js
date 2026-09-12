@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { createFakeDocument } from "./test-dom.js";
 import { createApp } from "../app.js";
+import { baseMapConfig } from "../core/map-config.js";
+import { resolveMapVariantConfig } from "../core/map-variants.js";
 
 const originalGlobals = {
   addEventListener: Object.getOwnPropertyDescriptor(
@@ -56,6 +58,15 @@ try {
   });
   assert.equal(globalThis.__marbleAppBooted, true);
   assert.equal(
+    app.kitchenDynamics.state.ants.length,
+    10,
+    "boot initializes objective targets before Start",
+  );
+  assert.equal(
+    document.getElementById("objectiveStatus").textContent,
+    "Kill all ants · 10 left",
+  );
+  assert.equal(
     document.getElementById("settingsTitle").textContent,
     "Settings",
   );
@@ -81,7 +92,7 @@ try {
   );
   assert.equal(
     document.getElementById("goalHelp").textContent,
-    "Hold the marble inside the green goal to visit the next map.",
+    "Kill all kitchen ants, reach the living-room exit, or hold inside the green goal. Your current objective is shown above.",
   );
   assert.equal(
     document.getElementById("resetSpeedSetting").textContent,
@@ -110,6 +121,29 @@ try {
   assert.equal(app.state.game.phase, "calibrating");
   assert.equal(app.state.input.sensor.permission, "granted");
   assert.equal(document.getElementById("controls").hidden, true);
+
+  const livingDocument = createFakeDocument();
+  setTestGlobal("document", livingDocument);
+  const initialMap = resolveMapVariantConfig(baseMapConfig, "living-room");
+  const livingApp = createApp({
+    document: livingDocument,
+    window: globalThis,
+    storage: globalThis.localStorage,
+    initialMap,
+  });
+  assert.equal(livingApp.mapRuntime.state.activeMap.variantId, "living-room");
+  assert.equal(livingApp.state.marble.x, initialMap.spawn.x);
+  assert.equal(livingApp.kitchenDynamics.state.ants.length, 0);
+  assert.equal(
+    livingDocument.getElementById("objectiveStatus").textContent,
+    "Reach the exit doorway",
+  );
+  await livingApp.gameController.start();
+  assert.equal(
+    livingApp.mapRuntime.state.activeMap.variantId,
+    "living-room",
+    "Start preserves an authoring tool's selected map",
+  );
 } finally {
   for (const [key, descriptor] of Object.entries(originalGlobals)) {
     if (descriptor === undefined) {

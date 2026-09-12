@@ -55,8 +55,11 @@ function testWorldAndMapElements() {
     "map object summary",
   );
   assertPositiveNumber(resolvedMapConfig.spawn.r, "spawn radius");
-  assertPositiveNumber(resolvedMapConfig.goal.r, "goal radius");
-  assertPositiveNumber(resolvedMapConfig.goal.holdMs, "goal hold time");
+  assert.deepEqual(resolvedMapConfig.objective, {
+    type: "eliminate",
+    target: "ant",
+    count: "all",
+  });
 
   for (const [index, element] of resolvedMapConfig.elements.entries()) {
     assert.ok(

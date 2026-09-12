@@ -2,7 +2,7 @@ export const copy = {
   bootError: "game failed to load. refresh and try again.",
   title: "marble tilt",
   startHelp:
-    "Tilt your phone to roll, or use arrows/WASD. Explore, then hold inside the green goal to visit the next map. Pinch to zoom; use two fingers to pan.",
+    "Tilt your phone to roll, or use arrows/WASD. Kill all ants in the kitchen; cross the living room to its exit. Follow the objective shown above. Pinch to zoom; use two fingers to pan.",
   initialHint: "",
   hints: {
     mapOpen: "",
@@ -51,7 +51,7 @@ export const copy = {
       title: "Controls & map",
       movement: "Tilt your phone to steer. On desktop, use arrows or WASD.",
       camera: "Pinch to zoom. Drag with two fingers to pan.",
-      goal: "Hold the marble inside the green goal to visit the next map.",
+      goal: "Kill all kitchen ants, reach the living-room exit, or hold inside the green goal. Your current objective is shown above.",
     },
     sections: {
       gameplay: "Gameplay",

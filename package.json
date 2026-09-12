@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "install-hooks": "git config core.hooksPath .githooks"
+    "install-hooks": "git config core.hooksPath .githooks",
+    "map:validate": "node tools/validate-map.js",
+    "map:render": "node tools/render-map.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

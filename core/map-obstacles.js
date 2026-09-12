@@ -76,11 +76,14 @@ export function snapRectToGrid(rect, gridSize) {
 
 export function normalizeJoinedObstacleRects(rects) {
   const normalized = rects.map((rect) => ({ ...rect }));
+  // Stitch only plain wall segments. Furniture and rounded/rotated shapes have
+  // deliberate footprints that touching neighbors must never resize.
+  const walls = normalized.filter(
+    (rect) => !rect.fixture && !rect.cornerRadius && !(rect.angle ?? 0),
+  );
 
-  for (const horizontal of normalized.filter(isHorizontalRect)) {
-    for (const vertical of normalized.filter(
-      (rect) => !isHorizontalRect(rect),
-    )) {
+  for (const horizontal of walls.filter(isHorizontalRect)) {
+    for (const vertical of walls.filter((rect) => !isHorizontalRect(rect))) {
       const horizontalBottom = horizontal.y + horizontal.h;
       const verticalBottom = vertical.y + vertical.h;
       let horizontalRight = horizontal.x + horizontal.w;

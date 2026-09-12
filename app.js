@@ -407,6 +407,7 @@ export function createApp({
   document: documentRef = document,
   window: windowRef = window,
   storage = availableStorage(() => windowRef.localStorage),
+  initialMap = resolvedMapConfig,
 } = {}) {
   const els = createDomElements(documentRef);
   const {
@@ -423,7 +424,7 @@ export function createApp({
   } = els;
 
   const mapRuntime = createMapRuntime({
-    initialMap: resolvedMapConfig,
+    initialMap,
   });
   const mapState = mapRuntime.state;
   const world = mapState.activeMap.world;
@@ -432,12 +433,12 @@ export function createApp({
     mapConfig: mapState.activeMap,
     obstacles: mapState.obstacles,
     waterPatches: mapState.terrainByType[MAP_ELEMENT_TYPES.waterPatch].elements,
-    mapState,
+    world,
   });
 
   const state = createGameState({
     world,
-    resolvedMapConfig,
+    resolvedMapConfig: initialMap,
     timing,
     hapticTuning,
     physicsConfig,
@@ -474,6 +475,7 @@ export function createApp({
     startBtn,
     goalIndicator: els.goalIndicator,
     levelLabel: els.levelLabel,
+    objectiveStatus: els.objectiveStatus,
     debugLines,
     state,
   });
@@ -577,6 +579,7 @@ export function createApp({
     mapRenderer.syncWorld();
     terrainView.renderTerrain();
     ui.setMapObjects(mapObjectSummary(mapState.activeMap));
+    goalController.refreshStatus();
   }
 
   function resetForNextMap() {
@@ -629,6 +632,7 @@ export function createApp({
     effectsRenderer,
     hapticFeedback,
     intro,
+    kitchenState: kitchenDynamics.state,
     mapProgression,
     mapRuntime,
     marble,
@@ -686,7 +690,7 @@ export function createApp({
     frameLoop,
     introSequence,
     mapRenderer,
-    resetMap: () => setCurrentMap(resolvedMapConfig),
+    resetMap: () => setCurrentMap(initialMap),
     resetCalibration: sensorController.resetCalibration,
     scheduleFrame: frameLoop.schedule,
     sensorWatchdog,
@@ -766,6 +770,7 @@ export function createApp({
       windowRef,
     });
     ui.setLevelLabel(mapLevelLabel(mapState.activeMap));
+    goalController.refreshStatus();
     registerServiceWorker({
       navigatorRef: windowRef.navigator,
       onStatusChange: updatePwaStatus,
@@ -777,8 +782,12 @@ export function createApp({
   }
 
   return {
+    cameraController,
     gameController,
     inputManager,
+    kitchenDynamics,
+    mapProgression,
+    mapRuntime,
     state,
   };
 }
