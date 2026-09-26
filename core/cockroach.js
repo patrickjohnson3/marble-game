@@ -205,12 +205,12 @@ export function updateCockroach(
         cockroach.decisionIn = 0;
       }
     }
+    // Reacquire after the quiet interval even if roaming took us far away.
+    // The pursuit timeout and post-contact cooldown bound the harassment.
     if (
       cockroach.mode === "scurry" &&
       cockroach.harassmentIn === 0 &&
-      !cockroach.contactLatched &&
-      Math.hypot(targetMarble.x - cockroach.x, targetMarble.y - cockroach.y) <=
-        cockroachConfig.harassmentRange
+      !cockroach.contactLatched
     ) {
       cockroach.mode = "harass";
       cockroach.modeFrames = cockroachConfig.harassmentDuration;

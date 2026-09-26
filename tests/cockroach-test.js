@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { cockroachConfig } from "../core/game-config.js";
+import { resolvedMapConfig } from "../core/map-config.js";
+import { createResolvedMapState } from "../core/map-runtime.js";
 import {
   createCockroach,
   updateCockroach,
@@ -235,18 +237,34 @@ function testAttackIsBoundedAndDoesNotProjectTheMarble() {
   );
 }
 
-function testHarassmentHasRangeTimeoutAndRespite() {
+function testHarassmentReacquiresAfterRespiteAndStillTimesOut() {
   const { cockroach, mapState } = fixture();
-  advance(cockroach, mapState, cockroachConfig.harassmentInterval + 1);
+  const marble = { x: 100, y: 100, vx: 0, vy: 0, r: 29 };
+  advance(
+    cockroach,
+    mapState,
+    cockroachConfig.harassmentInterval - 1,
+    [1],
+    marble,
+  );
   assert.equal(
     cockroach.mode,
     "scurry",
-    "it does not home toward a distant marble",
+    "the opening quiet period is preserved",
   );
-  const marble = { x: cockroach.x + 200, y: cockroach.y, vx: 0, vy: 0, r: 29 };
+  assert.ok(Math.hypot(marble.x - cockroach.x, marble.y - cockroach.y) > 900);
   updateCockroach(cockroach, marble, 1, mapState);
-  assert.equal(cockroach.mode, "harass");
-  assert.ok(cockroach.vx > 0);
+  assert.equal(
+    cockroach.mode,
+    "harass",
+    "distance cannot strand a ready attack",
+  );
+  assert.ok(
+    cockroach.vx * (marble.x - cockroach.x) +
+      cockroach.vy * (marble.y - cockroach.y) >
+      0,
+    "the pursuit closes toward the distant marble",
+  );
   advance(
     cockroach,
     mapState,
@@ -260,15 +278,56 @@ function testHarassmentHasRangeTimeoutAndRespite() {
     "an unsuccessful chase ends without contact",
   );
   assert.ok(cockroach.harassmentIn > 0);
-  advance(
-    cockroach,
-    mapState,
-    cockroachConfig.retreatDuration + 1,
-    [1],
-    marble,
+  // Keep resolving contact so real separation can rearm the next encounter.
+  while (cockroach.harassmentIn > 1) {
+    updateCockroach(cockroach, marble, 1, mapState);
+    resolveCockroachContact(cockroach, marble, marble, mapState);
+    assert.notEqual(
+      cockroach.mode,
+      "harass",
+      "cooldown always provides respite",
+    );
+  }
+  updateCockroach(cockroach, marble, 1, mapState);
+  assert.equal(
+    cockroach.mode,
+    "harass",
+    "another bounded attempt follows cooldown",
   );
-  assert.equal(cockroach.mode, "scurry");
-  assert.ok(cockroach.harassmentIn > 0);
+}
+
+function testKitchenRoamingDoesNotLoseThePlayer() {
+  for (const target of [resolvedMapConfig.spawn, { x: 3350, y: 1100 }]) {
+    for (const dt of [0.5, 2]) {
+      const mapState = createResolvedMapState(resolvedMapConfig);
+      const cockroach = mapState.cockroach;
+      const marble = { x: target.x, y: target.y, r: 29, vx: 0, vy: 0 };
+      const hits = [];
+      // Hold a clear target still to isolate encounter frequency from player
+      // steering and marble drift. Use the real kitchen's obstacle geometry.
+      for (let frame = dt; frame <= 60 * 60; frame += dt) {
+        marble.vx = 0;
+        marble.vy = 0;
+        updateCockroach(cockroach, marble, dt, mapState);
+        if (
+          resolveCockroachContact(cockroach, marble, marble, mapState) ===
+          "attack"
+        )
+          hits.push(frame);
+      }
+      assert.ok(
+        hits.length >= 3,
+        "the insect must return repeatedly, not wander away for a minute",
+      );
+      assert.ok(
+        hits[0] <= 30 * 60,
+        "even a distant target is reacquired promptly",
+      );
+      for (let i = 1; i < hits.length; i++) {
+        assert.ok(hits[i] - hits[i - 1] >= cockroachConfig.postContactCooldown);
+      }
+    }
+  }
 }
 
 function testObstaclesBoundsAndCadence() {
@@ -289,6 +348,8 @@ function testObstaclesBoundsAndCadence() {
   let reference;
   for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
     const { cockroach, mapState } = fixture(obstacles);
+    // Isolate ordinary roaming; pursuit cadence is covered separately.
+    cockroach.harassmentIn = 3000;
     for (let i = 0; i < 20; i++) {
       advance(cockroach, mapState, 100, parts);
       assert.ok(
@@ -373,12 +434,24 @@ function testMovingTargetInterpolationAndFreshState() {
 function testRoamingIsIndependentAndSeparatingContactIsHarmless() {
   const first = fixture();
   const second = fixture();
-  advance(first.cockroach, first.mapState, 300, [1], farMarble);
-  advance(second.cockroach, second.mapState, 300, [1], {
-    ...farMarble,
-    x: -10000,
-    y: -10000,
-  });
+  advance(
+    first.cockroach,
+    first.mapState,
+    cockroachConfig.harassmentInterval / 2,
+    [1],
+    farMarble,
+  );
+  advance(
+    second.cockroach,
+    second.mapState,
+    cockroachConfig.harassmentInterval / 2,
+    [1],
+    {
+      ...farMarble,
+      x: -10000,
+      y: -10000,
+    },
+  );
   near(first.cockroach.x, second.cockroach.x);
   near(first.cockroach.y, second.cockroach.y);
   const { cockroach, mapState } = fixture();
@@ -416,7 +489,8 @@ testOnlyIncomingStrongMarbleContactRepels();
 testGlancingAndSeparatingContactsDoNotRepel();
 testSweepAndWallOcclusion();
 testAttackIsBoundedAndDoesNotProjectTheMarble();
-testHarassmentHasRangeTimeoutAndRespite();
+testHarassmentReacquiresAfterRespiteAndStillTimesOut();
+testKitchenRoamingDoesNotLoseThePlayer();
 testObstaclesBoundsAndCadence();
 testMovingTargetInterpolationAndFreshState();
 testRoamingIsIndependentAndSeparatingContactIsHarmless();

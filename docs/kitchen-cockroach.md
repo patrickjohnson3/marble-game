@@ -18,9 +18,8 @@ Speeds use the same world-units-per-60-Hz-frame convention as marble physics.
 | -------------------------------------------- | ---------------------------------- |
 | Body contact radius                          | 24 world units (marble radius: 29) |
 | Ordinary scurry / harassment / retreat speed | 3 / 6.5 / 5.5                      |
-| Initial quiet interval                       | 7 seconds                          |
-| Harassment acquisition range                 | 900 world units                    |
-| Maximum pursuit                              | 2.5 seconds                        |
+| Initial quiet interval                       | 3 seconds                          |
+| Maximum pursuit                              | 6 seconds                          |
 | Post-contact or failed-pursuit cooldown      | 6 seconds                          |
 | Retreat / strong-hit stun                    | 2 seconds / 0.4 seconds            |
 | Heading decisions / interception lead        | 0.3 seconds / 1/6 second           |
@@ -29,12 +28,14 @@ Speeds use the same world-units-per-60-Hz-frame convention as marble physics.
 | Maximum knockback / per-frame retention      | 12 / 0.9                           |
 | Contact rearm gap                            | 8 world units                      |
 
-Ordinary scurrying is independent of the marble. When its timer is ready and
-the marble is in range, it briefly pursues the marble's projected position.
+Ordinary scurrying during the quiet interval is independent of the marble. When
+its timer is ready, it pursues the marble's projected position wherever the player
+has moved in the kitchen. There is no distance gate that can leave a ready
+cockroach wandering indefinitely.
 A hit or chase timeout sends it into retreat, then ordinary scurrying. Cooldown
 continues during retreat/stun, leaving additional quiet time afterward. A
-stunned cockroach first drifts under knockback, then retreats. A distant player
-does not attract a continuously homing insect.
+stunned cockroach first drifts under knockback, then retreats. Each pursuit is
+limited to six seconds, even if the player remains far away.
 
 Movement uses a local 120 Hz tick and interpolated marble positions. Timers and
 obstacle decisions advance by simulation time, not rendered-frame count.
@@ -72,14 +73,17 @@ state change.
 `npm test` includes deterministic behavior, collision, irregular-step movement,
 objective, reset, authoring and fake-canvas tests. `npm run test:browser` also
 exercises a real cockroach shove, keyboard-driven repel, retreat, Retry and
-actual ant crushes followed by progression. The controlled browser attack
+actual ant crushes followed by progression. A stationary-target kitchen test
+checks repeated reacquisition at both nearby and distant positions. The browser
+attack starts outside the former acquisition range. The controlled browser attack
 fixtures place actors on clear floor; they do not establish hunting difficulty.
 
 Inspect it through `npm run map:render -- kitchen-floor --phone` or live play.
 On a physical phone, judge whether charges are readable, the shove disrupts
 without feeling unfair, and a deliberate fast strike reliably creates breathing
-room. In particular, judge encounter frequency: the 900-unit acquisition radius
-and independent roaming deliberately permit longer quiet periods when the
-cockroach wanders away. Test contacts near utensils and the sponge, and check
-that antennae/legs remain clear and animation stays smooth. Desktop Chrome
+room. In particular, judge whether the more regular encounters and up-to-six-second
+pursuit remain fair while hunting ants; successful contact or a strong repel
+still guarantees six seconds before another pursuit. Test contacts near utensils
+and the sponge, and check that antennae/legs remain clear and animation stays
+smooth. Desktop Chrome
 checks do not establish phone sensor, haptic, GPU or compositor performance.

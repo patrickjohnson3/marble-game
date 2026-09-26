@@ -30,26 +30,29 @@ window.__cockroachApp = createApp();`,
       /Kill all ants/,
     );
 
-    await page.evaluate((config) => {
+    // Let a ready, scurrying insect acquire from beyond the old 900-unit
+    // range and reach the marble using actual game-loop movement.
+    await page.evaluate(() => {
       const app = window.__cockroachApp;
       app.gameController.pause();
-      Object.assign(app.state.marble, { x: 2000, y: 3650, vx: 0, vy: 0 });
+      Object.assign(app.state.marble, { x: 1400, y: 3650, vx: 0, vy: 0 });
       Object.assign(app.state.input.tilt, { smoothX: 0, smoothY: 0 });
       Object.assign(app.mapRuntime.state.cockroach, {
-        x: 2120,
+        x: 2700,
         y: 3650,
         vx: 0,
         vy: 0,
         angle: Math.PI,
-        mode: "harass",
-        modeFrames: config.harassmentDuration,
+        mode: "scurry",
+        modeFrames: 0,
+        harassmentIn: 1,
         decisionIn: 0,
         pendingFrames: 0,
         contactLatched: false,
       });
       app.cameraController.centerOnMarble();
       app.gameController.resume();
-    }, cockroachConfig);
+    });
     await page.waitForFunction(
       () => window.__cockroachApp.mapRuntime.state.cockroach.mode === "retreat",
     );
