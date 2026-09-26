@@ -30,6 +30,47 @@ window.__cockroachApp = createApp();`,
       /Kill all ants/,
     );
 
+    // The app must supply live kitchen food to the physics-owned roach. Place
+    // it facing away from a real cereal cluster and watch it return on its own.
+    await page.evaluate(() => {
+      const app = window.__cockroachApp;
+      app.gameController.pause();
+      const food = app.kitchenDynamics.state.cheerios.find(
+        (item) => item.active && item.kind === "cheerio",
+      );
+      Object.assign(app.state.marble, { x: 400, y: 500, vx: 0, vy: 0 });
+      Object.assign(app.state.input.tilt, { smoothX: 0, smoothY: 0 });
+      Object.assign(app.mapRuntime.state.cockroach, {
+        x: food.originX + food.pushX - 350,
+        y: food.originY + food.pushY,
+        angle: Math.PI,
+        mode: "scurry",
+        harassmentIn: 600,
+        decisionIn: 0,
+      });
+      app.gameController.resume();
+    });
+    await page.waitForFunction(
+      () => {
+        const app = window.__cockroachApp;
+        const roach = app.mapRuntime.state.cockroach;
+        return (
+          roach.mode === "scurry" &&
+          app.kitchenDynamics.state.cheerios.some(
+            (food) =>
+              food.active &&
+              food.kind === "cheerio" &&
+              Math.hypot(
+                food.originX + food.pushX - roach.x,
+                food.originY + food.pushY - roach.y,
+              ) < 140,
+          )
+        );
+      },
+      null,
+      { timeout: 5000 },
+    );
+
     // Let a ready, scurrying insect acquire from beyond the old 900-unit
     // range and reach the marble using actual game-loop movement.
     await page.evaluate(() => {

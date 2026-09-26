@@ -338,7 +338,7 @@ function bindViewportEvents({
   documentRef.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
 }
 
-function createPhysicsContext(state, mapState) {
+function createPhysicsContext(state, mapState, kitchenState) {
   const { bounds, input, intro, marble, physics } = state;
   const { keyboard, tilt } = input;
   return {
@@ -349,6 +349,7 @@ function createPhysicsContext(state, mapState) {
     keyboard,
     physics,
     mapState,
+    kitchenState,
   };
 }
 
@@ -663,7 +664,11 @@ export function createApp({
       }),
   });
 
-  const physicsContext = createPhysicsContext(state, mapState);
+  const physicsContext = createPhysicsContext(
+    state,
+    mapState,
+    kitchenDynamics.state,
+  );
   const gameLoop = createGameLoop({
     cameraController,
     effectsRenderer,

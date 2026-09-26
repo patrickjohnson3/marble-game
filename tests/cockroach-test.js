@@ -274,8 +274,8 @@ function testHarassmentReacquiresAfterRespiteAndStillTimesOut() {
   );
   assert.equal(
     cockroach.mode,
-    "retreat",
-    "an unsuccessful chase ends without contact",
+    "scurry",
+    "an unsuccessful chase returns to ordinary foraging without fleeing",
   );
   assert.ok(cockroach.harassmentIn > 0);
   // Keep resolving contact so real separation can rearm the next encounter.
@@ -294,6 +294,45 @@ function testHarassmentReacquiresAfterRespiteAndStillTimesOut() {
     "harass",
     "another bounded attempt follows cooldown",
   );
+}
+
+function testPursuitCatchesModerateMovingTargets() {
+  for (const speed of [6, 8]) {
+    let referenceTime;
+    for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
+      const { cockroach, mapState } = fixture();
+      mapState.activeMap = { ...map, world: { width: 8000, height: 3000 } };
+      Object.assign(cockroach, {
+        mode: "harass",
+        modeFrames: cockroachConfig.harassmentDuration,
+        decisionIn: 0,
+      });
+      let elapsed = 0,
+        index = 0,
+        result;
+      const marble = { x: 1400, y: 1000, vx: speed, vy: 0, r: 29 };
+      while (elapsed < cockroachConfig.harassmentDuration && !result) {
+        const dt = Math.min(
+          parts[index++ % parts.length],
+          cockroachConfig.harassmentDuration - elapsed,
+        );
+        const previous = { x: marble.x, y: marble.y };
+        marble.x += speed * dt;
+        updateCockroach(cockroach, marble, dt, mapState, previous);
+        result = resolveCockroachContact(cockroach, marble, previous, mapState);
+        elapsed += dt;
+      }
+      assert.equal(
+        result,
+        "attack",
+        "a pursuit starting 400 units behind must catch ordinary moving targets",
+      );
+      assert.equal(cockroach.mode, "retreat");
+      assert.equal(cockroach.harassmentIn, cockroachConfig.postContactCooldown);
+      if (referenceTime !== undefined) near(elapsed, referenceTime, 2.2);
+      else referenceTime = elapsed;
+    }
+  }
 }
 
 function testKitchenRoamingDoesNotLoseThePlayer() {
@@ -490,6 +529,7 @@ testGlancingAndSeparatingContactsDoNotRepel();
 testSweepAndWallOcclusion();
 testAttackIsBoundedAndDoesNotProjectTheMarble();
 testHarassmentReacquiresAfterRespiteAndStillTimesOut();
+testPursuitCatchesModerateMovingTargets();
 testKitchenRoamingDoesNotLoseThePlayer();
 testObstaclesBoundsAndCadence();
 testMovingTargetInterpolationAndFreshState();

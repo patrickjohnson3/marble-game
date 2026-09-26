@@ -446,6 +446,7 @@ function physicsStep(context, dt, feedback) {
       dt,
       context.mapState,
       physicsScratch.previousTerrainMarble,
+      context.kitchenState,
     );
     resolveCockroachContact(
       cockroach,

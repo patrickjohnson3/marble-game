@@ -1,4 +1,5 @@
 import { cockroachConfig } from "./game-config.js";
+import { ELLIPTICAL_SURFACE_SHAPES } from "./map-elements.js";
 import {
   circleObstacleContact,
   resolveObstacleCollision,
@@ -79,11 +80,71 @@ function retreat(cockroach, marble, frames) {
   cockroach.decisionIn = cockroachConfig.decisionInterval;
 }
 
-function chooseDirection(cockroach, marble) {
+function forage(cockroach, mapState, kitchenState) {
+  let closest = Infinity;
+  let targetX = cockroach.x;
+  let targetY = cockroach.y;
+  const radius = cockroachConfig.forageRadius;
+  // Read the existing mutable food positions. Pushed/eaten cereal must not
+  // leave a second set of stale attraction points on the floor.
+  for (const cereal of kitchenState?.cheerios ?? []) {
+    if (!cereal.active || cereal.kind !== "cheerio") continue;
+    const x = cereal.originX + cereal.pushX;
+    const y = cereal.originY + cereal.pushY;
+    const distance = Math.hypot(x - cockroach.x, y - cockroach.y);
+    if (distance >= closest || !clearAt(x, y, cockroach.r, mapState)) continue;
+    closest = distance;
+    targetX = x;
+    targetY = y;
+    if (distance < radius * 2) {
+      // Walk around the food rather than repeatedly overshooting its center.
+      const angle = Math.atan2(cockroach.y - y, cockroach.x - x) + 0.8;
+      targetX += Math.cos(angle) * radius;
+      targetY += Math.sin(angle) * radius;
+    }
+  }
+  const shape = ELLIPTICAL_SURFACE_SHAPES.gooPatch;
+  for (const patch of mapState.terrainByType?.gooPatch?.elements ?? []) {
+    const x = patch.x + patch.w * shape.centerX;
+    const y = patch.y + patch.h * shape.centerY;
+    const dx = cockroach.x - x;
+    const dy = cockroach.y - y;
+    const rx =
+      patch.w * shape.radiusX + cockroach.r + cockroachConfig.gooEdgeMargin;
+    const ry =
+      patch.h * shape.radiusY + cockroach.r + cockroachConfig.gooEdgeMargin;
+    let angle = Math.atan2(
+      (-dx * shape.sin + dy * shape.cos) / ry,
+      (dx * shape.cos + dy * shape.sin) / rx,
+    );
+    let localX = Math.cos(angle) * rx;
+    let localY = Math.sin(angle) * ry;
+    const edgeX = x + localX * shape.cos - localY * shape.sin;
+    const edgeY = y + localX * shape.sin + localY * shape.cos;
+    const distance = Math.hypot(edgeX - cockroach.x, edgeY - cockroach.y);
+    if (distance >= closest || !clearAt(edgeX, edgeY, cockroach.r, mapState))
+      continue;
+    closest = distance;
+    if (distance < radius) angle += 0.35;
+    localX = Math.cos(angle) * rx;
+    localY = Math.sin(angle) * ry;
+    targetX = x + localX * shape.cos - localY * shape.sin;
+    targetY = y + localX * shape.sin + localY * shape.cos;
+  }
+  if (closest === Infinity) return false;
+  cockroach.angle = Math.atan2(targetY - cockroach.y, targetX - cockroach.x);
+  return true;
+}
+
+function chooseDirection(cockroach, marble, mapState, kitchenState) {
   cockroach.decisionIndex++;
   if (cockroach.mode === "harass") {
     // A short lead is readable and still lets a quick turn evade the charge.
-    const lead = cockroachConfig.interceptFrames;
+    const distance = Math.hypot(marble.x - cockroach.x, marble.y - cockroach.y);
+    const lead = Math.min(
+      cockroachConfig.interceptFrames,
+      distance / cockroachConfig.harassSpeed,
+    );
     cockroach.angle = Math.atan2(
       marble.y + marble.vy * lead - cockroach.y,
       marble.x + marble.vx * lead - cockroach.x,
@@ -93,10 +154,16 @@ function chooseDirection(cockroach, marble) {
       cockroach.y - marble.y,
       cockroach.x - marble.x,
     );
-  } else if (cockroach.mode === "scurry") {
+  } else if (
+    cockroach.mode === "scurry" &&
+    !forage(cockroach, mapState, kitchenState)
+  ) {
     cockroach.angle += Math.sin(cockroach.decisionIndex * 2.4) * 0.65;
   }
-  cockroach.decisionIn = cockroachConfig.decisionInterval;
+  cockroach.decisionIn =
+    cockroach.mode === "harass"
+      ? cockroachConfig.attackDecisionInterval
+      : cockroachConfig.decisionInterval;
 }
 
 function moveCockroach(cockroach, speed, mapState) {
@@ -150,6 +217,7 @@ export function updateCockroach(
   dt,
   mapState,
   previousMarble = marble,
+  kitchenState,
 ) {
   if (!cockroach || mapState.goalCompleted || !Number.isFinite(dt) || dt <= 0)
     return;
@@ -198,7 +266,10 @@ export function updateCockroach(
       if (cockroach.mode === "stunned") {
         retreat(cockroach, targetMarble, cockroachConfig.retreatDuration);
       } else if (cockroach.mode === "harass") {
-        retreat(cockroach, targetMarble, cockroachConfig.retreatDuration);
+        // A missed chase still grants the full quiet interval. Return to food
+        // instead of fleeing hundreds of units from a player never contacted.
+        cockroach.mode = "scurry";
+        cockroach.decisionIn = 0;
         cockroach.harassmentIn = cockroachConfig.postContactCooldown;
       } else {
         cockroach.mode = "scurry";
@@ -216,7 +287,8 @@ export function updateCockroach(
       cockroach.modeFrames = cockroachConfig.harassmentDuration;
       cockroach.decisionIn = 0;
     }
-    if (cockroach.decisionIn <= 0) chooseDirection(cockroach, targetMarble);
+    if (cockroach.decisionIn <= 0)
+      chooseDirection(cockroach, targetMarble, mapState, kitchenState);
     const speed =
       cockroach.mode === "stunned"
         ? 0

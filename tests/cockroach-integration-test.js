@@ -100,6 +100,39 @@ function harness() {
   }
 }
 
+{
+  const { context, runtime, state, feedback } = harness();
+  Object.assign(state.marble, { x: 1500, y: 500 });
+  Object.assign(runtime.state.cockroach, {
+    mode: "scurry",
+    harassmentIn: 1000,
+    decisionIn: 0,
+    angle: 0,
+  });
+  const cereal = {
+    kind: "cheerio",
+    active: true,
+    originX: 100,
+    originY: 500,
+    pushX: 0,
+    pushY: 0,
+  };
+  context.kitchenState = { cheerios: [cereal] };
+  updatePhysics(context, 2, feedback);
+  assert.ok(
+    runtime.state.cockroach.x < 500,
+    "the real physics path supplies live food to ordinary roach movement",
+  );
+  const x = runtime.state.cockroach.x;
+  cereal.pushX = 900;
+  runtime.state.cockroach.decisionIn = 0;
+  updatePhysics(context, 2, feedback);
+  assert.ok(
+    runtime.state.cockroach.x > x,
+    "the next decision uses pushed cereal without refreshing a copied target list",
+  );
+}
+
 for (const phase of ["intro", "complete", "hazard"]) {
   const { context, runtime, state, feedback, impacts } = harness();
   if (phase === "intro") state.intro.released = false;
