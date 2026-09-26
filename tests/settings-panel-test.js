@@ -27,6 +27,7 @@ function createPanelHarness() {
   let saveCount = 0;
   let renderCount = 0;
   let retryCount = 0;
+  const loadedMaps = [];
   let installCount = 0;
   const settings = {
     maxSpeed: 14,
@@ -39,6 +40,8 @@ function createPanelHarness() {
     fpsEnabled: false,
     statsEnabled: false,
   };
+  const mapSelect = fakeControl("kitchen-floor");
+  const loadMap = fakeButton();
   const fpsSetting = fakeControl();
   const fullscreenSetting = fakeControl();
   const goalIndicatorSetting = fakeControl();
@@ -60,6 +63,8 @@ function createPanelHarness() {
       closeSettings: fakeButton(),
       resumeGame: fakeButton(),
       retryMap: fakeButton(),
+      mapSelect,
+      loadMap,
       installApp,
       speedSetting,
       speedSettingValue,
@@ -101,6 +106,9 @@ function createPanelHarness() {
     onRetryMap() {
       retryCount++;
     },
+    onLoadMap(id) {
+      loadedMaps.push(id);
+    },
     onSetNeutral() {},
     onFpsChanged() {
       fpsChangeCount++;
@@ -118,6 +126,9 @@ function createPanelHarness() {
   });
 
   return {
+    mapSelect,
+    loadMap,
+    loadedMaps,
     counts: () => ({
       applyCount,
       fullscreenChangeCount,
@@ -286,6 +297,8 @@ function testInstalledPwaDisablesFullscreenToggle() {
       closeSettings: fakeButton(),
       resumeGame: fakeButton(),
       retryMap: fakeButton(),
+      mapSelect: fakeControl(),
+      loadMap: fakeButton(),
       installApp: fakeButton(),
       speedSetting: fakeControl(),
       speedSettingValue: { textContent: "" },
@@ -320,6 +333,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
     onOpenSettings() {},
     onCloseSettings() {},
     onRetryMap() {},
+    onLoadMap() {},
     onSetNeutral() {},
     onFpsChanged() {},
     onHitboxOverlayChanged() {},
@@ -338,5 +352,31 @@ function testInstalledPwaDisablesFullscreenToggle() {
 }
 
 testInstalledPwaDisablesFullscreenToggle();
+
+function testMapLoadIsAnExplicitCommandNotAPreference() {
+  const { mapSelect, loadMap, loadedMaps, counts, settings } =
+    createPanelHarness();
+  const before = { ...settings };
+  mapSelect.value = "living-room";
+  assert.deepEqual(
+    loadedMaps,
+    [],
+    "choosing alone must not reset the current run",
+  );
+  loadMap.disabled = true;
+  loadMap.listeners.click();
+  assert.deepEqual(loadedMaps, [], "disabled load must not switch maps");
+  loadMap.disabled = false;
+  loadMap.listeners.click();
+  assert.deepEqual(loadedMaps, ["living-room"]);
+  assert.deepEqual(settings, before);
+  assert.equal(
+    counts().saveCount,
+    0,
+    "map selection is not persisted as a preference",
+  );
+}
+
+testMapLoadIsAnExplicitCommandNotAPreference();
 
 console.log("Settings panel tests passed.");

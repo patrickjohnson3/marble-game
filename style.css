@@ -1042,7 +1042,8 @@ button.primaryAction {
 }
 #settingsModal #neutral,
 #settingsModal #installApp,
-#settingsModal #retryMap {
+#settingsModal #retryMap,
+#settingsModal #loadMap {
   width: 100%;
   margin-bottom: 12px;
 }
@@ -1132,7 +1133,17 @@ button.primaryAction {
   width: 22px;
   height: 22px;
 }
-.settingRow:has(input:disabled) {
+.settingRow select {
+  min-width: 0;
+  border: 1px solid #ffffff24;
+  border-radius: 6px;
+  padding: 8px;
+  background: #2e3440;
+  color: white;
+  font: inherit;
+}
+.settingRow:has(input:disabled),
+.settingRow:has(select:disabled) {
   opacity: 0.48;
 }
 

@@ -57,6 +57,21 @@ try {
     storage: globalThis.localStorage,
   });
   assert.equal(globalThis.__marbleAppBooted, true);
+  const mapSelect = document.getElementById("mapSelect");
+  assert.deepEqual(
+    mapSelect.children.map((option) => option.value),
+    baseMapConfig.variants.map((variant) => variant.id),
+    "all registered maps should be selectable, including generated maps",
+  );
+  assert.ok(
+    mapSelect.children.every(
+      (option) =>
+        typeof option.textContent === "string" && option.textContent.length > 0,
+    ),
+  );
+  assert.equal(mapSelect.value, app.mapRuntime.state.activeMap.variantId);
+  assert.equal(mapSelect.disabled, true);
+  assert.equal(document.getElementById("loadMap").disabled, true);
   assert.equal(
     app.kitchenDynamics.state.ants.length,
     10,

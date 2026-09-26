@@ -38,7 +38,13 @@ export function createMapProgression({
       return blockAdvance(copy.goalNoNextMap);
     }
 
-    const nextMap = resolveMapVariantConfig(baseMapConfig, variant.id);
+    return loadMap(variant.id);
+  }
+
+  function loadMap(variantId) {
+    if (!baseMapConfig.variants?.some((variant) => variant?.id === variantId))
+      return false;
+    const nextMap = resolveMapVariantConfig(baseMapConfig, variantId);
 
     applyMap(nextMap);
     resetForNextMap();
@@ -63,6 +69,7 @@ export function createMapProgression({
 
   return {
     advanceToNextMap,
+    loadMap,
     retryCurrentMap,
   };
 }

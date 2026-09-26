@@ -40,6 +40,7 @@ export const copy = {
     installApp: "install app",
     neutral: "set neutral",
     retryMap: "retry map",
+    loadMap: "load map",
     reset: "reset",
     resume: "resume",
   },
@@ -47,6 +48,8 @@ export const copy = {
     toggleLabel: "settings",
     title: "Settings",
     closeLabel: "close settings",
+    mapSwitchHelp:
+      "After Start, load any map as a fresh run. Controls and preferences stay unchanged.",
     help: {
       title: "Controls & map",
       movement: "Tilt your phone to steer. On desktop, use arrows or WASD.",
@@ -59,6 +62,7 @@ export const copy = {
       diagnostics: "Diagnostics",
     },
     labels: {
+      mapSelect: "test map",
       speedSetting: "top speed",
       sensitivitySetting: "tilt response",
       hapticsSetting: "haptics",
@@ -93,6 +97,8 @@ export function applyDocumentCopy({ document, els }) {
   els.closeSettings.textContent = copy.buttons.closeSettings;
   els.installApp.textContent = copy.buttons.installApp;
   els.retryMap.textContent = copy.buttons.retryMap;
+  els.loadMap.textContent = copy.buttons.loadMap;
+  els.mapSwitchHelp.textContent = copy.settings.mapSwitchHelp;
   els.resetSpeedSetting.textContent = copy.buttons.reset;
   els.resetSpeedSetting.title = "reset top speed";
   els.resetSpeedSetting.setAttribute("aria-label", "reset top speed");

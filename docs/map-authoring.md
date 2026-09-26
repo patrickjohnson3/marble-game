@@ -97,6 +97,14 @@ All objectives use the existing completion latch, feedback, and progression;
 Retry restores the current map's actors and clears the latch while retaining
 control settings and calibration.
 
+## Switching maps during play
+
+After pressing Start, open **Settings → Diagnostics**, choose a **test map**, and
+press **load map**. This starts a fresh run of any registered map without reloading
+the page or recalibrating input. Loading the current map restarts it. Retry and
+normal progression then follow the selected map. The selection is not persisted;
+reloading the page still uses the normal starting map.
+
 ## Author, validate, inspect, repeat
 
 1. Copy the closest real definition into `maps/<room>.js`. Set a unique id,

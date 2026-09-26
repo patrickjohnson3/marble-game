@@ -52,7 +52,7 @@
       }
     </style>
     <script>
-      const assetVersion = "ef295306e62639c7";
+      const assetVersion = "1b2a746989934aac";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -277,6 +277,16 @@
         </section>
         <details class="settingsSection diagnosticsSettings">
           <summary id="diagnosticsSettingsTitle"></summary>
+          <label class="settingRow" for="mapSelect">
+            <span></span>
+            <select
+              id="mapSelect"
+              aria-describedby="mapSwitchHelp"
+              disabled
+            ></select>
+          </label>
+          <p id="mapSwitchHelp" class="settingsStatus"></p>
+          <button id="loadMap" class="secondary" disabled></button>
           <label class="settingRow checkboxRow" for="hitboxOverlaySetting">
             <span></span>
             <input id="hitboxOverlaySetting" type="checkbox" />

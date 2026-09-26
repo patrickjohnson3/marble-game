@@ -579,6 +579,7 @@ export function createApp({
     mapRenderer.syncWorld();
     terrainView.renderTerrain();
     ui.setMapObjects(mapObjectSummary(mapState.activeMap));
+    els.mapSelect.value = mapState.activeMap.variantId;
     goalController.refreshStatus();
   }
 
@@ -625,6 +626,15 @@ export function createApp({
     mapProgression.retryCurrentMap();
     if (!intro.released) mapRenderer.updateIntroBounds();
     ui.setLevelLabel("");
+    gameController.closeSettings();
+  }
+  function loadMap(variantId) {
+    if (
+      game.phase === GAME_PHASES.waiting ||
+      !mapProgression.loadMap(variantId)
+    )
+      return;
+    if (!intro.released) mapRenderer.updateIntroBounds();
     gameController.closeSettings();
   }
   const goalController = createGoalController({
@@ -737,6 +747,16 @@ export function createApp({
     onStartClick: gameController.start,
   });
 
+  for (const variant of baseMapConfig.variants) {
+    const option = documentRef.createElement("option");
+    option.value = variant.id;
+    option.textContent = variant.name ?? variant.id;
+    els.mapSelect.appendChild(option);
+  }
+  els.mapSelect.value = mapState.activeMap.variantId;
+  els.mapSelect.disabled = true;
+  els.loadMap.disabled = true;
+
   bindSettingsPanel({
     els,
     settings,
@@ -745,10 +765,16 @@ export function createApp({
     applySettings,
     applyFullscreenSetting,
     saveSettings,
-    onOpenSettings: gameController.openSettings,
+    onOpenSettings: () => {
+      els.mapSelect.value = mapState.activeMap.variantId;
+      els.mapSelect.disabled = game.phase === GAME_PHASES.waiting;
+      els.loadMap.disabled = els.mapSelect.disabled;
+      gameController.openSettings();
+    },
     onCloseSettings: gameController.closeSettings,
     onInstallApp: pwaInstallController.promptInstall,
     onRetryMap: retryCurrentMap,
+    onLoadMap: loadMap,
     onSetNeutral: sensorController.setNeutralNow,
     onFpsChanged: ui.setFpsEnabled,
     onHitboxOverlayChanged: terrainView.setHitboxOverlayEnabled,
