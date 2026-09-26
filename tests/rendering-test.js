@@ -1,7 +1,10 @@
 import { resolvedMapConfig } from "../core/map-config.js";
 import assert from "node:assert/strict";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
-import { createForkCollisionRects } from "../core/map-obstacles.js";
+import {
+  createForkCollisionRects,
+  createSpoonCollisionRects,
+} from "../core/map-obstacles.js";
 import {
   createKitchenDynamics,
   createKitchenDynamicsState,
@@ -1825,71 +1828,75 @@ function testKitchenObstaclesRenderAsFixtures() {
 
 testKitchenObstaclesRenderAsFixtures();
 
-function testForkCollisionPartsPreserveSpritePlacement() {
+function testUtensilCollisionPartsPreserveSpritePlacement() {
   withFakeDocument(() => {
-    for (const angle of [0, -0.42, 0.52]) {
-      // The second kitchen uses hitboxW 720, but the image still displays at 760.
-      // Also check contain sizing when height, rather than width, limits scale.
-      for (const hitboxW of [720, 760, 1500]) {
-        const fork = {
-          type: "obstacle",
-          fixture: "fork",
-          x: 680,
-          y: 1520,
-          w: 840,
-          h: 360,
-          hitboxW,
-          hitboxH: 60,
-          angle,
-        };
-        const original = new FakeElement();
-        const split = new FakeElement();
-        const parts = createForkCollisionRects(fork);
-        renderObstacleWalls(original, [fork], {
-          mapConfig: {
-            theme: "kitchenFloor",
-            clusters: resolvedMapConfig.clusters,
-          },
-        });
-        renderObstacleWalls(split, parts, {
-          mapConfig: {
-            theme: "kitchenFloor",
-            clusters: resolvedMapConfig.clusters,
-          },
-        });
-        assert.equal(
-          split.firstChild.children.length,
-          1,
-          "collision parts must produce one sprite",
-        );
-        const oldStyle = original.firstChild.firstChild.style;
-        const newStyle = split.firstChild.firstChild.style;
-        for (const key of ["left", "top", "width", "height"]) {
+    for (const [fixtureKind, createParts, widths, angles] of [
+      ["fork", createForkCollisionRects, [720, 760, 1500], [0, -0.42, 0.52]],
+      ["spoon", createSpoonCollisionRects, [580, 620, 1500], [0, 0.34, -0.26]],
+    ]) {
+      for (const angle of angles) {
+        // Cover minimum display width and height-limited contain scaling.
+        for (const hitboxW of widths) {
+          const fixture = {
+            type: "obstacle",
+            fixture: fixtureKind,
+            x: 680,
+            y: 1520,
+            w: 840,
+            h: 360,
+            hitboxW,
+            hitboxH: 60,
+            angle,
+          };
+          const original = new FakeElement();
+          const split = new FakeElement();
+          const parts = createParts(fixture);
+          renderObstacleWalls(original, [fixture], {
+            mapConfig: {
+              theme: "kitchenFloor",
+              clusters: resolvedMapConfig.clusters,
+            },
+          });
+          renderObstacleWalls(split, parts, {
+            mapConfig: {
+              theme: "kitchenFloor",
+              clusters: resolvedMapConfig.clusters,
+            },
+          });
           assert.equal(
-            newStyle[key],
-            oldStyle[key],
-            `fork sprite ${key} must not change`,
+            split.firstChild.children.length,
+            1,
+            "collision parts must produce one sprite",
+          );
+          const oldStyle = original.firstChild.firstChild.style;
+          const newStyle = split.firstChild.firstChild.style;
+          for (const key of ["left", "top", "width", "height"]) {
+            assert.equal(
+              newStyle[key],
+              oldStyle[key],
+              `${fixtureKind} sprite ${key} must not change`,
+            );
+          }
+          assert.equal(
+            newStyle.properties["--fixture-angle"],
+            oldStyle.properties["--fixture-angle"],
+          );
+          const debug = new FakeElement();
+          renderObstacleHitboxes(debug, parts);
+          assert.equal(
+            debug.firstChild.context.calls.filter(
+              ([name]) => name === "roundRect",
+            ).length,
+            parts.length,
+            "opt-in hitbox overlay must show the actual rounded primitives",
           );
         }
-        assert.equal(
-          newStyle.properties["--fixture-angle"],
-          oldStyle.properties["--fixture-angle"],
-        );
-        const debug = new FakeElement();
-        renderObstacleHitboxes(debug, parts);
-        assert.equal(
-          debug.firstChild.context.calls.filter(
-            ([name]) => name === "roundRect",
-          ).length,
-          parts.length,
-          "opt-in hitbox overlay must show the actual rounded primitives",
-        );
       }
     }
   });
 }
 
-testForkCollisionPartsPreserveSpritePlacement();
+testUtensilCollisionPartsPreserveSpritePlacement();
 
 function testObstacleHitboxesRenderDebugCanvas() {
   const container = new FakeElement();

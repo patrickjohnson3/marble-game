@@ -34,13 +34,20 @@ export const KITCHEN_FIXTURES = Object.freeze({
   sponge: "sponge",
 });
 
-// The fork PNG is centered with CSS background-size: contain. Collision uses
-// the same image dimensions and minimum display box as the sprite renderer.
+// Utensil PNGs are centered with CSS background-size: contain. Collision uses
+// the same image dimensions and minimum display boxes as the sprite renderer.
 export const KITCHEN_FORK_SPRITE = Object.freeze({
   width: 1024,
   height: 132,
   minWidth: 760,
   minHeight: 110,
+});
+
+export const KITCHEN_SPOON_SPRITE = Object.freeze({
+  width: 1024,
+  height: 220,
+  minWidth: 620,
+  minHeight: 150,
 });
 
 const kitchenFixtureValues = new Set(Object.values(KITCHEN_FIXTURES));

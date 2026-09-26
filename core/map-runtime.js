@@ -7,6 +7,7 @@ import {
 } from "./map-elements.js";
 import {
   createForkCollisionRects,
+  createSpoonCollisionRects,
   normalizeJoinedObstacleRects,
 } from "./map-obstacles.js";
 import { rectBounds } from "./rect-bounds.js";
@@ -58,11 +59,15 @@ export function createResolvedMapState(
   );
   const obstacles = normalizeObstacles(
     elementsByType[MAP_ELEMENT_TYPES.obstacle],
-  ).flatMap((obstacle) =>
-    obstacle.fixture === KITCHEN_FIXTURES.fork
-      ? createForkCollisionRects(obstacle).map(prepareCollisionObstacle)
-      : [prepareCollisionObstacle(obstacle)],
-  );
+  )
+    .flatMap((obstacle) => {
+      if (obstacle.fixture === KITCHEN_FIXTURES.fork)
+        return createForkCollisionRects(obstacle);
+      if (obstacle.fixture === KITCHEN_FIXTURES.spoon)
+        return createSpoonCollisionRects(obstacle);
+      return [obstacle];
+    })
+    .map(prepareCollisionObstacle);
   return {
     activeMap,
     obstacles,

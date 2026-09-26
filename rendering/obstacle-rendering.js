@@ -1,6 +1,10 @@
 import { rectBounds } from "../core/rect-bounds.js";
 import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
-import { KITCHEN_FIXTURES, KITCHEN_FORK_SPRITE } from "../core/map-elements.js";
+import {
+  KITCHEN_FIXTURES,
+  KITCHEN_FORK_SPRITE,
+  KITCHEN_SPOON_SPRITE,
+} from "../core/map-elements.js";
 import { renderLivingRoomFixtures } from "./living-room-rendering.js";
 
 function rectPath(x, y, w, h) {
@@ -297,7 +301,14 @@ function syncKitchenSpongeSprite(layer, spongeParts) {
 }
 
 function syncKitchenSpoonSprite(layer, spoonParts) {
-  syncKitchenFixtureSprite(layer, spoonParts, "kitchenSpoonSprite", 620, 150);
+  const source = spoonParts[0]?.fixtureSource;
+  syncKitchenFixtureSprite(
+    layer,
+    source ? [source] : spoonParts,
+    "kitchenSpoonSprite",
+    KITCHEN_SPOON_SPRITE.minWidth,
+    KITCHEN_SPOON_SPRITE.minHeight,
+  );
 }
 
 function renderKitchenObstacleWalls(container, obstacles) {

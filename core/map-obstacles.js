@@ -1,4 +1,4 @@
-import { KITCHEN_FORK_SPRITE } from "./map-elements.js";
+import { KITCHEN_FORK_SPRITE, KITCHEN_SPOON_SPRITE } from "./map-elements.js";
 
 // Rounded rectangles measured in fork.png pixels: tapered handle, narrow neck,
 // flare, and head/tines. The tine slots are narrower than the marble diameter.
@@ -13,21 +13,45 @@ const forkMetalRects = [
   [873, 12, 151, 107, 17.5],
 ];
 
+// Spoon PNG coordinates exclude its transparent end padding. Four rounded
+// pieces follow the tapered handle/neck, a small circle fills the flare, and
+// two overlapping capsules fit the bowl.
+const spoonMetalRects = [
+  [103, 70, 138, 87, 36],
+  [170, 84, 200, 59, 29.5],
+  [326, 93, 192, 39, 19.5],
+  [501, 97, 175, 30, 15],
+  [625, 87, 50, 50, 25],
+  [659, 23, 231, 173, 86.5],
+  [645, 45, 275, 126, 63],
+];
+
 export function createForkCollisionRects(fork) {
-  const sprite = KITCHEN_FORK_SPRITE;
-  const visualWidth = Math.max(fork.hitboxW ?? fork.w, sprite.minWidth);
-  const visualHeight = Math.max(fork.hitboxH ?? fork.h, sprite.minHeight);
+  return createSpriteCollisionRects(fork, KITCHEN_FORK_SPRITE, forkMetalRects);
+}
+
+export function createSpoonCollisionRects(spoon) {
+  return createSpriteCollisionRects(
+    spoon,
+    KITCHEN_SPOON_SPRITE,
+    spoonMetalRects,
+  );
+}
+
+function createSpriteCollisionRects(fixture, sprite, metalRects) {
+  const visualWidth = Math.max(fixture.hitboxW ?? fixture.w, sprite.minWidth);
+  const visualHeight = Math.max(fixture.hitboxH ?? fixture.h, sprite.minHeight);
   const scale = Math.min(
     visualWidth / sprite.width,
     visualHeight / sprite.height,
   );
-  const angle = fork.angle ?? 0;
+  const angle = fixture.angle ?? 0;
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
-  const centerX = fork.x + fork.w / 2;
-  const centerY = fork.y + fork.h / 2;
+  const centerX = fixture.x + fixture.w / 2;
+  const centerY = fixture.y + fixture.h / 2;
 
-  return forkMetalRects.map(([x, y, width, height, radius]) => {
+  return metalRects.map(([x, y, width, height, radius]) => {
     const localX = (x + width / 2 - sprite.width / 2) * scale;
     const localY = (y + height / 2 - sprite.height / 2) * scale;
     const hitboxW = width * scale;
@@ -37,9 +61,9 @@ export function createForkCollisionRects(fork) {
     const w = Math.abs(cos) * hitboxW + Math.abs(sin) * hitboxH;
     const h = Math.abs(sin) * hitboxW + Math.abs(cos) * hitboxH;
     return {
-      type: fork.type,
-      fixture: fork.fixture,
-      fixtureSource: fork,
+      type: fixture.type,
+      fixture: fixture.fixture,
+      fixtureSource: fixture,
       x: centerX + cos * localX - sin * localY - w / 2,
       y: centerY + sin * localX + cos * localY - h / 2,
       w,

@@ -1,7 +1,10 @@
 import { kitchenPoint } from "../maps/kitchen-layout.js";
 import { antConfig } from "./game-config.js";
 import { pointInEllipsePatch } from "./geometry.js";
-import { createForkCollisionRects } from "./map-obstacles.js";
+import {
+  createForkCollisionRects,
+  createSpoonCollisionRects,
+} from "./map-obstacles.js";
 import {
   ELLIPTICAL_SURFACE_SHAPES,
   KITCHEN_FIXTURES,
@@ -152,6 +155,8 @@ function elementCaches(elements = []) {
     if (element.type === MAP_ELEMENT_TYPES.obstacle) {
       if (element.fixture === KITCHEN_FIXTURES.fork) {
         obstacles.push(...createForkCollisionRects(element));
+      } else if (element.fixture === KITCHEN_FIXTURES.spoon) {
+        obstacles.push(...createSpoonCollisionRects(element));
       } else {
         obstacles.push(element);
       }

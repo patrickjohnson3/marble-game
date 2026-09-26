@@ -213,7 +213,7 @@ for (const source of [straightForkMap, kitchenFloor, kitchenBreakfast]) {
   );
 
   for (const fixture of source.elements.filter(
-    (element) => element.fixture && element.fixture !== "fork",
+    (element) => element.fixture === "sponge",
   )) {
     const prepared = state.obstacles.find(
       (obstacle) => obstacle.fixture === fixture.fixture,
