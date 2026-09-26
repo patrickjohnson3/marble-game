@@ -42,6 +42,9 @@ Then open `http://localhost:8000/`.
 - The **Mouse** arrow automatically points from your marble toward a distant
   mouse. It disappears when you get close or defeat it. Optional **exit / goal
   arrow** guidance is available in Settings.
+- The main kitchen cockroach occasionally charges and shoves the marble. It is
+  invulnerable: roll into it fast to knock it away and buy a quiet interval. Only
+  ants count toward kitchen completion.
 - Retry map in Settings restores the current map and its objects to their
   starting state, while keeping your control settings and neutral position.
 

@@ -11,7 +11,7 @@ import {
   sceneryKinds,
   fixtureKinds,
 } from "../maps/map-authoring.js";
-import { mouseConfig } from "./game-config.js";
+import { cockroachConfig, mouseConfig } from "./game-config.js";
 import { kitchenPoint } from "../maps/kitchen-layout.js";
 import { hasLikelyReachableGoal } from "./map-reachability.js";
 
@@ -490,6 +490,31 @@ function validateMouse(config, { world, obstacles, errors, spawn }) {
     errors.push("mouse must appear reachable from spawn");
 }
 
+function validateCockroach(config, { world, obstacles, errors }) {
+  const cockroach = config.cockroach;
+  if (!cockroach) return;
+  if (config.theme !== "kitchenFloor")
+    errors.push("cockroach requires the kitchenFloor theme");
+  if (![cockroach.x, cockroach.y].every(Number.isFinite)) {
+    errors.push("cockroach spawn needs finite coordinates");
+    return;
+  }
+  const circle = { ...cockroach, r: cockroachConfig.radius };
+  if (
+    circle.x - circle.r < 0 ||
+    circle.y - circle.r < 0 ||
+    circle.x + circle.r > world.width ||
+    circle.y + circle.r > world.height
+  )
+    errors.push("cockroach spawn must fit inside world bounds");
+  if (
+    obstacles.some(
+      (obstacle) => circleObstacleContact(circle, obstacle).intersects,
+    )
+  )
+    errors.push("cockroach spawn must not overlap blocking geometry");
+}
+
 function validateComposition(config, { world, obstacles, errors, spawn }) {
   if (!config?.objective) return;
   const regionIds = new Set();
@@ -623,6 +648,7 @@ function validateComposition(config, { world, obstacles, errors, spawn }) {
       );
   }
   validateMouse(config, { world, obstacles, errors, spawn });
+  validateCockroach(config, { world, obstacles, errors });
   if (config.route && errors.length === 0)
     validateAuthoredRoute(config, obstacles, errors, spawn);
 }

@@ -34,6 +34,7 @@ export function createTerrainView({
       overlayContainer: mapThemeOverlayEl,
       mapConfig: mapState.activeMap,
       mouse: mapState.mouse,
+      cockroach: mapState.cockroach,
       themeState,
       world: mapState.activeMap.world,
     });
@@ -141,6 +142,7 @@ export function createTerrainView({
       dynamicsState,
       mapConfig: mapState.activeMap,
       mouse: mapState.mouse,
+      cockroach: mapState.cockroach,
       themeState,
     });
     updateGoalLabel();

@@ -131,6 +131,16 @@ All objectives use the existing completion latch, feedback, and progression;
 Retry restores the current map's actors and clears the latch while retaining
 control settings and calibration.
 
+## Kitchen cockroach
+
+The main kitchen declares `cockroach: { x: 1400, y: 3500 }`. This optional
+kitchen-only actor uses existing prepared obstacle geometry and the whole room;
+it adds no obstacles, navigation region, or objective type. Other maps omit it.
+Validation checks finite spawn coordinates, room bounds and obstacle clearance.
+Tuning, interaction rules and device-playtest questions are in
+[kitchen cockroach](kitchen-cockroach.md). Retry recreates its authoritative
+`mapRuntime.state.cockroach` state. Ant elimination never reads that state.
+
 ## Switching maps during play
 
 After pressing Start, open **Settings → Diagnostics**, choose a **test map**, and

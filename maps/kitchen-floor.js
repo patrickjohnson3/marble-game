@@ -7,8 +7,9 @@ export const kitchenFloorMap = {
   world: { width: 4400, height: 4400 },
   spawn: { x: 840, y: 3640, r: 29 },
   objective: { type: "eliminate", target: "ant", count: "all" },
+  cockroach: { x: 1400, y: 3500 },
   objectSummary:
-    "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants.",
+    "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants, invulnerable cockroach.",
   surfaces: [
     { kind: "goo", x: 1240, y: 1800, w: 560, h: 460 },
     // The existing sponge interaction absorbs the first water patch.

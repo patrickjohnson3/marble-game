@@ -1,3 +1,4 @@
+import { updateCockroach, resolveCockroachContact } from "./cockroach.js";
 import { clamp } from "./geometry.js";
 import {
   ELLIPTICAL_SURFACE_SHAPES,
@@ -435,6 +436,25 @@ function physicsStep(context, dt, feedback) {
     context.mapState.obstacles,
     physicsScratch.collisionContact,
   );
+  const cockroach = context.mapState.cockroach;
+  if (context.intro.released && !context.mapState.goalCompleted && cockroach) {
+    // Use the marble's resolved wall path. The cockroach yields on contact;
+    // it adds a one-shot velocity impulse, never a positional wall constraint.
+    updateCockroach(
+      cockroach,
+      context.marble,
+      dt,
+      context.mapState,
+      physicsScratch.previousTerrainMarble,
+    );
+    resolveCockroachContact(
+      cockroach,
+      context.marble,
+      physicsScratch.previousTerrainMarble,
+      context.mapState,
+      feedback.onImpact,
+    );
+  }
   handleSurfaceFeedback(context, feedback.onSurface, currentSurfaceType);
 }
 

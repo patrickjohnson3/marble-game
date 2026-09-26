@@ -311,6 +311,9 @@ function testEliminationUsesActualCrushStateAndCompletesOnce() {
     reachObjectiveMap,
   );
   assert.equal(kitchen.state.ants.length > 0, true);
+  const cockroach = runtime.state.cockroach;
+  assert.ok(cockroach, "the kitchen has an active invulnerable nuisance");
+  cockroach.mode = "harass";
   controller.update(1);
   assert.equal(calls.completed.length, 0);
   assert.equal(calls.statuses.at(-1), "Kill all ants · 10 left");
@@ -349,6 +352,16 @@ function testEliminationUsesActualCrushStateAndCompletesOnce() {
     }
   }
   assert.equal(runtime.state.activeMap.variantId, "living-test");
+  assert.equal(
+    cockroach.mode,
+    "harass",
+    "completion needs no cockroach defeat",
+  );
+  assert.equal(
+    runtime.state.cockroach,
+    null,
+    "the old actor cannot follow into the next map",
+  );
   assert.equal(calls.advances, 1);
   assert.equal(calls.effects, 1);
   assert.equal(
@@ -376,6 +389,10 @@ function testEliminationRetryAndMissingSuccessor() {
     resetForNextMap,
     runtime,
   } = harness;
+  const previousCockroach = runtime.state.cockroach;
+  const initialCockroach = globalThis.structuredClone(previousCockroach);
+  previousCockroach.mode = "retreat";
+  previousCockroach.x += 200;
   // Unrelated live objects and consumed food cannot keep an ant objective open.
   kitchen.state.cheerios[0].active = false;
   for (const ant of kitchen.state.ants) ant.alive = false;
@@ -405,6 +422,12 @@ function testEliminationRetryAndMissingSuccessor() {
     requestRender() {},
   });
   progression.retryCurrentMap();
+  assert.notEqual(runtime.state.cockroach, previousCockroach);
+  assert.deepEqual(
+    runtime.state.cockroach,
+    initialCockroach,
+    "Retry restores cockroach position, behavior and all cooldown/contact state",
+  );
   assert.equal(runtime.state.goalCompleted, false);
   assert.equal(livingAntCount(kitchen.state.ants), 10);
   controller.update(1);

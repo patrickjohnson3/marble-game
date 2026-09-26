@@ -88,6 +88,28 @@ export const mouseConfig = {
   bounce: 0.38,
 };
 
+// Cockroach motion and timers use 60 Hz frame units, like marble physics.
+export const cockroachConfig = {
+  radius: 24,
+  scurrySpeed: 3,
+  harassSpeed: 6.5,
+  retreatSpeed: 5.5,
+  harassmentInterval: 420,
+  harassmentRange: 900,
+  harassmentDuration: 150,
+  postContactCooldown: 360,
+  retreatDuration: 120,
+  stunDuration: 24,
+  decisionInterval: 18,
+  interceptFrames: 10,
+  contactImpulse: 6,
+  maxDisruptedSpeed: 14,
+  repelSpeed: 7,
+  maxKnockbackSpeed: 12,
+  knockbackRetention: 0.9,
+  separationMargin: 8,
+};
+
 export const antConfig = {
   radius: 7,
   speed: 0.9,

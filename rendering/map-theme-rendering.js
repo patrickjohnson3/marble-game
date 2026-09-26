@@ -1,6 +1,10 @@
 import { drawKitchenFloorDetails } from "./kitchen-floor-details.js";
 import { renderLivingRoom } from "./living-room-rendering.js";
 import { appendMouseCanvas, renderMouse } from "./mouse-rendering.js";
+import {
+  appendCockroachCanvas,
+  renderCockroach,
+} from "./cockroach-rendering.js";
 import { antConfig } from "../core/game-config.js";
 
 const kitchenFloorCanvasScale = 0.4;
@@ -984,12 +988,14 @@ export function renderMapThemeDynamics({
   dynamicsState,
   mapConfig,
   mouse = null,
+  cockroach = null,
   themeState = {},
 }) {
   if (mapConfig?.theme === "kitchenFloor") {
     renderKitchenDynamics(themeState, dynamicsState);
   }
   renderMouse(themeState, mouse);
+  renderCockroach(themeState, cockroach);
 }
 
 export function renderMapTheme({
@@ -998,11 +1004,15 @@ export function renderMapTheme({
   overlayContainer,
   mapConfig,
   mouse = null,
+  cockroach = null,
   themeState = {},
   world = mapConfig?.world,
 }) {
   container.replaceChildren();
   overlayContainer.replaceChildren();
+  themeState.cockroachCanvas = null;
+  themeState.cockroachContext = null;
+  themeState.cockroachPose = null;
   themeState.mouseCanvas = null;
   themeState.mouseContext = null;
   themeState.mousePose = null;
@@ -1035,6 +1045,7 @@ export function renderMapTheme({
     world,
   });
   appendMouseCanvas(overlay, themeState, mouse);
+  appendCockroachCanvas(overlay, themeState, cockroach);
   container.replaceChildren(underlay);
   overlayContainer.replaceChildren(overlay);
 }

@@ -1,3 +1,4 @@
+import { createCockroach } from "./cockroach.js";
 import { createMouse } from "./mouse.js";
 import { cloneMapComposition } from "./map-variants.js";
 import {
@@ -75,6 +76,7 @@ export function createResolvedMapState(
     obstacleBounds: rectBounds(obstacles),
     terrainByType,
     mouse: createMouse(activeMap),
+    cockroach: createCockroach(activeMap),
   };
 }
 
@@ -88,6 +90,7 @@ export function createMapRuntime({
     obstacleBounds: null,
     terrainByType: {},
     mouse: null,
+    cockroach: null,
     goalHoldMs: 0,
     goalCompleted: false,
   };
@@ -106,6 +109,7 @@ export function createMapRuntime({
     state.obstacleBounds = derived.obstacleBounds;
     state.terrainByType = derived.terrainByType;
     state.mouse = derived.mouse;
+    state.cockroach = derived.cockroach;
     resetGoalProgress();
     return state;
   }

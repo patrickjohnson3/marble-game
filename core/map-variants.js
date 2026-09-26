@@ -4,6 +4,7 @@ export function cloneMapComposition(map) {
   for (const key of [
     "objective",
     "mouse",
+    "cockroach",
     "regions",
     "clusters",
     "scenery",
@@ -44,6 +45,7 @@ function resolveMapConfig(config, variant) {
     ...cloneMapComposition(variant),
     objective: variant.objective ? { ...variant.objective } : undefined,
     mouse: variant.mouse ? { ...variant.mouse } : undefined,
+    cockroach: variant.cockroach ? { ...variant.cockroach } : undefined,
     regions: variant.regions?.map((region) => ({ ...region })),
     variantId: variant.id,
     name: variant.name,

@@ -446,3 +446,33 @@ rejectsEdit(
 );
 
 console.log("Map authoring tests passed.");
+
+rejectsEdit(
+  kitchenFloorMap,
+  (map) => {
+    map.cockroach.x = -5;
+  },
+  "cockroach spawn",
+);
+rejectsEdit(
+  kitchenFloorMap,
+  (map) => {
+    map.cockroach.y = NaN;
+  },
+  "finite coordinates",
+);
+rejectsEdit(
+  kitchenFloorMap,
+  (map) => {
+    const sponge = map.fixtures.find((item) => item.kind === "sponge");
+    map.cockroach = { x: sponge.x + sponge.w / 2, y: sponge.y + sponge.h / 2 };
+  },
+  "blocking geometry",
+);
+rejectsEdit(
+  livingRoomMap,
+  (map) => {
+    map.cockroach = { x: 600, y: 600 };
+  },
+  "kitchenFloor theme",
+);
