@@ -126,7 +126,7 @@ function appendFloor(parent, theme, world, rect = {}) {
 function appendKitchenFloorCanvas(parent, world, mapConfig) {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
-  const tileSize = 550;
+  const tileSize = 275;
   const tileTones = ["#e6e1d5", "#e8e3d8", "#e4dfd2", "#e7e2d6", "#e5e0d4"];
 
   canvas.className = "kitchenFloorCanvas";

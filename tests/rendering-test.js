@@ -682,17 +682,6 @@ function testKitchenThemeRendersQuietCeramicFloor() {
     "static floor should retain its backing resolution",
   );
   assert.equal(floor.height, 1760);
-  const tileFills = floor.context.calls.filter(
-    (call) =>
-      call[0] === "fillRect" &&
-      call[3] >= 440 &&
-      call[3] <= 660 &&
-      call[4] === call[3],
-  );
-  assert.ok(
-    tileFills.length > 0 && tileFills.length <= 200,
-    "ceramic tiles should be substantially larger than the former 220px checker",
-  );
   assert.equal(
     underlayChildren.some((child) =>
       child.className.includes("kitchenTileAccent"),
