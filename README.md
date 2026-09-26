@@ -37,8 +37,11 @@ Then open `http://localhost:8000/`.
 - Desktop fallback: use arrow keys or WASD.
 - Settings: use the gear button.
 - Camera: pinch to zoom and drag with two fingers to pan.
-- Objective: follow the top-left status. Kill all kitchen ants; reach the living
-  room doorway; hold inside the green circle on the older maps.
+- Objective: follow the top-left status. Kill all kitchen ants; defeat the living
+  room mouse and reach its doorway; hold inside the green circle on older maps.
+- The **Mouse** arrow automatically points from your marble toward a distant
+  mouse. It disappears when you get close or defeat it. Optional **exit / goal
+  arrow** guidance is available in Settings.
 - Retry map in Settings restores the current map and its objects to their
   starting state, while keeping your control settings and neutral position.
 

@@ -290,8 +290,8 @@ function createBehaviorHarness({
       update() {},
     },
     ui: {
-      setGoalIndicator(visible, angle) {
-        calls.goalIndicators.push({ visible, angle });
+      setGoalIndicator(visible, angle, label) {
+        calls.goalIndicators.push({ visible, angle, label });
       },
       setHint(hint) {
         calls.hints.push(hint);
@@ -349,6 +349,177 @@ function testGoalIndicatorUsesTheCurrentObjective() {
 }
 
 testGoalIndicatorUsesTheCurrentObjective();
+
+function createMouseIndicatorMap() {
+  return {
+    ...resolvedMapConfig,
+    objective: { type: "reach", region: "door", defeat: "mouse" },
+    regions: [
+      { id: "door", x: 800, y: 0, w: 200, h: 200 },
+      { id: "mouse-run", x: 0, y: 0, w: 1000, h: 1000 },
+    ],
+    mouse: { x: 800, y: 800, roamRegion: "mouse-run" },
+    world: { width: 1000, height: 1000 },
+    spawn: { x: 500, y: 500, r: 10 },
+    elements: [],
+  };
+}
+
+function testMouseHintAutomaticallyTracksTheLiveMouse() {
+  const settings = { goalIndicatorEnabled: false };
+  const { calls, mapRuntime, state, tick } = createBehaviorHarness({
+    activeMap: createMouseIndicatorMap(),
+    settings,
+  });
+  const mouse = mapRuntime.state.mouse;
+
+  tick();
+  assert.deepEqual(calls.goalIndicators.at(-1), {
+    visible: true,
+    angle: Math.atan2(mouse.y - state.marble.y, mouse.x - state.marble.x),
+    label: "Mouse",
+  });
+
+  // Forced frames still refresh the bearing while paused. Translation and
+  // uniform camera zoom cannot change a direction measured from the marble.
+  state.game.paused = true;
+  for (const [dx, dy, scale] of [
+    [300, 300, 0.4],
+    [-300, 300, 1],
+    [-300, -300, 2],
+    [300, -300, 0.75],
+  ]) {
+    mouse.x = state.marble.x + dx;
+    mouse.y = state.marble.y + dy;
+    state.camera.x = -123;
+    state.camera.y = 456;
+    state.camera.scale = scale;
+    tick();
+    assert.deepEqual(calls.goalIndicators.at(-1), {
+      visible: true,
+      angle: Math.atan2(dy, dx),
+      label: "Mouse",
+    });
+  }
+  assert.equal(
+    settings.goalIndicatorEnabled,
+    false,
+    "the hint must not opt into other goal arrows",
+  );
+}
+
+testMouseHintAutomaticallyTracksTheLiveMouse();
+
+function testMouseHintHidesWithoutADistantReleasedLivingTarget() {
+  const { calls, mapRuntime, state, tick } = createBehaviorHarness({
+    activeMap: createMouseIndicatorMap(),
+  });
+  state.game.paused = true;
+  tick();
+  assert.equal(calls.goalIndicators.at(-1).visible, true);
+
+  state.intro.released = false;
+  tick();
+  assert.equal(calls.goalIndicators.at(-1).visible, false);
+  state.intro.released = true;
+
+  mapRuntime.state.mouse.x = state.marble.x + 100;
+  mapRuntime.state.mouse.y = state.marble.y;
+  tick();
+  assert.equal(
+    calls.goalIndicators.at(-1).visible,
+    false,
+    "a nearby mouse needs no locating hint",
+  );
+
+  mapRuntime.state.mouse.x = 800;
+  mapRuntime.state.mouse.y = 800;
+  mapRuntime.state.mouse.health = 0;
+  tick();
+  assert.equal(
+    calls.goalIndicators.at(-1).visible,
+    false,
+    "a defeated mouse must not remain a target",
+  );
+
+  mapRuntime.state.mouse = null;
+  tick();
+  assert.equal(
+    calls.goalIndicators.at(-1).visible,
+    false,
+    "missing mouse state must not expose the locked exit",
+  );
+}
+
+testMouseHintHidesWithoutADistantReleasedLivingTarget();
+
+function testMouseHintRefreshesAfterRetryAndMapOrSettingChanges() {
+  const activeMap = createMouseIndicatorMap();
+  const settings = { goalIndicatorEnabled: false };
+  const { calls, mapRuntime, state, tick } = createBehaviorHarness({
+    activeMap,
+    settings,
+  });
+  state.game.paused = true;
+  tick();
+  assert.equal(calls.goalIndicators.at(-1).label, "Mouse");
+
+  mapRuntime.state.mouse.health = 0;
+  tick();
+  assert.equal(calls.goalIndicators.at(-1).visible, false);
+  settings.goalIndicatorEnabled = true;
+  tick();
+  assert.deepEqual(calls.goalIndicators.at(-1), {
+    visible: true,
+    angle: Math.atan2(-400, 400),
+    label: "",
+  });
+
+  // Retry recreates authoritative actor state; no hint state should survive it.
+  mapRuntime.setActiveMap(activeMap);
+  tick();
+  assert.equal(calls.goalIndicators.at(-1).visible, true);
+  assert.equal(calls.goalIndicators.at(-1).label, "Mouse");
+
+  settings.goalIndicatorEnabled = false;
+  mapRuntime.setActiveMap({
+    ...activeMap,
+    objective: { type: "reach", region: "door" },
+  });
+  tick();
+  assert.equal(
+    calls.goalIndicators.at(-1).visible,
+    false,
+    "a mouse without a defeat objective must not enable an automatic arrow",
+  );
+
+  settings.goalIndicatorEnabled = true;
+  tick();
+  assert.equal(calls.goalIndicators.at(-1).visible, true);
+  assert.equal(calls.goalIndicators.at(-1).label, "");
+  settings.goalIndicatorEnabled = false;
+  tick();
+  assert.equal(
+    calls.goalIndicators.at(-1).visible,
+    false,
+    "paused setting changes clear the old goal arrow",
+  );
+
+  settings.goalIndicatorEnabled = true;
+  mapRuntime.setActiveMap({
+    ...activeMap,
+    objective: { type: "eliminate", target: "ant", count: "all" },
+    mouse: undefined,
+  });
+  tick();
+  assert.equal(
+    calls.goalIndicators.at(-1).visible,
+    false,
+    "kitchen elimination must not retain the mouse or exit hint",
+  );
+}
+
+testMouseHintRefreshesAfterRetryAndMapOrSettingChanges();
 
 function testHazardRecoveryResetsGameplayFeedbackAndRearms() {
   const activeMap = {

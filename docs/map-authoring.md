@@ -122,8 +122,11 @@ Health, motion, and the hit latch reset together on Retry. A plain `reach` objec
 without `defeat` retains its original behavior.
 
 After defeat, the entire marble must enter the exit rectangle. The doorway marker
-uses the same region, and the optional direction indicator points to the living
-mouse, then the exit. There is no hold timer for reach. Older maps still use their original circular held goals.
+uses the same region. A labeled Mouse arrow automatically points from the marble
+toward the live mouse while it is farther than the existing indicator proximity
+threshold; it hides near the mouse and after defeat. The saved **exit / goal arrow**
+setting controls optional destination guidance after defeat and on other maps.
+There is no hold timer for reach. Older maps still use their original circular held goals.
 All objectives use the existing completion latch, feedback, and progression;
 Retry restores the current map's actors and clears the latch while retaining
 control settings and calibration.

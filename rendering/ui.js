@@ -26,6 +26,7 @@ export function createUi({
   const goalIndicatorState = {
     angleKey: null,
     visible: null,
+    label: null,
   };
   const debugLineBuffer = [];
   const debugUpdateIntervalMs = 250;
@@ -85,7 +86,11 @@ export function createUi({
     mapObjectsStatus.hidden = !message;
   }
 
-  function setGoalIndicator(visible, angle = 0) {
+  function setGoalIndicator(visible, angle = 0, label = "") {
+    if (goalIndicatorState.label !== label) {
+      goalIndicatorState.label = label;
+      goalIndicator.setAttribute("data-label", label);
+    }
     if (goalIndicatorState.visible !== visible) {
       goalIndicatorState.visible = visible;
       goalIndicator.classList.toggle("show", visible);

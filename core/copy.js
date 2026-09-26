@@ -54,7 +54,7 @@ export const copy = {
       title: "Controls & map",
       movement: "Tilt your phone to steer. On desktop, use arrows or WASD.",
       camera: "Pinch to zoom. Drag with two fingers to pan.",
-      goal: "Kill all kitchen ants, defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above.",
+      goal: "Kill all kitchen ants, defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above. The Mouse arrow points from your marble toward a distant mouse automatically.",
     },
     sections: {
       gameplay: "Gameplay",
@@ -68,7 +68,7 @@ export const copy = {
       hapticsSetting: "haptics",
       trailSetting: "trail",
       fullscreenSetting: "fullscreen",
-      goalIndicatorSetting: "goal arrow",
+      goalIndicatorSetting: "exit / goal arrow",
       hitboxOverlaySetting: "hitboxes",
       fpsSetting: "fps",
       statsSetting: "stats",

@@ -449,6 +449,18 @@ function testGoalIndicatorUpdatesVisibilityAndAngle() {
     "1.25rad",
   );
 
+  ui.setGoalIndicator(true, -2, "Mouse");
+  assert.equal(goalIndicator.attributes["data-label"], "Mouse");
+  assert.equal(
+    goalIndicator.style.properties["--goal-indicator-angle"],
+    "-2rad",
+  );
+  ui.setGoalIndicator(true, 0.5);
+  assert.equal(
+    goalIndicator.attributes["data-label"],
+    "",
+    "destination guidance must not retain a stale Mouse label",
+  );
   ui.setGoalIndicator(false);
   assert.equal(goalIndicator.classList.contains("show"), false);
 }

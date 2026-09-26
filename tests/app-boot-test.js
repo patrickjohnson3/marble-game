@@ -107,7 +107,7 @@ try {
   );
   assert.equal(
     document.getElementById("goalHelp").textContent,
-    "Kill all kitchen ants, defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above.",
+    "Kill all kitchen ants, defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above. The Mouse arrow points from your marble toward a distant mouse automatically.",
   );
   assert.equal(
     document.getElementById("resetSpeedSetting").textContent,

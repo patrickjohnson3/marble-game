@@ -114,12 +114,21 @@ export function createGameLoop({
   }
 
   function updateGoalIndicator(context) {
-    if (!settings.goalIndicatorEnabled || !context.intro.released) {
+    const seekingMouse = mouseDefeatRequired(
+      mapState.activeMap,
+      mapState.mouse,
+    );
+    if (
+      !context.intro.released ||
+      (!seekingMouse && !settings.goalIndicatorEnabled)
+    ) {
       ui.setGoalIndicator(false);
       return;
     }
 
-    const goal = mouseDefeatRequired(mapState.activeMap, mapState.mouse)
+    // Finding the roaming mouse is part of its encounter. Destination arrows
+    // remain optional; the mouse cue needs no saved preference or extra state.
+    const goal = seekingMouse
       ? mapState.mouse
       : getObjectiveRegion(mapState.activeMap);
     if (!goal) {
@@ -134,6 +143,7 @@ export function createGameLoop({
     ui.setGoalIndicator(
       distance > radius * tuning.goalIndicatorDistanceMultiplier,
       Math.atan2(dy, dx),
+      seekingMouse ? "Mouse" : "",
     );
   }
 
@@ -234,11 +244,11 @@ export function createGameLoop({
       // the map and teleport the marble; that jump is never a collision sweep.
       goalController?.update(frameDelta, currentTime);
       cameraController.updateFollow(frameDelta);
-      updateGoalIndicator(context);
       updateHazardArmed();
     }
 
     const renderBudgetStart = performance.now();
+    updateGoalIndicator(physicsContext);
     marbleView.render();
     if (!game.paused) trailRenderer.update(currentTime);
     effectsRenderer.render(currentTime);

@@ -343,6 +343,41 @@ window.__mapPreview = createApp({
       await page.locator("#objectiveStatus").textContent(),
       /Defeat the mouse/,
     );
+    assert.equal(
+      await page.locator("#goalIndicatorSetting").isChecked(),
+      false,
+    );
+    await page.waitForFunction(() => {
+      const { state, mapRuntime } = window.__mapPreview;
+      const arrow = document.getElementById("goalIndicator");
+      const mouse = mapRuntime.state.mouse;
+      const bearing = Math.atan2(
+        mouse.y - state.marble.y,
+        mouse.x - state.marble.x,
+      );
+      return (
+        arrow.classList.contains("show") &&
+        arrow.dataset.label === "Mouse" &&
+        Math.abs(
+          parseFloat(arrow.style.getPropertyValue("--goal-indicator-angle")) -
+            bearing,
+        ) < 0.001
+      );
+    });
+    await page.evaluate(() => {
+      const { state, mapRuntime } = window.__mapPreview;
+      const mouse = mapRuntime.state.mouse;
+      Object.assign(state.marble, {
+        x: mouse.x + 180,
+        y: mouse.y,
+        vx: 0,
+        vy: 0,
+      });
+    });
+    await page.waitForFunction(
+      () =>
+        !document.getElementById("goalIndicator").classList.contains("show"),
+    );
 
     await page.evaluate(() => {
       const app = window.__mapPreview;
@@ -365,6 +400,11 @@ window.__mapPreview = createApp({
       "entering the exit cannot skip a living mouse",
     );
     assert.match(await page.locator("#goal").textContent(), /Defeat mouse/);
+    assert.equal(
+      await page.locator("#goalIndicator.show").count(),
+      1,
+      "moving away from the mouse restores its locator",
+    );
     await page.evaluate(() => window.__mapPreview.gameController.pause());
 
     async function keyboardRunUp() {
@@ -503,6 +543,11 @@ window.__mapPreview = createApp({
       /Mouse defeated.*Reach the exit/,
     );
     assert.match(await page.locator("#goal").textContent(), /Next room/);
+    assert.equal(
+      await page.locator("#goalIndicator.show").count(),
+      0,
+      "the automatic mouse cue ends at defeat without enabling optional exit guidance",
+    );
 
     await page.evaluate(() => {
       const app = window.__mapPreview;
@@ -535,6 +580,7 @@ window.__mapPreview = createApp({
       "mouse state must not leak into the next map",
     );
     assert.equal(await page.locator(".mouseCanvas").count(), 0);
+    assert.equal(await page.locator("#goalIndicator.show").count(), 0);
     assert.deepEqual(browserErrors, []);
   } finally {
     await page.close();
