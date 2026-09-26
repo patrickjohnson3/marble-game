@@ -62,7 +62,8 @@ function harness() {
     state.marble.vx < -cockroachConfig.contactImpulse * 0.8,
     "a real physics step applies the cockroach's disruptive impulse",
   );
-  assert.equal(runtime.state.cockroach.mode, "retreat");
+  assert.equal(runtime.state.cockroach.mode, "harass");
+  assert.equal(runtime.state.cockroach.engaged, true);
   assert.equal(impacts.length, 1);
   assert.deepEqual(
     { x: state.marble.x, y: state.marble.y },
@@ -73,7 +74,7 @@ function harness() {
   assert.equal(
     impacts.length,
     1,
-    "the retreat does not repeatedly shove the marble",
+    "one physical contact does not repeatedly shove the marble",
   );
 }
 
@@ -133,6 +134,35 @@ function harness() {
   );
 }
 
+{
+  for (const dt of [0.5, 1, 2]) {
+    const { context, runtime, feedback, impacts, state } = harness();
+    Object.assign(state.marble, { x: 2200, y: 600 });
+    Object.assign(runtime.state.cockroach, {
+      x: 2254,
+      y: 600,
+      previousX: 2254,
+      previousY: 600,
+      decisionIn: 0,
+    });
+    let elapsed = 0;
+    while (elapsed < 180 && impacts.length < 2) {
+      updatePhysics(context, dt, feedback);
+      elapsed += dt;
+    }
+    assert.ok(
+      impacts.length >= 2,
+      "separate physical attacks repeat without retreat",
+    );
+    assert.ok(
+      state.marble.x < 2100,
+      "the stronger hits physically push the marble back",
+    );
+    assert.equal(runtime.state.cockroach.mode, "harass");
+    assert.equal(runtime.state.cockroach.engaged, true);
+  }
+}
+
 for (const phase of ["intro", "complete", "hazard"]) {
   const { context, runtime, state, feedback, impacts } = harness();
   if (phase === "intro") state.intro.released = false;
@@ -171,6 +201,8 @@ for (const phase of ["intro", "complete", "hazard"]) {
   assert.equal(runtime.state.cockroach.x, authored.x);
   assert.equal(runtime.state.cockroach.mode, "scurry");
   assert.equal(runtime.state.cockroach.contactLatched, false);
+  assert.equal(runtime.state.cockroach.engaged, false);
+  assert.equal(runtime.state.cockroach.attackRecoveryFrames, 0);
   assert.ok(runtime.state.cockroach.harassmentIn > 0);
   for (const variantId of [
     "living-room",

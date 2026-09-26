@@ -91,7 +91,7 @@ function testOnlyKitchenCreatesAnInvulnerableActor() {
   );
 }
 
-function testHarassmentDisruptsOnceThenDisengages() {
+function testHarassmentDisruptsOncePerContactAndStaysEngaged() {
   const { cockroach, mapState } = fixture();
   cockroach.vx = -cockroachConfig.harassSpeed;
   const { marble, result, impacts } = hit(cockroach, mapState, 0, "harass");
@@ -101,8 +101,8 @@ function testHarassmentDisruptsOnceThenDisengages() {
     marble.vx < -4,
     "the incoming insect visibly redirects a stationary marble",
   );
-  assert.equal(cockroach.mode, "retreat");
-  assert.ok(cockroach.harassmentIn >= cockroachConfig.retreatDuration);
+  assert.equal(cockroach.mode, "harass");
+  assert.equal(cockroach.engaged, true);
   const velocity = marble.vx;
   for (let i = 0; i < 500; i++) {
     assert.equal(
@@ -115,11 +115,18 @@ function testHarassmentDisruptsOnceThenDisengages() {
       "held contact must not add another impulse",
     );
   }
-  advance(cockroach, mapState, cockroachConfig.retreatDuration + 1);
-  assert.equal(cockroach.mode, "scurry");
-  assert.ok(
-    cockroach.harassmentIn > 0,
-    "a calm interval remains after retreat",
+  advance(
+    cockroach,
+    mapState,
+    cockroachConfig.harassmentDuration + 1,
+    [1],
+    marble,
+  );
+  assert.equal(cockroach.mode, "harass");
+  assert.equal(
+    cockroach.engaged,
+    true,
+    "a nearby target keeps the encounter active",
   );
 }
 
@@ -327,8 +334,8 @@ function testPursuitCatchesModerateMovingTargets() {
         "attack",
         "a pursuit starting 400 units behind must catch ordinary moving targets",
       );
-      assert.equal(cockroach.mode, "retreat");
-      assert.equal(cockroach.harassmentIn, cockroachConfig.postContactCooldown);
+      assert.equal(cockroach.mode, "harass");
+      assert.equal(cockroach.engaged, true);
       if (referenceTime !== undefined) near(elapsed, referenceTime, 2.2);
       else referenceTime = elapsed;
     }
@@ -342,8 +349,8 @@ function testKitchenRoamingDoesNotLoseThePlayer() {
       const cockroach = mapState.cockroach;
       const marble = { x: target.x, y: target.y, r: 29, vx: 0, vy: 0 };
       const hits = [];
-      // Hold a clear target still to isolate encounter frequency from player
-      // steering and marble drift. Use the real kitchen's obstacle geometry.
+      // Hold the target still to isolate acquisition and sustained-contact
+      // behavior. Actual knockback/repeated impacts are covered by physics tests.
       for (let frame = dt; frame <= 60 * 60; frame += dt) {
         marble.vx = 0;
         marble.vy = 0;
@@ -354,17 +361,13 @@ function testKitchenRoamingDoesNotLoseThePlayer() {
         )
           hits.push(frame);
       }
-      assert.ok(
-        hits.length >= 3,
-        "the insect must return repeatedly, not wander away for a minute",
-      );
+      assert.equal(hits.length, 1, "one held contact must not stack attacks");
+      assert.equal(cockroach.mode, "harass");
+      assert.equal(cockroach.engaged, true, "a nearby target never times out");
       assert.ok(
         hits[0] <= 30 * 60,
         "even a distant target is reacquired promptly",
       );
-      for (let i = 1; i < hits.length; i++) {
-        assert.ok(hits[i] - hits[i - 1] >= cockroachConfig.postContactCooldown);
-      }
     }
   }
 }
@@ -523,7 +526,7 @@ function testMovingObstacleRecovery() {
 }
 
 testOnlyKitchenCreatesAnInvulnerableActor();
-testHarassmentDisruptsOnceThenDisengages();
+testHarassmentDisruptsOncePerContactAndStaysEngaged();
 testOnlyIncomingStrongMarbleContactRepels();
 testGlancingAndSeparatingContactsDoNotRepel();
 testSweepAndWallOcclusion();

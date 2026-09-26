@@ -36,6 +36,8 @@ export function createCockroach(map) {
     knockbackX: 0,
     knockbackY: 0,
     contactLatched: false,
+    engaged: false,
+    attackRecoveryFrames: 0,
   };
 }
 
@@ -262,35 +264,59 @@ export function updateCockroach(
     tickTime += tickFrames;
     cockroach.pendingFrames = Math.max(0, cockroach.pendingFrames - tickFrames);
     cockroach.harassmentIn = Math.max(0, cockroach.harassmentIn - tickFrames);
-    if (cockroach.mode !== "scurry" && cockroach.modeFrames <= 0) {
+    cockroach.attackRecoveryFrames = Math.max(
+      0,
+      cockroach.attackRecoveryFrames - tickFrames,
+    );
+    // Distant acquisition still has a timeout. Once a hit starts an encounter,
+    // only escape distance (or a strong counter-hit) ends the pressure.
+    if (
+      cockroach.mode === "harass" &&
+      (cockroach.engaged
+        ? Math.hypot(
+            cockroach.x - targetMarble.x,
+            cockroach.y - targetMarble.y,
+          ) > cockroachConfig.escapeDistance
+        : cockroach.modeFrames <= 0)
+    ) {
+      cockroach.mode = "scurry";
+      cockroach.modeFrames = 0;
+      cockroach.engaged = false;
+      cockroach.attackRecoveryFrames = 0;
+      cockroach.decisionIn = 0;
+      cockroach.harassmentIn = cockroachConfig.postContactCooldown;
+    } else if (
+      cockroach.mode !== "scurry" &&
+      cockroach.mode !== "harass" &&
+      cockroach.modeFrames <= 0
+    ) {
       if (cockroach.mode === "stunned") {
         retreat(cockroach, targetMarble, cockroachConfig.retreatDuration);
-      } else if (cockroach.mode === "harass") {
-        // A missed chase still grants the full quiet interval. Return to food
-        // instead of fleeing hundreds of units from a player never contacted.
-        cockroach.mode = "scurry";
-        cockroach.decisionIn = 0;
-        cockroach.harassmentIn = cockroachConfig.postContactCooldown;
       } else {
         cockroach.mode = "scurry";
         cockroach.decisionIn = 0;
       }
     }
-    // Reacquire after the quiet interval even if roaming took us far away.
-    // The pursuit timeout and post-contact cooldown bound the harassment.
+    // Reacquire after the quiet interval even if foraging took us far away.
     if (
       cockroach.mode === "scurry" &&
       cockroach.harassmentIn === 0 &&
       !cockroach.contactLatched
     ) {
       cockroach.mode = "harass";
+      cockroach.engaged = false;
       cockroach.modeFrames = cockroachConfig.harassmentDuration;
       cockroach.decisionIn = 0;
     }
     if (cockroach.decisionIn <= 0)
       chooseDirection(cockroach, targetMarble, mapState, kitchenState);
+    // Brace after a strike and yield while bodies still touch. Without this,
+    // pursuit would walk through the latched marble instead of making a new hit.
+    const recovering =
+      cockroach.mode === "harass" &&
+      (cockroach.attackRecoveryFrames > 0 || cockroach.contactLatched);
     const speed =
-      cockroach.mode === "stunned"
+      cockroach.mode === "stunned" || recovering
         ? 0
         : cockroach.mode === "harass"
           ? cockroachConfig.harassSpeed
@@ -363,6 +389,8 @@ export function resolveCockroachContact(
   if (relativeIncoming <= 0) return null;
   if (marbleIncoming >= cockroachConfig.repelSpeed) {
     cockroach.mode = "stunned";
+    cockroach.engaged = false;
+    cockroach.attackRecoveryFrames = 0;
     cockroach.modeFrames = cockroachConfig.stunDuration;
     cockroach.harassmentIn = cockroachConfig.postContactCooldown;
     cockroach.knockbackX =
@@ -373,16 +401,20 @@ export function resolveCockroachContact(
     onImpact(Math.min(marbleIncoming, cockroachConfig.maxKnockbackSpeed));
     return "repel";
   }
-  if (cockroach.mode !== "harass") return null;
-  marble.vx += nx * cockroachConfig.contactImpulse;
-  marble.vy += ny * cockroachConfig.contactImpulse;
+  if (cockroach.mode !== "harass" || cockroach.attackRecoveryFrames > 0)
+    return null;
+  // Cancel a sub-repel incoming component before applying the outward kick.
+  // A medium-speed bump must visibly rebound rather than continue into the bug.
+  const impulse = cockroachConfig.contactImpulse + Math.max(0, marbleIncoming);
+  marble.vx += nx * impulse;
+  marble.vy += ny * impulse;
   const speed = Math.hypot(marble.vx, marble.vy);
   if (speed > cockroachConfig.maxDisruptedSpeed) {
     marble.vx *= cockroachConfig.maxDisruptedSpeed / speed;
     marble.vy *= cockroachConfig.maxDisruptedSpeed / speed;
   }
-  retreat(cockroach, marble, cockroachConfig.retreatDuration);
-  cockroach.harassmentIn = cockroachConfig.postContactCooldown;
+  cockroach.engaged = true;
+  cockroach.attackRecoveryFrames = cockroachConfig.attackRecoveryDuration;
   onImpact(cockroachConfig.contactImpulse);
   return "attack";
 }

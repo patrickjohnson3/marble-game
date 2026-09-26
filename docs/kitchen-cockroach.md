@@ -19,13 +19,14 @@ Speeds use the same world-units-per-60-Hz-frame convention as marble physics.
 | Body contact radius                          | 24 world units (marble radius: 29) |
 | Ordinary scurry / harassment / retreat speed | 3 / 10.5 / 5.5                     |
 | Initial quiet interval                       | 3 seconds                          |
-| Maximum pursuit                              | 6 seconds                          |
-| Post-contact or failed-pursuit cooldown      | 6 seconds                          |
+| Initial approach timeout                     | 6 seconds                          |
+| Escape / failed-approach / repel cooldown    | 6 seconds                          |
 | Retreat / strong-hit stun                    | 2 seconds / 0.4 seconds            |
 | Ordinary / attacking heading decisions       | 0.3 seconds / 0.1 seconds          |
 | Maximum interception lead                    | 1/6 second (shorter up close)      |
 | Food roaming radius / goo-edge margin        | 70 / 18 world units                |
-| Marble attack impulse / resulting speed cap  | 6 / 14                             |
+| Outward attack kick / resulting speed cap    | 12 / 14                            |
+| Strike recovery / escape distance            | 0.3 seconds / 480 world units      |
 | Incoming marble speed needed to repel        | 7                                  |
 | Maximum knockback / per-frame retention      | 12 / 0.9                           |
 | Contact rearm gap                            | 8 world units                      |
@@ -45,12 +46,17 @@ cockroach wandering indefinitely. Attacks now run faster than moderate hunting
 motion, but a marble at its normal top speed can still outrun it. More frequent
 heading decisions and distance-limited prediction improve close interception.
 
-A hit sends it into retreat, then ordinary foraging. Cooldown continues during
-retreat/stun, leaving additional quiet time afterward. A stunned cockroach first
-drifts under knockback, then retreats. Each pursuit is limited to six seconds,
-even if the player remains far away. A missed pursuit returns directly to foraging
-with the same six-second cooldown; it no longer flees hundreds of units from a
-player it never reached.
+A successful roach hit starts a sustained encounter. The insect braces for 0.3
+seconds, then pursues another contact; it does not flee or start the six-second
+cooldown after its own attack. Engagement has no timeout while the marble is
+nearby. Putting more than 480 world units (about eight marble diameters) between
+the centers ends it and resumes food/goo foraging with six seconds of quiet time.
+A distant initial approach still has a six-second limit, so simply being far away
+when it acquires a target does not immediately cancel the pursuit.
+
+A strong incoming marble hit retains priority: stun, physical knockback, retreat,
+and cooldown interrupt the encounter. Stun lasts 0.4 seconds, followed by a
+two-second retreat. This deliberate counter-hit remains an alternative to escape.
 
 Movement uses a local 120 Hz tick and interpolated marble positions. Timers and
 obstacle decisions advance by simulation time, not rendered-frame count.
@@ -69,16 +75,24 @@ also have positive relative closing speed.
 
 A fresh incoming marble component of at least 7 wins over the cockroach attack:
 it produces cockroach knockback of `min(incomingSpeed, 12)` away from the marble,
-stun and cooldown, without damage. A weaker contact during harassment instead
-adds `6 * n` to marble velocity, capped to speed 14, and immediately retreats.
+stun and cooldown, without damage. A weaker contact during harassment cancels
+any incoming normal component, then adds an outward kick of 12: `velocity += n * (12 + max(0, incomingSpeed))`, capped
+to total speed 14. A medium-speed approach therefore rebounds instead of
+continuing into the roach. Tangential motion is retained subject to that cap.
 Existing impact particles, marble squash and haptics provide contact feedback.
 No contact projects the marble's position or creates a persistent pushing wall.
 
 One latch covers the whole contact. It rearms only after the bodies separate by
-more than 8 units; neither continuous overlap nor successive physics substeps
-can repeat the effect. Weak incidental contact while scurrying does not stun it.
+more than 8 units, and the 0.3-second strike recovery must also expire before
+another attack. While bodies still touch, the pursuing insect stops its own
+locomotion instead of walking through the marble. It never blocks the marble's
+position, so lateral steering remains possible beside a wall. Neither continuous
+overlap nor successive physics substeps can repeat the effect. Strong separated
+counter-hits still work during strike recovery. Weak incidental contact while
+scurrying does not stun it.
 
-Retry recreates every timer, impulse and contact field. Intro confinement,
+Retry recreates every timer, impulse, contact, engagement and strike-recovery
+field. Intro confinement,
 hazard teleports and completed maps skip its processing. A map transition
 replaces both actor state and canvas; final-ant completion needs no cockroach
 state change.
@@ -88,13 +102,17 @@ state change.
 `npm test` includes deterministic behavior, collision, irregular-step movement,
 objective, reset, authoring and fake-canvas tests. `npm run test:browser` also
 exercises the real app's food-directed roaming, a cockroach shove,
-keyboard-driven repel, retreat, Retry and actual ant crushes followed by progression.
+repeated attacks, keyboard-driven escape/repel, Retry and actual ant crushes
+followed by progression.
 New deterministic coverage requires a pursuit starting 400 units behind a
 moderately moving marble to make contact before timeout at 30, 60, 120 Hz and
 irregular step partitions. Food tests cover staying nearby, pushed/consumed food,
-goo-edge residency, unchanged attack/retreat/stun modes and cadence equivalence. A stationary-target kitchen test
-checks repeated reacquisition at both nearby and distant positions. The browser
-attack starts outside the former acquisition range. The controlled browser attack
+goo-edge residency, unchanged attack/retreat/stun modes and cadence equivalence.
+Stationary-target kitchen tests check acquisition at nearby/distant positions,
+then sustained engagement without contact spam. Full physics tests let the marble
+move under the shove and verify repeated separate impacts. Pressure regressions
+cover the old timeout, distance escape, recovery cadence, wall contact and lateral
+escape. The browser attack starts outside the former acquisition range. The controlled browser attack
 fixtures place actors on clear floor; they do not establish hunting difficulty.
 
 Inspect it through `npm run map:render -- kitchen-floor --phone` or live play.
@@ -102,8 +120,9 @@ On a physical phone, judge whether charges are readable, the shove disrupts
 without feeling unfair, and a deliberate fast strike reliably creates breathing
 room. In particular, judge whether the faster, more accurate encounters remain fair
 while hunting ants, and whether the insect visibly belongs around food and goo;
-successful contact or a strong repel still guarantees six seconds before another
-pursuit. Test contacts near utensils
+escaping or a strong repel grants six seconds before another pursuit. Judge the
+480-unit escape threshold and 0.3-second strike spacing in particular; an insect's
+successful hit now deliberately maintains pressure. Test contacts near utensils
 and the sponge, and check that antennae/legs remain clear and animation stays
 smooth. Desktop Chrome
 checks do not establish phone sensor, haptic, GPU or compositor performance.

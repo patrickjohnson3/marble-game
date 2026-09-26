@@ -76,11 +76,11 @@ window.__cockroachApp = createApp();`,
     await page.evaluate(() => {
       const app = window.__cockroachApp;
       app.gameController.pause();
-      Object.assign(app.state.marble, { x: 1400, y: 3650, vx: 0, vy: 0 });
+      Object.assign(app.state.marble, { x: 2200, y: 600, vx: 0, vy: 0 });
       Object.assign(app.state.input.tilt, { smoothX: 0, smoothY: 0 });
       Object.assign(app.mapRuntime.state.cockroach, {
-        x: 2700,
-        y: 3650,
+        x: 3500,
+        y: 600,
         vx: 0,
         vy: 0,
         angle: Math.PI,
@@ -90,24 +90,75 @@ window.__cockroachApp = createApp();`,
         decisionIn: 0,
         pendingFrames: 0,
         contactLatched: false,
+        engaged: false,
+        attackRecoveryFrames: 0,
       });
       app.cameraController.centerOnMarble();
       app.gameController.resume();
     });
     await page.waitForFunction(
-      () => window.__cockroachApp.mapRuntime.state.cockroach.mode === "retreat",
+      () =>
+        window.__cockroachApp.mapRuntime.state.cockroach.engaged &&
+        window.__cockroachApp.mapRuntime.state.cockroach.attackRecoveryFrames >
+          0,
     );
     const attack = await page.evaluate(() => {
       const app = window.__cockroachApp;
       app.gameController.pause();
       return {
         speed: Math.hypot(app.state.marble.vx, app.state.marble.vy),
-        cooldown: app.mapRuntime.state.cockroach.harassmentIn,
+        mode: app.mapRuntime.state.cockroach.mode,
+        x: app.state.marble.x,
         squash: app.state.marble.impactSquash,
       };
     });
-    assert.ok(attack.speed > 1, "contact visibly disrupts a stationary marble");
-    assert.ok(attack.cooldown > 0 && attack.squash > 0);
+    assert.ok(attack.speed > 8, "contact delivers a strong outward kick");
+    assert.equal(attack.mode, "harass", "a hit does not trigger retreat");
+    assert.ok(attack.squash > 0);
+
+    await page.evaluate(() => window.__cockroachApp.gameController.resume());
+    const repeated = await page.evaluate(async () => {
+      const app = window.__cockroachApp;
+      let previousRecovery =
+        app.mapRuntime.state.cockroach.attackRecoveryFrames;
+      const deadline = performance.now() + 4000;
+      while (performance.now() < deadline) {
+        await new Promise(requestAnimationFrame);
+        const roach = app.mapRuntime.state.cockroach;
+        if (roach.attackRecoveryFrames > previousRecovery) {
+          return {
+            mode: roach.mode,
+            x: app.state.marble.x,
+            engaged: roach.engaged,
+          };
+        }
+        previousRecovery = roach.attackRecoveryFrames;
+      }
+      return null;
+    });
+    assert.ok(repeated, "after real separation the roach strikes again");
+    assert.equal(repeated.mode, "harass");
+    assert.equal(repeated.engaged, true);
+    assert.ok(
+      repeated.x < attack.x - 60,
+      "hits visibly push the marble backward",
+    );
+
+    // Escape through real input, then verify the encounter ends and food
+    // roaming resumes instead of immediately starting another attack.
+    await page.keyboard.down("ArrowLeft");
+    await page.waitForFunction(
+      () => {
+        const roach = window.__cockroachApp.mapRuntime.state.cockroach;
+        return (
+          !roach.engaged && roach.mode === "scurry" && roach.harassmentIn > 0
+        );
+      },
+      null,
+      { timeout: 6000 },
+    );
+    await page.keyboard.up("ArrowLeft");
+    await page.evaluate(() => window.__cockroachApp.gameController.pause());
 
     // Set a clear run-up, then let real keyboard input and collisions repel it.
     await page.evaluate((config) => {
@@ -126,6 +177,8 @@ window.__cockroachApp = createApp();`,
         harassmentIn: config.harassmentInterval,
         pendingFrames: 0,
         contactLatched: false,
+        engaged: false,
+        attackRecoveryFrames: 0,
       });
       app.gameController.resume();
     }, cockroachConfig);
@@ -177,6 +230,8 @@ window.__cockroachApp = createApp();`,
         return (
           roach.mode === "scurry" &&
           !roach.contactLatched &&
+          !roach.engaged &&
+          roach.attackRecoveryFrames === 0 &&
           roach.harassmentIn > interval - 10
         );
       }, cockroachConfig.harassmentInterval),

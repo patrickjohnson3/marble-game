@@ -95,8 +95,8 @@ export const cockroachConfig = {
   harassSpeed: 10.5,
   retreatSpeed: 5.5,
   harassmentInterval: 180,
-  harassmentDuration: 360,
-  postContactCooldown: 360,
+  harassmentDuration: 360, // Initial approach only; close encounters need escape.
+  postContactCooldown: 360, // After escape, failed approach, or a strong repel.
   retreatDuration: 120,
   stunDuration: 24,
   decisionInterval: 18,
@@ -104,7 +104,9 @@ export const cockroachConfig = {
   interceptFrames: 10,
   forageRadius: 70,
   gooEdgeMargin: 18,
-  contactImpulse: 6,
+  contactImpulse: 12,
+  attackRecoveryDuration: 18, // A brief brace, not a retreat.
+  escapeDistance: 480,
   maxDisruptedSpeed: 14,
   repelSpeed: 7,
   maxKnockbackSpeed: 12,
