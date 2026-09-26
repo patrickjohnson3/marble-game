@@ -88,14 +88,23 @@ export function createCameraController({
     if (!intro.released || gestures.isActive()) return;
 
     camera.gestureCooldown = Math.max(0, camera.gestureCooldown - dt);
-    if (camera.gestureCooldown > 0) return;
+    const width = viewport.width();
+    const height = viewport.height();
+    const marbleX = marble.x * camera.scale;
+    const marbleY = marble.y * camera.scale;
+    if (camera.gestureCooldown === 0) {
+      const followStep = 1 - Math.pow(1 - camera.followLag, dt);
+      camera.x += (width / 2 - marbleX - camera.x) * followStep;
+      camera.y += (height / 2 - marbleY - camera.y) * followStep;
+    }
 
-    const targetX = viewport.width() / 2 - marble.x * camera.scale;
-    const targetY = viewport.height() / 2 - marble.y * camera.scale;
-    const followStep = 1 - Math.pow(1 - camera.followLag, dt);
-
-    camera.x += (targetX - camera.x) * followStep;
-    camera.y += (targetY - camera.y) * followStep;
+    // Manual gestures may explore away from the marble. After release, neither
+    // the cooldown nor smooth following may let its body leave the viewport.
+    const radius = marble.r * camera.scale;
+    const marginX = Math.min(radius, width / 2);
+    const marginY = Math.min(radius, height / 2);
+    camera.x = clamp(camera.x, marginX - marbleX, width - marginX - marbleX);
+    camera.y = clamp(camera.y, marginY - marbleY, height - marginY - marbleY);
     applyTransform();
   }
 

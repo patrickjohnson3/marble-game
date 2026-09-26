@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
 import { createCameraController } from "../input/camera-controller.js";
+import { resolvedMapConfig } from "../core/map-config.js";
+import { tuning } from "../core/game-config.js";
 
 function createController({
   marble = { x: 100, y: 100, vx: 5, vy: -2 },
   viewport = { width: () => 300, height: () => 300 },
   world = { width: 1000, height: 1000 },
   intro = { released: true },
+  camera: cameraOverrides = {},
+  tuning: cameraTuning = { gestureCooldownFrames: 10 },
 } = {}) {
+  marble = { r: 29, ...marble };
   const camera = {
     x: 0,
     y: 0,
@@ -15,6 +20,7 @@ function createController({
     gestureCooldown: 0,
     minScale: 0.35,
     maxScale: 3,
+    ...cameraOverrides,
   };
   const cameraEl = { style: {} };
   const mapState = { activeMap: { world } };
@@ -24,12 +30,12 @@ function createController({
     game: { paused: false },
     intro,
     marble,
-    tuning: { gestureCooldownFrames: 10 },
+    tuning: cameraTuning,
     viewport,
     mapState,
   });
 
-  return { camera, controller, mapState };
+  return { camera, controller, mapState, marble };
 }
 
 function testFollowPreservesSmoothFollow() {
@@ -43,8 +49,10 @@ function testFollowPreservesSmoothFollow() {
   assert.equal(camera.y, -75);
 }
 
-function testFollowWaitsForGestureCooldown() {
-  const { camera, controller } = createController();
+function testFollowWaitsForGestureCooldownWhileMarbleIsVisible() {
+  const { camera, controller } = createController({
+    marble: { x: 400, y: 400 },
+  });
   camera.x = -300;
   camera.y = -300;
   camera.gestureCooldown = 10;
@@ -107,8 +115,8 @@ function testPinchKeepsMapPointAtMovingMidpoint() {
   }
 }
 
-function testStationaryGesturePausesFollowUntilReleaseCooldownExpires() {
-  const { camera, controller } = createController();
+function testStationaryGesturePausesFollowThenRestoresVisibility() {
+  const { camera, controller, marble } = createController();
   camera.x = -300;
   camera.y = -300;
   controller.onPointerDown({ pointerId: 1, clientX: 100, clientY: 100 });
@@ -119,12 +127,19 @@ function testStationaryGesturePausesFollowUntilReleaseCooldownExpires() {
   assert.equal(camera.y, -300);
 
   controller.onPointerEnd({ pointerId: 2 });
-  for (let frame = 0; frame < 9; frame++) controller.updateFollow(1);
-  assert.equal(camera.x, -300);
-  assert.equal(camera.y, -300);
   controller.updateFollow(1);
-  assert.ok(camera.x > -300);
-  assert.ok(camera.y > -300);
+  assertMarbleVisible(camera, marble, 300, 300);
+  assert.ok(
+    camera.gestureCooldown > 0,
+    "visibility does not cancel the pan cooldown",
+  );
+  const position = { x: camera.x, y: camera.y };
+  for (let frame = 0; frame < 8; frame++) controller.updateFollow(1);
+  assert.equal(camera.x, position.x);
+  assert.equal(camera.y, position.y);
+  controller.updateFollow(1);
+  assert.ok(camera.x > position.x, "smooth centering resumes after cooldown");
+  assert.ok(camera.y > position.y);
 }
 
 function testPointerReplacementAndCancellationRebaseGesture() {
@@ -239,16 +254,126 @@ function testWorldSizeCanChange() {
   assert.equal(camera.y, -830);
 }
 
+function assertMarbleVisible(camera, marble, width, height) {
+  const x = camera.x + marble.x * camera.scale;
+  const y = camera.y + marble.y * camera.scale;
+  const radius = marble.r * camera.scale;
+  assert.ok(
+    x - radius >= -1e-7 &&
+      x + radius <= width + 1e-7 &&
+      y - radius >= -1e-7 &&
+      y + radius <= height + 1e-7,
+    `marble (${x}, ${y}) radius ${radius} must fit in ${width}x${height}`,
+  );
+}
+
+function testMovingMarbleStaysVisibleAfterZoomAtEveryCadence() {
+  for (const [width, height] of [
+    [390, 844],
+    [844, 390],
+  ]) {
+    for (const [startScale, endScale] of [
+      [1, 2.5],
+      [2.5, 1],
+      [1, 0.12],
+    ]) {
+      for (const [vx, vy] of [
+        [14, 0],
+        [-14, 0],
+        [0, 14],
+        [0, -14],
+      ]) {
+        for (const dt of [0.5, 1, 2]) {
+          const { camera, controller, marble } = createController({
+            marble: { x: 2200, y: 2200, vx, vy },
+            viewport: { width: () => width, height: () => height },
+            world: { width: 4400, height: 4400 },
+            camera: { ...resolvedMapConfig.camera, scale: startScale },
+            tuning,
+          });
+          controller.centerOnMarble();
+          controller.onPointerDown({
+            pointerId: 1,
+            clientX: width / 2 - 50,
+            clientY: height / 2,
+          });
+          controller.onPointerDown({
+            pointerId: 2,
+            clientX: width / 2 + 50,
+            clientY: height / 2,
+          });
+          const halfDistance = (50 * endScale) / startScale;
+          controller.onPointerMove({
+            pointerId: 1,
+            clientX: width / 2 - halfDistance,
+            clientY: height / 2,
+          });
+          controller.onPointerMove({
+            pointerId: 2,
+            clientX: width / 2 + halfDistance,
+            clientY: height / 2,
+          });
+          controller.onPointerEnd({ pointerId: 1 });
+          controller.onPointerEnd({ pointerId: 2 });
+          assert.ok(Math.abs(camera.scale - endScale) < 1e-9);
+          for (let frame = 0; frame < 140; frame += dt) {
+            marble.x += vx * dt;
+            marble.y += vy * dt;
+            controller.updateFollow(dt);
+            assertMarbleVisible(camera, marble, width, height);
+            assert.ok(
+              camera.x >= Math.min(0, width - 4400 * camera.scale) - 1e-7,
+            );
+            assert.ok(
+              camera.y >= Math.min(0, height - 4400 * camera.scale) - 1e-7,
+            );
+          }
+          assert.equal(
+            camera.gestureCooldown,
+            0,
+            "coverage continues past cooldown into ordinary following",
+          );
+        }
+      }
+    }
+  }
+}
+
+function testVisibilityAndWorldEdgesAgree() {
+  for (const x of [29, 4400 - 29]) {
+    for (const y of [29, 4400 - 29]) {
+      const { camera, controller, marble } = createController({
+        marble: { x, y },
+        viewport: { width: () => 390, height: () => 844 },
+        world: { width: 4400, height: 4400 },
+        camera: {
+          ...resolvedMapConfig.camera,
+          scale: 2.5,
+          gestureCooldown: 90,
+          x: -4000,
+          y: -4000,
+        },
+      });
+      controller.updateFollow(1);
+      assertMarbleVisible(camera, marble, 390, 844);
+      assert.ok(camera.x <= 0 && camera.x >= 390 - 4400 * camera.scale);
+      assert.ok(camera.y <= 0 && camera.y >= 844 - 4400 * camera.scale);
+    }
+  }
+}
+
 testFollowPreservesSmoothFollow();
-testFollowWaitsForGestureCooldown();
+testFollowWaitsForGestureCooldownWhileMarbleIsVisible();
 testGesturePansCameraAndStartsCooldown();
 testPinchKeepsMapPointAtMovingMidpoint();
-testStationaryGesturePausesFollowUntilReleaseCooldownExpires();
+testStationaryGesturePausesFollowThenRestoresVisibility();
 testPointerReplacementAndCancellationRebaseGesture();
 testIntroPinchKeepsMarbleCenteredThenAllowsMapExploration();
 testCenterClampsToWorldEdges();
 testFollowClampsToFarWorldEdges();
 testSmallScaledWorldCentersInViewport();
 testWorldSizeCanChange();
+testMovingMarbleStaysVisibleAfterZoomAtEveryCadence();
+testVisibilityAndWorldEdgesAgree();
 
 console.log("Camera tests passed.");
