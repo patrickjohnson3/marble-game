@@ -194,12 +194,32 @@ function simulateMouse(dt, duration, setup = () => {}) {
 }
 
 function testMovementPausesAndKnockbackUseElapsedTime() {
-  const reference = simulateMouse(1, 270);
-  for (const dt of [0.25, 0.5, 2, 7]) {
-    const mouse = simulateMouse(dt, 270);
+  const reference = simulateMouse(1, 6000);
+  for (const dt of [0.25, 0.5, 2, 7, 13]) {
+    const mouse = simulateMouse(dt, 6000);
     near(mouse.x, reference.x);
     near(mouse.y, reference.y);
     near(mouse.gait, reference.gait);
+  }
+  const irregular = createMouse(map);
+  const partitions = [0.3, 1.7, 0.8, 2, 3.5];
+  for (let elapsed = 0, i = 0; elapsed < 6000; i++) {
+    const step = Math.min(partitions[i % partitions.length], 6000 - elapsed);
+    updateMouse(irregular, farMarble, step);
+    elapsed += step;
+  }
+  near(irregular.x, reference.x);
+  near(irregular.y, reference.y);
+  near(irregular.gait, reference.gait);
+  const startledSetup = (mouse) =>
+    updateMouse(mouse, { x: mouse.x - 100, y: mouse.y, vx: 10, vy: 0 }, 0.25);
+  const startledReference = simulateMouse(1, 150, startledSetup);
+  for (const dt of [0.25, 0.5, 2, 7]) {
+    const mouse = simulateMouse(dt, 150, startledSetup);
+    near(mouse.x, startledReference.x);
+    near(mouse.y, startledReference.y);
+    near(mouse.angle, startledReference.angle);
+    near(mouse.gait, startledReference.gait);
   }
   const boundarySetup = (mouse) => {
     mouse.x = 70;
@@ -256,12 +276,94 @@ function testLongRoamRemainsBoundedDeterministicAndKeepsMoving() {
   }
   assert.deepEqual(simulateMouse(1, 500), simulateMouse(1, 500));
   const mouse = createMouse(map);
+  const threat = { x: mouse.x - 100, y: mouse.y, vx: 10, vy: 0 };
+  const initialAngle = mouse.angle;
   const initialX = mouse.x;
-  updateMouse(mouse, { x: mouse.x - 100, y: mouse.y, vx: 10, vy: 0 }, 1);
+  updateMouse(mouse, threat, 0.25);
+  assert.ok(mouse.scurryFrames > 0, "an approaching marble provokes an escape");
   assert.ok(
-    mouse.x > initialX + mouseConfig.walkSpeed,
-    "an approaching marble provokes a scurry",
+    Math.abs(mouse.angle - initialAngle) <=
+      mouseConfig.scurryTurnRate * 0.25 + 1e-10,
+    "the startled mouse pivots rather than snapping instantly around",
   );
+  assert.equal(mouse.x, initialX, "a short startle pause precedes the dart");
+  while (mouse.pauseFrames > 0) updateMouse(mouse, threat, 0.25);
+  const runX = mouse.x;
+  updateMouse(mouse, threat, 1);
+  near(mouse.x - runX, mouseConfig.scurrySpeed);
+}
+
+function testCalmRunsVaryAndTurnDuringPausesWithoutBouncing() {
+  const mouse = createMouse(map);
+  const runs = [];
+  const pauses = [];
+  let framesMoving = 0;
+  for (let elapsed = 0; elapsed < 6000; elapsed += 0.25) {
+    const previousAngle = mouse.angle;
+    const previousTurn = mouse.turnIndex;
+    const previousPauseFrames = mouse.pauseFrames;
+    const previousX = mouse.x;
+    const previousY = mouse.y;
+    updateMouse(mouse, farMarble, 0.25);
+    if (previousTurn !== mouse.turnIndex) {
+      runs.push(mouse.turnIn);
+      pauses.push(mouse.pauseFrames);
+    }
+    assert.ok(
+      Math.abs(mouse.angle - previousAngle) <=
+        mouseConfig.turnRate * 0.25 + 1e-10,
+      "roaming never reflects/snap-turns the mouse at an invisible edge",
+    );
+    const moved = Math.hypot(mouse.x - previousX, mouse.y - previousY);
+    if (moved > 0) framesMoving++;
+    if (previousPauseFrames >= 0.25) near(moved, 0);
+    assert.ok(mouse.x >= mouse.r + mouseConfig.roamMargin - 1e-8);
+    assert.ok(mouse.x <= 1200 - mouse.r - mouseConfig.roamMargin + 1e-8);
+    assert.ok(mouse.y >= mouse.r + mouseConfig.roamMargin - 1e-8);
+    assert.ok(mouse.y <= 1200 - mouse.r - mouseConfig.roamMargin + 1e-8);
+  }
+  assert.ok(runs.length > 20, "the mouse continues choosing new runs");
+  assert.ok(framesMoving > 12000, "sniffing does not replace roaming");
+  assert.ok(new Set(runs.map((duration) => Math.round(duration))).size > 5);
+  assert.ok(new Set(pauses.map((duration) => Math.round(duration))).size > 5);
+}
+
+function testEdgeThreatChoosesAnEscapeRunInsteadOfBouncing() {
+  const edge = mouseConfig.radius + mouseConfig.roamMargin + 1;
+  for (const [x, y, angle] of [
+    [edge, 600, Math.PI],
+    [1200 - edge, 600, 0],
+    [600, edge, -Math.PI / 2],
+    [600, 1200 - edge, Math.PI / 2],
+  ]) {
+    const mouse = createMouse(map);
+    Object.assign(mouse, { x, y, angle, targetAngle: angle });
+    const threat = {
+      x: x - Math.cos(angle) * 150,
+      y: y - Math.sin(angle) * 150,
+      vx: Math.cos(angle) * 10,
+      vy: Math.sin(angle) * 10,
+    };
+    updateMouse(mouse, threat, 0.25);
+    while (mouse.pauseFrames > 0) updateMouse(mouse, farMarble, 0.25);
+    for (let i = 0; i < 30; i++) {
+      const heading = mouse.angle;
+      updateMouse(mouse, farMarble, 1);
+      near(mouse.angle, heading);
+      assert.ok(mouse.x >= edge - 1 - 1e-8 && mouse.x <= 1201 - edge + 1e-8);
+      assert.ok(mouse.y >= edge - 1 - 1e-8 && mouse.y <= 1201 - edge + 1e-8);
+    }
+    const towardMarble =
+      (mouse.x - x) * -Math.cos(angle) + (mouse.y - y) * -Math.sin(angle);
+    assert.ok(
+      Math.hypot(mouse.x - x, mouse.y - y) > 60,
+      "escape follows the roomy edge",
+    );
+    assert.ok(
+      Math.abs(towardMarble) < 1,
+      "the mouse does not flee straight back into the approaching marble",
+    );
+  }
 }
 
 function physicsContext(mouse) {
@@ -337,6 +439,8 @@ testCoincidentCentersStayFinite();
 testDefeatStopsFurtherHitsAndMovementAndRetryIsFresh();
 testMovementPausesAndKnockbackUseElapsedTime();
 testLongRoamRemainsBoundedDeterministicAndKeepsMoving();
+testCalmRunsVaryAndTurnDuringPausesWithoutBouncing();
+testEdgeThreatChoosesAnEscapeRunInsteadOfBouncing();
 testPhysicsSubstepsContactWithoutRepetition();
 testPhysicsImpactIsConsistentAcrossCadences();
 testHazardResetSkipsMouseMovementAndContact();

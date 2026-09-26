@@ -180,11 +180,88 @@ withFakeDocument(() => {
     "the visible carpet backing must match its terrain rectangle",
   );
   assert.deepEqual(calls, second.firstChild.context.calls);
-  assert.equal(
-    calls.filter((call) => call[0] === "stroke").length,
-    3,
-    "static fibers are batched instead of stroked individually",
-  );
+});
+
+withFakeDocument(() => {
+  const previousImage = globalThis.Image;
+  const images = [];
+  globalThis.Image = class {
+    constructor() {
+      this.complete = false;
+      this.naturalWidth = 0;
+      images.push(this);
+    }
+  };
+  try {
+    const container = new FakeElement();
+    const cleared = new FakeElement();
+    const differentMap = new FakeElement();
+    renderRoughPatches(container, [rug]);
+    renderRoughPatches(cleared, [rug]);
+    renderRoughPatches(differentMap, [rug]);
+    assert.equal(images.length, 1, "rug material is shared across canvases");
+    const canvas = container.firstChild;
+    assert.equal(
+      canvas.context.calls.some((call) => call[0] === "drawImage"),
+      false,
+      "an incomplete material must leave a usable backing without drawing",
+    );
+
+    // A load that finishes after a map switch must use the current contents.
+    const currentRug = { ...rug, x: rug.x + 130, w: rug.w - 200 };
+    renderRoughPatches(container, [currentRug]);
+    renderRoughPatches(cleared, []);
+    renderRoughPatches(differentMap, [{ x: 30, y: 50, w: 180, h: 140 }]);
+    const otherMapCanvas = differentMap.firstChild;
+    const otherMapDrawCount = otherMapCanvas.context.calls.length;
+    canvas.context.calls.length = 0;
+    images[0].complete = true;
+    images[0].naturalWidth = 1254;
+    images[0].onload();
+
+    assert.strictEqual(
+      container.firstChild,
+      canvas,
+      "loading reuses the canvas",
+    );
+    assert.equal(
+      cleared.children.length,
+      0,
+      "late loading cannot restore a removed rug",
+    );
+    assert.equal(
+      otherMapCanvas.context.calls.length,
+      otherMapDrawCount,
+      "late loading cannot redraw a previous map over non-shag terrain",
+    );
+    const calls = canvas.context.calls;
+    const clipRect = calls.find((call) => call[0] === "rect");
+    assert.deepEqual(
+      clipRect,
+      ["rect", currentRug.x, currentRug.y, currentRug.w, currentRug.h],
+      "the material must be clipped to the latest authoritative terrain footprint",
+    );
+    const backing = calls.find((call) => call[0] === "fillRect");
+    assert.deepEqual(backing.slice(1), clipRect.slice(1));
+    const firstImage = calls.findIndex((call) => call[0] === "drawImage");
+    assert.ok(firstImage > calls.findIndex((call) => call[0] === "clip"));
+    assert.ok(
+      calls.filter((call) => call[0] === "drawImage").length < 40,
+      "material is baked in a bounded number of map-load draws, not per fiber",
+    );
+
+    const loaded = new FakeElement();
+    renderRoughPatches(loaded, [currentRug]);
+    assert.equal(images.length, 1, "subsequent maps reuse the loaded texture");
+    assert.deepEqual(
+      loaded.firstChild.context.calls.filter((call) => call[0] === "drawImage"),
+      calls.filter((call) => call[0] === "drawImage"),
+      "material placement is deterministic across fresh and reused canvases",
+    );
+  } finally {
+    if (previousImage === undefined) delete globalThis.Image;
+    else globalThis.Image = previousImage;
+  }
 });
 
 console.log("Living room tests passed");

@@ -11,6 +11,26 @@ import { createTerrainView } from "../rendering/map-renderer.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
 
 const oldDocument = globalThis.document;
+const oldImage = globalThis.Image;
+const images = [];
+globalThis.Image = class {
+  complete = false;
+  naturalWidth = 0;
+  listeners = new Map();
+  addEventListener(type, listener) {
+    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+    this.listeners.get(type).add(listener);
+  }
+  removeEventListener(type, listener) {
+    this.listeners.get(type)?.delete(listener);
+  }
+  dispatch(type) {
+    for (const listener of this.listeners.get(type) ?? []) listener();
+  }
+  constructor() {
+    images.push(this);
+  }
+};
 globalThis.document = {
   createElement: (tag) =>
     tag === "canvas" ? new FakeCanvasElement() : new FakeElement(),
@@ -63,6 +83,41 @@ try {
     "world movement should translate the existing local canvas",
   );
 
+  assert.equal(images.length, 1, "one cached sprite serves the encounter");
+  assert.equal(
+    context.calls.some((call) => call[0] === "drawImage"),
+    false,
+  );
+  const retiredState = {};
+  appendMouseCanvas(new FakeElement(), retiredState, liveMouse());
+  const retiredContext = retiredState.mouseContext;
+  renderMouse(retiredState, null);
+  retiredContext.calls.length = 0;
+  images[0].complete = true;
+  images[0].naturalWidth = 1254;
+  images[0].dispatch("load");
+  assert.equal(
+    retiredContext.calls.length,
+    0,
+    "late loading cannot repaint a retired actor",
+  );
+  assert.equal(images[0].listeners.get("load").size, 0);
+  assert.equal(images[0].listeners.get("error").size, 0);
+  assert.ok(
+    context.calls.some(
+      (call) =>
+        call[0] === "drawImage" && call[1] === "assets/sprites/mouse.webp",
+    ),
+    "late sprite readiness redraws even a paused pose without a game tick",
+  );
+  context.calls.length = 0;
+  renderMouse(themeState, mouse);
+  assert.equal(context.calls.length, 0, "a loaded static pose is cached too");
+  mouse.pauseFrames = 10;
+  renderMouse(themeState, mouse);
+  assert.ok(context.calls.length > 0, "a stationary sniff updates its muzzle");
+  context.calls.length = 0;
+
   mouse.angle = Math.PI / 2;
   mouse.health = 50;
   renderMouse(themeState, mouse);
@@ -111,12 +166,13 @@ try {
     "defeated mouse should have no live health bar",
   );
   assert.ok(
-    context.calls.some((call) => call[0] === "ellipse"),
-    "defeat should leave a visible resting body",
+    context.calls.some((call) => call[0] === "drawImage"),
+    "defeat should leave the textured resting body",
   );
   const deadPose = context.calls.filter((call) => call[0] === "transform");
   assert.equal(deadPose.length, 2, "defeat has a distinct collapsed body pose");
   context.calls.length = 0;
+  mouse.pauseFrames -= 1;
   renderMouse(themeState, mouse);
   assert.equal(context.calls.length, 0, "defeated pose should stay still");
   renderMouse(themeState, null);
@@ -220,7 +276,14 @@ try {
     false,
   );
   assert.equal(label, "", "other maps retain their existing goal presentation");
+  assert.equal(
+    images.length,
+    1,
+    "Retry reuses the decoded image without duplicating asset state",
+  );
 } finally {
+  if (oldImage === undefined) delete globalThis.Image;
+  else globalThis.Image = oldImage;
   if (oldDocument === undefined) delete globalThis.document;
   else globalThis.document = oldDocument;
 }

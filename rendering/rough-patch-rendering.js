@@ -1,5 +1,22 @@
 import { drawRoundedRect, renderPatchCanvas } from "./wall-rendering.js";
 
+const shagTextureSize = 560;
+const pendingShagRenders = new Map();
+let shagTexture = null;
+
+function getShagTexture() {
+  if (shagTexture || typeof globalThis.Image !== "function") return shagTexture;
+  shagTexture = new globalThis.Image();
+  shagTexture.decoding = "async";
+  shagTexture.onload = () => {
+    for (const render of pendingShagRenders.values()) render();
+    pendingShagRenders.clear();
+  };
+  shagTexture.onerror = () => pendingShagRenders.clear();
+  shagTexture.src = "assets/sprites/shag.webp";
+  return shagTexture;
+}
+
 function patchDotOffset(x, y, salt = 0) {
   return (
     (Math.imul(Math.round(x) + salt, 31) +
@@ -135,45 +152,32 @@ function drawShagPatch(context, patch) {
   context.beginPath();
   context.rect(patch.x, patch.y, patch.w, patch.h);
   context.clip();
-  context.strokeStyle = "#51695d66";
-  context.lineWidth = 7;
-  context.strokeRect(patch.x + 7, patch.y + 7, patch.w - 14, patch.h - 14);
-  context.lineWidth = 1.7;
-  context.lineCap = "round";
-  // Fixed fibers are batched into three paths and baked only at map load.
-  const fiberColors = ["#d8dfce6b", "#4c685a3d", "#c0cbb766"];
-  for (let layer = 0; layer < fiberColors.length; layer += 1) {
-    context.strokeStyle = fiberColors[layer];
-    context.beginPath();
+  if (shagTexture?.complete && shagTexture.naturalWidth > 0) {
+    // Bake the material into the existing canvas once; texture phase stays in
+    // world coordinates even if a map changes its patch bounds.
+    context.globalAlpha = 0.58;
     for (
-      let row = 0, y = patch.y + 14;
-      y < patch.y + patch.h - 12;
-      row += 1, y += 18
+      let y = Math.floor(patch.y / shagTextureSize) * shagTextureSize;
+      y < patch.y + patch.h;
+      y += shagTextureSize
     ) {
       for (
-        let column = 0, x = patch.x + 14;
-        x < patch.x + patch.w - 12;
-        column += 1, x += 18
+        let x = Math.floor(patch.x / shagTextureSize) * shagTextureSize;
+        x < patch.x + patch.w;
+        x += shagTextureSize
       ) {
-        const seed =
-          Math.imul(column + 1, 374761393) ^ Math.imul(row + 1, 668265263);
-        const variation = Math.imul(seed ^ (seed >>> 13), 1274126177) >>> 0;
-        if (variation % 3 !== layer) continue;
-        const startX = x + ((variation >>> 2) % 15) - 7;
-        const startY = y + ((variation >>> 6) % 15) - 7;
-        const length = 6 + ((variation >>> 10) % 10);
-        const lean = ((variation >>> 14) % 13) - 6;
-        context.moveTo(startX, startY);
-        context.quadraticCurveTo(
-          startX + lean * 0.3,
-          startY - length * 0.7,
-          startX + lean,
-          startY - length,
-        );
+        context.drawImage(shagTexture, x, y, shagTextureSize, shagTextureSize);
       }
     }
-    context.stroke();
+    context.globalAlpha = 1;
   }
+  // The bound edge reads as fabric rather than another painted terrain outline.
+  context.strokeStyle = "#46594f55";
+  context.lineWidth = 12;
+  context.strokeRect(patch.x + 6, patch.y + 6, patch.w - 12, patch.h - 12);
+  context.strokeStyle = "#c2cbbb66";
+  context.lineWidth = 3;
+  context.strokeRect(patch.x + 10, patch.y + 10, patch.w - 20, patch.h - 20);
   context.restore();
 }
 
@@ -182,6 +186,13 @@ export function renderRoughPatches(
   roughPatches,
   { bounds, padding = 0 } = {},
 ) {
+  const texture =
+    Array.isArray(roughPatches) &&
+    roughPatches.some((patch) => patch.material === "shag")
+      ? getShagTexture()
+      : null;
+  // Only the latest contents of this container may repaint when loading ends.
+  pendingShagRenders.delete(container);
   renderPatchCanvas(container, roughPatches, {
     bounds,
     className: "roughPatchCanvas",
@@ -189,4 +200,9 @@ export function renderRoughPatches(
     drawPatch: drawRoughPatch,
     padding,
   });
+  if (texture && !texture.complete) {
+    pendingShagRenders.set(container, () =>
+      renderRoughPatches(container, roughPatches, { bounds, padding }),
+    );
+  }
 }

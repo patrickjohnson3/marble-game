@@ -65,8 +65,8 @@ The existing moving/absorbing sponge belongs to `kitchen-floor` and targets its
 first water patch; the breakfast kitchen's sponge remains a static fixture.
 That specialized behavior stays in `core/kitchen-dynamics.js`.
 
-Shag expands to `roughPatch` with `material: "shag"`: static pile art, existing
-rough-terrain movement. It uses `roughPatchDragRetention` in
+Shag expands to `roughPatch` with `material: "shag"`: static textured pile art
+and existing rough-terrain movement. It uses `roughPatchDragRetention` in
 `core/game-config.js`; this pass does not retune that constant or the integrator.
 
 ## Objectives
@@ -101,11 +101,16 @@ hit does less damage and mouse motion cannot damage itself against a stationary
 marble. Contact stays latched until the bodies separate by more than 8 units.
 All tuning is in `mouseConfig` in `core/game-config.js`.
 
-The mouse walks, pauses, and scurries away from an approaching marble within its
-named roaming rectangle, spanning wood and shag. Validation reserves clear
-approaches around this rectangle and checks sampled reachability from spawn;
+The mouse uses deterministic varied runs and sniff/pivot pauses, then briefly
+startles before scurrying away from an approaching marble. Runs turn inward
+before reaching the edge of its named roaming rectangle, spanning wood and shag.
+Validation reserves clear approaches around this rectangle and checks sampled
+reachability from spawn;
 this deliberately avoids runtime pathfinding. Do not place furniture or hazards
 in that region. The rectangle is an AI patrol limit, not marble collision geometry.
+
+The fur and rug material use shared image assets; see
+[asset notes](living-room-art.md) for their source prompts and rendering limits.
 Health, motion, and the hit latch reset together on Retry. A plain `reach` objective
 without `defeat` retains its original behavior.
 

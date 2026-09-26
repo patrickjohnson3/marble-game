@@ -27,12 +27,13 @@ export function createMouse(map) {
     vx: 0,
     vy: 0,
     angle: -Math.PI / 2,
+    targetAngle: -Math.PI / 2,
     health: mouseConfig.maxHealth,
     maxHealth: mouseConfig.maxHealth,
     hitFlash: 0,
     gait: 0,
     contactLatched: false,
-    turnIn: mouseConfig.turnInterval,
+    turnIn: 0,
     pauseFrames: 0,
     scurryFrames: 0,
     turnIndex: 0,
@@ -52,6 +53,55 @@ export function mouseImpactDamage(normalSpeed) {
   );
 }
 
+// Pick runs inside the clear encounter area. The margin is a behavioral cue,
+// not another collider: a knocked mouse still has the full region available.
+function planMouseRun(mouse, angle, duration, speed) {
+  const region = mouse.roamRegion;
+  const margin = Math.min(
+    mouseConfig.roamMargin,
+    (region.w - mouse.r * 2) * 0.2,
+    (region.h - mouse.r * 2) * 0.2,
+  );
+  const left = region.x + mouse.r + margin;
+  const right = region.x + region.w - mouse.r - margin;
+  const top = region.y + mouse.r + margin;
+  const bottom = region.y + region.h - mouse.r - margin;
+  const desiredAngle = angle;
+  let space = 0;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    space = Math.min(
+      dx > 0
+        ? (right - mouse.x) / dx
+        : dx < 0
+          ? (left - mouse.x) / dx
+          : Infinity,
+      dy > 0
+        ? (bottom - mouse.y) / dy
+        : dy < 0
+          ? (top - mouse.y) / dy
+          : Infinity,
+    );
+    if (space >= speed * duration * 0.5 || attempt === 3) break;
+    // Try a side-step before turning inward, so an escape near an edge does
+    // not automatically send the mouse straight back toward the marble.
+    angle =
+      attempt === 0
+        ? desiredAngle + Math.PI / 2
+        : attempt === 1
+          ? desiredAngle - Math.PI / 2
+          : Math.atan2(
+              region.y + region.h / 2 - mouse.y,
+              region.x + region.w / 2 - mouse.x,
+            );
+  }
+  mouse.targetAngle =
+    mouse.angle +
+    Math.atan2(Math.sin(angle - mouse.angle), Math.cos(angle - mouse.angle));
+  return Math.min(duration, Math.max(0, space) / speed);
+}
+
 export function updateMouse(mouse, marble, dt) {
   if (!mouse || mouse.health <= 0 || !Number.isFinite(dt) || dt <= 0) return;
   mouse.previousX = mouse.x;
@@ -66,32 +116,59 @@ export function updateMouse(mouse, marble, dt) {
     threatDistance < mouseConfig.threatDistance &&
     marble.vx * fromMarbleX + marble.vy * fromMarbleY > 0
   ) {
-    mouse.angle = Math.atan2(fromMarbleY, fromMarbleX);
-    mouse.scurryFrames = mouseConfig.turnInterval;
-    mouse.turnIn = mouseConfig.turnInterval;
-    mouse.pauseFrames = 0;
+    mouse.scurryFrames = planMouseRun(
+      mouse,
+      Math.atan2(fromMarbleY, fromMarbleX),
+      mouseConfig.turnInterval,
+      mouseConfig.scurrySpeed,
+    );
+    mouse.turnIn = 0;
+    // Briefly orient before darting. A fast marble can catch this reaction;
+    // the mouse never teleports its heading through a half turn.
+    mouse.pauseFrames = Math.max(
+      mouseConfig.startlePause,
+      Math.abs(mouse.targetAngle - mouse.angle) / mouseConfig.scurryTurnRate,
+    );
   }
 
-  // Split only at behavior transitions so a pause/turn does not cost a different
-  // amount of walking time at different rendering/physics cadences.
+  // Split at behavior transitions, retaining the same walking/paused time for
+  // different physics partitions. Turns happen during the pause, not as snaps
+  // halfway through a run. Decision variation is deterministic and has no
+  // per-frame randomness or synchronized two-angle patrol pattern.
   let remaining = dt;
   while (remaining > 0) {
     const scurrying = mouse.scurryFrames > 0;
     if (!scurrying && mouse.pauseFrames === 0 && mouse.turnIn <= 0) {
       mouse.turnIndex += 1;
-      mouse.angle += mouse.turnIndex % 2 ? Math.PI / 3 : -Math.PI / 2;
-      mouse.turnIn = mouseConfig.turnInterval;
-      mouse.pauseFrames = mouseConfig.pauseDuration;
+      const variation = Math.sin(mouse.turnIndex * 2.4);
+      mouse.turnIn = planMouseRun(
+        mouse,
+        mouse.angle + mouseConfig.turnAngle * variation,
+        mouseConfig.turnInterval *
+          (1 +
+            mouseConfig.runDurationVariation * Math.sin(mouse.turnIndex * 1.7)),
+        mouseConfig.walkSpeed,
+      );
+      mouse.pauseFrames = Math.max(
+        mouseConfig.pauseDuration *
+          (1 + mouseConfig.pauseDurationVariation * variation),
+        Math.abs(mouse.targetAngle - mouse.angle) / mouseConfig.turnRate,
+      );
     }
-    const paused = !scurrying && mouse.pauseFrames > 0;
+    const paused = mouse.pauseFrames > 0;
     const step = Math.min(
       remaining,
-      scurrying
-        ? mouse.scurryFrames
-        : paused
-          ? mouse.pauseFrames
+      paused
+        ? mouse.pauseFrames
+        : scurrying
+          ? mouse.scurryFrames
           : mouse.turnIn,
     );
+    if (paused) {
+      const turn =
+        (scurrying ? mouseConfig.scurryTurnRate : mouseConfig.turnRate) * step;
+      mouse.angle += clamp(mouse.targetAngle - mouse.angle, -turn, turn);
+    }
     const speed = paused
       ? 0
       : scurrying
@@ -115,23 +192,25 @@ export function updateMouse(mouse, marble, dt) {
     const bottom = region.y + region.h - mouse.r;
     let nextX = mouse.x + dx;
     let nextY = mouse.y + dy;
-    // Reflect overshoot instead of discarding a cadence-dependent part of a
-    // walking step. Roaming edges turn movement; they are not physical walls.
+    // Planned runs stop before these bounds. Preserve reflected overshoot for
+    // knockback so an impulse cannot strand the mouse outside reachable space.
     while (nextX < left || nextX > right) {
       nextX = nextX < left ? 2 * left - nextX : 2 * right - nextX;
       mouse.angle = Math.PI - mouse.angle;
+      mouse.targetAngle = Math.PI - mouse.targetAngle;
       mouse.vx = -mouse.vx;
     }
     while (nextY < top || nextY > bottom) {
       nextY = nextY < top ? 2 * top - nextY : 2 * bottom - nextY;
       mouse.angle = -mouse.angle;
+      mouse.targetAngle = -mouse.targetAngle;
       mouse.vy = -mouse.vy;
     }
     mouse.gait += Math.hypot(dx, dy);
     mouse.x = nextX;
     mouse.y = nextY;
-    if (scurrying) mouse.scurryFrames -= step;
-    else if (paused) mouse.pauseFrames -= step;
+    if (paused) mouse.pauseFrames -= step;
+    else if (scurrying) mouse.scurryFrames -= step;
     else mouse.turnIn -= step;
     remaining -= step;
   }
