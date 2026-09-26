@@ -5,11 +5,13 @@ export const livingRoomMap = {
   id: "living-room",
   name: "living room",
   theme: "livingRoom",
-  objectSummary: "objects: sofa, chest table, bookcase, shag rug, toy blocks.",
+  objectSummary:
+    "objects: sofa, chest table, bookcase, shag rug, toy blocks, mouse.",
   difficulty: 2,
   world: { width: 4400, height: 4400 },
   spawn: { x: 680, y: 3740, r: 29 },
-  objective: { type: "reach", region: "exit-door" },
+  objective: { type: "reach", region: "exit-door", defeat: "mouse" },
+  mouse: { x: 2160, y: 3360, roamRegion: "mouse-run" },
   regions: [
     {
       id: "exit-door",
@@ -19,6 +21,8 @@ export const livingRoomMap = {
       w: 340,
       h: 480,
     },
+    // Clear encounter space spans shag and wood; no hidden collision walls.
+    { id: "mouse-run", x: 1750, y: 2550, w: 900, h: 1350 },
   ],
   fixtures: [
     {
@@ -90,6 +94,7 @@ export const livingRoomMap = {
   clusters: [{ kind: "readingPile", x: 2920, y: 1160, angle: 0.2 }],
   scenery: [{ kind: "sock", x: 760, y: 2990, w: 220, h: 100, angle: -0.4 }],
   views: [
+    { id: "mouse", x: 2160, y: 3360 },
     { id: "entry-toys", x: 900, y: 3620 },
     { id: "rug-route", x: 1420, y: 2680 },
     { id: "coffee-table", x: 2240, y: 1860 },

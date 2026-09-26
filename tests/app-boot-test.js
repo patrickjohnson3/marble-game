@@ -107,7 +107,7 @@ try {
   );
   assert.equal(
     document.getElementById("goalHelp").textContent,
-    "Kill all kitchen ants, reach the living-room exit, or hold inside the green goal. Your current objective is shown above.",
+    "Kill all kitchen ants, defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above.",
   );
   assert.equal(
     document.getElementById("resetSpeedSetting").textContent,
@@ -151,7 +151,7 @@ try {
   assert.equal(livingApp.kitchenDynamics.state.ants.length, 0);
   assert.equal(
     livingDocument.getElementById("objectiveStatus").textContent,
-    "Reach the exit doorway",
+    "Defeat the mouse · Roll fast to hit harder",
   );
   await livingApp.gameController.start();
   assert.equal(

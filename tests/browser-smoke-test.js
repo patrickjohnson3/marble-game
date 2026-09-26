@@ -287,6 +287,186 @@ async function testShortViewportSettingsRemainReachable(browser, baseUrl) {
   }
 }
 
+async function testLivingRoomMouseEncounter(browser, baseUrl) {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    serviceWorkers: "block",
+  });
+  const browserErrors = collectBrowserErrors(page);
+  try {
+    await page.route("**/boot.js*", (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: `import { createApp } from "./app.js";
+import { baseMapConfig } from "./core/map-config.js";
+import { resolveMapVariantConfig } from "./core/map-variants.js";
+window.__mapPreview = createApp({
+  initialMap: resolveMapVariantConfig(baseMapConfig, "living-room"),
+});`,
+      }),
+    );
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.locator("#start").click();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(
+      () => window.__mapPreview.state.intro.released,
+      null,
+      { timeout: timing.introReleaseDelayMs + 5000 },
+    );
+    assert.equal(await page.locator(".mouseCanvas").count(), 1);
+    assert.match(
+      await page.locator("#objectiveStatus").textContent(),
+      /Defeat the mouse/,
+    );
+
+    await page.evaluate(() => {
+      const app = window.__mapPreview;
+      const exit = app.mapRuntime.state.activeMap.regions.find(
+        (region) => region.id === "exit-door",
+      );
+      Object.assign(app.state.marble, {
+        x: exit.x + exit.w / 2,
+        y: exit.y + exit.h / 2,
+        vx: 0,
+        vy: 0,
+      });
+    });
+    await page.waitForTimeout(150);
+    assert.equal(
+      await page.evaluate(
+        () => window.__mapPreview.mapRuntime.state.activeMap.variantId,
+      ),
+      "living-room",
+      "entering the exit cannot skip a living mouse",
+    );
+    assert.match(await page.locator("#goal").textContent(), /Defeat mouse/);
+    await page.evaluate(() => window.__mapPreview.gameController.pause());
+
+    async function keyboardRunUp() {
+      // Position the actors on clear wood to repeat an attack without turning
+      // this smoke test into an autonomous hunter. Velocity starts at zero;
+      // real keyboard input, AI, physics and collision code deliver each hit.
+      const healthBefore = await page.evaluate(() => {
+        const app = window.__mapPreview;
+        const mouse = app.mapRuntime.state.mouse;
+        Object.assign(mouse, { x: 2300, y: 3650, vx: 0, vy: 0 });
+        Object.assign(app.state.marble, {
+          x: 2120,
+          y: 3650,
+          vx: 0,
+          vy: 0,
+        });
+        app.cameraController.centerOnMarble();
+        app.gameController.resume();
+        return mouse.health;
+      });
+      await page.keyboard.down("ArrowRight");
+      await page.waitForFunction(
+        (before) => window.__mapPreview.mapRuntime.state.mouse.health < before,
+        healthBefore,
+        { timeout: 3000 },
+      );
+      await page.keyboard.up("ArrowRight");
+      return page.evaluate(() => {
+        const app = window.__mapPreview;
+        app.gameController.pause();
+        const mouse = app.mapRuntime.state.mouse;
+        return { health: mouse.health, maxHealth: mouse.maxHealth };
+      });
+    }
+
+    const firstHit = await keyboardRunUp();
+    assert.ok(firstHit.health > 0 && firstHit.health < firstHit.maxHealth);
+    await page.evaluate(() => {
+      window.__previousMouse = window.__mapPreview.mapRuntime.state.mouse;
+      window.__mapPreview.gameController.resume();
+    });
+    await page.locator("#settingsToggle").click();
+    await page.locator("#retryMap").click();
+    assert.deepEqual(
+      await page.evaluate(() => {
+        const app = window.__mapPreview;
+        app.gameController.pause();
+        const mouse = app.mapRuntime.state.mouse;
+        return {
+          fresh: mouse !== window.__previousMouse,
+          fullHealth: mouse.health === mouse.maxHealth,
+          contactLatched: mouse.contactLatched,
+          completed: app.mapRuntime.state.goalCompleted,
+        };
+      }),
+      {
+        fresh: true,
+        fullHealth: true,
+        contactLatched: false,
+        completed: false,
+      },
+      "Retry must restore a fresh enemy and locked objective",
+    );
+
+    let health = firstHit.maxHealth;
+    for (let hit = 0; hit < 8 && health > 0; hit++) {
+      ({ health } = await keyboardRunUp());
+    }
+    assert.equal(health, 0, "separated keyboard run-ups must defeat the mouse");
+    const defeated = await page.evaluate(() => {
+      const app = window.__mapPreview;
+      const mouse = app.mapRuntime.state.mouse;
+      app.gameController.resume();
+      return { x: mouse.x, y: mouse.y, gait: mouse.gait };
+    });
+    await page.waitForTimeout(250);
+    assert.deepEqual(
+      await page.evaluate(() => {
+        const mouse = window.__mapPreview.mapRuntime.state.mouse;
+        return { x: mouse.x, y: mouse.y, gait: mouse.gait };
+      }),
+      defeated,
+      "defeated mouse must stop walking and animating",
+    );
+    assert.match(
+      await page.locator("#objectiveStatus").textContent(),
+      /Mouse defeated.*Reach the exit/,
+    );
+    assert.match(await page.locator("#goal").textContent(), /Next room/);
+
+    await page.evaluate(() => {
+      const app = window.__mapPreview;
+      window.__mouseAdvanceCalls = 0;
+      const advance = app.mapProgression.advanceToNextMap;
+      app.mapProgression.advanceToNextMap = () => {
+        window.__mouseAdvanceCalls++;
+        return advance();
+      };
+      const exit = app.mapRuntime.state.activeMap.regions.find(
+        (region) => region.id === "exit-door",
+      );
+      Object.assign(app.state.marble, {
+        x: exit.x + exit.w / 2,
+        y: exit.y + exit.h / 2,
+        vx: 0,
+        vy: 0,
+      });
+    });
+    await page.waitForFunction(
+      () =>
+        window.__mapPreview.mapRuntime.state.activeMap.variantId ===
+        "parking-lot",
+    );
+    await page.waitForTimeout(150);
+    assert.equal(await page.evaluate(() => window.__mouseAdvanceCalls), 1);
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.mapRuntime.state.mouse),
+      null,
+      "mouse state must not leak into the next map",
+    );
+    assert.equal(await page.locator(".mouseCanvas").count(), 0);
+    assert.deepEqual(browserErrors, []);
+  } finally {
+    await page.close();
+  }
+}
+
 async function testPreviewRejectsCompletedMap(browser, baseUrl) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const browserErrors = collectBrowserErrors(page);
@@ -307,6 +487,11 @@ window.__mapPreview = createApp({ initialMap });`,
     );
     await page.goto(baseUrl, { waitUntil: "networkidle" });
     await page.locator("#start").click();
+    // Start resets the map; defeat this fixture's mouse after that reset so
+    // startup still reaches the exit and exercises stale capture refusal.
+    await page.evaluate(() => {
+      window.__mapPreview.mapRuntime.state.mouse.health = 0;
+    });
     await page.keyboard.press("ArrowRight");
     await page.waitForFunction(
       () =>
@@ -484,6 +669,7 @@ try {
     browser,
     `http://127.0.0.1:${port}/`,
   );
+  await testLivingRoomMouseEncounter(browser, `http://127.0.0.1:${port}/`);
   await testPreviewRejectsCompletedMap(browser, `http://127.0.0.1:${port}/`);
   await testMapSwitching(browser, `http://127.0.0.1:${port}/`);
   console.log("Browser smoke test passed.");

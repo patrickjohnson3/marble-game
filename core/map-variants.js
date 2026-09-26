@@ -3,6 +3,7 @@ export function cloneMapComposition(map) {
   const fields = {};
   for (const key of [
     "objective",
+    "mouse",
     "regions",
     "clusters",
     "scenery",
@@ -42,6 +43,7 @@ function resolveMapConfig(config, variant) {
     ...config,
     ...cloneMapComposition(variant),
     objective: variant.objective ? { ...variant.objective } : undefined,
+    mouse: variant.mouse ? { ...variant.mouse } : undefined,
     regions: variant.regions?.map((region) => ({ ...region })),
     variantId: variant.id,
     name: variant.name,

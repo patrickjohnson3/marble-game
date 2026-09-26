@@ -1,3 +1,4 @@
+import { createMouse } from "./mouse.js";
 import { cloneMapComposition } from "./map-variants.js";
 import {
   KITCHEN_FIXTURES,
@@ -73,6 +74,7 @@ export function createResolvedMapState(
     obstacles,
     obstacleBounds: rectBounds(obstacles),
     terrainByType,
+    mouse: createMouse(activeMap),
   };
 }
 
@@ -85,6 +87,7 @@ export function createMapRuntime({
     obstacles: [],
     obstacleBounds: null,
     terrainByType: {},
+    mouse: null,
     goalHoldMs: 0,
     goalCompleted: false,
   };
@@ -102,6 +105,7 @@ export function createMapRuntime({
     state.obstacles = derived.obstacles;
     state.obstacleBounds = derived.obstacleBounds;
     state.terrainByType = derived.terrainByType;
+    state.mouse = derived.mouse;
     resetGoalProgress();
     return state;
   }

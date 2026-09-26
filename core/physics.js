@@ -4,6 +4,7 @@ import {
   MAP_ELEMENT_TYPES,
 } from "./map-elements.js";
 import { handleWallCollisions, marbleOverRect } from "./physics-collisions.js";
+import { resolveMouseContact, updateMouse } from "./mouse.js";
 
 const defaultOverspeedRetention = 0;
 const defaultSettleSpeed = 0;
@@ -415,6 +416,19 @@ function physicsStep(context, dt, feedback) {
   const currentSurfaceType = surfaceType(hits);
   feedback.onTerrain?.(currentSurfaceType);
   applySurfaceDrag(context, hits, factors);
+  const mouse = context.mapState.mouse;
+  // Hazard teleports have already invalidated their sweep and returned above.
+  // The authored roaming region is obstacle-free; contact uses incoming velocity
+  // here, before static wall responses can reflect it away from the impact.
+  if (context.intro.released && mouse?.health > 0) {
+    updateMouse(mouse, context.marble, dt);
+    resolveMouseContact(
+      mouse,
+      context.marble,
+      physicsScratch.previousTerrainMarble,
+      feedback.onImpact,
+    );
+  }
   handleWallCollisions(
     context,
     feedback.onImpact,

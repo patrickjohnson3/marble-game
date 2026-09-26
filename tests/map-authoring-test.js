@@ -392,4 +392,57 @@ assert.deepEqual(
   expandMap(kitchenFloorMap).clusters.at(-1).ants,
 );
 
+rejectsEdit(
+  livingRoomMap,
+  (map) => {
+    delete map.mouse;
+  },
+  "requires an authored mouse",
+);
+rejectsEdit(
+  livingRoomMap,
+  (map) => {
+    map.objective.defeat = "sofa";
+  },
+  "only defeat",
+);
+rejectsEdit(
+  livingRoomMap,
+  (map) => {
+    map.mouse.roamRegion = "missing";
+  },
+  "declared roamRegion",
+);
+rejectsEdit(
+  livingRoomMap,
+  (map) => {
+    map.mouse.x = 100;
+  },
+  "mouse spawn",
+);
+rejectsEdit(
+  livingRoomMap,
+  (map) => {
+    map.fixtures.push({ kind: "toyBlock", x: 2200, y: 3400, w: 100, h: 100 });
+  },
+  "clear approaches",
+);
+rejectsEdit(
+  livingRoomMap,
+  (map) => {
+    map.surfaces.push({ kind: "hazard", x: 2200, y: 3400, w: 100, h: 100 });
+  },
+  "clear approaches",
+);
+
+rejectsEdit(
+  livingRoomMap,
+  (map) => {
+    // Outside the patrol rectangle but too close for the marble to contact the
+    // mouse's left side without being forced into the toy by the response.
+    map.fixtures.push({ kind: "toyBlock", x: 1700, y: 3400, w: 20, h: 100 });
+  },
+  "clear approaches",
+);
+
 console.log("Map authoring tests passed.");

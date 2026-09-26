@@ -37,10 +37,19 @@ export function livingAntCount(ants) {
   return remaining;
 }
 
-export function objectiveStatusText(map, remaining) {
+export function mouseDefeatRequired(map, mouse) {
+  return map.objective?.defeat === "mouse" && !(mouse?.health <= 0);
+}
+
+export function objectiveStatusText(map, remaining, mouse) {
   if (map.objective?.type === "eliminate") {
     return "Kill all ants · " + remaining + " left";
   }
-  if (map.objective?.type === "reach") return "Reach the exit doorway";
+  if (mouseDefeatRequired(map, mouse))
+    return "Defeat the mouse · Roll fast to hit harder";
+  if (map.objective?.type === "reach")
+    return map.objective.defeat === "mouse"
+      ? "Mouse defeated · Reach the exit doorway"
+      : "Reach the exit doorway";
   return "Hold inside the green goal";
 }

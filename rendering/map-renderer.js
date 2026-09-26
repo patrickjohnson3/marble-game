@@ -1,4 +1,7 @@
-import { getObjectiveRegion } from "../core/map-objectives.js";
+import {
+  getObjectiveRegion,
+  mouseDefeatRequired,
+} from "../core/map-objectives.js";
 
 export function createTerrainView({
   mapThemeEl,
@@ -30,6 +33,7 @@ export function createTerrainView({
       dynamicsState,
       overlayContainer: mapThemeOverlayEl,
       mapConfig: mapState.activeMap,
+      mouse: mapState.mouse,
       themeState,
       world: mapState.activeMap.world,
     });
@@ -93,7 +97,7 @@ export function createTerrainView({
     goalEl.hidden = !goal;
     const reach = mapState.activeMap.objective?.type === "reach";
     goalEl.classList.toggle("destination", reach);
-    goalEl.textContent = reach ? (goal.label ?? "Exit") : "";
+    updateGoalLabel();
     if (!goal) return;
 
     goalEl.style.left = (reach ? goal.x : goal.x - goal.r) + "px";
@@ -101,6 +105,18 @@ export function createTerrainView({
     goalEl.style.width = (reach ? goal.w : goal.r * 2) + "px";
     goalEl.style.height = (reach ? goal.h : goal.r * 2) + "px";
     updateGoalProgress(0);
+  }
+
+  function updateGoalLabel() {
+    const map = mapState.activeMap;
+    const reach = map.objective?.type === "reach";
+    const locked = mouseDefeatRequired(map, mapState.mouse);
+    const text = reach
+      ? locked
+        ? "Defeat mouse to exit"
+        : (getObjectiveRegion(map).label ?? "Exit")
+      : "";
+    if (goalEl.textContent !== text) goalEl.textContent = text;
   }
 
   function renderTerrain() {
@@ -124,8 +140,10 @@ export function createTerrainView({
     drawMapThemeDynamics({
       dynamicsState,
       mapConfig: mapState.activeMap,
+      mouse: mapState.mouse,
       themeState,
     });
+    updateGoalLabel();
   }
 
   return {

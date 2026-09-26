@@ -3,6 +3,7 @@ import {
   getObjectiveRegion,
   livingAntCount,
   marbleInsideRegion,
+  mouseDefeatRequired,
   objectiveStatusText,
 } from "./map-objectives.js";
 
@@ -47,7 +48,7 @@ export function createGoalController({
     ui.setObjectiveStatus?.(
       mapState.goalCompleted
         ? "Map complete"
-        : objectiveStatusText(mapState.activeMap, remaining),
+        : objectiveStatusText(mapState.activeMap, remaining, mapState.mouse),
     );
     return remaining;
   }
@@ -84,7 +85,12 @@ export function createGoalController({
     const region = getObjectiveRegion(mapState.activeMap);
     if (objective?.type === "reach") {
       goalHapticActive = false;
-      if (intro.released && marbleInsideRegion(marble, region)) complete();
+      if (
+        intro.released &&
+        !mouseDefeatRequired(mapState.activeMap, mapState.mouse) &&
+        marbleInsideRegion(marble, region)
+      )
+        complete();
       return;
     }
 

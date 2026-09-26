@@ -53,6 +53,25 @@ export const physicsConfig = {
   collisionPositionSlop: 0,
 };
 
+// Mouse motion and timers use the same 60 Hz frame units as marble physics.
+export const mouseConfig = {
+  radius: 44,
+  maxHealth: 100,
+  minDamageSpeed: 3,
+  fullDamageSpeed: 14,
+  maxDamage: 30,
+  separationMargin: 8,
+  walkSpeed: 1.2,
+  scurrySpeed: 3,
+  threatDistance: 220,
+  turnInterval: 90,
+  pauseDuration: 18,
+  knockbackRetention: 0.9,
+  knockbackScale: 0.65,
+  hitFlashDecay: 0.055,
+  bounce: 0.38,
+};
+
 export const antConfig = {
   radius: 7,
   speed: 0.9,

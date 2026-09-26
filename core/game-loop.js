@@ -2,7 +2,7 @@ import { copy } from "./copy.js";
 import { clamp } from "./geometry.js";
 import { SURFACE_TYPES, updatePhysicsInput, updatePhysics } from "./physics.js";
 import { GAME_PHASES } from "./runtime-states.js";
-import { getObjectiveRegion } from "./map-objectives.js";
+import { getObjectiveRegion, mouseDefeatRequired } from "./map-objectives.js";
 
 export function elapsedMsToFrameDelta(elapsedMs, timing) {
   // Long frames intentionally run as capped slow-motion instead of catching up
@@ -119,7 +119,9 @@ export function createGameLoop({
       return;
     }
 
-    const goal = getObjectiveRegion(mapState.activeMap);
+    const goal = mouseDefeatRequired(mapState.activeMap, mapState.mouse)
+      ? mapState.mouse
+      : getObjectiveRegion(mapState.activeMap);
     if (!goal) {
       ui.setGoalIndicator(false);
       return;

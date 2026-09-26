@@ -8,6 +8,7 @@ import { createMapProgression } from "../core/map-progression.js";
 import { createMapRuntime } from "../core/map-runtime.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { baseMapConfig } from "../core/map-config.js";
+import { resolveMouseContact } from "../core/mouse.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
 import {
   getObjectiveRegion,
@@ -465,5 +466,85 @@ function testReachRequiresTheDeclaredRegionAndResets() {
 testEliminationUsesActualCrushStateAndCompletesOnce();
 testEliminationRetryAndMissingSuccessor();
 testReachRequiresTheDeclaredRegionAndResets();
+
+function testMouseDefeatUnlocksExitAndRetryRestoresEncounter() {
+  const source = resolveMapVariantConfig(baseMapConfig, "living-room");
+  const { applyMap, calls, controller, marble, runtime, resetForNextMap } =
+    objectiveHarness(source);
+  const initialMouse = globalThis.structuredClone(runtime.state.mouse);
+  const mouse = runtime.state.mouse;
+  const exit = getObjectiveRegion(source);
+  Object.assign(marble, { x: exit.x + exit.w / 2, y: exit.y + exit.h / 2 });
+  controller.update(1);
+  assert.equal(
+    calls.completed.length,
+    0,
+    "exit stays locked while mouse lives",
+  );
+  assert.match(calls.statuses.at(-1), /Defeat the mouse/);
+  runtime.state.mouse = null;
+  controller.update(1);
+  assert.equal(
+    calls.completed.length,
+    0,
+    "missing encounter state must fail closed",
+  );
+  runtime.state.mouse = mouse;
+
+  let hitEvents = 0;
+  for (let hit = 0; hit < 4; hit++) {
+    const radius = marble.r + mouse.r;
+    Object.assign(marble, {
+      x: mouse.x - radius - 20,
+      y: mouse.y,
+      vx: 14,
+      vy: 0,
+    });
+    resolveMouseContact(mouse, marble, marble, () => hitEvents++);
+    const previous = { x: marble.x, y: marble.y };
+    marble.x = mouse.x - radius + 1;
+    resolveMouseContact(mouse, marble, previous, () => hitEvents++);
+    controller.update(1);
+    assert.equal(
+      calls.completed.length,
+      0,
+      "defeating mouse unlocks exit without auto-completing",
+    );
+    if (hit < 3) assert.ok(mouse.health > 0);
+  }
+  assert.equal(mouse.health, 0);
+  assert.equal(hitEvents, 4);
+  assert.match(calls.statuses.at(-1), /Mouse defeated.*Reach the exit/);
+  Object.assign(marble, { x: exit.x + exit.w / 2, y: exit.y + exit.h / 2 });
+  controller.update(1);
+  controller.update(1);
+  assert.deepEqual(calls.completed, ["living-room"]);
+  assert.equal(calls.effects, 1);
+
+  const progression = createMapProgression({
+    baseMapConfig,
+    getCurrentMap: () => runtime.state.activeMap,
+    applyMap,
+    resetForNextMap,
+    terrainView: { updateGoalProgress() {} },
+    ui: { setHint() {} },
+    requestRender() {},
+  });
+  progression.retryCurrentMap();
+  assert.notEqual(runtime.state.mouse, mouse);
+  assert.deepEqual(
+    runtime.state.mouse,
+    initialMouse,
+    "Retry resets health, latch, movement and hit reaction together",
+  );
+  assert.equal(runtime.state.goalCompleted, false);
+  Object.assign(marble, { x: exit.x + exit.w / 2, y: exit.y + exit.h / 2 });
+  controller.update(1);
+  assert.equal(calls.completed.length, 1, "Retry locks exit again");
+  applyMap(kitchenObjectiveMap);
+  assert.equal(runtime.state.mouse, null, "mouse cannot leak into kitchen");
+}
+
+testMouseDefeatUnlocksExitAndRetryRestoresEncounter();
 
 console.log("Goal controller tests passed.");

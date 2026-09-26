@@ -11,6 +11,7 @@ import {
   sceneryKinds,
   fixtureKinds,
 } from "../maps/map-authoring.js";
+import { mouseConfig } from "./game-config.js";
 import { kitchenPoint } from "../maps/kitchen-layout.js";
 import { hasLikelyReachableGoal } from "./map-reachability.js";
 
@@ -364,6 +365,13 @@ function validateAuthoredObjective(
   if (!authoredThemes.includes(config.theme))
     errors.push(`unknown authoring theme '${config.theme}'`);
   const objective = config.objective;
+  if (
+    objective.defeat !== undefined &&
+    (objective.type !== "reach" || objective.defeat !== "mouse")
+  )
+    errors.push("reach supports only defeat: 'mouse'");
+  if (objective.defeat === "mouse" && !config.mouse)
+    errors.push("mouse objective requires an authored mouse");
   if (objective.type === "eliminate") {
     if (objective.target !== "ant" || objective.count !== "all")
       errors.push("eliminate supports target 'ant' and count 'all'");
@@ -416,6 +424,70 @@ function validateAuthoredObjective(
   } else {
     errors.push(`unknown objective type '${objective.type}'`);
   }
+}
+
+// The mouse patrol deliberately uses a clear rectangle, not pathfinding.
+// A conservative AABB check also reserves a marble diameter around the area so
+// the player can approach from every side, including beside rotated furniture.
+function validateMouse(config, { world, obstacles, errors, spawn }) {
+  const mouse = config.mouse;
+  if (!mouse) return;
+  if (config.theme !== "livingRoom")
+    errors.push("mouse requires the livingRoom theme");
+  const region = config.regions?.find((item) => item.id === mouse.roamRegion);
+  if (!region) {
+    errors.push("mouse requires a declared roamRegion");
+    return;
+  }
+  const radius = mouseConfig.radius;
+  if (
+    !Number.isFinite(mouse.x) ||
+    !Number.isFinite(mouse.y) ||
+    mouse.x - radius < region.x ||
+    mouse.y - radius < region.y ||
+    mouse.x + radius > region.x + region.w ||
+    mouse.y + radius > region.y + region.h
+  )
+    errors.push("mouse spawn must fit inside its roamRegion");
+  if (region.w < radius * 4 || region.h < radius * 4)
+    errors.push("mouse roamRegion needs room to scurry");
+  const margin = spawn?.r ?? 0;
+  const blockers = [
+    ...obstacles,
+    ...(config.elements ?? []).filter((item) => item.type === "hazardPatch"),
+  ];
+  for (const item of blockers) {
+    const cos = Math.abs(Math.cos(item.angle ?? 0));
+    const sin = Math.abs(Math.sin(item.angle ?? 0));
+    const halfW =
+      ((item.hitboxW ?? item.w) * cos + (item.hitboxH ?? item.h) * sin) / 2;
+    const halfH =
+      ((item.hitboxW ?? item.w) * sin + (item.hitboxH ?? item.h) * cos) / 2;
+    const x = item.x + item.w / 2,
+      y = item.y + item.h / 2;
+    if (
+      x + halfW + margin * 2 > region.x &&
+      x - halfW - margin * 2 < region.x + region.w &&
+      y + halfH + margin * 2 > region.y &&
+      y - halfH - margin * 2 < region.y + region.h
+    ) {
+      errors.push(
+        "mouse roamRegion must have clear approaches without obstacles or hazards",
+      );
+      break;
+    }
+  }
+  if (
+    errors.length === 0 &&
+    !hasLikelyReachableGoal({
+      world,
+      obstacles,
+      spawn,
+      goal: { x: mouse.x, y: mouse.y, r: radius + margin },
+      cellSize: 20,
+    })
+  )
+    errors.push("mouse must appear reachable from spawn");
 }
 
 function validateComposition(config, { world, obstacles, errors, spawn }) {
@@ -550,6 +622,7 @@ function validateComposition(config, { world, obstacles, errors, spawn }) {
         `inspection view '${view.id}' scale must be positive and finite`,
       );
   }
+  validateMouse(config, { world, obstacles, errors, spawn });
   if (config.route && errors.length === 0)
     validateAuthoredRoute(config, obstacles, errors, spawn);
 }

@@ -19,7 +19,12 @@ if (requested.includes("--list")) {
           id,
           objective: objective ?? "legacy held goal",
         })),
-        objectives: ["eliminate: ant/all", "reach: named rectangular region"],
+        objectives: [
+          "eliminate: ant/all",
+          "reach: named rectangular region; optional defeat: mouse",
+        ],
+        mouse:
+          "{x, y, roamRegion}: living-room encounter; clear named rectangular patrol area",
         themes: authoredThemes,
         surfaces: surfaceTypes,
         fixtures: fixtureKinds,

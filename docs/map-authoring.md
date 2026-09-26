@@ -8,7 +8,8 @@ the marble. No editor or runtime build step is needed.
 - `maps/kitchen-floor.js` and `maps/kitchen-breakfast.js`: ceramic kitchens,
   utensil/spill placement, food clusters, ants, and elimination objectives.
 - `maps/living-room.js`: furniture, shag, dressing, a named exit, inspection
-  views, and a declared traversal corridor. Use this as the primary reach example.
+  views, a mouse encounter, and a declared traversal corridor. Use this as the
+  primary reach example.
 - `maps/map-authoring.js`: the supported vocabulary and small load-time expansion.
 - `maps/kitchen-layout.js`: existing reusable food/scenery recipes. Change a
   recipe only when every map using it should change.
@@ -84,15 +85,33 @@ The HUD shows `Kill all ants · N left`. Maps with no authored ants are invalid.
 The living room declares:
 
 ```js
-objective: { type: "reach", region: "exit-door" },
+objective: { type: "reach", region: "exit-door", defeat: "mouse" },
+mouse: { x: 2160, y: 3360, roamRegion: "mouse-run" },
 regions: [
+  { id: "mouse-run", x: 1750, y: 2550, w: 900, h: 1350 },
   { id: "exit-door", label: "Next room", x: 3500, y: 0, w: 340, h: 480 },
 ],
 ```
 
-The entire marble must enter the rectangle. The doorway marker uses the same
-region, and the optional direction indicator points to its center. There is no
-hold timer for reach. Older maps still use their original circular held goals.
+The living-room exit stays locked until `mapRuntime.state.mouse.health` is zero.
+The player rolls into the mouse; there is no attack button. Damage is
+`30 * clamp((incomingNormalSpeed - 3) / 11, 0, 1)`, with 100 initial health.
+Normal speed is the marble velocity toward the mouse at contact, so a glancing
+hit does less damage and mouse motion cannot damage itself against a stationary
+marble. Contact stays latched until the bodies separate by more than 8 units.
+All tuning is in `mouseConfig` in `core/game-config.js`.
+
+The mouse walks, pauses, and scurries away from an approaching marble within its
+named roaming rectangle, spanning wood and shag. Validation reserves clear
+approaches around this rectangle and checks sampled reachability from spawn;
+this deliberately avoids runtime pathfinding. Do not place furniture or hazards
+in that region. The rectangle is an AI patrol limit, not marble collision geometry.
+Health, motion, and the hit latch reset together on Retry. A plain `reach` objective
+without `defeat` retains its original behavior.
+
+After defeat, the entire marble must enter the exit rectangle. The doorway marker
+uses the same region, and the optional direction indicator points to the living
+mouse, then the exit. There is no hold timer for reach. Older maps still use their original circular held goals.
 All objectives use the existing completion latch, feedback, and progression;
 Retry restores the current map's actors and clears the latch while retaining
 control settings and calibration.
@@ -180,8 +199,8 @@ spill shapes, sponge, cereal, and ant behavior. The living room has an open entr
 toy threshold, slow rug around a solid chest, sofa alcove, wood bypass lanes,
 and a clear northeast doorway. Magazines and socks are cosmetic.
 
-Implementation checks exercised a complete keyboard ant hunt (10 to 0), final-ant
-transition to the living room, and restart back to 10 ants. A separate continuous
+The original map-authoring pass (before the mouse encounter) exercised a complete
+keyboard ant hunt (10 to 0), final-ant transition to the living room, and restart back to 10 ants. A separate continuous
 keyboard traversal followed the living route from spawn to the next map in
 10.855 seconds without coordinate writes. Separately positioned keyboard contact
 checks hit the sofa, chest, and rotated toy at a 29px center-to-edge distance.

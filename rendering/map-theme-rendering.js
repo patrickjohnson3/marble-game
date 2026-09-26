@@ -1,5 +1,6 @@
 import { drawKitchenFloorDetails } from "./kitchen-floor-details.js";
 import { renderLivingRoom } from "./living-room-rendering.js";
+import { appendMouseCanvas, renderMouse } from "./mouse-rendering.js";
 import { antConfig } from "../core/game-config.js";
 
 const kitchenFloorCanvasScale = 0.4;
@@ -982,11 +983,13 @@ function renderKitchenDynamics(themeState, dynamicsState) {
 export function renderMapThemeDynamics({
   dynamicsState,
   mapConfig,
+  mouse = null,
   themeState = {},
 }) {
   if (mapConfig?.theme === "kitchenFloor") {
     renderKitchenDynamics(themeState, dynamicsState);
   }
+  renderMouse(themeState, mouse);
 }
 
 export function renderMapTheme({
@@ -994,11 +997,15 @@ export function renderMapTheme({
   dynamicsState = { ants: [], cheerios: [] },
   overlayContainer,
   mapConfig,
+  mouse = null,
   themeState = {},
   world = mapConfig?.world,
 }) {
   container.replaceChildren();
   overlayContainer.replaceChildren();
+  themeState.mouseCanvas = null;
+  themeState.mouseContext = null;
+  themeState.mousePose = null;
   themeState.kitchenDynamicCanvas = null;
   themeState.kitchenDynamicContext = null;
   themeState.kitchenDynamicWorld = null;
@@ -1027,6 +1034,7 @@ export function renderMapTheme({
     themeState,
     world,
   });
+  appendMouseCanvas(overlay, themeState, mouse);
   container.replaceChildren(underlay);
   overlayContainer.replaceChildren(overlay);
 }
