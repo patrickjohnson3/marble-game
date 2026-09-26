@@ -1,9 +1,4 @@
-import {
-  isKitchenFixture,
-  MAP_ELEMENT_TYPE_VALUES,
-  mapObstacleElements,
-} from "./map-elements.js";
-import { normalizeJoinedObstacleRects } from "./map-obstacles.js";
+import { isKitchenFixture, MAP_ELEMENT_TYPE_VALUES } from "./map-elements.js";
 import { circleObstacleContact } from "./physics-collisions.js";
 import { createResolvedMapState } from "./map-runtime.js";
 import {
@@ -179,13 +174,11 @@ function mapValidationContext(config, normalizedObstacles) {
   );
   const checkedObstaclesSource =
     normalizedObstacles ??
-    (config?.objective
-      ? createResolvedMapState({
-          world,
-          spawn: config.spawn,
-          elements: objectElements,
-        }).obstacles
-      : normalizeJoinedObstacleRects(mapObstacleElements(objectElements)));
+    createResolvedMapState({
+      world,
+      spawn: config?.spawn,
+      elements: objectElements,
+    }).obstacles;
   const checkedObstacles = Array.isArray(checkedObstaclesSource)
     ? checkedObstaclesSource.filter(
         (obstacle) => obstacle && typeof obstacle === "object",
@@ -649,8 +642,6 @@ function validateComposition(config, { world, obstacles, errors, spawn }) {
   }
   validateMouse(config, { world, obstacles, errors, spawn });
   validateCockroach(config, { world, obstacles, errors });
-  if (config.route && errors.length === 0)
-    validateAuthoredRoute(config, obstacles, errors, spawn);
 }
 
 function validateRotatedBounds(rect, { world, errors, label }) {
@@ -683,7 +674,7 @@ function validateAuthoredRoute(config, obstacles, errors, spawn) {
   const radius = spawn.r * 2;
   let previous = spawn;
   for (const point of config.route) {
-    if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
       errors.push("route waypoints must have finite coordinates");
       return;
     }
@@ -714,7 +705,7 @@ function validateAuthoredRoute(config, obstacles, errors, spawn) {
     }
     previous = point;
   }
-  if (config.objective.type === "reach") {
+  if (config.objective?.type === "reach") {
     const region = config.regions.find(
       (item) => item.id === config.objective.region,
     );
@@ -725,6 +716,13 @@ function validateAuthoredRoute(config, obstacles, errors, spawn) {
       previous.y + spawn.r > region.y + region.h
     )
       errors.push("route must finish inside the destination region");
+  } else if (
+    config.goal &&
+    Math.hypot(previous.x - config.goal.x, previous.y - config.goal.y) +
+      spawn.r >
+      config.goal.r
+  ) {
+    errors.push("route must finish inside the held goal");
   }
 }
 
@@ -816,5 +814,15 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
     errors,
     spawn: checkedSpawn,
   });
+  if (config?.route !== undefined && errors.length === 0)
+    validateAuthoredRoute(
+      config,
+      [
+        ...checkedObstacles,
+        ...elements.filter((element) => element.type === "hazardPatch"),
+      ],
+      errors,
+      checkedSpawn,
+    );
   return errors;
 }

@@ -1,4 +1,8 @@
-import { KITCHEN_FORK_SPRITE, KITCHEN_SPOON_SPRITE } from "./map-elements.js";
+import {
+  KITCHEN_FORK_SPRITE,
+  KITCHEN_SPOON_SPRITE,
+  PARKING_CAR_SPRITE,
+} from "./map-elements.js";
 
 // Rounded rectangles measured in fork.png pixels: tapered handle, narrow neck,
 // flare, and head/tines. The tine slots are narrower than the marble diameter.
@@ -25,6 +29,25 @@ const spoonMetalRects = [
   [659, 23, 231, 173, 86.5],
   [645, 45, 275, 126, 63],
 ];
+
+// Measured in parking-car.webp pixels: rounded bonnet, narrow flanks, rear
+// shoulders/bumper, and the slightly wider lower body. Preserve transparent
+// sprite padding so collision and background-size: contain share one transform.
+const parkingCarBodyRects = [
+  [37.7, 9.8, 769.5, 1647.9, 350],
+  [34.7, 419.9, 775.6, 1285.5, 185.9],
+  [46.7, 1206.6, 751.7, 623.2, 216.4],
+  [119.4, 1403.1, 606.1, 435.6, 217.8],
+  [29, 736.3, 787, 966.2, 150.6],
+];
+
+export function createParkingCarCollisionRects(car) {
+  return createSpriteCollisionRects(
+    car,
+    PARKING_CAR_SPRITE,
+    parkingCarBodyRects,
+  );
+}
 
 export function createForkCollisionRects(fork) {
   return createSpriteCollisionRects(fork, KITCHEN_FORK_SPRITE, forkMetalRects);

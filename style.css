@@ -1192,3 +1192,108 @@ button.primaryAction {
   opacity: 1;
   transform: none;
 }
+
+/* Authored parking-lot fixtures and wear are static and world aligned. */
+.authoredParkingSurface {
+  background:
+    linear-gradient(#55594f4d, #55594f4d),
+    #55594f url("assets/sprites/parking-asphalt.webp") repeat;
+  background-size: 960px 960px;
+}
+.parkingSceneryCanvas,
+.parkingExitPaint,
+.parkingFixture,
+.parkingCarSprite {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.parkingExitPaint {
+  color: #e4dfc8a6;
+  font: 900 94px / 110px sans-serif;
+  letter-spacing: 14px;
+  text-align: center;
+}
+.parkingObstacleLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.parkingFixture {
+  background: #929288;
+  box-shadow: 3px 5px 6px #141a164f;
+}
+.parkingFixture.parkedCar {
+  overflow: visible;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.parkingCarSprite {
+  inset: 0;
+  background: url("assets/sprites/parking-car.webp") center / contain no-repeat;
+}
+.parkingFixture.wheelStop {
+  border: 3px solid #6f746a;
+  background: linear-gradient(#b2b2a3, #969d8b 48%, #6d7568);
+  box-shadow:
+    inset 0 3px 0 #d4d2bc8c,
+    inset 0 -4px 0 #444e3f5e,
+    2px 4px 4px #17231852;
+}
+.parkingFixture.wheelStop::before,
+.parkingFixture.wheelStop::after {
+  position: absolute;
+  content: "";
+  top: 40%;
+  left: 12%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3d493c;
+  box-shadow: 0 1px #d3d5bc70;
+}
+.parkingFixture.wheelStop::after {
+  left: auto;
+  right: 12%;
+}
+.parkingFixture.curb {
+  border: 2px solid #737767;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 328px,
+      #666e6259 329px 331px,
+      transparent 332px 334px
+    ),
+    linear-gradient(90deg, #bdbaa9, #9f9f8f 74%, #7a8274);
+  box-shadow:
+    inset 2px 0 1px #dbd7c485,
+    3px 3px 4px #1722184f;
+}
+.parkingFixture.trafficCone {
+  clip-path: none;
+  filter: none;
+  border: 2px solid #202921;
+  background: linear-gradient(135deg, #4a4b39, #252d25);
+  box-shadow: 4px 6px 5px #161e205e;
+}
+.parkingFixture.trafficCone::after {
+  position: absolute;
+  content: "";
+  inset: 13%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 47% 45%,
+    #693614 0 9%,
+    #e3a26b 11% 14%,
+    #c75e26 16% 38%,
+    #d9d2b7 40% 56%,
+    #f5ece1 57% 60%,
+    #d97231 62% 81%,
+    #854621 91%
+  );
+  box-shadow:
+    inset -3px -4px 4px #6b35154d,
+    2px 3px 3px #0c151b66;
+}

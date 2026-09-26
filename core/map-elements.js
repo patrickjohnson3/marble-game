@@ -50,6 +50,14 @@ export const KITCHEN_SPOON_SPRITE = Object.freeze({
   minHeight: 150,
 });
 
+// Parking car uses the same centered background-size: contain transform.
+export const PARKING_CAR_SPRITE = Object.freeze({
+  width: 845,
+  height: 1860,
+  minWidth: 0,
+  minHeight: 0,
+});
+
 const kitchenFixtureValues = new Set(Object.values(KITCHEN_FIXTURES));
 
 export function isKitchenFixture(value) {

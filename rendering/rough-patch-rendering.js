@@ -1,4 +1,5 @@
 import { drawRoundedRect, renderPatchCanvas } from "./wall-rendering.js";
+import { drawParkingGravel } from "./parking-lot-rendering.js";
 
 const shagTextureSize = 560;
 const pendingShagRenders = new Map();
@@ -45,6 +46,10 @@ function drawPatchGritLayer(
 }
 
 function drawRoughPatch(context, patch) {
+  if (patch.material === "gravel") {
+    drawParkingGravel(context, patch);
+    return;
+  }
   if (patch.material === "shag") {
     drawShagPatch(context, patch);
     return;

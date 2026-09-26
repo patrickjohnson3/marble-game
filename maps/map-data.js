@@ -2,6 +2,7 @@ import { expandMap } from "./map-authoring.js";
 import { kitchenFloorMap } from "./kitchen-floor.js";
 import { kitchenBreakfastMap } from "./kitchen-breakfast.js";
 import { livingRoomMap } from "./living-room.js";
+import { parkingLotMap } from "./parking-lot.js";
 
 export const mapDefinitions = [
   kitchenFloorMap,
@@ -53,19 +54,6 @@ const hockeyRinkElements = [
   { type: "obstacle", x: 3820, y: 2280, w: 50, h: 720 },
   { type: "hazardPatch", x: 2000, y: 1960, w: 400, h: 400 },
   { type: "roughPatch", x: 920, y: 3160, w: 520, h: 340 },
-];
-
-const parkingLotElements = [
-  { type: "obstacle", x: 720, y: 600, w: 860, h: 150 },
-  { type: "obstacle", x: 2040, y: 600, w: 860, h: 150 },
-  { type: "obstacle", x: 600, y: 1640, w: 150, h: 860 },
-  { type: "obstacle", x: 3360, y: 1520, w: 150, h: 860 },
-  { type: "obstacle", x: 1440, y: 2880, w: 1000, h: 120 },
-  { type: "obstacle", x: 2760, y: 3040, w: 860, h: 130 },
-  { type: "hazardPatch", x: 1840, y: 1640, w: 520, h: 380 },
-  { type: "hazardPatch", x: 2640, y: 2480, w: 440, h: 360 },
-  { type: "icePatch", x: 1040, y: 2440, w: 520, h: 420 },
-  { type: "roughPatch", x: 2960, y: 840, w: 600, h: 460 },
 ];
 
 const parkingLotPuddlesElements = [
@@ -203,17 +191,7 @@ export const frozenGeneratedMapVariants = [
 export const authoredMapVariants = [
   expandMap(kitchenFloorMap),
   expandMap(livingRoomMap),
-  {
-    id: "parking-lot",
-    name: "parking lot",
-    theme: "parkingLot",
-    objectSummary:
-      "objects: cars, cones, oil stains, tire marks, parking lines.",
-    difficulty: 3,
-    spawn: { x: 560, y: 3720, r: 29 },
-    goal: { x: 3760, y: 680, r: 84, holdMs: 5000 },
-    elements: parkingLotElements,
-  },
+  parkingLotMap,
   {
     id: "sand-lot",
     name: "sand lot",

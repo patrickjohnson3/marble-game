@@ -1,6 +1,11 @@
 import { drawRoundedRect, renderPatchCanvas } from "./wall-rendering.js";
+import { drawDrainOpening } from "./parking-lot-rendering.js";
 
 function drawHazardPatch(context, patch) {
+  if (patch.material === "drain") {
+    drawDrainOpening(context, patch);
+    return;
+  }
   const radius = 8;
   const gradient = context.createLinearGradient(
     patch.x,

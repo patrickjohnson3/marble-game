@@ -39,6 +39,7 @@ export const runtimeScripts = [
   "maps/kitchen-floor.js",
   "maps/kitchen-breakfast.js",
   "maps/living-room.js",
+  "maps/parking-lot.js",
   "maps/kitchen-layout.js",
   "platform/platform.js",
   "rendering/effects.js",
@@ -50,6 +51,7 @@ export const runtimeScripts = [
   "rendering/map-renderer.js",
   "rendering/map-theme-rendering.js",
   "rendering/living-room-rendering.js",
+  "rendering/parking-lot-rendering.js",
   "rendering/marble-view.js",
   "rendering/mouse-rendering.js",
   "rendering/ice-patch-rendering.js",
@@ -79,6 +81,8 @@ export const pwaFiles = [
   "assets/sprites/mouse.webp",
   "assets/sprites/shag.webp",
   "assets/sprites/oak-floor.webp",
+  "assets/sprites/parking-asphalt.webp",
+  "assets/sprites/parking-car.webp",
 ];
 
 const runtimeStyles = ["style.css"];

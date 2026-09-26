@@ -10,6 +10,9 @@ the marble. No editor or runtime build step is needed.
 - `maps/living-room.js`: furniture, shag, dressing, a named exit, inspection
   views, a mouse encounter, and a declared traversal corridor. Use this as the
   primary reach example.
+- `maps/parking-lot.js`: level three's direct fixture/terrain layout, flat scenery,
+  held goal, route, and inspection views. See [parking notes](parking-lot.md);
+  this specialized legacy map does not use `expandMap()`.
 - `maps/map-authoring.js`: the supported vocabulary and small load-time expansion.
 - `maps/kitchen-layout.js`: existing reusable food/scenery recipes. Change a
   recipe only when every map using it should change.
@@ -176,8 +179,9 @@ spawn/destination clearance, and blocked routes.
 
 The reachability check is a 20-unit sampled grid using real collision shapes.
 An authored route additionally samples every 5 units with twice the marble
-radius, reserving steering space. Neither proves dynamic playability or checks
-every possible hazard/terrain crossing. Drive the route after changing it.
+radius, reserving steering space around solids and reset hazards. Held-goal
+routes must finish inside the goal. Neither proves dynamic playability or checks
+every possible terrain crossing. Drive the route after changing it.
 
 Screenshots use the real app, renderer, camera transform, and runtime actors in
 local Chrome. Set `CHROME_PATH` if needed. Output includes `overview.png`,

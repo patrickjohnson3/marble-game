@@ -6,6 +6,7 @@ import {
   KITCHEN_SPOON_SPRITE,
 } from "../core/map-elements.js";
 import { renderLivingRoomFixtures } from "./living-room-rendering.js";
+import { renderParkingFixtures } from "./parking-lot-rendering.js";
 
 function rectPath(x, y, w, h) {
   return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
@@ -376,6 +377,10 @@ export function renderObstacleWalls(
   }
   if (mapConfig?.theme === "livingRoom") {
     renderLivingRoomFixtures(container, obstacles);
+    return;
+  }
+  if ((mapConfig?.variantId ?? mapConfig?.id) === "parking-lot") {
+    renderParkingFixtures(container, obstacles);
     return;
   }
 

@@ -1,5 +1,6 @@
 import { drawKitchenFloorDetails } from "./kitchen-floor-details.js";
 import { renderLivingRoom } from "./living-room-rendering.js";
+import { renderAuthoredParkingLot } from "./parking-lot-rendering.js";
 import { appendMouseCanvas, renderMouse } from "./mouse-rendering.js";
 import {
   appendCockroachCanvas,
@@ -331,7 +332,11 @@ function renderKitchenFloor({
   renderKitchenDynamicObjects({ dynamicsState, overlay, themeState, world });
 }
 
-function renderParkingLot({ underlay, overlay, world }) {
+function renderParkingLot({ underlay, overlay, world, mapConfig }) {
+  if ((mapConfig?.variantId ?? mapConfig?.id) === "parking-lot") {
+    renderAuthoredParkingLot({ underlay, overlay, world, mapConfig });
+    return;
+  }
   appendFloor(underlay, "parkingLot", world);
   [0.2, 0.36, 0.52, 0.68].forEach((x) =>
     appendBox(underlay, "parkingStripe", world, {

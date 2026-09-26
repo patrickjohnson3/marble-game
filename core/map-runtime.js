@@ -9,6 +9,7 @@ import {
 } from "./map-elements.js";
 import {
   createForkCollisionRects,
+  createParkingCarCollisionRects,
   createSpoonCollisionRects,
   normalizeJoinedObstacleRects,
 } from "./map-obstacles.js";
@@ -67,6 +68,8 @@ export function createResolvedMapState(
         return createForkCollisionRects(obstacle);
       if (obstacle.fixture === KITCHEN_FIXTURES.spoon)
         return createSpoonCollisionRects(obstacle);
+      if (obstacle.fixture === "parkedCar")
+        return createParkingCarCollisionRects(obstacle);
       return [obstacle];
     })
     .map(prepareCollisionObstacle);
