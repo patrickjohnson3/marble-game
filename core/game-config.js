@@ -55,7 +55,8 @@ export const physicsConfig = {
 
 // Mouse motion and timers use the same 60 Hz frame units as marble physics.
 export const mouseConfig = {
-  radius: 44,
+  // Body length is about three marble diameters; render scale follows this.
+  radius: 88,
   maxHealth: 100,
   minDamageSpeed: 3,
   fullDamageSpeed: 14,

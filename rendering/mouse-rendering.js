@@ -1,5 +1,4 @@
-const canvasSize = 240;
-const canvasCenter = canvasSize / 2;
+const canvasReferenceRadius = 120;
 const bodyReferenceRadius = 44;
 const healthBarWidth = 82;
 const strideLength = 24;
@@ -110,26 +109,21 @@ function drawMouse(context, mouse, sprite) {
   if (defeated) return;
   // Draw after restoring heading: health remains horizontal as the mouse turns.
   const fraction = Math.max(0, Math.min(1, mouse.health / mouse.maxHealth));
+  const barWidth = healthBarWidth * scale;
   const barY = -mouse.r - 20;
   context.fillStyle = "#322e29e6";
-  context.fillRect(-healthBarWidth / 2 - 2, barY - 2, healthBarWidth + 4, 12);
+  context.fillRect(-barWidth / 2 - 2, barY - 2, barWidth + 4, 12);
   context.fillStyle = "#f6eddc";
-  context.fillRect(-healthBarWidth / 2, barY, healthBarWidth, 8);
+  context.fillRect(-barWidth / 2, barY, barWidth, 8);
   context.fillStyle = hitFlash > 0 ? "#fff7cf" : "#b15b48";
-  context.fillRect(-healthBarWidth / 2, barY, healthBarWidth * fraction, 8);
+  context.fillRect(-barWidth / 2, barY, barWidth * fraction, 8);
 }
 
 export function appendMouseCanvas(overlay, themeState, mouse) {
   if (!mouse) return;
   const canvas = document.createElement("canvas");
   canvas.className = "mouseCanvas";
-  canvas.width = canvasSize;
-  canvas.height = canvasSize;
   canvas.style.position = "absolute";
-  canvas.style.left = -canvasCenter + "px";
-  canvas.style.top = -canvasCenter + "px";
-  canvas.style.width = canvasSize + "px";
-  canvas.style.height = canvasSize + "px";
   canvas.style.pointerEvents = "none";
   canvas.setAttribute("aria-hidden", "true");
   overlay.appendChild(canvas);
@@ -165,6 +159,15 @@ export function renderMouse(themeState, mouse) {
   if (!context) return;
   const sprite = getMouseSprite();
   const pose = themeState.mousePose;
+  if (pose.r !== mouse.r) {
+    // Reserve room for the rotating tail as well as the collision-sized body.
+    // Derive storage from actor size so tuning radius cannot silently clip art.
+    const size =
+      Math.ceil((mouse.r / bodyReferenceRadius) * canvasReferenceRadius) * 2;
+    canvas.width = canvas.height = size;
+    canvas.style.width = canvas.style.height = size + "px";
+    canvas.style.left = canvas.style.top = -size / 2 + "px";
+  }
   // Once defeated the pose is static, even if the last pause was unfinished.
   const pauseFrames = mouse.health > 0 ? mouse.pauseFrames : 0;
   if (pose.x !== mouse.x || pose.y !== mouse.y) {
@@ -184,8 +187,8 @@ export function renderMouse(themeState, mouse) {
   )
     return;
   context.setTransform(1, 0, 0, 1, 0, 0);
-  context.clearRect(0, 0, canvasSize, canvasSize);
-  context.setTransform(1, 0, 0, 1, canvasCenter, canvasCenter);
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.setTransform(1, 0, 0, 1, canvas.width / 2, canvas.height / 2);
   drawMouse(context, mouse, sprite);
   pose.r = mouse.r;
   pose.angle = mouse.angle;

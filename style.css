@@ -279,21 +279,9 @@ body {
   transform-origin: center;
 }
 .livingRoomSurface {
-  background:
-    linear-gradient(116deg, transparent 38%, #fff4d518 48%, transparent 69%),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 1048px,
-      #6b4e3633 1048px 1050px
-    ),
-    repeating-linear-gradient(
-        90deg,
-        #c8a174 0 208px,
-        #795d4133 208px 210px,
-        #c39b6d 210px 418px,
-        #795d4133 418px 420px
-      )
-      #c39b6d;
+  /* Four 210px boards per strip. Continuous grain avoids horizontal tile seams. */
+  background: #c39b6d url("assets/sprites/oak-floor.webp") repeat-x 0 0 / 840px
+    100%;
   box-shadow: inset 0 0 0 8px #765a3e2b;
 }
 .livingRoomObstacleLayer {

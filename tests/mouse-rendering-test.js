@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { mouseConfig } from "../core/game-config.js";
 import {
   appendMouseCanvas,
   renderMouse,
@@ -40,7 +41,7 @@ function liveMouse() {
   return {
     x: 1600,
     y: 2700,
-    r: 44,
+    r: mouseConfig.radius,
     angle: 0,
     health: 100,
     maxHealth: 100,
@@ -128,8 +129,8 @@ try {
   );
   const heading = context.calls.find((call) => call[0] === "transform");
   assert.ok(Math.abs(heading[1]) < 1e-10 && Math.abs(heading[4]) < 1e-10);
-  assert.equal(heading[2], 1);
-  assert.equal(heading[3], -1);
+  assert.equal(heading[2], mouse.r / 44);
+  assert.equal(heading[3], -mouse.r / 44);
   const firstBarIndex = context.calls.findIndex(
     (call) => call[0] === "fillRect",
   );
@@ -157,6 +158,28 @@ try {
     fullWidth / 2,
     "hit flash must not change the displayed health",
   );
+  // The rotated tail must remain within the local canvas at the actual
+  // gameplay radius, including diagonal headings and a changed actor size.
+  for (const radius of [mouseConfig.radius, mouseConfig.radius * 1.1]) {
+    mouse.r = radius;
+    for (let i = 0; i < 8; i++) {
+      mouse.angle = (i * Math.PI) / 4;
+      context.calls.length = 0;
+      renderMouse(themeState, mouse);
+      const rotation = context.calls.find((call) => call[0] === "transform");
+      const tail = context.calls.find((call) => call[0] === "quadraticCurveTo");
+      const x =
+        canvas.width / 2 + rotation[1] * tail[3] + rotation[3] * tail[4];
+      const y =
+        canvas.height / 2 + rotation[2] * tail[3] + rotation[4] * tail[4];
+      assert.ok(
+        x > 0 && x < canvas.width && y > 0 && y < canvas.height,
+        "tail must not be cropped when the enlarged mouse turns",
+      );
+      assert.equal(canvas.style.width, canvas.width + "px");
+      assert.equal(canvas.style.left, -canvas.width / 2 + "px");
+    }
+  }
   context.calls.length = 0;
   mouse.health = 0;
   renderMouse(themeState, mouse);

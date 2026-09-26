@@ -76,6 +76,7 @@ export const pwaFiles = [
   "assets/sprites/spoon.png",
   "assets/sprites/mouse.webp",
   "assets/sprites/shag.webp",
+  "assets/sprites/oak-floor.webp",
 ];
 
 const runtimeStyles = ["style.css"];

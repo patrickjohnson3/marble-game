@@ -1,6 +1,6 @@
-# Living-room rug and mouse art
+# Living-room materials and mouse art
 
-The two assets below were generated with the built-in `image_gen` tool and
+The assets below were generated with the built-in `image_gen` tool and
 packaged as lossless WebP, with decoded pixel equality checked against the PNG
 originals. No new runtime dependency is required.
 
@@ -9,19 +9,31 @@ originals. No new runtime dependency is required.
   terrain rectangle and baked into its existing static canvas. It adds no
   per-frame drawing. Late image loading repaints only the current map contents.
 - `assets/sprites/mouse.webp`: 1254 × 1254 with alpha, 843,698 bytes. A shared
-  body/head sprite drawn into the existing 240 × 240 mouse canvas. Draw bounds
-  account for transparent padding to keep the fur near the unchanged circular
+  body/head sprite drawn into a local canvas sized from the actor radius
+  (480 × 480 at radius 88). Draw bounds
+  account for transparent padding to keep the fur near the circular
   contact footprint. Tail, feet and sniffing whiskers animate in Canvas; the
   thin tail/whiskers remain cosmetic. Health feedback stays horizontal and the
   defeated pose stays still. A simple shaded fallback works before loading or
   when the asset is unavailable.
 
-The images add about 2.89 MiB of transfer/cache data and up to 12 MiB of decoded
-RGBA storage. Canvas backing storage is unchanged. The texture is deliberately
+- `assets/sprites/oak-floor.webp`: 724 × 2172, 1,727,284 bytes. A repeating
+  hardwood material on the existing world-sized CSS floor element. Four boards
+  per 840px-wide strip preserve the previous 210px board width, with natural
+  grain and staggered end joints. Each strip spans the room length and repeats
+  only horizontally, avoiding abrupt horizontal material seams. No additional
+  canvas or per-frame work.
+
+The images add about 4.54 MiB of transfer/cache data and up to 18 MiB of decoded
+RGBA storage. The mouse canvas uses about 0.88 MiB (previously 0.22 MiB); other
+canvas allocations are unchanged. The texture is deliberately
 subdued to preserve marble/mouse readability. Real-phone judgment is still
 needed for texture density, perceived gait, hunting difficulty and smoothness.
-Mouse movement speeds, damage, collision radius, carpet drag and map geometry
-are unchanged. The short startle/pivot pause makes fast approaches more catchable.
+The mouse body is approximately 175 × 140 world pixels beside a 58px-diameter
+marble. Its collision radius increased from 44 to 88 alongside the art, keeping
+contacts consistent with visible size. Canvas extent and health-bar width derive
+from that radius. Mouse movement speeds, health, damage, carpet drag and map
+geometry are unchanged. The short startle/pivot pause makes fast approaches more catchable.
 
 ## Generation prompts
 
@@ -63,3 +75,24 @@ are unchanged. The short startle/pivot pause makes fast approaches more catchabl
 > no props, no cast shadow, no text or UI, no dramatic directional lighting. This
 > will render only about 90 pixels long; prioritize natural silhouette and fur
 > mass with eyes/nose/ears legible at small scale.
+
+### Wood floor
+
+> Create a TALL NARROW PORTRAIT game texture asset, aspect ratio 1:3 (for example
+> 832 pixels wide by 2496 pixels tall). Exactly orthographic overhead view of
+> FOUR parallel vertical oak floorboards across the width of the entire tall
+> image. This is a long hardwood flooring strip for a realistic top-down marble
+> game, with continuous grain running top to bottom and a few subtle staggered
+> board-end joints at different heights. Boards have realistic proportions: each
+> roughly 12 times longer than its width. Warm medium-light honey brown natural
+> oak, fine organic wood grain with gentle growth-ring curves and restrained
+> pores, modest matte/satin wear, slight varied tones between the four planks.
+> Restrained material contrast, narrow believable seams, no exaggerated dark
+> gaps, no harsh bright seam edges. Tiny understated scratches, no prominent
+> repetitive knots. Lighting completely even and diffuse from above. Fill every
+> edge of the TALL PORTRAIT image with wood. Horizontal edges should meet as a
+> believable board seam when this strip repeats SIDE BY SIDE; it will NOT repeat
+> vertically. Preserve natural fine wood grain proportions; do not create a
+> square image or stretch short grain vertically. No furniture, rug, objects,
+> animals, writing, shadow, gradient illumination, vignette, perspective or
+> room view.

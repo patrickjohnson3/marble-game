@@ -50,6 +50,41 @@ function testDamageTracksIncomingSpeedAndIsBounded() {
   assert.ok(mouse.vx > 0, "a direct hit knocks the mouse away");
 }
 
+function testContactUsesTheFullBodyRadiusFromEverySide() {
+  for (const [nx, ny] of [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ]) {
+    const mouse = createMouse(map);
+    const marble = {
+      x: mouse.x + nx * (mouse.r + 29 + 0.1),
+      y: mouse.y + ny * (mouse.r + 29 + 0.1),
+      vx: -nx * 14,
+      vy: -ny * 14,
+      r: 29,
+    };
+    const previous = { x: marble.x, y: marble.y };
+    assert.equal(resolveMouseContact(mouse, marble, previous), 0);
+    assert.equal(mouse.contactLatched, false);
+    marble.x -= nx * 0.2;
+    marble.y -= ny * 0.2;
+    assert.equal(
+      resolveMouseContact(mouse, marble, previous),
+      mouseConfig.maxDamage,
+    );
+    near(
+      Math.hypot(marble.x - mouse.x, marble.y - mouse.y),
+      mouse.r + marble.r,
+    );
+    assert.ok(
+      marble.vx * nx + marble.vy * ny > 0,
+      "the full body edge rebounds an incoming marble",
+    );
+  }
+}
+
 function testGlancingHitDoesLessDamageAndSweepFindsFirstContact() {
   const direct = createMouse(map);
   const glancing = createMouse(map);
@@ -172,6 +207,7 @@ function testDefeatStopsFurtherHitsAndMovementAndRetryIsFresh() {
   assert.equal(impacts, 4);
   const fresh = createMouse(map);
   assert.equal(fresh.health, mouseConfig.maxHealth);
+  assert.equal(fresh.r, mouseConfig.radius);
   assert.equal(fresh.contactLatched, false);
   assert.equal(fresh.hitFlash, 0);
   assert.equal(fresh.x, map.mouse.x);
@@ -212,7 +248,11 @@ function testMovementPausesAndKnockbackUseElapsedTime() {
   near(irregular.y, reference.y);
   near(irregular.gait, reference.gait);
   const startledSetup = (mouse) =>
-    updateMouse(mouse, { x: mouse.x - 100, y: mouse.y, vx: 10, vy: 0 }, 0.25);
+    updateMouse(
+      mouse,
+      { x: mouse.x - mouse.r - farMarble.r - 27, y: mouse.y, vx: 10, vy: 0 },
+      0.25,
+    );
   const startledReference = simulateMouse(1, 150, startledSetup);
   for (const dt of [0.25, 0.5, 2, 7]) {
     const mouse = simulateMouse(dt, 150, startledSetup);
@@ -222,8 +262,8 @@ function testMovementPausesAndKnockbackUseElapsedTime() {
     near(mouse.gait, startledReference.gait);
   }
   const boundarySetup = (mouse) => {
-    mouse.x = 70;
-    mouse.y = 80;
+    mouse.x = mouse.r + 26;
+    mouse.y = mouse.r + 36;
     mouse.angle = -Math.PI / 3;
   };
   const boundaryReference = simulateMouse(1, 270, boundarySetup);
@@ -276,7 +316,12 @@ function testLongRoamRemainsBoundedDeterministicAndKeepsMoving() {
   }
   assert.deepEqual(simulateMouse(1, 500), simulateMouse(1, 500));
   const mouse = createMouse(map);
-  const threat = { x: mouse.x - 100, y: mouse.y, vx: 10, vy: 0 };
+  const threat = {
+    x: mouse.x - mouse.r - farMarble.r - 27,
+    y: mouse.y,
+    vx: 10,
+    vy: 0,
+  };
   const initialAngle = mouse.angle;
   const initialX = mouse.x;
   updateMouse(mouse, threat, 0.25);
@@ -368,7 +413,13 @@ function testEdgeThreatChoosesAnEscapeRunInsteadOfBouncing() {
 
 function physicsContext(mouse) {
   return {
-    marble: { x: 505, y: 600, vx: 14, vy: 0, r: 29 },
+    marble: {
+      x: mouse.x - mouse.r - 29 - 22,
+      y: mouse.y,
+      vx: 14,
+      vy: 0,
+      r: 29,
+    },
     tilt: { smoothX: 0, smoothY: 0 },
     intro: { released: true },
     bounds: { left: 0, right: 1200, top: 0, bottom: 1200 },
@@ -414,7 +465,9 @@ function testHazardResetSkipsMouseMovementAndContact() {
   const before = globalThis.structuredClone(mouse);
   const context = physicsContext(mouse);
   context.mapState.terrainByType[SURFACE_TYPES.hazardPatch] = {
-    elements: [{ x: 495, y: 590, w: 30, h: 30 }],
+    elements: [
+      { x: context.marble.x - 10, y: context.marble.y - 10, w: 30, h: 30 },
+    ],
   };
   let impacts = 0;
   const reset = updatePhysics(context, 2, {
@@ -432,6 +485,7 @@ function testHazardResetSkipsMouseMovementAndContact() {
 }
 
 testDamageTracksIncomingSpeedAndIsBounded();
+testContactUsesTheFullBodyRadiusFromEverySide();
 testGlancingHitDoesLessDamageAndSweepFindsFirstContact();
 testSustainedContactRequiresSeparationEvenAfterHarmlessBump();
 testMouseCannotDamageItselfOrReflectOutgoingVelocity();

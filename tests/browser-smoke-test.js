@@ -313,6 +313,31 @@ window.__mapPreview = createApp({
       null,
       { timeout: timing.introReleaseDelayMs + 5000 },
     );
+    const floorMaterial = await page
+      .locator(".livingRoomSurface")
+      .evaluate(async (floor) => {
+        const style = window.getComputedStyle(floor);
+        const url = style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
+        const image = new window.Image();
+        image.src = url;
+        await image.decode();
+        return {
+          url,
+          loaded: image.naturalWidth > 0,
+          inWorld: Boolean(floor.closest("#world")),
+          attachment: style.backgroundAttachment,
+        };
+      });
+    assert.match(floorMaterial.url, /oak-floor\.webp/);
+    assert.ok(
+      floorMaterial.loaded,
+      "wood material must decode in the real browser",
+    );
+    assert.ok(
+      floorMaterial.inWorld,
+      "floor must move with the world, not the viewport",
+    );
+    assert.notEqual(floorMaterial.attachment, "fixed");
     assert.equal(await page.locator(".mouseCanvas").count(), 1);
     assert.match(
       await page.locator("#objectiveStatus").textContent(),
@@ -351,7 +376,8 @@ window.__mapPreview = createApp({
         const mouse = app.mapRuntime.state.mouse;
         Object.assign(mouse, { x: 2300, y: 3650, vx: 0, vy: 0 });
         Object.assign(app.state.marble, {
-          x: 2120,
+          // Keep the same free run-up as body size changes.
+          x: mouse.x - mouse.r - app.state.marble.r - 107,
           y: 3650,
           vx: 0,
           vy: 0,
