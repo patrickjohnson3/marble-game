@@ -21,8 +21,27 @@ function near(actual, expected, tolerance = 1e-8) {
   );
 }
 
+function contactMouse() {
+  const mouse = createMouse(map);
+  mouse.angle = mouse.previousAngle = mouse.targetAngle = 0;
+  return mouse;
+}
+
+function assertOutsideBody(mouse, marble) {
+  for (const part of mouseConfig.bodyParts) {
+    const x = mouse.x + Math.cos(mouse.angle) * part.x * mouse.r;
+    const y = mouse.y + Math.sin(mouse.angle) * part.x * mouse.r;
+    assert.ok(
+      Math.hypot(marble.x - x, marble.y - y) >=
+        part.r * mouse.r + marble.r - 1e-8,
+      "contact correction clears every overlapping body part",
+    );
+  }
+}
+
 function hit(mouse, speed, onImpact = () => {}) {
-  const radius = mouse.r + 29;
+  const rump = mouseConfig.bodyParts[0];
+  const radius = (rump.r - rump.x) * mouse.r + 29;
   const previous = { x: mouse.x - radius - 12, y: mouse.y };
   const marble = {
     x: mouse.x - radius + 2,
@@ -42,7 +61,7 @@ function testDamageTracksIncomingSpeedAndIsBounded() {
   assert.ok(mouseImpactDamage(6) > 0);
   assert.ok(mouseImpactDamage(12) > mouseImpactDamage(6));
   assert.equal(mouseImpactDamage(Number.MAX_VALUE), mouseConfig.maxDamage);
-  const mouse = createMouse(map);
+  const mouse = contactMouse();
   const { marble, damage } = hit(mouse, 14);
   assert.equal(damage, mouseConfig.maxDamage);
   assert.equal(mouse.health, mouse.maxHealth - damage);
@@ -50,44 +69,108 @@ function testDamageTracksIncomingSpeedAndIsBounded() {
   assert.ok(mouse.vx > 0, "a direct hit knocks the mouse away");
 }
 
-function testContactUsesTheFullBodyRadiusFromEverySide() {
-  for (const [nx, ny] of [
-    [1, 0],
-    [-1, 0],
-    [0, 1],
-    [0, -1],
-  ]) {
-    const mouse = createMouse(map);
-    const marble = {
-      x: mouse.x + nx * (mouse.r + 29 + 0.1),
-      y: mouse.y + ny * (mouse.r + 29 + 0.1),
-      vx: -nx * 14,
-      vy: -ny * 14,
-      r: 29,
-    };
-    const previous = { x: marble.x, y: marble.y };
-    assert.equal(resolveMouseContact(mouse, marble, previous), 0);
-    assert.equal(mouse.contactLatched, false);
-    marble.x -= nx * 0.2;
-    marble.y -= ny * 0.2;
-    assert.equal(
-      resolveMouseContact(mouse, marble, previous),
-      mouseConfig.maxDamage,
-    );
-    near(
-      Math.hypot(marble.x - mouse.x, marble.y - mouse.y),
-      mouse.r + marble.r,
-    );
-    assert.ok(
-      marble.vx * nx + marble.vy * ny > 0,
-      "the full body edge rebounds an incoming marble",
-    );
+function testContactTracksTheTaperedBodyAndHeading() {
+  const rump = mouseConfig.bodyParts[0];
+  const head = mouseConfig.bodyParts[2];
+  for (const angle of [0, Math.PI / 2, 0.65]) {
+    for (const [part, nx, ny] of [
+      [rump, -1, 0],
+      [rump, 0, 1],
+      [rump, 0, -1],
+      [head, 1, 0],
+    ]) {
+      const mouse = contactMouse();
+      mouse.angle = mouse.previousAngle = angle;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const worldNx = cos * nx - sin * ny;
+      const worldNy = sin * nx + cos * ny;
+      const radius = part.r * mouse.r + 29;
+      const marble = {
+        x: mouse.x + cos * part.x * mouse.r + worldNx * (radius + 0.1),
+        y: mouse.y + sin * part.x * mouse.r + worldNy * (radius + 0.1),
+        vx: -worldNx * 14,
+        vy: -worldNy * 14,
+        r: 29,
+      };
+      const previous = { x: marble.x, y: marble.y };
+      assert.equal(resolveMouseContact(mouse, marble, previous), 0);
+      assert.equal(mouse.contactLatched, false);
+      marble.x -= worldNx * 0.2;
+      marble.y -= worldNy * 0.2;
+      near(resolveMouseContact(mouse, marble, previous), mouseConfig.maxDamage);
+      assertOutsideBody(mouse, marble);
+      assert.ok(marble.vx * worldNx + marble.vy * worldNy > 0);
+    }
   }
+  const mouse = contactMouse();
+  const besideBody = {
+    x: mouse.x,
+    y: mouse.y + mouse.r * 0.75 + 29,
+    r: 29,
+    vx: 0,
+    vy: -14,
+  };
+  assert.equal(resolveMouseContact(mouse, besideBody, besideBody), 0);
+  assert.equal(
+    mouse.contactLatched,
+    false,
+    "the old circular side margin is clear",
+  );
+}
+
+function testBodySeamsKeepOneContactAndClearAllParts() {
+  const mouse = contactMouse();
+  let impacts = 0;
+  for (const x of [-24, 0, 20, 42]) {
+    const marble = { x: mouse.x + x, y: mouse.y + 55, vx: 0, vy: -14, r: 29 };
+    resolveMouseContact(mouse, marble, marble, () => impacts++);
+    assertOutsideBody(mouse, marble);
+  }
+  assert.equal(
+    impacts,
+    1,
+    "moving among overlapping parts is one sustained contact",
+  );
+  const health = mouse.health;
+  const tailContact = {
+    x: mouse.x - 110,
+    y: mouse.y,
+    vx: 14,
+    vy: 0,
+    r: 29,
+  };
+  resolveMouseContact(mouse, tailContact, tailContact, () => impacts++);
+  assert.equal(
+    mouse.health,
+    health,
+    "separation from the head alone cannot rearm damage",
+  );
+  hit(mouse, 14, () => impacts++);
+  assert.equal(impacts, 2, "leaving the entire body rearms the next impact");
+}
+
+function testTurningContactUsesPreviousHeadingWithoutSelfDamage() {
+  const mouse = contactMouse();
+  mouse.angle = 0.8;
+  const marble = { x: mouse.x + 85, y: mouse.y + 52, r: 29, vx: 0, vy: 0 };
+  let impacts = 0;
+  resolveMouseContact(mouse, marble, marble, () => impacts++);
+  assert.equal(
+    mouse.contactLatched,
+    true,
+    "turning moves the head into contact",
+  );
+  assertOutsideBody(mouse, marble);
+  assert.equal(mouse.health, mouse.maxHealth);
+  assert.equal(impacts, 0);
+  assert.equal(marble.vx, 0);
+  assert.equal(marble.vy, 0);
 }
 
 function testGlancingHitDoesLessDamageAndSweepFindsFirstContact() {
-  const direct = createMouse(map);
-  const glancing = createMouse(map);
+  const direct = contactMouse();
+  const glancing = contactMouse();
   const radius = direct.r + 29;
   const directMarble = {
     x: direct.x + radius + 20,
@@ -102,7 +185,7 @@ function testGlancingHitDoesLessDamageAndSweepFindsFirstContact() {
   });
   const glancingMarble = {
     x: glancing.x + radius + 20,
-    y: glancing.y - radius * 0.8,
+    y: glancing.y - (mouseConfig.bodyParts[0].r * glancing.r + 29) * 0.8,
     r: 29,
     vx: 14,
     vy: 0,
@@ -114,16 +197,43 @@ function testGlancingHitDoesLessDamageAndSweepFindsFirstContact() {
   assert.equal(directDamage, mouseConfig.maxDamage);
   assert.ok(glancingDamage > 0 && glancingDamage < directDamage);
   assert.ok(directMarble.x < direct.x, "fast sweep stops at the entry side");
+  const reverseMouse = contactMouse();
+  const reverseMarble = {
+    x: reverseMouse.x - radius - 20,
+    y: reverseMouse.y,
+    r: 29,
+    vx: -14,
+    vy: 0,
+  };
+  assert.equal(
+    resolveMouseContact(reverseMouse, reverseMarble, {
+      x: reverseMouse.x + radius + 20,
+      y: reverseMouse.y,
+    }),
+    mouseConfig.maxDamage,
+  );
+  const head = mouseConfig.bodyParts[2];
+  near(
+    reverseMarble.x,
+    reverseMouse.x + (head.x + head.r) * reverseMouse.r + 29,
+  );
+  assert.ok(
+    reverseMarble.vx > 0,
+    "the head is first even though its part is last",
+  );
 }
 
 function testSustainedContactRequiresSeparationEvenAfterHarmlessBump() {
   for (const firstSpeed of [1, 14]) {
-    const mouse = createMouse(map);
+    const mouse = contactMouse();
     hit(mouse, firstSpeed);
     const healthAfterFirstContact = mouse.health;
     for (let i = 0; i < 120; i++) {
       const marble = {
-        x: mouse.x - mouse.r - 28,
+        x:
+          mouse.x -
+          (mouseConfig.bodyParts[0].r - mouseConfig.bodyParts[0].x) * mouse.r -
+          28,
         y: mouse.y,
         r: 29,
         vx: 14,
@@ -141,10 +251,13 @@ function testSustainedContactRequiresSeparationEvenAfterHarmlessBump() {
 }
 
 function testMouseCannotDamageItselfOrReflectOutgoingVelocity() {
-  const mouse = createMouse(map);
+  const mouse = contactMouse();
   mouse.previousX = mouse.x - 5;
   const stillMarble = {
-    x: mouse.x + mouse.r + 27,
+    x:
+      mouse.x +
+      (mouseConfig.bodyParts[2].r + mouseConfig.bodyParts[2].x) * mouse.r +
+      27,
     y: mouse.y,
     vx: 0,
     vy: 0,
@@ -155,14 +268,15 @@ function testMouseCannotDamageItselfOrReflectOutgoingVelocity() {
   resolveMouseContact(mouse, stillMarble, previous, () => impacts++);
   assert.equal(mouse.health, mouse.maxHealth);
   assert.equal(impacts, 0);
-  near(
-    Math.hypot(stillMarble.x - mouse.x, stillMarble.y - mouse.y),
-    mouse.r + stillMarble.r,
-  );
+  assertOutsideBody(mouse, stillMarble);
 
-  const reversingMouse = createMouse(map);
+  const reversingMouse = contactMouse();
   const outgoing = {
-    x: reversingMouse.x - reversingMouse.r - 28,
+    x:
+      reversingMouse.x -
+      (mouseConfig.bodyParts[0].r - mouseConfig.bodyParts[0].x) *
+        reversingMouse.r -
+      28,
     y: reversingMouse.y,
     r: 29,
     vx: -2,
@@ -184,16 +298,16 @@ function testMouseCannotDamageItselfOrReflectOutgoingVelocity() {
 }
 
 function testCoincidentCentersStayFinite() {
-  const mouse = createMouse(map);
+  const mouse = contactMouse();
   const marble = { x: mouse.x, y: mouse.y, vx: 0, vy: 0, r: 29 };
   resolveMouseContact(mouse, marble, marble);
   assert.ok(Number.isFinite(marble.x) && Number.isFinite(marble.y));
   assert.equal(mouse.health, mouse.maxHealth);
-  near(Math.hypot(marble.x - mouse.x, marble.y - mouse.y), mouse.r + marble.r);
+  assertOutsideBody(mouse, marble);
 }
 
 function testDefeatStopsFurtherHitsAndMovementAndRetryIsFresh() {
-  const mouse = createMouse(map);
+  const mouse = contactMouse();
   let impacts = 0;
   for (let i = 0; i < 4; i++) hit(mouse, 14, () => impacts++);
   assert.equal(mouse.health, 0);
@@ -205,7 +319,7 @@ function testDefeatStopsFurtherHitsAndMovementAndRetryIsFresh() {
   updateMouse(mouse, farMarble, 100);
   assert.deepEqual(mouse, defeated);
   assert.equal(impacts, 4);
-  const fresh = createMouse(map);
+  const fresh = contactMouse();
   assert.equal(fresh.health, mouseConfig.maxHealth);
   assert.equal(fresh.r, mouseConfig.radius);
   assert.equal(fresh.contactLatched, false);
@@ -429,7 +543,7 @@ function physicsContext(mouse) {
 }
 
 function testPhysicsSubstepsContactWithoutRepetition() {
-  const mouse = createMouse(map);
+  const mouse = contactMouse();
   mouse.pauseFrames = 100;
   // Exercise real movement: the approaching marble can interrupt this pause.
   mouse.scurryFrames = 0;
@@ -439,7 +553,7 @@ function testPhysicsSubstepsContactWithoutRepetition() {
   assert.ok(mouse.health < mouse.maxHealth);
   assert.equal(impacts, 1);
   assert.ok(context.marble.vx < 0);
-  const locked = physicsContext(createMouse(map));
+  const locked = physicsContext(contactMouse());
   locked.intro.released = false;
   const before = globalThis.structuredClone(locked.mapState.mouse);
   updatePhysics(locked, 2, { onImpact() {}, onSurface() {} });
@@ -448,7 +562,7 @@ function testPhysicsSubstepsContactWithoutRepetition() {
 
 function testPhysicsImpactIsConsistentAcrossCadences() {
   for (const dt of [0.5, 1, 2]) {
-    const mouse = createMouse(map);
+    const mouse = contactMouse();
     const context = physicsContext(mouse);
     let impacts = 0;
     for (let t = 0; t < 8 && mouse.health === mouse.maxHealth; t += dt) {
@@ -461,7 +575,7 @@ function testPhysicsImpactIsConsistentAcrossCadences() {
 }
 
 function testHazardResetSkipsMouseMovementAndContact() {
-  const mouse = createMouse(map);
+  const mouse = contactMouse();
   const before = globalThis.structuredClone(mouse);
   const context = physicsContext(mouse);
   context.mapState.terrainByType[SURFACE_TYPES.hazardPatch] = {
@@ -485,7 +599,9 @@ function testHazardResetSkipsMouseMovementAndContact() {
 }
 
 testDamageTracksIncomingSpeedAndIsBounded();
-testContactUsesTheFullBodyRadiusFromEverySide();
+testContactTracksTheTaperedBodyAndHeading();
+testBodySeamsKeepOneContactAndClearAllParts();
+testTurningContactUsesPreviousHeadingWithoutSelfDamage();
 testGlancingHitDoesLessDamageAndSweepFindsFirstContact();
 testSustainedContactRequiresSeparationEvenAfterHarmlessBump();
 testMouseCannotDamageItselfOrReflectOutgoingVelocity();

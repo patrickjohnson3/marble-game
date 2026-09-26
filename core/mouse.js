@@ -27,6 +27,7 @@ export function createMouse(map) {
     vx: 0,
     vy: 0,
     angle: -Math.PI / 2,
+    previousAngle: -Math.PI / 2,
     targetAngle: -Math.PI / 2,
     health: mouseConfig.maxHealth,
     maxHealth: mouseConfig.maxHealth,
@@ -36,6 +37,7 @@ export function createMouse(map) {
     turnIn: 0,
     pauseFrames: 0,
     scurryFrames: 0,
+    fleeFrames: 0,
     turnIndex: 0,
     roamRegion: { x: region.x, y: region.y, w: region.w, h: region.h },
   };
@@ -67,20 +69,24 @@ function planMouseRun(mouse, angle, duration, speed) {
   const top = region.y + mouse.r + margin;
   const bottom = region.y + region.h - mouse.r - margin;
   const desiredAngle = angle;
+  // Reserve the remaining decaying kick toward each edge. Otherwise a good
+  // hit carries an escape beyond its planned pivot into the safety reflection.
+  const kickX = mouse.vx / -Math.log(mouseConfig.knockbackRetention);
+  const kickY = mouse.vy / -Math.log(mouseConfig.knockbackRetention);
   let space = 0;
   for (let attempt = 0; attempt < 4; attempt++) {
     const dx = Math.cos(angle);
     const dy = Math.sin(angle);
     space = Math.min(
       dx > 0
-        ? (right - mouse.x) / dx
+        ? (right - mouse.x - Math.max(0, kickX)) / dx
         : dx < 0
-          ? (left - mouse.x) / dx
+          ? (left - mouse.x - Math.min(0, kickX)) / dx
           : Infinity,
       dy > 0
-        ? (bottom - mouse.y) / dy
+        ? (bottom - mouse.y - Math.max(0, kickY)) / dy
         : dy < 0
-          ? (top - mouse.y) / dy
+          ? (top - mouse.y - Math.min(0, kickY)) / dy
           : Infinity,
     );
     if (space >= speed * duration * 0.5 || attempt === 3) break;
@@ -102,32 +108,37 @@ function planMouseRun(mouse, angle, duration, speed) {
   return Math.min(duration, Math.max(0, space) / speed);
 }
 
+function startMouseScurry(mouse, angle, duration, speed) {
+  mouse.scurryFrames = planMouseRun(mouse, angle, duration, speed);
+  mouse.turnIn = 0;
+  // Orient before darting while a hit's existing knockback carries the body.
+  mouse.pauseFrames = Math.max(
+    mouseConfig.startlePause,
+    Math.abs(mouse.targetAngle - mouse.angle) / mouseConfig.scurryTurnRate,
+  );
+}
+
 export function updateMouse(mouse, marble, dt) {
   if (!mouse || mouse.health <= 0 || !Number.isFinite(dt) || dt <= 0) return;
   mouse.previousX = mouse.x;
   mouse.previousY = mouse.y;
+  mouse.previousAngle = mouse.angle;
   mouse.hitFlash = Math.max(0, mouse.hitFlash - mouseConfig.hitFlashDecay * dt);
   const fromMarbleX = mouse.x - marble.x;
   const fromMarbleY = mouse.y - marble.y;
   const threatDistance = Math.hypot(fromMarbleX, fromMarbleY);
   if (
+    mouse.fleeFrames === 0 &&
     mouse.scurryFrames === 0 &&
     threatDistance > 0 &&
     threatDistance < mouseConfig.threatDistance &&
     marble.vx * fromMarbleX + marble.vy * fromMarbleY > 0
   ) {
-    mouse.scurryFrames = planMouseRun(
+    startMouseScurry(
       mouse,
       Math.atan2(fromMarbleY, fromMarbleX),
       mouseConfig.turnInterval,
       mouseConfig.scurrySpeed,
-    );
-    mouse.turnIn = 0;
-    // Briefly orient before darting. A fast marble can catch this reaction;
-    // the mouse never teleports its heading through a half turn.
-    mouse.pauseFrames = Math.max(
-      mouseConfig.startlePause,
-      Math.abs(mouse.targetAngle - mouse.angle) / mouseConfig.scurryTurnRate,
     );
   }
 
@@ -137,6 +148,17 @@ export function updateMouse(mouse, marble, dt) {
   // per-frame randomness or synchronized two-angle patrol pattern.
   let remaining = dt;
   while (remaining > 0) {
+    const fleeing = mouse.fleeFrames > 0;
+    if (fleeing && mouse.scurryFrames === 0) {
+      // A short run may end at an edge before the flight timer does. Choose
+      // another clear escape without shortening or extending the reaction.
+      startMouseScurry(
+        mouse,
+        Math.atan2(mouse.y - marble.y, mouse.x - marble.x),
+        Math.min(mouseConfig.turnInterval, mouse.fleeFrames),
+        mouseConfig.fleeSpeed,
+      );
+    }
     const scurrying = mouse.scurryFrames > 0;
     if (!scurrying && mouse.pauseFrames === 0 && mouse.turnIn <= 0) {
       mouse.turnIndex += 1;
@@ -158,6 +180,7 @@ export function updateMouse(mouse, marble, dt) {
     const paused = mouse.pauseFrames > 0;
     const step = Math.min(
       remaining,
+      fleeing ? mouse.fleeFrames : Infinity,
       paused
         ? mouse.pauseFrames
         : scurrying
@@ -171,9 +194,11 @@ export function updateMouse(mouse, marble, dt) {
     }
     const speed = paused
       ? 0
-      : scurrying
-        ? mouseConfig.scurrySpeed
-        : mouseConfig.walkSpeed;
+      : fleeing
+        ? mouseConfig.fleeSpeed
+        : scurrying
+          ? mouseConfig.scurrySpeed
+          : mouseConfig.walkSpeed;
     const retention = Math.pow(mouseConfig.knockbackRetention, step);
     const knockbackDistance =
       mouseConfig.knockbackRetention === 1
@@ -212,6 +237,15 @@ export function updateMouse(mouse, marble, dt) {
     if (paused) mouse.pauseFrames -= step;
     else if (scurrying) mouse.scurryFrames -= step;
     else mouse.turnIn -= step;
+    if (fleeing) {
+      mouse.fleeFrames = Math.max(0, mouse.fleeFrames - step);
+      if (mouse.fleeFrames === 0) {
+        // Discard the remaining escape run/pivot before normal roaming resumes.
+        mouse.scurryFrames = 0;
+        mouse.pauseFrames = 0;
+        mouse.turnIn = 0;
+      }
+    }
     remaining -= step;
   }
 }
@@ -223,39 +257,65 @@ export function resolveMouseContact(
   onImpact = () => {},
 ) {
   if (!mouse || mouse.health <= 0) return 0;
-  const radius = mouse.r + marble.r;
-  const startX = previous.x - mouse.previousX;
-  const startY = previous.y - mouse.previousY;
-  const endX = marble.x - mouse.x;
-  const endY = marble.y - mouse.y;
-  const startDistance = Math.hypot(startX, startY);
-  if (startDistance > radius + mouseConfig.separationMargin) {
-    mouse.contactLatched = false;
+  const cos = Math.cos(mouse.angle);
+  const sin = Math.sin(mouse.angle);
+  const previousCos = Math.cos(mouse.previousAngle);
+  const previousSin = Math.sin(mouse.previousAngle);
+  let separated = true;
+  let hitTime = Infinity;
+  let penetration = -Infinity;
+  let normalX = 0;
+  let normalY = 0;
+  let contactX = 0;
+  let contactY = 0;
+  let contactRadius = 0;
+  for (const part of mouseConfig.bodyParts) {
+    const offset = part.x * mouse.r;
+    const radius = part.r * mouse.r + marble.r;
+    const startX = previous.x - mouse.previousX - previousCos * offset;
+    const startY = previous.y - mouse.previousY - previousSin * offset;
+    const centerX = mouse.x + cos * offset;
+    const centerY = mouse.y + sin * offset;
+    const endX = marble.x - centerX;
+    const endY = marble.y - centerY;
+    const startDistance = Math.hypot(startX, startY);
+    if (startDistance <= radius + mouseConfig.separationMargin) {
+      separated = false;
+    }
+    let time = 0;
+    let nx = endX;
+    let ny = endY;
+    const depth = radius - Math.hypot(endX, endY);
+    if (startDistance > radius) {
+      // Sweep each part from the previous heading as well as position. Select
+      // the earliest entry across the body, never the first part in the list.
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const a = dx * dx + dy * dy;
+      const b = startX * dx + startY * dy;
+      const c = startX * startX + startY * startY - radius * radius;
+      const discriminant = b * b - a * c;
+      if (a === 0 || b >= 0 || discriminant < 0) continue;
+      time = (-b - Math.sqrt(discriminant)) / a;
+      if (time < 0 || time > 1) continue;
+      nx = startX + dx * time;
+      ny = startY + dy * time;
+    } else if (depth < 0) {
+      // Existing contact is separating; do not pull it back to the mouse.
+      continue;
+    }
+    if (time > hitTime || (time === hitTime && depth <= penetration)) continue;
+    hitTime = time;
+    penetration = depth;
+    normalX = nx;
+    normalY = ny;
+    contactX = centerX;
+    contactY = centerY;
+    contactRadius = radius;
   }
-
-  let normalX = startX;
-  let normalY = startY;
-  if (startDistance > radius) {
-    // First contact of the relative sweep, including the mouse's own scurry.
-    // A closest-point normal would lose the direct component of a fast hit.
-    const dx = endX - startX;
-    const dy = endY - startY;
-    const a = dx * dx + dy * dy;
-    const b = startX * dx + startY * dy;
-    const c = startX * startX + startY * startY - radius * radius;
-    const discriminant = b * b - a * c;
-    if (a === 0 || b >= 0 || discriminant < 0) return 0;
-    const hitTime = (-b - Math.sqrt(discriminant)) / a;
-    if (hitTime < 0 || hitTime > 1) return 0;
-    normalX += dx * hitTime;
-    normalY += dy * hitTime;
-  } else if (Math.hypot(endX, endY) > radius) {
-    // Existing contact is separating; do not pull it back to the mouse.
-    return 0;
-  } else {
-    normalX = endX;
-    normalY = endY;
-  }
+  // One body owns the contact latch, including where adjacent parts overlap.
+  if (separated) mouse.contactLatched = false;
+  if (hitTime === Infinity) return 0;
 
   const normalLength = Math.hypot(normalX, normalY);
   if (normalLength > 0) {
@@ -266,11 +326,31 @@ export function resolveMouseContact(
     normalX = speed > 0 ? -marble.vx / speed : 1;
     normalY = speed > 0 ? -marble.vy / speed : 0;
   }
-  // Correction is less than the rearm margin, so it cannot create a fresh hit.
-  marble.x = mouse.x + normalX * radius;
-  marble.y = mouse.y + normalY * radius;
+  marble.x = contactX + normalX * contactRadius;
+  marble.y = contactY + normalY * contactRadius;
+  // At a seam, correcting one circle can leave penetration in its neighbor.
+  // Continue along the same outward normal beyond any overlapping part. Each
+  // correction passes that circle's far intersection, so it cannot recur.
+  for (let pass = 0; pass < mouseConfig.bodyParts.length; pass++) {
+    let corrected = false;
+    for (const part of mouseConfig.bodyParts) {
+      const offset = part.x * mouse.r;
+      const dx = marble.x - mouse.x - cos * offset;
+      const dy = marble.y - mouse.y - sin * offset;
+      const radius = part.r * mouse.r + marble.r;
+      const c = dx * dx + dy * dy - radius * radius;
+      if (c >= -1e-8) continue;
+      const b = dx * normalX + dy * normalY;
+      const distance = -b + Math.sqrt(b * b - c);
+      marble.x += normalX * distance;
+      marble.y += normalY * distance;
+      corrected = true;
+    }
+    if (!corrected) break;
+  }
   const incomingSpeed = -(marble.vx * normalX + marble.vy * normalY);
-  const damage = mouse.contactLatched ? 0 : mouseImpactDamage(incomingSpeed);
+  const freshContact = !mouse.contactLatched;
+  const damage = freshContact ? mouseImpactDamage(incomingSpeed) : 0;
   mouse.contactLatched = true;
   if (damage > 0) {
     mouse.health = Math.max(0, mouse.health - damage);
@@ -283,7 +363,19 @@ export function resolveMouseContact(
     } else {
       mouse.vx = 0;
       mouse.vy = 0;
+      mouse.fleeFrames = 0;
+      mouse.scurryFrames = 0;
+      mouse.pauseFrames = 0;
     }
+  }
+  if (freshContact && incomingSpeed > 0 && mouse.health > 0) {
+    mouse.fleeFrames = mouseConfig.fleeDuration;
+    startMouseScurry(
+      mouse,
+      Math.atan2(-normalY, -normalX),
+      Math.min(mouseConfig.turnInterval, mouse.fleeFrames),
+      mouseConfig.fleeSpeed,
+    );
   }
   if (incomingSpeed > 0) {
     marble.vx += (1 + mouseConfig.bounce) * incomingSpeed * normalX;

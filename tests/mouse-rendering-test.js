@@ -17,6 +17,7 @@ const images = [];
 globalThis.Image = class {
   complete = false;
   naturalWidth = 0;
+  naturalHeight = 0;
   listeners = new Map();
   addEventListener(type, listener) {
     if (!this.listeners.has(type)) this.listeners.set(type, new Set());
@@ -96,6 +97,7 @@ try {
   retiredContext.calls.length = 0;
   images[0].complete = true;
   images[0].naturalWidth = 1254;
+  images[0].naturalHeight = 1254;
   images[0].dispatch("load");
   assert.equal(
     retiredContext.calls.length,
@@ -110,6 +112,12 @@ try {
         call[0] === "drawImage" && call[1] === "assets/sprites/mouse.webp",
     ),
     "late sprite readiness redraws even a paused pose without a game tick",
+  );
+  const bodyDraw = context.calls.find((call) => call[0] === "drawImage");
+  assert.equal(
+    bodyDraw[4] / bodyDraw[5],
+    images[0].naturalWidth / images[0].naturalHeight,
+    "the body must preserve the source sprite's proportions instead of stretching its width",
   );
   context.calls.length = 0;
   renderMouse(themeState, mouse);

@@ -36,8 +36,8 @@ function drawMouse(context, mouse, sprite) {
   context.transform(cos * scale, sin * scale, -sin * scale, cos * scale, 0, 0);
   context.globalAlpha = defeated ? 0.65 : 1;
 
-  // Tail and toes are cosmetic. Fur covers the same compact contact footprint;
-  // the source image's transparent padding is included in these draw bounds.
+  // Tail and toes are cosmetic. The square sprite keeps its native aspect
+  // ratio; the three contact circles follow its tapered body.
   context.lineCap = "round";
   context.lineWidth = 5;
   context.strokeStyle = "#866961";
@@ -53,12 +53,12 @@ function drawMouse(context, mouse, sprite) {
   context.quadraticCurveTo(-97, 17, -101, 5);
   context.stroke();
 
-  ellipse(context, -3, 4, 41, defeated ? 23 : 35, "#332b282b");
+  ellipse(context, -3, 3, 41, defeated ? 16 : 23, "#332b282b");
   for (const side of [-1, 1]) {
     ellipse(
       context,
       -23 + gait * side * 4,
-      side * 30,
+      side * 22,
       7,
       3,
       "#af9182",
@@ -67,7 +67,7 @@ function drawMouse(context, mouse, sprite) {
     ellipse(
       context,
       18 - gait * side * 4,
-      side * 23,
+      side * 16,
       6,
       2.5,
       "#af9182",
@@ -78,17 +78,17 @@ function drawMouse(context, mouse, sprite) {
   context.save();
   if (defeated) context.transform(1, 0, 0.24, 0.7, 0, 0);
   if (sprite) {
-    context.drawImage(sprite, -51, -76, 102, 152);
+    context.drawImage(sprite, -51, -51, 102, 102);
   } else {
     // A readable fallback while the image loads or if it fails offline.
     const coat = context.createRadialGradient(-12, -9, 2, -5, 0, 40);
     coat.addColorStop(0, "#a09480");
     coat.addColorStop(1, "#5c5147");
-    ellipse(context, -8, 0, 35, 34, coat);
-    ellipse(context, 21, 0, 25, 19, coat);
+    ellipse(context, -8, 0, 35, 23, coat);
+    ellipse(context, 21, 0, 25, 13, coat);
     for (const side of [-1, 1]) {
-      ellipse(context, 15, side * 20, 7, 9, "#b09888");
-      ellipse(context, 32, side * 8, 2, 2, "#242526");
+      ellipse(context, 15, side * 14, 7, 6, "#b09888");
+      ellipse(context, 32, side * 5.5, 2, 2, "#242526");
     }
   }
   // Tiny muzzle/whisker motion remains visible during a stationary sniff.

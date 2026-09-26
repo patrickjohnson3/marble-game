@@ -98,12 +98,19 @@ The player rolls into the mouse; there is no attack button. Damage is
 `30 * clamp((incomingNormalSpeed - 3) / 11, 0, 1)`, with 100 initial health.
 Normal speed is the marble velocity toward the mouse at contact, so a glancing
 hit does less damage and mouse motion cannot damage itself against a stationary
-marble. Contact stays latched until the bodies separate by more than 8 units.
+marble. Three overlapping circles follow the tapered body as it turns. Contact
+stays latched until the marble separates from every part by more than 8 units.
 All tuning is in `mouseConfig` in `core/game-config.js`.
 
 The mouse uses deterministic varied runs and sniff/pivot pauses, then briefly
 startles before scurrying away from an approaching marble. Runs turn inward
 before reaching the edge of its named roaming rectangle, spanning wood and shag.
+Walking speed is 2.4 world units per 60 Hz frame; proximity scurries use 5.5.
+A fresh incoming marble impact starts 150 frames (2.5 seconds) of flight at 7.5,
+including harmless slow bumps. Flight persists after the marble stops, chooses
+another escape run at roaming edges, and then returns to normal behavior. Only
+a fresh separated impact refreshes it; held contact cannot extend it. Defeat
+stops flight and Retry resets it. Health and the damage formula are unchanged.
 Validation reserves clear approaches around this rectangle and checks sampled
 reachability from spawn;
 this deliberately avoids runtime pathfinding. Do not place furniture or hazards

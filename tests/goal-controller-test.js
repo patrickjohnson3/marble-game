@@ -502,7 +502,8 @@ function testMouseDefeatUnlocksExitAndRetryRestoresEncounter() {
     });
     resolveMouseContact(mouse, marble, marble, () => hitEvents++);
     const previous = { x: marble.x, y: marble.y };
-    marble.x = mouse.x - radius + 1;
+    // Sweep into the actual body; its side is narrower than the roaming bound.
+    marble.x = mouse.x;
     resolveMouseContact(mouse, marble, previous, () => hitEvents++);
     controller.update(1);
     assert.equal(

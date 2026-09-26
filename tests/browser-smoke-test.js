@@ -397,12 +397,51 @@ window.__mapPreview = createApp({
         const app = window.__mapPreview;
         app.gameController.pause();
         const mouse = app.mapRuntime.state.mouse;
-        return { health: mouse.health, maxHealth: mouse.maxHealth };
+        return {
+          health: mouse.health,
+          maxHealth: mouse.maxHealth,
+          fleeFrames: mouse.fleeFrames,
+          gait: mouse.gait,
+        };
       });
     }
 
     const firstHit = await keyboardRunUp();
     assert.ok(firstHit.health > 0 && firstHit.health < firstHit.maxHealth);
+    assert.ok(firstHit.fleeFrames > 0, "a real keyboard impact starts flight");
+    await page.evaluate(() => {
+      const app = window.__mapPreview;
+      // Remove the continuing threat; only the hit reaction should persist.
+      Object.assign(app.state.marble, { x: 300, y: 500, vx: 0, vy: 0 });
+      app.gameController.resume();
+    });
+    await page.waitForFunction(() => {
+      const mouse = window.__mapPreview.mapRuntime.state.mouse;
+      return mouse.fleeFrames > 0 && mouse.fleeFrames < 90;
+    });
+    assert.ok(
+      await page.evaluate(
+        (gait) => window.__mapPreview.mapRuntime.state.mouse.gait > gait + 100,
+        firstHit.gait,
+      ),
+      "the mouse keeps fleeing after the marble stops threatening it",
+    );
+    await page.waitForFunction(
+      () => window.__mapPreview.mapRuntime.state.mouse.fleeFrames === 0,
+      null,
+      { timeout: 5000 },
+    );
+    assert.equal(
+      await page.evaluate(() => {
+        const app = window.__mapPreview;
+        app.gameController.pause();
+        return app.mapRuntime.state.mouse.health;
+      }),
+      firstHit.health,
+      "flight expires without another attack or damage",
+    );
+    const retryHit = await keyboardRunUp();
+    assert.ok(retryHit.fleeFrames > 0, "Retry exercises an active escape");
     await page.evaluate(() => {
       window.__previousMouse = window.__mapPreview.mapRuntime.state.mouse;
       window.__mapPreview.gameController.resume();
@@ -418,6 +457,7 @@ window.__mapPreview = createApp({
           fresh: mouse !== window.__previousMouse,
           fullHealth: mouse.health === mouse.maxHealth,
           contactLatched: mouse.contactLatched,
+          fleeFrames: mouse.fleeFrames,
           completed: app.mapRuntime.state.goalCompleted,
         };
       }),
@@ -425,6 +465,7 @@ window.__mapPreview = createApp({
         fresh: true,
         fullHealth: true,
         contactLatched: false,
+        fleeFrames: 0,
         completed: false,
       },
       "Retry must restore a fresh enemy and locked objective",
@@ -435,6 +476,13 @@ window.__mapPreview = createApp({
       ({ health } = await keyboardRunUp());
     }
     assert.equal(health, 0, "separated keyboard run-ups must defeat the mouse");
+    assert.equal(
+      await page.evaluate(
+        () => window.__mapPreview.mapRuntime.state.mouse.fleeFrames,
+      ),
+      0,
+      "defeat stops any remaining flight",
+    );
     const defeated = await page.evaluate(() => {
       const app = window.__mapPreview;
       const mouse = app.mapRuntime.state.mouse;

@@ -57,13 +57,21 @@ export const physicsConfig = {
 export const mouseConfig = {
   // Body length is about three marble diameters; render scale follows this.
   radius: 88,
+  // Local centers/radii follow the tapered fur silhouette, scaled by radius.
+  bodyParts: [
+    { x: -0.43, r: 0.55 },
+    { x: 0.05, r: 0.47 },
+    { x: 0.63, r: 0.36 },
+  ],
   maxHealth: 100,
   minDamageSpeed: 3,
   fullDamageSpeed: 14,
   maxDamage: 30,
   separationMargin: 8,
-  walkSpeed: 1.2,
-  scurrySpeed: 3,
+  walkSpeed: 2.4,
+  scurrySpeed: 5.5,
+  fleeSpeed: 7.5,
+  fleeDuration: 150, // 2.5 seconds, including pivots between escape runs.
   threatDistance: 220,
   turnInterval: 90,
   pauseDuration: 18,

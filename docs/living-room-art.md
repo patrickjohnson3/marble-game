@@ -11,8 +11,8 @@ originals. No new runtime dependency is required.
 - `assets/sprites/mouse.webp`: 1254 × 1254 with alpha, 843,698 bytes. A shared
   body/head sprite drawn into a local canvas sized from the actor radius
   (480 × 480 at radius 88). Draw bounds
-  account for transparent padding to keep the fur near the circular
-  contact footprint. Tail, feet and sniffing whiskers animate in Canvas; the
+  account for transparent padding to keep the fur near the
+  tapered contact footprint. Tail, feet and sniffing whiskers animate in Canvas; the
   thin tail/whiskers remain cosmetic. Health feedback stays horizontal and the
   defeated pose stays still. A simple shaded fallback works before loading or
   when the asset is unavailable.
@@ -29,11 +29,14 @@ RGBA storage. The mouse canvas uses about 0.88 MiB (previously 0.22 MiB); other
 canvas allocations are unchanged. The texture is deliberately
 subdued to preserve marble/mouse readability. Real-phone judgment is still
 needed for texture density, perceived gait, hunting difficulty and smoothness.
-The mouse body is approximately 175 × 140 world pixels beside a 58px-diameter
-marble. Its collision radius increased from 44 to 88 alongside the art, keeping
-contacts consistent with visible size. Canvas extent and health-bar width derive
-from that radius. Mouse movement speeds, health, damage, carpet drag and map
-geometry are unchanged. The short startle/pivot pause makes fast approaches more catchable.
+The mouse body is approximately 175 × 94 world pixels beside a 58px-diameter
+marble. The square source image now draws square, correcting the old 102 × 152
+stretch that made it look broad. Feet, fallback and shadow follow the narrower
+body. Three overlapping circles fit the rump, torso and head; the 88-unit
+bounding radius still controls roaming clearance, canvas extent and health-bar
+width. Tail and whiskers do not block the marble. Health, damage, carpet drag and
+map geometry are unchanged. Movement and timed post-hit flight are described in
+[map authoring](map-authoring.md).
 
 ## Generation prompts
 
