@@ -183,6 +183,7 @@ function isOverTerrainPatch(marble, intro, patches, physics) {
 function createPhysicsScratch() {
   return {
     collisionContact: {},
+    hazardMarble: { x: 0, y: 0, r: 0, vx: 0, vy: 0 },
     // Reused frame-local output for contacts evaluated after physics.
     movementPath: { segments: [], count: 0 },
     frameFactors: {
@@ -446,6 +447,34 @@ function physicsStep(context, dt, feedback) {
   );
   const hits = updateSurfaceHits(context, physicsScratch);
   hits.icePatch = overIcePatch;
+  if (hits.hazardPatch) {
+    // Reject hazard crossings hidden behind solid geometry. Probe with zero
+    // velocity: wall separation depends only on position, and must not emit an
+    // impact or change the real marble's incoming mouse/wall contact velocity.
+    const probe = physicsScratch.hazardMarble;
+    probe.x = context.marble.x;
+    probe.y = context.marble.y;
+    probe.r = context.marble.r;
+    handleWallCollisions(
+      {
+        marble: probe,
+        bounds: context.bounds,
+        intro: context.intro,
+        physics: context.physics,
+      },
+      () => {},
+      context.mapState.obstacles,
+      physicsScratch.collisionContact,
+    );
+    hits.hazardPatch = sweptOverTerrainPatch(
+      physicsScratch.previousTerrainMarble,
+      probe,
+      context.intro,
+      terrainCandidates(context, SURFACE_TYPES.hazardPatch),
+      context.physics,
+      SURFACE_TYPES.hazardPatch,
+    );
+  }
   // A reset invalidates this movement and its surface hits. Stop the frame so
   // remaining substeps cannot accelerate the marble away from its new spawn.
   if (hits.hazardPatch && feedback.onHazard?.() === true) return true;

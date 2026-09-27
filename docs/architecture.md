@@ -178,7 +178,10 @@ Inside one `physicsStep()`:
    velocity, preserving the original movement limit.
 5. Stop both velocity and displacement below the existing settle thresholds.
 6. Move the marble and sweep its actual segment against goo, rough, water,
-   and hazard patches. If hazard feedback resets the marble, abort the frame.
+   and hazard patches. Verify tentative hazard hits against a scratch copy
+   separated from solid geometry by the existing wall resolver. This prevents
+   resets through walls without changing incoming contact velocity or terrain
+   handling. If hazard feedback resets the marble, abort the frame.
 7. Report the current surface using priority:
    goo, rough, water, ice, floor.
 8. Apply post-move drag for goo, rough, and water patches.

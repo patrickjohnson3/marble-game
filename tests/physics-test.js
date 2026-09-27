@@ -24,6 +24,9 @@ import {
 } from "../core/physics.js";
 import { MAP_ELEMENT_TYPES } from "../core/map-elements.js";
 import { physicsConfig } from "../core/game-config.js";
+import { baseMapConfig } from "../core/map-config.js";
+import { createResolvedMapState } from "../core/map-runtime.js";
+import { resolveMapVariantConfig } from "../core/map-variants.js";
 
 function assertNear(actual, expected, tolerance = 1e-9) {
   assert.equal(
@@ -2211,5 +2214,114 @@ function testRectangularTerrainHasRoundedSweptCorners() {
 }
 
 testRectangularTerrainHasRoundedSweptCorners();
+
+function testParkingConeShieldsTheDrain() {
+  function run({ removeHazard = false, removeObstacles = false } = {}) {
+    const config = resolveMapVariantConfig(baseMapConfig, "parking-lot");
+    const mapState = createResolvedMapState(config);
+    if (removeHazard) mapState.terrainByType.hazardPatch.elements = [];
+    if (removeObstacles) mapState.obstacles = [];
+    const marble = { x: 1728, y: 1917, r: 29, vx: 0, vy: 14 };
+    const impacts = [];
+    let hazards = 0;
+    const reset = updatePhysics(
+      {
+        marble,
+        mapState,
+        physics: physicsConfig,
+        tilt: { smoothX: 0, smoothY: 0 },
+        intro: { released: true },
+        bounds: {
+          left: 0,
+          top: 0,
+          right: config.world.width,
+          bottom: config.world.height,
+        },
+      },
+      2,
+      {
+        onHazard() {
+          hazards++;
+          Object.assign(marble, config.spawn, { vx: 0, vy: 0 });
+          return true;
+        },
+        onImpact: (strength) => impacts.push(strength),
+        onSurface() {},
+      },
+    );
+    return { marble, impacts, hazards, reset };
+  }
+
+  const blocked = run();
+  assert.equal(blocked.hazards, 0, "the cone blocks the path before the drain");
+  assert.equal(blocked.reset, undefined);
+  assert.equal(
+    blocked.impacts.length,
+    1,
+    "only the real cone contact emits feedback",
+  );
+  const noDrain = run({ removeHazard: true });
+  assert.deepEqual(blocked.marble, noDrain.marble);
+  assert.deepEqual(blocked.impacts, noDrain.impacts);
+  const unblocked = run({ removeObstacles: true });
+  assert.equal(
+    unblocked.reset,
+    true,
+    "without the cone the same approach reaches the drain",
+  );
+  assert.equal(unblocked.hazards, 1);
+  assert.equal(unblocked.impacts.length, 0);
+}
+
+function testHazardSweepRespectsWallsWithoutLosingEarlierCrossings() {
+  for (const [hazardX, expectedHazards] of [
+    [52, 0],
+    [35, 1],
+  ]) {
+    const marble = { x: 20, y: 50, r: 5, vx: 28, vy: 0 };
+    let hazards = 0;
+    let impacts = 0;
+    const reset = updateTestPhysics(
+      {
+        marble,
+        bounds: { left: 0, top: 0, right: 200, bottom: 200 },
+        intro: { released: true },
+        tilt: { smoothX: 0, smoothY: 0 },
+        obstacles: [{ x: 50, y: 0, w: 20, h: 100 }],
+        hazardPatches: [{ x: hazardX, y: 40, w: 1, h: 20 }],
+        physics: {
+          ...physicsConfig,
+          baseDragRetention: 1,
+          maxSpeed: 100,
+          maxStepDistance: 100,
+        },
+      },
+      1,
+      {
+        onHazard() {
+          hazards++;
+          Object.assign(marble, { x: 100, y: 150, vx: 0, vy: 0 });
+          return true;
+        },
+        onImpact: () => impacts++,
+        onSurface() {},
+      },
+    );
+    assert.equal(hazards, expectedHazards);
+    if (expectedHazards) {
+      assert.equal(reset, true);
+      assert.equal(impacts, 0, "the aborted move must not emit a wall impact");
+      assert.deepEqual(marble, { x: 100, y: 150, r: 5, vx: 0, vy: 0 });
+    } else {
+      assert.equal(impacts, 1);
+      // The wall's left face is x=50 and the marble radius is 5.
+      assert.equal(marble.x, 45);
+      assertNear(marble.vx, -28 * physicsConfig.bounce);
+    }
+  }
+}
+
+testParkingConeShieldsTheDrain();
+testHazardSweepRespectsWallsWithoutLosingEarlierCrossings();
 
 console.log("Physics tests passed.");
