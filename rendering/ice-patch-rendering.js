@@ -93,7 +93,7 @@ function drawGloss(context, patch) {
   });
 }
 
-function drawIcePatch(context, patch) {
+function drawIcePatch(context, patch, shadowScale) {
   const gradient = context.createLinearGradient(
     patch.x,
     patch.y,
@@ -109,8 +109,8 @@ function drawIcePatch(context, patch) {
 
   context.save();
   context.shadowColor = "rgba(180,238,255,.18)";
-  context.shadowBlur = 12;
-  context.shadowOffsetY = 4;
+  context.shadowBlur = 12 * shadowScale;
+  context.shadowOffsetY = 4 * shadowScale;
   context.fillStyle = gradient;
   context.beginPath();
   drawRoundedRect(context, patch, radius);

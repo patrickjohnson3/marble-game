@@ -1,7 +1,7 @@
 import { drawRoundedRect, renderPatchCanvas } from "./wall-rendering.js";
 import { drawDrainOpening } from "./parking-lot-rendering.js";
 
-function drawHazardPatch(context, patch) {
+function drawHazardPatch(context, patch, shadowScale) {
   if (patch.material === "drain") {
     drawDrainOpening(context, patch);
     return;
@@ -20,8 +20,8 @@ function drawHazardPatch(context, patch) {
 
   context.save();
   context.shadowColor = "rgba(239,71,111,.32)";
-  context.shadowBlur = 16;
-  context.shadowOffsetY = 6;
+  context.shadowBlur = 16 * shadowScale;
+  context.shadowOffsetY = 6 * shadowScale;
   context.fillStyle = gradient;
   context.beginPath();
   drawRoundedRect(context, patch, radius);

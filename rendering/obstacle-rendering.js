@@ -111,7 +111,7 @@ function drawFillRects(context, rects) {
   rects.forEach((rect) => context.rect(rect.x, rect.y, rect.w, rect.h));
 }
 
-function drawObstacleGroup(context, group) {
+function drawObstacleGroup(context, group, shadowScale) {
   const { bottom, left, right, top } = rectBounds(group);
   const geometry = mergedRectGeometry(group);
   const fill = context.createLinearGradient(left, top, right, bottom);
@@ -122,8 +122,8 @@ function drawObstacleGroup(context, group) {
 
   context.save();
   context.shadowColor = "rgba(0,0,0,.55)";
-  context.shadowBlur = 18;
-  context.shadowOffsetY = 14;
+  context.shadowBlur = 18 * shadowScale;
+  context.shadowOffsetY = 14 * shadowScale;
   context.fillStyle = fill;
   drawFillRects(context, geometry.fillRects);
   context.fill();
@@ -384,7 +384,7 @@ export function renderObstacleWalls(
     return;
   }
 
-  const { canvas, context } = createCanvas(
+  const { canvas, context, shadowScale } = createCanvas(
     "obstacleCanvas",
     obstacles,
     padding,
@@ -394,7 +394,9 @@ export function renderObstacleWalls(
 
   canvas.setAttribute("data-wall-groups", String(obstacleGroups.length));
   if (context) {
-    obstacleGroups.forEach((group) => drawObstacleGroup(context, group));
+    obstacleGroups.forEach((group) =>
+      drawObstacleGroup(context, group, shadowScale),
+    );
     drawObstacleOutline(context, obstacles);
   }
   container.replaceChildren(canvas);

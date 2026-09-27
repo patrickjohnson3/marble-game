@@ -45,7 +45,7 @@ function drawPatchGritLayer(
   }
 }
 
-function drawRoughPatch(context, patch) {
+function drawRoughPatch(context, patch, shadowScale) {
   if (patch.material === "gravel") {
     drawParkingGravel(context, patch);
     return;
@@ -68,8 +68,8 @@ function drawRoughPatch(context, patch) {
 
   context.save();
   context.shadowColor = "rgba(0,0,0,.24)";
-  context.shadowBlur = 12;
-  context.shadowOffsetY = 6;
+  context.shadowBlur = 12 * shadowScale;
+  context.shadowOffsetY = 6 * shadowScale;
   context.fillStyle = gradient;
   context.beginPath();
   drawRoundedRect(context, patch, radius);

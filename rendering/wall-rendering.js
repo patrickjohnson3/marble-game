@@ -1,5 +1,9 @@
 import { rectBounds } from "../core/rect-bounds.js";
 
+// Bound a shared terrain/obstacle backing to 16 MiB, even on large maps at
+// high DPR. CSS bounds and drawing coordinates stay in world space.
+const maxCanvasDimension = 2048;
+
 function configureCanvas(
   canvas,
   className,
@@ -11,11 +15,25 @@ function configureCanvas(
   const top = bounds.top - padding;
   const width = bounds.width + padding * 2;
   const height = bounds.height + padding * 2;
-  const pixelRatio = canvasPixelRatio();
+  const nativePixelRatio = canvasPixelRatio();
+  const pixelRatio = Math.min(
+    nativePixelRatio,
+    maxCanvasDimension / width,
+    maxCanvasDimension / height,
+  );
+  // Canvas shadows ignore the transform: shrink their pixel values along with
+  // the backing so downsampling does not enlarge or clip their visible extent.
+  const shadowScale = pixelRatio / nativePixelRatio;
 
   canvas.classList.add(className);
-  const pixelWidth = Math.ceil(width * pixelRatio);
-  const pixelHeight = Math.ceil(height * pixelRatio);
+  const pixelWidth = Math.min(
+    maxCanvasDimension,
+    Math.ceil(width * pixelRatio),
+  );
+  const pixelHeight = Math.min(
+    maxCanvasDimension,
+    Math.ceil(height * pixelRatio),
+  );
   if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
   if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
   canvas.style.left = left + "px";
@@ -36,7 +54,7 @@ function configureCanvas(
     );
   }
 
-  return { canvas, context, left, pixelRatio, top };
+  return { canvas, context, left, pixelRatio, shadowScale, top };
 }
 
 export function createCanvas(
@@ -78,7 +96,7 @@ export function renderPatchCanvas(
 
   const existingCanvas = container.firstChild;
   const reuseCanvas = existingCanvas?.classList?.contains(className);
-  const { canvas, context, left, pixelRatio, top } = reuseCanvas
+  const { canvas, context, left, pixelRatio, shadowScale, top } = reuseCanvas
     ? configureCanvas(existingCanvas, className, patches, padding, bounds)
     : createCanvas(className, patches, padding, bounds);
   canvas.setAttribute(dataAttribute, String(patches.length));
@@ -95,7 +113,7 @@ export function renderPatchCanvas(
         -top * pixelRatio,
       );
     }
-    patches.forEach((patch) => drawPatch(context, patch));
+    patches.forEach((patch) => drawPatch(context, patch, shadowScale));
   }
   if (!reuseCanvas) container.replaceChildren(canvas);
 }

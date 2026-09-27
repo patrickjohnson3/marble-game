@@ -22,7 +22,11 @@ import {
 } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import { renderWaterPatches } from "../rendering/water-patch-rendering.js";
-import { renderOuterWalls } from "../rendering/wall-rendering.js";
+import {
+  createCanvas,
+  renderOuterWalls,
+  renderPatchCanvas,
+} from "../rendering/wall-rendering.js";
 import {
   createMapRenderer,
   createTerrainView,
@@ -96,6 +100,103 @@ function kitchenDynamicsWith(overrides = {}) {
     ...overrides,
   });
 }
+
+function testCanvasMemoryBudgetPreservesWorldCoordinates() {
+  const originalDpr = globalThis.devicePixelRatio;
+  try {
+    for (const dpr of [1, 2, 3]) {
+      globalThis.devicePixelRatio = dpr;
+      withFakeDocument(() => {
+        const rect = { x: -100, y: 200, w: 4400, h: 3600 };
+        const options = {
+          className: "budgetTest",
+          padding: 20,
+          drawPatch(context, patch) {
+            context.fillRect(patch.x, patch.y, patch.w, patch.h);
+          },
+        };
+        const container = new FakeElement();
+        renderPatchCanvas(container, [rect], options);
+        const canvas = container.firstChild;
+        // 16 MiB is the documented ceiling for one shared terrain canvas.
+        assert.ok(canvas.width * canvas.height * 4 <= 16 * 1024 * 1024);
+        assert.equal(canvas.style.left, "-120px");
+        assert.equal(canvas.style.top, "180px");
+        assert.equal(canvas.style.width, "4440px");
+        assert.equal(canvas.style.height, "3640px");
+        const transform = canvas.context.calls.find(
+          ([name]) => name === "setTransform",
+        );
+        const [, sx, , , sy, tx, ty] = transform;
+        assert.equal(sx, sy, "downsampling must not distort the surface");
+        // A world point must still land at its CSS-local position, within
+        // one backing pixel of the integer canvas allocation.
+        assert.ok(
+          Math.abs(((rect.x * sx + tx) * 4440) / canvas.width - 20) < 1,
+        );
+        assert.ok(
+          Math.abs(((rect.y * sy + ty) * 3640) / canvas.height - 20) < 1,
+        );
+        assert.ok(
+          canvas.context.calls.some(
+            ([name, x, y, w, h]) =>
+              name === "fillRect" &&
+              x === -100 &&
+              y === 200 &&
+              w === 4400 &&
+              h === 3600,
+          ),
+        );
+
+        // A shrinking liquid keeps its canvas and restores native resolution.
+        canvas.context.calls.length = 0;
+        renderPatchCanvas(
+          container,
+          [{ x: 30, y: 40, w: 100, h: 60 }],
+          options,
+        );
+        assert.equal(container.firstChild, canvas);
+        const ratio = Math.min(dpr, 2);
+        assert.equal(canvas.width, 140 * ratio);
+        assert.equal(canvas.height, 100 * ratio);
+        assert.deepEqual(
+          canvas.context.calls
+            .filter(([name]) => name === "setTransform")
+            .at(-1),
+          ["setTransform", ratio, 0, 0, ratio, -10 * ratio, -20 * ratio],
+        );
+        assert.ok(
+          canvas.context.calls.some(
+            ([name, x, y, w, h]) =>
+              name === "clearRect" &&
+              x === 0 &&
+              y === 0 &&
+              w === canvas.width &&
+              h === canvas.height,
+          ),
+        );
+
+        // Canvas shadows are measured in backing pixels, not world units.
+        renderIcePatches(container, [rect], { padding: 20 });
+        const ice = container.firstChild.context;
+        const iceScale = ice.calls.find(([name]) => name === "setTransform")[1];
+        assert.ok(Math.abs(ice.shadowBlur / iceScale - 12 / ratio) < 1e-9);
+        assert.ok(Math.abs(ice.shadowOffsetY / iceScale - 4 / ratio) < 1e-9);
+
+        const obstacle = createCanvas("obstacleCanvas", [rect], 32);
+        assert.ok(
+          obstacle.canvas.width * obstacle.canvas.height * 4 <=
+            16 * 1024 * 1024,
+        );
+      });
+    }
+  } finally {
+    if (originalDpr === undefined) delete globalThis.devicePixelRatio;
+    else globalThis.devicePixelRatio = originalDpr;
+  }
+}
+
+testCanvasMemoryBudgetPreservesWorldCoordinates();
 
 function createMapState({
   goal = { x: 100, y: 120, r: 50 },

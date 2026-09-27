@@ -223,6 +223,13 @@ reused to avoid hot-loop allocation.
 
 Rendering is DOM/CSS/SVG/canvas based. There is no WebGL layer.
 
+Shared terrain and legacy-obstacle canvases in `wall-rendering.js` cap their
+longest backing edge at 2048 pixels (at most 16 MiB RGBA per canvas). Smaller
+surfaces retain DPR resolution, capped at DPR 2. Downsampling preserves CSS
+world bounds and scales canvas shadows to keep their visible extent unchanged.
+This trades fine detail at close zoom for bounded allocations on large maps;
+validate both high-DPR phone views and maximum zoom when changing the budget.
+
 Static or rarely changing map visuals:
 
 - `createMapRenderer()` sizes the world, renders intro walls, renders outer map
