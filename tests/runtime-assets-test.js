@@ -5,6 +5,14 @@ import { runtimeScripts } from "../runtime-assets.js";
 
 const root = process.cwd();
 
+const manifest = JSON.parse(
+  readFileSync(resolve(root, "manifest.webmanifest"), "utf8"),
+);
+assert.ok(
+  manifest.orientation === undefined || manifest.orientation === "any",
+  "installed play must allow both portrait and landscape orientation",
+);
+
 function relativeModuleImports(source) {
   const imports = [];
   const patterns = [
