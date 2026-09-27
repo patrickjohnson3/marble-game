@@ -1264,7 +1264,8 @@ export function updateKitchenDynamics(
     mapConfig.variantId === kitchenFloorMapId,
   );
   updateAnts(state, marble, previousMarble, frameDelta, events, movementPath);
-  state.frameIndex += 1;
+  // Feedback cooldowns use the same 60 Hz time units as movement and timers.
+  state.frameIndex += frameDelta;
   return events;
 }
 

@@ -1,6 +1,12 @@
 import { resolvedMapConfig } from "../core/map-config.js";
 import assert from "node:assert/strict";
-import { antConfig, physicsConfig } from "../core/game-config.js";
+import {
+  antConfig,
+  physicsConfig,
+  hapticTuning,
+  tuning,
+} from "../core/game-config.js";
+import { createHapticsController } from "../core/haptics.js";
 import { updatePhysics } from "../core/physics.js";
 import { pointInEllipsePatch } from "../core/geometry.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
@@ -1381,4 +1387,84 @@ function testCoincidentFoodContactsSeparateAlongTheImpactDirection() {
 }
 
 testCoincidentFoodContactsSeparateAlongTheImpactDirection();
+
+function testKitchenFeedbackCooldownUsesElapsedTime() {
+  for (const kind of ["ant", "cereal"]) {
+    for (const dt of [2, 1, 0.5]) {
+      const mapConfig = {
+        ...kitchenMap("kitchen-floor", []),
+        clusters: [
+          {
+            x: 0.5,
+            y: 0.5,
+            angle: 0,
+            ants: kind === "ant" ? [[0, 0]] : [],
+            cheerios: kind === "cereal" ? [[0, 0]] : [],
+            crumbs: [],
+          },
+        ],
+      };
+      const dynamics = createKitchenDynamics();
+      dynamics.reset({ mapConfig, world });
+      if (kind === "ant") {
+        Object.assign(dynamics.state.ants[0], { alive: false, squished: true });
+      }
+      const pulseTimes = [];
+      let time = 0;
+      const haptics = createHapticsController(
+        {
+          enabled: true,
+          impact: {
+            minImpact: hapticTuning.impactMin,
+            lastPulse: -Infinity,
+            cooldownMs: hapticTuning.impactCooldownMs,
+          },
+        },
+        hapticTuning,
+        {
+          now: () => (time * 1000) / 60,
+          vibrate: () => pulseTimes.push(time),
+        },
+      );
+      for (; time < 60; time += dt) {
+        const food = dynamics.state.cheerios[0];
+        const marble =
+          kind === "ant"
+            ? { x: 480 + time, y: 500, r: 29, vx: 1, vy: 0 }
+            : {
+                x: food.originX + food.pushX,
+                y: food.originY + food.pushY,
+                r: 29,
+                vx: 1,
+                vy: 0,
+              };
+        const events = update(dynamics, mapConfig, marble, dt);
+        if (events.splatHits)
+          haptics.pulseImpact(tuning.antSplatImpactFeedback);
+        if (events.cerealHits)
+          haptics.pulseImpact(tuning.cerealBumpImpactFeedback);
+      }
+      const cooldown =
+        kind === "ant" ? antConfig.splatFeedbackCooldownFrames : 20;
+      const expected = [];
+      for (let t = 0; t < 60; t += cooldown) expected.push(t);
+      assert.deepEqual(pulseTimes, expected, `${kind} cooldown at dt=${dt}`);
+      assert.equal(dynamics.state.frameIndex, 60);
+      update(dynamics, mapConfig, farFromAnts, 0);
+      assert.equal(
+        dynamics.state.frameIndex,
+        60,
+        "zero elapsed time cannot age a cooldown",
+      );
+      dynamics.reset({ mapConfig, world });
+      assert.equal(
+        dynamics.state.frameIndex,
+        0,
+        "Retry resets the simulation clock",
+      );
+    }
+  }
+}
+
+testKitchenFeedbackCooldownUsesElapsedTime();
 console.log("Kitchen dynamics tests passed.");
