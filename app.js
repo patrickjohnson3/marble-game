@@ -80,7 +80,8 @@ import { createUi } from "./rendering/ui.js";
 function showBootError(documentRef, error) {
   const bootErrorEl = documentRef.getElementById("bootError");
   if (bootErrorEl) {
-    bootErrorEl.textContent = copy.bootError;
+    const message = documentRef.getElementById("bootErrorMessage");
+    if (message) message.textContent = copy.bootError;
     bootErrorEl.hidden = false;
   }
   console.error(error);

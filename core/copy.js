@@ -1,5 +1,5 @@
 export const copy = {
-  bootError: "game failed to load. refresh and try again.",
+  bootError: "game failed to load. reconnect and try again.",
   title: "marble tilt",
   startHelp:
     "Tilt your phone to roll, or use arrows/WASD. Kill all kitchen ants, then choose Next room; defeat the living-room mouse with fast hits, then reach its exit. Follow the objective shown above. Pinch to zoom; use two fingers to pan.",

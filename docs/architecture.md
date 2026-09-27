@@ -32,7 +32,10 @@ committing. Do not hand-edit the generated cache metadata in `index.html` or
 
 ## Startup Sequence
 
-The entrypoint is intentionally small:
+The entrypoint is intentionally small. The inline shell waits for the required
+stylesheet before loading the module, so startup cannot succeed with unmeasured,
+unstyled controls. Stylesheet and module failures expose a Retry button whose
+styles and reload handler live in the shell and work without those resources.
 
 1. `boot.js` imports `createApp` from `app.js`.
 2. `boot.js` calls `createApp()`.

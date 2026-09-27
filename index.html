@@ -42,6 +42,9 @@
         z-index: 100;
         display: grid;
         place-items: center;
+        align-content: center;
+        gap: 16px;
+        overflow: auto;
         padding: 24px;
         background: #101114;
         color: white;
@@ -50,9 +53,19 @@
           sans-serif;
         text-align: center;
       }
+      #retryBoot {
+        min-height: 44px;
+        padding: 12px 20px;
+        border: 0;
+        border-radius: 8px;
+        background: white;
+        color: #111;
+        font: inherit;
+        cursor: pointer;
+      }
     </style>
     <script>
-      const assetVersion = "35aab288f281ec39";
+      const assetVersion = "674427f882b673a9";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -137,9 +150,8 @@
         if (window.__marbleAppBooted) return;
         const bootErrorEl = document.getElementById("bootError");
         if (bootErrorEl) {
-          bootErrorEl.textContent =
-            "game failed to load. refresh and try again.";
           bootErrorEl.hidden = false;
+          document.getElementById("retryBoot").focus();
         }
         if (error) console.error(error);
       };
@@ -153,11 +165,18 @@
       const appStylesheet = document.createElement("link");
       appStylesheet.rel = "stylesheet";
       appStylesheet.href = "style.css?v=" + assetVersion;
-      document.head.appendChild(appStylesheet);
+      const appStylesReady = new Promise((resolve) => {
+        appStylesheet.addEventListener("load", () => resolve(true));
+        appStylesheet.addEventListener("error", () => resolve(false));
+        document.head.appendChild(appStylesheet);
+      });
     </script>
   </head>
   <body>
-    <div id="bootError" role="alert" hidden></div>
+    <div id="bootError" role="alert" hidden>
+      <p id="bootErrorMessage">game failed to load. reconnect and try again.</p>
+      <button id="retryBoot" type="button">Retry</button>
+    </div>
     <div id="game">
       <div id="world">
         <div id="introWalls" class="walls"></div>
@@ -315,13 +334,24 @@
     </div>
 
     <script>
-      const appScript = document.createElement("script");
-      appScript.type = "module";
-      appScript.src = "boot.js?v=" + assetVersion;
-      appScript.addEventListener("error", function (event) {
-        window.__showMarbleBootError(event);
+      document.getElementById("retryBoot").addEventListener("click", () => {
+        window.location.reload();
       });
-      document.body.appendChild(appScript);
+      appStylesReady.then((loaded) => {
+        if (!loaded) {
+          window.__showMarbleBootError(
+            new Error("Game stylesheet failed to load"),
+          );
+          return;
+        }
+        const appScript = document.createElement("script");
+        appScript.type = "module";
+        appScript.src = "boot.js?v=" + assetVersion;
+        appScript.addEventListener("error", function (event) {
+          window.__showMarbleBootError(event);
+        });
+        document.body.appendChild(appScript);
+      });
     </script>
   </body>
 </html>
