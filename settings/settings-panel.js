@@ -10,6 +10,7 @@ export function bindSettingsPanel({
   onCloseSettings,
   onInstallApp = () => {},
   onRetryMap,
+  onRetryMotion,
   onLoadMap,
   onSetNeutral,
   onFpsChanged,
@@ -32,6 +33,7 @@ export function bindSettingsPanel({
     closeSettings,
     resumeGame,
     retryMap,
+    retryMotion,
     loadMap,
     mapSelect,
     speedSetting,
@@ -106,6 +108,7 @@ export function bindSettingsPanel({
   closeSettings.addEventListener("click", onCloseSettings);
   resumeGame.addEventListener("click", onCloseSettings);
   retryMap.addEventListener("click", onRetryMap);
+  retryMotion.addEventListener("click", onRetryMotion);
   loadMap.addEventListener("click", () => {
     if (!loadMap.disabled) onLoadMap(mapSelect.value);
   });

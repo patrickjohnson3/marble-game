@@ -241,8 +241,12 @@ function setupSensors({
     game,
     sensor,
     onFallback() {
-      ui.setHint(copy.hints.noMotionSensor);
-      ui.setGameStatus(copy.hints.noMotionSensor);
+      const message =
+        sensor.permission === "denied"
+          ? copy.hints.motionDenied
+          : copy.hints.noMotionSensor;
+      ui.setHint(message);
+      ui.setGameStatus(message);
       sensor.using = SENSOR_MODES.keyboard;
       game.phase = GAME_PHASES.running;
       tilt.neutralX = 0;
@@ -477,6 +481,8 @@ export function createApp({
     installApp,
     mapObjectsStatus,
     pwaStatus: els.pwaStatus,
+    motionRecovery: els.motionRecovery,
+    motionRecoveryHelp: els.motionRecoveryHelp,
     settings,
     settingsOverlay,
     startBtn,
@@ -797,6 +803,7 @@ export function createApp({
     onCloseSettings: gameController.closeSettings,
     onInstallApp: pwaInstallController.promptInstall,
     onRetryMap: retryCurrentMap,
+    onRetryMotion: () => windowRef.location.reload(),
     onLoadMap: loadMap,
     onSetNeutral: sensorController.setNeutralNow,
     onFpsChanged: ui.setFpsEnabled,

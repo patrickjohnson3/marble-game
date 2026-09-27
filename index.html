@@ -65,7 +65,7 @@
       }
     </style>
     <script>
-      const assetVersion = "674427f882b673a9";
+      const assetVersion = "3e588064d00716a4";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -296,6 +296,14 @@
           <h3 id="deviceSettingsTitle"></h3>
           <button id="installApp" class="secondary" hidden></button>
           <button id="neutral" class="secondary"></button>
+          <div id="motionRecovery" hidden>
+            <p id="motionRecoveryHelp" class="settingsStatus"></p>
+            <button
+              id="retryMotion"
+              class="secondary"
+              aria-describedby="motionRecoveryHelp"
+            ></button>
+          </div>
           <label class="settingRow checkboxRow" for="fullscreenSetting">
             <span></span>
             <input id="fullscreenSetting" type="checkbox" />

@@ -1,3 +1,6 @@
+import { copy } from "../core/copy.js";
+import { GAME_PHASES, SENSOR_MODES } from "../core/runtime-states.js";
+
 export function createUi({
   controls,
   gameStatus,
@@ -11,6 +14,8 @@ export function createUi({
   installApp,
   mapObjectsStatus,
   pwaStatus,
+  motionRecovery,
+  motionRecoveryHelp,
   settings,
   settingsOverlay,
   startBtn,
@@ -39,7 +44,21 @@ export function createUi({
     hint.textContent = message;
   }
 
+  function updateMotionRecovery() {
+    if (!motionRecovery) return;
+    const { sensor } = state.input;
+    motionRecovery.hidden =
+      state.game.phase === GAME_PHASES.waiting ||
+      sensor.using === SENSOR_MODES.orientation ||
+      sensor.using === SENSOR_MODES.motion;
+    motionRecoveryHelp.textContent =
+      sensor.permission === "denied"
+        ? copy.settings.motionDeniedHelp
+        : copy.settings.motionMissingHelp;
+  }
+
   function setGameStatus(message) {
+    updateMotionRecovery();
     if (!gameStatus) return;
 
     gameStatus.textContent = message;
@@ -178,6 +197,7 @@ export function createUi({
   }
 
   function openSettingsModal() {
+    updateMotionRecovery();
     settingsOverlay.classList.add("open");
     settingsOverlay.setAttribute("aria-hidden", "false");
     updateDebugPanel({ force: true });

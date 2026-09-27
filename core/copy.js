@@ -7,9 +7,10 @@ export const copy = {
   hints: {
     mapOpen: "",
     noMotionSensor:
-      "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
+      "No motion readings. Open Settings for help; arrows/WASD still work.",
     neutralSet: "neutral set. tilt from your normal holding angle.",
-    motionDenied: "motion permission denied. check chrome site settings.",
+    motionDenied:
+      "Motion access denied. Open Settings for help; arrows/WASD still work.",
     calibrating: "keep holding normally for half a sec...",
     neutralReset: "neutral reset to current hand position.",
     icePatch: "ice: slippery.",
@@ -41,6 +42,7 @@ export const copy = {
     installApp: "install app",
     neutral: "set neutral",
     retryMap: "retry map",
+    retryMotion: "Reload to retry motion",
     nextRoom: "Next room",
     loadMap: "load map",
     reset: "reset",
@@ -50,6 +52,10 @@ export const copy = {
     toggleLabel: "settings",
     title: "Settings",
     closeLabel: "close settings",
+    motionDeniedHelp:
+      "Motion access was denied. Check your browser’s motion permissions. Reload and tap Start to try again; if access stays blocked, close and reopen the browser or installed app. Reloading restarts this run. Keyboard controls still work.",
+    motionMissingHelp:
+      "No motion readings are available. On a phone, open the game over HTTPS and allow motion access when prompted. After checking access, reload and tap Start. Reloading restarts this run. Keyboard controls still work.",
     mapSwitchHelp:
       "After Start, load any map as a fresh run. Controls and preferences stay unchanged.",
     help: {
@@ -99,6 +105,7 @@ export function applyDocumentCopy({ document, els }) {
   els.closeSettings.textContent = copy.buttons.closeSettings;
   els.installApp.textContent = copy.buttons.installApp;
   els.retryMap.textContent = copy.buttons.retryMap;
+  els.retryMotion.textContent = copy.buttons.retryMotion;
   els.nextRoom.textContent = copy.buttons.nextRoom;
   els.loadMap.textContent = copy.buttons.loadMap;
   els.mapSwitchHelp.textContent = copy.settings.mapSwitchHelp;

@@ -14,7 +14,10 @@ import { prepareMapCapture } from "../tools/render-map.js";
 import { testCockroachEncounter } from "./cockroach-browser-test.js";
 import { testCameraZoomVisibility } from "./camera-browser-test.js";
 import { testMapSwitching } from "./map-switch-browser-test.js";
-import { testStartupRecovery } from "./mobile-workflows-browser-test.js";
+import {
+  testMotionPermissionRecovery,
+  testStartupRecovery,
+} from "./mobile-workflows-browser-test.js";
 
 async function marbleTransform(page) {
   return page.locator("#marble").evaluate((element) => element.style.transform);
@@ -954,6 +957,7 @@ try {
 
   assert.deepEqual(browserErrors, [], "browser smoke test must not log errors");
   await testStartupRecovery(browser, `http://127.0.0.1:${port}/`);
+  await testMotionPermissionRecovery(browser, `http://127.0.0.1:${port}/`);
   await testInterruptionWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticOrientationWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticLateSensorRecovery(browser, `http://127.0.0.1:${port}/`);

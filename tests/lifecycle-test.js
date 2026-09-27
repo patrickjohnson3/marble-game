@@ -313,7 +313,7 @@ async function testStartContinuesWhenMotionPermissionStalls() {
   assert.equal(state.input.sensor.permission, "timeout");
   assert.equal(
     hint,
-    "no motion sensor yet. use arrows/WASD here, or try HTTPS on your phone.",
+    "No motion readings. Open Settings for help; arrows/WASD still work.",
   );
   assert.equal(gameStatus, hint);
 }
@@ -399,7 +399,10 @@ async function testMotionPermissionDenialKeepsKeyboardFallbackActive() {
   assert.equal(startBtn.disabled, true);
   assert.equal(state.game.phase, "calibrating");
   assert.equal(state.input.sensor.permission, "denied");
-  assert.equal(hint, "motion permission denied. check chrome site settings.");
+  assert.equal(
+    hint,
+    "Motion access denied. Open Settings for help; arrows/WASD still work.",
+  );
   assert.equal(gameStatus, hint);
 }
 
