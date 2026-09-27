@@ -293,9 +293,10 @@ export function registerServiceWorker({
   let updateReadyNotified = false;
   let updateReloadStarted = false;
   function notifyUpdateReady() {
-    if (updateReadyNotified) return;
-    updateReadyNotified = true;
-    notifyServiceWorkerUpdate(onUpdateReady);
+    if (!updateReadyNotified) {
+      updateReadyNotified = true;
+      notifyServiceWorkerUpdate(onUpdateReady);
+    }
     notifyServiceWorkerStatus(onStatusChange, "update-ready");
   }
 

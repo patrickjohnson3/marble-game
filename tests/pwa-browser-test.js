@@ -14,6 +14,7 @@ import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import { runtimeFiles, runtimeModuleScripts } from "../runtime-assets.js";
 import { copy } from "../core/copy.js";
+import { tuning } from "../core/game-config.js";
 import {
   closeServer,
   collectBrowserErrors,
@@ -86,6 +87,17 @@ function createRelease(directory, name) {
     );
   }
 
+  // Expose this release's real app for state-preservation assertions. The worker
+  // still installs and serves these generated files, without request routing.
+  const bootPath = join(directory, "boot.js");
+  writeFileSync(
+    bootPath,
+    readFileSync(bootPath, "utf8").replace(
+      "createApp();",
+      "window.__pwaApp = createApp();",
+    ),
+  );
+
   // Exercise the actual release generation workflow, including import maps.
   execFileSync(process.execPath, ["bump-cache-version.js"], { cwd: directory });
   if (name === "a") {
@@ -129,6 +141,14 @@ function createDeploymentServer(
   const requests = [];
   const server = createServer((request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
+    if (url.pathname === "/pwa-probe") {
+      response
+        .writeHead(200, { "content-type": "text/html" })
+        .end(
+          '<!doctype html><title>PWA activation probe</title><link rel="icon" href="data:,">',
+        );
+      return;
+    }
     if (!url.pathname.startsWith(scope)) {
       response.writeHead(404).end();
       return;
@@ -198,14 +218,18 @@ async function cacheState(page) {
   });
 }
 
-async function waitForActiveRelease(page, cacheName) {
+async function waitForActiveRelease(
+  page,
+  cacheName,
+  registrationUrl = page.url(),
+) {
   await page.waitForFunction(
-    (expected) => {
+    ({ expected, registrationUrl: url }) => {
       // Poll resolved state: this browser runner treats a Promise predicate as
       // truthy before its asynchronous cache lookup has completed.
       Promise.all([
         window.caches.keys(),
-        navigator.serviceWorker.getRegistration(),
+        navigator.serviceWorker.getRegistration(url),
       ]).then(([names, registration]) => {
         window.__pwaActiveCache =
           names.includes(expected) &&
@@ -219,9 +243,53 @@ async function waitForActiveRelease(page, cacheName) {
       });
       return window.__pwaActiveCache === expected;
     },
-    cacheName,
+    { expected: cacheName, registrationUrl },
     { timeout },
   );
+}
+
+async function waitForWaitingRelease(page, release) {
+  await page.waitForFunction(
+    () => {
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        window.__pwaWaiting = registration?.waiting?.state === "installed";
+      });
+      return window.__pwaWaiting === true;
+    },
+    null,
+    { timeout },
+  );
+  assert.ok(
+    (await cacheState(page)).some((cache) => cache.name === release.cacheName),
+  );
+}
+
+async function reopenAfterClosing(context, page, baseUrl, release) {
+  await page.close();
+  const reopened = await context.newPage();
+  const errors = collectBrowserErrors(reopened);
+  // Wait outside worker scope: opening another controlled app page too early
+  // can keep the old worker alive and prevent normal waiting-worker activation.
+  await reopened.goto(new URL("/pwa-probe", baseUrl).href);
+  await waitForActiveRelease(reopened, release.cacheName, baseUrl);
+  let navigations = 0;
+  reopened.on("framenavigated", (frame) => {
+    if (frame === reopened.mainFrame()) navigations++;
+  });
+  await reopened.goto(baseUrl);
+  await waitForBoot(reopened, release.version);
+  await reopened.waitForLoadState("networkidle");
+  assert.equal(
+    navigations,
+    1,
+    "reopening the updated game must boot without a reload loop",
+  );
+  assert.deepEqual(
+    errors,
+    [],
+    "reopening an updated release must not log errors",
+  );
+  return reopened;
 }
 
 async function assertCachedShellVersion(page, baseUrl, release) {
@@ -256,7 +324,7 @@ async function testModuleWorkerUpgrade(browser, releases, shellCacheControl) {
   const port = await listen(deployment.server);
   const baseUrl = `http://127.0.0.1:${port}${scope}`;
   const context = await browser.newContext({ serviceWorkers: "allow" });
-  const page = await context.newPage();
+  let page = await context.newPage();
   const errors = collectBrowserErrors(page);
   let navigations = 0;
   page.on("framenavigated", (frame) => {
@@ -288,7 +356,10 @@ async function testModuleWorkerUpgrade(browser, releases, shellCacheControl) {
     // An ordinary visit must check imported worker modules. registration.update()
     // bypasses their HTTP cache and would hide this regression.
     await page.goto(baseUrl);
-    await waitForActiveRelease(page, releases.b.cacheName);
+    await waitForWaitingRelease(page, releases.b);
+    await waitForBoot(page, releases.a.version);
+    await assertCachedShellVersion(page, baseUrl, releases.a);
+    page = await reopenAfterClosing(context, page, baseUrl, releases.b);
     await assertCachedShellVersion(page, baseUrl, releases.b);
     await waitForBoot(page, releases.b.version);
     const currentCaches = await cacheState(page);
@@ -303,26 +374,27 @@ async function testModuleWorkerUpgrade(browser, releases, shellCacheControl) {
       "the upgraded worker must precache the full new manifest, including unused modules and assets",
     );
     assert.equal(await page.evaluate(() => window.__pwaRelease), "b");
-    assert.ok(
-      navigations - beforeUpgrade <= 2,
-      "the upgrade must not repeatedly reload the page",
+    assert.equal(
+      navigations - beforeUpgrade,
+      1,
+      "an ordinary visit may install an update but must not force a reload",
     );
 
     // Disable HTTP cache only after the upgrade, so a browser cache hit cannot
     // masquerade as service-worker offline coverage or mask stale imports.
     await disableHttpCache(context, page);
     await context.setOffline(true);
-    const beforeOffline = navigations;
+    let offlineNavigations = 0;
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) offlineNavigations++;
+    });
+    const offlineErrors = collectBrowserErrors(page);
     await page.goto(baseUrl);
     await waitForBoot(page, releases.b.version);
     assert.equal(await page.evaluate(() => window.__pwaRelease), "b");
-    assert.equal(
-      navigations - beforeOffline,
-      1,
-      "offline boot must not reload",
-    );
+    assert.equal(offlineNavigations, 1, "offline boot must not reload");
     assert.deepEqual(
-      errors,
+      [...errors, ...offlineErrors],
       [],
       "PWA upgrade and offline boot must not log errors",
     );
@@ -348,7 +420,7 @@ async function testFailedUpgradePreservesShell(browser, releases) {
       });
     });
   });
-  const page = await context.newPage();
+  let page = await context.newPage();
   const errors = collectBrowserErrors(page);
 
   try {
@@ -382,16 +454,20 @@ async function testFailedUpgradePreservesShell(browser, releases) {
     deployment.withhold(undefined);
     await context.setOffline(false);
     await page.goto(baseUrl);
-    await waitForActiveRelease(page, releases.b.cacheName);
+    await waitForWaitingRelease(page, releases.b);
+    await waitForBoot(page, releases.a.version);
+    await assertCachedShellVersion(page, baseUrl, releases.a);
+    page = await reopenAfterClosing(context, page, baseUrl, releases.b);
     await assertCachedShellVersion(page, baseUrl, releases.b);
     await waitForBoot(page, releases.b.version);
     assert.equal(await page.evaluate(() => window.__pwaRelease), "b");
 
+    const recoveredErrors = collectBrowserErrors(page);
     await context.setOffline(true);
     await page.goto(baseUrl);
     await waitForBoot(page, releases.b.version);
     assert.deepEqual(
-      errors,
+      [...errors, ...recoveredErrors],
       [],
       "failed upgrade and recovery must preserve boot",
     );
@@ -406,7 +482,7 @@ async function testFirstInstallDocumentUpgrade(browser, releases) {
   const port = await listen(deployment.server);
   const baseUrl = `http://127.0.0.1:${port}${scope}`;
   const context = await browser.newContext({ serviceWorkers: "allow" });
-  const page = await context.newPage();
+  let page = await context.newPage();
   const errors = collectBrowserErrors(page);
   let navigations = 0;
   page.on("framenavigated", (frame) => {
@@ -424,41 +500,98 @@ async function testFirstInstallDocumentUpgrade(browser, releases) {
     await page.waitForLoadState("networkidle");
     assert.equal(navigations, 1, "the first worker claim must not reload");
 
+    await page.locator("#start").click();
+    await page.evaluate((sampleCount) => {
+      for (let index = 0; index < sampleCount; index++) {
+        const event = new window.Event("deviceorientation");
+        Object.defineProperties(event, {
+          beta: { value: 12 },
+          gamma: { value: 8 },
+        });
+        window.dispatchEvent(event);
+      }
+    }, tuning.neutralSampleCount);
+    await page.locator("#settingsToggle").click();
+    await page.locator("#diagnosticsSettingsTitle").click();
+    await page.locator("#mapSelect").selectOption("living-room");
+    await page.locator("#loadMap").click();
+    await page.locator("#settingsToggle").click();
+    const encounter = await page.evaluate(() => {
+      const { state, mapRuntime } = window.__pwaApp;
+      return {
+        marble: state.marble,
+        mouse: mapRuntime.state.mouse,
+        map: mapRuntime.state.activeMap.variantId,
+      };
+    });
+    assert.equal(encounter.map, "living-room");
+    assert.equal(await page.locator("#settingsOverlay").isVisible(), true);
+
+    const secondPage = await context.newPage();
+    const secondErrors = collectBrowserErrors(secondPage);
+    await secondPage.goto(baseUrl);
+    await waitForBoot(secondPage, releases.a.version);
     deployment.deploy(releases.b);
-    // Keep the initial document open throughout this update. Its listener must
-    // survive the first claim and reload when a replacement takes control.
+    // Keep both old-release documents open throughout installation. An update
+    // must preserve the actual paused encounter and require neither reload.
     await page.evaluate(async () => {
       const registration = await navigator.serviceWorker.ready;
       await registration.update();
     });
-    await waitForActiveRelease(page, releases.b.cacheName);
-    await waitForBoot(page, releases.b.version);
-    await page.waitForFunction(
-      (updateReady) =>
-        !document.getElementById("pwaStatus").textContent.includes(updateReady),
-      copy.pwa.updateReady,
-      { timeout },
-    );
-    await page.waitForLoadState("networkidle");
+    await waitForWaitingRelease(page, releases.b);
     assert.equal(
       navigations,
-      2,
-      "replacing the first worker must reload the original document exactly once",
+      1,
+      "installing an update must not reload a live encounter",
     );
+    assert.deepEqual(
+      await page.evaluate(() => {
+        const { state, mapRuntime } = window.__pwaApp;
+        return {
+          marble: state.marble,
+          mouse: mapRuntime.state.mouse,
+          map: mapRuntime.state.activeMap.variantId,
+        };
+      }),
+      encounter,
+      "waiting updates must preserve the current map, marble and mouse",
+    );
+    assert.ok(
+      (await page.locator("#pwaStatus").textContent()).includes(
+        copy.pwa.updateReady,
+      ),
+    );
+    await assertCachedShellVersion(page, baseUrl, releases.a);
+    await page.close();
+    page = secondPage;
+    await waitForWaitingRelease(page, releases.b);
+    await waitForBoot(page, releases.a.version);
+    assert.ok(
+      (await cacheState(page)).some(
+        (cache) => cache.name === releases.a.cacheName,
+      ),
+      "closing one tab must retain the other tab's release cache",
+    );
+    page = await reopenAfterClosing(context, page, baseUrl, releases.b);
     await assertCachedShellVersion(page, baseUrl, releases.b);
     assert.equal(await page.evaluate(() => window.__pwaRelease), "b");
 
     await disableHttpCache(context, page);
+    const reopenedErrors = collectBrowserErrors(page);
     await context.setOffline(true);
+    let offlineNavigations = 0;
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) offlineNavigations++;
+    });
     await page.goto(baseUrl);
     await waitForBoot(page, releases.b.version);
     assert.equal(
-      navigations,
-      3,
+      offlineNavigations,
+      1,
       "offline boot must not trigger an update loop",
     );
     assert.deepEqual(
-      errors,
+      [...errors, ...secondErrors, ...reopenedErrors],
       [],
       "updating a first-install document must preserve normal and offline boot",
     );

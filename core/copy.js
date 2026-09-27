@@ -29,7 +29,8 @@ export const copy = {
       "app update is taking longer than expected. current version is still available.",
     updateFailed: "app update failed. current version is still available.",
     updateInstalling: "downloading app update...",
-    updateReady: "app update installed. reloading...",
+    updateReady:
+      "update ready. when finished, close all game tabs and windows, then reopen to apply it. your current game can continue.",
   },
   intro: {
     countdown: "map opens in",

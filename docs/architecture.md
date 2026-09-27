@@ -368,13 +368,17 @@ HTTP-cached file list.
 and precaches the shell and runtime assets together. Navigation serves that
 worker's own installed shell without refreshing it independently, so a failed
 replacement installation leaves the previous offline version intact. After a
-successful installation it calls `skipWaiting()` and claims clients on
-activation.
+successful replacement installation it waits until all windows using the old
+worker close. This preserves active encounters and their cached assets. First
+installation activates normally and claims clients; activation still removes
+retired caches.
 
 `platform/platform.js` listens for controller changes even on a first visit.
 The initial claim does not reload the game; a later controller replacement
-reloads once so the new version takes effect immediately. Update status remains visible in the
-settings panel during the handoff. Installations still pending after 30 seconds
+reloads once to preserve shell/worker pairing if a replacement is forced externally.
+Normal updates wait instead: Settings tells players to close all game tabs/windows
+and reopen when finished. Reloading one tab while another remains open does not
+apply a waiting update. Installations still pending after 30 seconds
 report that the update is delayed, and failed installations leave the current
 version available instead of displaying a permanent downloading state.
 

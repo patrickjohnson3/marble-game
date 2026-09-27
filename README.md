@@ -92,3 +92,7 @@ npm run sync-cache
 This synchronizes the generated asset version and module cache manifest in
 `index.html` with the service-worker cache version and versioned runtime-asset
 import in `sw.js`.
+
+Downloaded updates wait until all game tabs/windows close. Finish your current
+game, close them, and reopen to apply the update; an update never forces an
+active encounter to restart. Settings reports when an update is ready.

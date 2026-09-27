@@ -330,6 +330,14 @@ async function testServiceWorkerRegistrationReportsInstalledUpdate() {
     "update-installing",
     "update-ready",
   ]);
+
+  // A newer download can replace an already-waiting release while a game stays open.
+  worker.state = "installing";
+  registrationListener();
+  worker.state = "installed";
+  workerListeners.statechange();
+  assert.equal(statuses.at(-1), "update-ready");
+  assert.equal(updateReadyCount, 1, "availability callback remains one-shot");
 }
 
 async function testServiceWorkerFirstInstallReturnsToReady() {

@@ -89,7 +89,11 @@ try {
   await installPromise;
   const activeCacheName = openedCacheName;
   const installedUrls = installedFiles.map((request) => request.url ?? request);
-  assert.equal(skippedWaiting, 1);
+  assert.equal(
+    skippedWaiting,
+    0,
+    "an update must wait for existing games to close",
+  );
   assert.equal(
     installedUrls.some((url) => url.includes("app.js?v=")),
     true,
