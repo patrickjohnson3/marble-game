@@ -94,6 +94,12 @@ try {
   appendMouseCanvas(new FakeElement(), retiredState, liveMouse());
   const retiredContext = retiredState.mouseContext;
   renderMouse(retiredState, null);
+  assert.equal(
+    images[0].listeners.get("load").size,
+    1,
+    "removing a pending canvas must leave only the live canvas subscribed",
+  );
+  assert.equal(images[0].listeners.get("error").size, 1);
   retiredContext.calls.length = 0;
   images[0].complete = true;
   images[0].naturalWidth = 1254;
@@ -210,6 +216,8 @@ try {
   assert.equal(overlay.children.length, 0);
   assert.equal(themeState.mouseCanvas, null);
 
+  // Model a slow download through real map-render/Retry/removal paths.
+  images[0].complete = false;
   const map = {
     theme: "livingRoom",
     world: { width: 4400, height: 4400 },
@@ -247,6 +255,7 @@ try {
     renderObstacleWalls() {},
   });
   view.renderTerrain();
+  assert.equal(images[0].listeners.get("load").size, 1);
   const firstCanvas = dynamicOverlay.firstChild.children.find(
     (item) => item.className === "mouseCanvas",
   );
@@ -268,6 +277,8 @@ try {
 
   mapState.mouse = null;
   view.renderMapThemeDynamics();
+  assert.equal(images[0].listeners.get("load").size, 0);
+  assert.equal(images[0].listeners.get("error").size, 0);
   assert.equal(
     label,
     "Defeat mouse to exit",
@@ -275,7 +286,16 @@ try {
   );
 
   mapState.mouse = liveMouse();
-  view.renderTerrain();
+  for (let retry = 0; retry < 4; retry++) {
+    mapState.mouse = liveMouse();
+    view.renderTerrain();
+    assert.equal(
+      images[0].listeners.get("load").size,
+      1,
+      "Retry must retire the previous pending subscription",
+    );
+    assert.equal(images[0].listeners.get("error").size, 1);
+  }
   const resetCanvas = dynamicOverlay.firstChild.children.find(
     (item) => item.className === "mouseCanvas",
   );
@@ -293,6 +313,22 @@ try {
     fullWidth,
     "Retry restores the full health display",
   );
+  images[0].complete = true;
+  images[0].naturalWidth = 0;
+  images[0].dispatch("error");
+  assert.equal(images[0].listeners.get("load").size, 0);
+  assert.equal(images[0].listeners.get("error").size, 0);
+  assert.equal(
+    dynamicOverlay.firstChild.children.includes(resetCanvas),
+    true,
+    "image failure must leave the canvas fallback in place",
+  );
+  images[0].complete = false;
+  view.renderTerrain();
+  const pendingCanvas = dynamicOverlay.firstChild.children.find(
+    (item) => item.className === "mouseCanvas",
+  );
+  pendingCanvas.context.calls.length = 0;
   mapState.activeMap = {
     theme: "parkingLot",
     world: map.world,
@@ -307,6 +343,16 @@ try {
     false,
   );
   assert.equal(label, "", "other maps retain their existing goal presentation");
+  assert.equal(
+    images[0].listeners.get("load").size,
+    0,
+    "leaving the living room must release pending mouse callbacks",
+  );
+  assert.equal(images[0].listeners.get("error").size, 0);
+  images[0].complete = true;
+  images[0].naturalWidth = 1254;
+  images[0].dispatch("load");
+  assert.equal(pendingCanvas.context.calls.length, 0);
   assert.equal(
     images.length,
     1,

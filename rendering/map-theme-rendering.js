@@ -1020,6 +1020,7 @@ export function renderMapTheme({
   world = mapConfig?.world,
 }) {
   themeState.kitchenCheerioCleanup?.();
+  themeState.mouseSpriteCleanup?.();
   container.replaceChildren();
   overlayContainer.replaceChildren();
   themeState.cockroachCanvas = null;

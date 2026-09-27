@@ -135,11 +135,16 @@ export function appendMouseCanvas(overlay, themeState, mouse) {
     // Paused/waiting games do not poll dynamic rendering. Repaint on load, but
     // never let a retired canvas or actor paint over a Retry/new map.
     const image = mouseSprite;
-    const repaint = () => {
+    const cleanup = () => {
       image.removeEventListener("load", repaint);
       image.removeEventListener("error", repaint);
+      themeState.mouseSpriteCleanup = null;
+    };
+    const repaint = () => {
+      cleanup();
       if (themeState.mouseCanvas === canvas) renderMouse(themeState, mouse);
     };
+    themeState.mouseSpriteCleanup = cleanup;
     image.addEventListener("load", repaint);
     image.addEventListener("error", repaint);
   }
@@ -149,6 +154,7 @@ export function renderMouse(themeState, mouse) {
   const canvas = themeState.mouseCanvas;
   if (!canvas) return;
   if (!mouse) {
+    themeState.mouseSpriteCleanup?.();
     canvas.remove();
     themeState.mouseCanvas = null;
     themeState.mouseContext = null;
