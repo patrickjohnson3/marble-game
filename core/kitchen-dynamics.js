@@ -545,7 +545,7 @@ function captureSpongeSoakAnchor(state) {
   );
 }
 
-function updateSponge(state, marble, frameDelta, events) {
+function updateSponge(state, marble, frameDelta, events, resolveMarbleWalls) {
   if (!state.sponge || !state.waterPatch || !state.waterPatchOriginal) return;
 
   const impact = resolveSpongeCollision(state, marble);
@@ -554,6 +554,9 @@ function updateSponge(state, marble, frameDelta, events) {
     events.spongeImpact = Math.max(events.spongeImpact, impact);
   }
   if (advanceSponge(state, frameDelta)) events.spongeChanges = 1;
+  // Separation can push the marble into a wall even without an impact impulse.
+  // Finish that contact before food and ants consume its position.
+  if (impact !== null) resolveMarbleWalls?.();
   if (
     !state.spongeDisturbed ||
     !spongeTouchesWater(state.sponge, state.waterPatch)
@@ -1185,6 +1188,7 @@ export function updateKitchenDynamics(
   previousMarble = marble,
   frameDelta = 1,
   movementPath = null,
+  resolveMarbleWalls,
 ) {
   const events = state.events;
   events.antCrushes.length = 0;
@@ -1197,7 +1201,7 @@ export function updateKitchenDynamics(
   events.waterChanges = 0;
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
-  updateSponge(state, marble, frameDelta, events);
+  updateSponge(state, marble, frameDelta, events, resolveMarbleWalls);
   updateCereal(
     state,
     marble,
@@ -1218,7 +1222,14 @@ export function createKitchenDynamics(state = createKitchenDynamicsState()) {
     reset(context) {
       return resetKitchenDynamics(state, context);
     },
-    update(mapConfig, marble, previousMarble, frameDelta, movementPath) {
+    update(
+      mapConfig,
+      marble,
+      previousMarble,
+      frameDelta,
+      movementPath,
+      resolveMarbleWalls,
+    ) {
       return updateKitchenDynamics(
         state,
         mapConfig,
@@ -1226,6 +1237,7 @@ export function createKitchenDynamics(state = createKitchenDynamicsState()) {
         previousMarble,
         frameDelta,
         movementPath,
+        resolveMarbleWalls,
       );
     },
   };

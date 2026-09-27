@@ -13,6 +13,7 @@ import {
 } from "../core/game-config.js";
 import { copy } from "../core/copy.js";
 import { resolvedMapConfig } from "../core/map-config.js";
+import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
 import { createMapRuntime } from "../core/map-runtime.js";
 import { SURFACE_TYPES } from "../core/physics.js";
 import { GAME_PHASES } from "../core/runtime-states.js";
@@ -160,6 +161,7 @@ testActiveFrameRunsGameplayBeforeRendering();
 function createBehaviorHarness({
   activeMap,
   kitchenEvents = null,
+  kitchenDynamics = null,
   onGoalUpdate = () => {},
   settings = { goalIndicatorEnabled: false },
 }) {
@@ -250,7 +252,7 @@ function createBehaviorHarness({
         onGoalUpdate(mapRuntime, state);
       },
     },
-    kitchenDynamics: {
+    kitchenDynamics: kitchenDynamics ?? {
       state: {},
       update(map, marble, previous, frameDelta, path) {
         calls.kitchenSweeps.push({
@@ -724,5 +726,59 @@ function testGameLoopForwardsReboundSegmentsAndClearsPreviousFrames() {
 }
 
 testGameLoopForwardsReboundSegmentsAndClearsPreviousFrames();
+
+function testSpongeCannotPushMarbleBeyondWorldBounds() {
+  for (const moving of [true, false]) {
+    const kitchenDynamics = createKitchenDynamics();
+    function assertInBounds(state) {
+      const { marble, bounds } = state;
+      assert.ok(marble.x >= bounds.left + marble.r);
+      assert.ok(marble.x <= bounds.right - marble.r);
+      assert.ok(marble.y >= bounds.top + marble.r);
+      assert.ok(
+        marble.y <= bounds.bottom - marble.r,
+        `sponge left marble outside world at y=${marble.y}`,
+      );
+    }
+    const harness = createBehaviorHarness({
+      activeMap: resolvedMapConfig,
+      kitchenDynamics,
+      onGoalUpdate(_runtime, state) {
+        assertInBounds(state);
+      },
+    });
+    const runtime = harness.mapRuntime.state;
+    kitchenDynamics.reset({
+      mapConfig: runtime.activeMap,
+      obstacles: runtime.obstacles,
+      waterPatches: runtime.terrainByType.waterPatch.elements,
+      world: runtime.activeMap.world,
+    });
+    const sponge = kitchenDynamics.state.sponge;
+    const angle = moving ? 0.71 : 0;
+    Object.assign(sponge, {
+      y: 4260,
+      angle,
+      collisionCenterY: 4330,
+      collisionCos: Math.cos(angle),
+      collisionSin: Math.sin(angle),
+    });
+    Object.assign(harness.state.marble, {
+      x: sponge.collisionCenterX - (moving ? 200 : 0),
+      y: 4371,
+      r: 29,
+      vx: moving ? 14 : 0,
+      vy: 0,
+    });
+    harness.state.input.keyboard.x = moving ? 1 : 0;
+    harness.state.input.tilt.smoothX = moving ? 18 : 0;
+    for (let frame = 0; frame < 30; frame++) {
+      harness.tick();
+      assertInBounds(harness.state);
+    }
+  }
+}
+
+testSpongeCannotPushMarbleBeyondWorldBounds();
 
 console.log("Game loop tests passed.");

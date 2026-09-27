@@ -1,6 +1,7 @@
 import { copy } from "./copy.js";
 import { clamp } from "./geometry.js";
 import { SURFACE_TYPES, updatePhysicsInput, updatePhysics } from "./physics.js";
+import { handleWallCollisions } from "./physics-collisions.js";
 import { GAME_PHASES } from "./runtime-states.js";
 import { getObjectiveRegion, mouseDefeatRequired } from "./map-objectives.js";
 
@@ -63,6 +64,15 @@ export function createGameLoop({
     );
     effectsRenderer.spawnImpact(impact);
     hapticFeedback.pulseImpact(impact);
+  }
+
+  function resolveMarbleWalls() {
+    handleWallCollisions(
+      physicsContext,
+      onImpact,
+      mapState.obstacles,
+      physicsContext.physicsScratch.collisionContact,
+    );
   }
 
   function onSurface(speed, surfaceType) {
@@ -206,6 +216,7 @@ export function createGameLoop({
         previousMarble,
         frameDelta,
         context.physicsScratch.movementPath,
+        resolveMarbleWalls,
       );
       if (themeEvents?.waterChanges > 0) {
         terrainView?.renderTerrainType(SURFACE_TYPES.waterPatch);
