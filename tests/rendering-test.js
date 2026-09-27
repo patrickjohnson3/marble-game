@@ -1,3 +1,4 @@
+import { createResolvedMapState } from "../core/map-runtime.js";
 import { resolvedMapConfig } from "../core/map-config.js";
 import assert from "node:assert/strict";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
@@ -767,7 +768,7 @@ function testKitchenThemeRendersQuietCeramicFloor() {
   };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
-  dynamics.reset({ mapConfig, world });
+  dynamics.reset({ mapConfig, world, obstacles: [] });
 
   withFakeImage(() => {
     withFakeDocument(() => {
@@ -866,7 +867,7 @@ function testKitchenFloorIsDeterministicAndDoesNotRedrawWithAnts() {
       elements: [],
     };
     const world = { width: 4400, height: 4400 };
-    dynamics.reset({ mapConfig, world });
+    dynamics.reset({ mapConfig, world, obstacles: [] });
     withFakeDocument(() => {
       renderMapTheme({
         container,
@@ -917,7 +918,7 @@ function testKitchenDynamicsInitialDrawUsesNextFrame() {
   };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
-  dynamics.reset({ mapConfig, world });
+  dynamics.reset({ mapConfig, world, obstacles: [] });
 
   withFakeImage(() => {
     withFakeDocument(() => {
@@ -963,7 +964,7 @@ function testKitchenCheeriosGiveWayToMarble() {
   };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
-  dynamics.reset({ mapConfig, world });
+  dynamics.reset({ mapConfig, world, obstacles: [] });
 
   withFakeDocument(() => {
     renderMapTheme({
@@ -1042,6 +1043,9 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
     clusters: resolvedMapConfig.clusters,
     elements: [fork],
   };
+
+  dynamics.state.obstacles = createResolvedMapState(mapConfig).obstacles;
+  assert.ok(dynamics.state.obstacles.length > 0);
 
   updateAndRenderMapThemeDynamics({
     dynamics,
@@ -1153,7 +1157,7 @@ function testKitchenDynamicsUseDirtyRedrawsAfterInitialRender() {
   };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
-  dynamics.reset({ mapConfig, world });
+  dynamics.reset({ mapConfig, world, obstacles: [] });
 
   withFakeDocument(() => {
     renderMapTheme({
@@ -1589,7 +1593,7 @@ function firstKitchenCheerio({ container, overlayContainer }) {
   };
   const world = { width: 4400, height: 4400 };
   const dynamics = kitchenDynamicsWith();
-  dynamics.reset({ mapConfig, world });
+  dynamics.reset({ mapConfig, world, obstacles: [] });
 
   withFakeDocument(() => {
     renderMapTheme({
@@ -1646,6 +1650,18 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
     clusters: resolvedMapConfig.clusters,
     elements: [{ ...patch, type: "gooPatch" }],
   };
+
+  for (const [fixture, mapConfig] of [
+    [waterCheerio, waterMapConfig],
+    [gooCheerio, gooMapConfig],
+  ]) {
+    fixture.dynamics.reset({
+      mapConfig,
+      world: { width: 4400, height: 4400 },
+      obstacles: [],
+    });
+    fixture.state = fixture.dynamics.state.cheerios[0];
+  }
 
   updateAndRenderMapThemeDynamics({
     container: waterContainer,

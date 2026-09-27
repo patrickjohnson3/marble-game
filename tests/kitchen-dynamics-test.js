@@ -11,6 +11,7 @@ import { updatePhysics } from "../core/physics.js";
 import { pointInEllipsePatch } from "../core/geometry.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
 import { ELLIPTICAL_SURFACE_SHAPES } from "../core/map-elements.js";
+import { createResolvedMapState } from "../core/map-runtime.js";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
 
 const world = { width: 1000, height: 1000 };
@@ -23,6 +24,14 @@ function kitchenMap(id = "kitchen-floor", elements = [waterPatch]) {
     clusters: resolvedMapConfig.clusters,
     elements,
   };
+}
+
+function reset(dynamics, mapConfig) {
+  dynamics.reset({
+    mapConfig,
+    world,
+    obstacles: createResolvedMapState({ ...mapConfig, world }).obstacles,
+  });
 }
 
 function marbleAt(cheerio, overrides = {}) {
@@ -43,7 +52,7 @@ function update(dynamics, mapConfig, marble, frameDelta = 1) {
 function testCheerioOnlySoaksAfterPlayerDisturbsIt() {
   const dynamics = createKitchenDynamics();
   const mapConfig = kitchenMap();
-  dynamics.reset({ mapConfig, world });
+  reset(dynamics, mapConfig);
   const cheerio = dynamics.state.cheerios[0];
   cheerio.originX = 250;
   cheerio.originY = 510;
@@ -78,7 +87,7 @@ testCheerioOnlySoaksAfterPlayerDisturbsIt();
 function testWaterSoakPersistsAndClamps() {
   const dynamics = createKitchenDynamics();
   const mapConfig = kitchenMap();
-  dynamics.reset({ mapConfig, world });
+  reset(dynamics, mapConfig);
   const cheerio = dynamics.state.cheerios[0];
   cheerio.originX = 250;
   cheerio.originY = 510;
@@ -91,12 +100,9 @@ function testWaterSoakPersistsAndClamps() {
     "water soaking should clamp when complete",
   );
 
-  update(
-    dynamics,
-    kitchenMap("kitchen-floor", []),
-    { x: 900, y: 900, vx: 0, vy: 0, r: 29 },
-    60,
-  );
+  cheerio.originX = 800;
+  cheerio.originY = 800;
+  update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 }, 60);
   assert.equal(
     cheerio.waterSoak,
     1,
@@ -109,7 +115,7 @@ testWaterSoakPersistsAndClamps();
 function testWaterSoakIsAuthoredForKitchenFloorOnly() {
   const dynamics = createKitchenDynamics();
   const mapConfig = kitchenMap("kitchen-breakfast-spill");
-  dynamics.reset({ mapConfig, world });
+  reset(dynamics, mapConfig);
   const cheerio = dynamics.state.cheerios[0];
   cheerio.originX = 250;
   cheerio.originY = 510;
@@ -129,7 +135,7 @@ function testCerealWaitsForVisibleMarbleContact() {
   for (const kind of ["cheerio", "crumb"]) {
     const dynamics = createKitchenDynamics();
     const mapConfig = kitchenMap("kitchen-floor", []);
-    dynamics.reset({ mapConfig, world });
+    reset(dynamics, mapConfig);
     const cereal = dynamics.state.cheerios.find(
       (candidate) => candidate.kind === kind,
     );
@@ -153,7 +159,7 @@ function testCerealCarriesMomentumAfterMarbleContact() {
   for (const kind of ["cheerio", "crumb"]) {
     const dynamics = createKitchenDynamics();
     const mapConfig = kitchenMap("kitchen-floor", []);
-    dynamics.reset({ mapConfig, world });
+    reset(dynamics, mapConfig);
     const cereal = dynamics.state.cheerios.find(
       (candidate) => candidate.kind === kind,
     );
@@ -615,7 +621,7 @@ const farFromAnts = { x: -1000, y: -1000, vx: 0, vy: 0, r: 29 };
 function antScene({ elements = [], cheerios = [cerealAt(800, 500)] } = {}) {
   const mapConfig = kitchenMap("kitchen-breakfast-spill", elements);
   const dynamics = createKitchenDynamics();
-  dynamics.reset({ mapConfig, world });
+  reset(dynamics, mapConfig);
   const ant = dynamics.state.ants[0];
   Object.assign(ant, { x: 300, y: 500, angle: 0, probeInFrames: 150 });
   dynamics.state.ants = [ant];
@@ -712,7 +718,7 @@ function testSweptAntCrushSettlesOnceAndPersistsUntilReset() {
   assert.equal(events.splatHits, 1);
   assert.equal(events.squishedAnts, 0);
   assert.equal(events.antCrushes.length, 0);
-  dynamics.reset({ mapConfig, world });
+  reset(dynamics, mapConfig);
   assert.equal(
     dynamics.state.ants.every((next) => next.alive && !next.squished),
     true,
@@ -893,7 +899,7 @@ function testAntColonyIsDeterministicIndividualAndContained() {
   const first = createKitchenDynamics();
   const second = createKitchenDynamics();
   for (const dynamics of [first, second]) {
-    dynamics.reset({ mapConfig, world });
+    reset(dynamics, mapConfig);
     dynamics.state.cheerios = [];
   }
   const initialAnts = first.state.ants.map((ant) => ({ ...ant }));
@@ -931,7 +937,7 @@ function testAntColonyIsDeterministicIndividualAndContained() {
     ),
     true,
   );
-  first.reset({ mapConfig, world });
+  reset(first, mapConfig);
   assert.deepEqual(
     first.state.ants,
     initialAnts,
@@ -957,7 +963,7 @@ function testAntCrushIncludesResolvedReboundPath() {
     ],
   };
   const dynamics = createKitchenDynamics();
-  dynamics.reset({ mapConfig, world });
+  reset(dynamics, mapConfig);
   const marble = { x: 160, y: 500, r: 29, vx: 14, vy: 0 };
   const previous = { ...marble };
   const context = {
@@ -1024,7 +1030,7 @@ function testAntOutsideReboundPathIsNotCrushedByEndpointChord() {
     ],
   };
   const dynamics = createKitchenDynamics();
-  dynamics.reset({ mapConfig, world });
+  reset(dynamics, mapConfig);
   const ant = dynamics.state.ants[0];
   ant.probeFrames = 100;
   ant.probeInFrames = 1000;
@@ -1092,7 +1098,7 @@ function testHazardDiscardsEarlierAntContacts() {
     ],
   };
   const dynamics = createKitchenDynamics();
-  dynamics.reset({ mapConfig, world });
+  reset(dynamics, mapConfig);
   const marble = { x: 160, y: 500, r: 29, vx: 14, vy: 0 };
   const previous = { ...marble };
   const context = {
@@ -1176,7 +1182,7 @@ function testCerealCoastingMatchesRepeatedReferenceFrames() {
         ],
       };
       const dynamics = createKitchenDynamics();
-      dynamics.reset({ mapConfig, world });
+      reset(dynamics, mapConfig);
       const food = dynamics.state.cheerios[0];
       food.vx = 8;
       food.vy = -4;
@@ -1251,7 +1257,12 @@ function testSpongeCoastingMatchesRepeatedReferenceFrames() {
         clusters: [],
       };
       const dynamics = createKitchenDynamics();
-      dynamics.reset({ mapConfig, world, waterPatches: [water] });
+      dynamics.reset({
+        mapConfig,
+        world,
+        obstacles: [sponge],
+        waterPatches: [water],
+      });
       Object.assign(sponge, {
         vx: initialVx,
         vy: initialVy,
@@ -1317,7 +1328,7 @@ function testFoodUsesVisibleLiquidFootprints() {
       ],
     };
     const dynamics = createKitchenDynamics();
-    dynamics.reset({ mapConfig, world });
+    reset(dynamics, mapConfig);
     const food = dynamics.state.cheerios[0];
     Object.assign(food, { vx: 1, playerDisturbed: true });
     update(dynamics, mapConfig, farFromAnts);
@@ -1358,7 +1369,7 @@ function testCoincidentFoodContactsSeparateAlongTheImpactDirection() {
       ],
     };
     const dynamics = createKitchenDynamics();
-    dynamics.reset({ mapConfig, world });
+    reset(dynamics, mapConfig);
     const food = dynamics.state.cheerios[0];
     const marble = { x: 500, y: 500, r: 29, vx, vy };
     update(dynamics, mapConfig, marble);
@@ -1405,7 +1416,7 @@ function testKitchenFeedbackCooldownUsesElapsedTime() {
         ],
       };
       const dynamics = createKitchenDynamics();
-      dynamics.reset({ mapConfig, world });
+      reset(dynamics, mapConfig);
       if (kind === "ant") {
         Object.assign(dynamics.state.ants[0], { alive: false, squished: true });
       }
@@ -1456,7 +1467,7 @@ function testKitchenFeedbackCooldownUsesElapsedTime() {
         60,
         "zero elapsed time cannot age a cooldown",
       );
-      dynamics.reset({ mapConfig, world });
+      reset(dynamics, mapConfig);
       assert.equal(
         dynamics.state.frameIndex,
         0,

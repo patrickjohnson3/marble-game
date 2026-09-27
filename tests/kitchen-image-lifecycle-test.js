@@ -31,7 +31,7 @@ try {
   };
   const world = { width: 4400, height: 4400 };
   const dynamics = createKitchenDynamics();
-  dynamics.reset({ mapConfig, world });
+  dynamics.reset({ mapConfig, world, obstacles: [] });
   const themeState = {};
   const container = new FakeElement();
   const overlayContainer = new FakeElement();

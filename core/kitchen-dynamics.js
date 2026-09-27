@@ -2,10 +2,6 @@ import { kitchenPoint } from "../maps/kitchen-layout.js";
 import { antConfig } from "./game-config.js";
 import { pointInEllipsePatch } from "./geometry.js";
 import {
-  createForkCollisionRects,
-  createSpoonCollisionRects,
-} from "./map-obstacles.js";
-import {
   ELLIPTICAL_SURFACE_SHAPES,
   KITCHEN_FIXTURES,
   MAP_ELEMENT_TYPES,
@@ -117,7 +113,6 @@ export function createKitchenDynamicsState() {
   return {
     ants: [],
     cheerios: [],
-    elementCacheSource: null,
     frameIndex: 0,
     obstacles: [],
     terrainElements: [],
@@ -146,28 +141,6 @@ export function createKitchenDynamicsState() {
   };
 }
 
-function elementCaches(elements = []) {
-  const obstacles = [];
-  const terrainElements = [];
-
-  for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
-    if (element.type === MAP_ELEMENT_TYPES.obstacle) {
-      if (element.fixture === KITCHEN_FIXTURES.fork) {
-        obstacles.push(...createForkCollisionRects(element));
-      } else if (element.fixture === KITCHEN_FIXTURES.spoon) {
-        obstacles.push(...createSpoonCollisionRects(element));
-      } else {
-        obstacles.push(element);
-      }
-    } else if (surfaceInfluences[element.type]) {
-      terrainElements.push(element);
-    }
-  }
-
-  return { obstacles, terrainElements };
-}
-
 function useRuntimeWaterPatch(state, waterPatches) {
   if (!Array.isArray(waterPatches) || !waterPatches[0]) return;
 
@@ -187,7 +160,6 @@ export function resetKitchenDynamics(
 ) {
   state.ants = [];
   state.cheerios = [];
-  state.elementCacheSource = null;
   state.frameIndex = 0;
   state.events.antCrushes.length = 0;
   state.events.squishedAnts = 0;
@@ -227,10 +199,10 @@ export function resetKitchenDynamics(
       );
     }
   }
-  const caches = elementCaches(mapConfig.elements);
-  state.elementCacheSource = mapConfig.elements;
-  state.obstacles = Array.isArray(obstacles) ? obstacles : caches.obstacles;
-  state.terrainElements = caches.terrainElements;
+  state.obstacles = obstacles;
+  state.terrainElements = (mapConfig.elements ?? []).filter(
+    (element) => surfaceInfluences[element.type],
+  );
   if (mapConfig.variantId === kitchenFloorMapId) {
     state.sponge = state.obstacles.find(
       (obstacle) => obstacle.fixture === KITCHEN_FIXTURES.sponge,
@@ -292,15 +264,6 @@ function soakPlayerDisturbedCheerio(cereal, elements, frameDelta) {
     cereal.revision += 1;
     return;
   }
-}
-
-function ensureElementCaches(state, elements = []) {
-  if (state.elementCacheSource === elements) return;
-
-  const caches = elementCaches(elements);
-  state.elementCacheSource = elements;
-  state.obstacles = caches.obstacles;
-  state.terrainElements = caches.terrainElements;
 }
 
 function cappedVectorScale(x, y, maxLength) {
@@ -1253,7 +1216,6 @@ export function updateKitchenDynamics(
   events.waterChanges = 0;
   if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
 
-  ensureElementCaches(state, mapConfig.elements);
   updateSponge(state, marble, frameDelta, events);
   updateCereal(
     state,

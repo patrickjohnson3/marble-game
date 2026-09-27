@@ -179,10 +179,14 @@ for (const map of [straight, kitchen, breakfast]) {
   assertMetalBoundary(spoonParts(state.obstacles), spoon);
   assertNeckResponse(state);
 
-  // Isolated dynamics callers must use the same metal boundary as the live
-  // map runtime; otherwise ants/cereal still collide with the old rectangle.
+  // Kitchen actors and the marble share the runtime's metal boundary.
   const dynamics = createKitchenDynamics();
-  dynamics.reset({ mapConfig: state.activeMap, world: map.world });
+  dynamics.reset({
+    mapConfig: state.activeMap,
+    obstacles: state.obstacles,
+    world: map.world,
+  });
+  assert.equal(dynamics.state.obstacles, state.obstacles);
   assertMetalBoundary(spoonParts(dynamics.state.obstacles), spoon);
   assert.equal(
     JSON.stringify(map),
