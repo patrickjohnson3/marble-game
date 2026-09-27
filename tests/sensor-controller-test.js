@@ -10,7 +10,10 @@ function assertClose(actual, expected) {
   assert.ok(Math.abs(actual - expected) < 1e-12, `${actual} != ${expected}`);
 }
 
-function createHarness({ adjustScreen = (gamma, beta) => [gamma, beta] } = {}) {
+function createHarness({
+  adjustScreen = (gamma, beta) => [gamma, beta],
+  neutralSampleCount = 2,
+} = {}) {
   let frameSchedules = 0;
   let introSchedules = 0;
   let hint = "";
@@ -47,7 +50,7 @@ function createHarness({ adjustScreen = (gamma, beta) => [gamma, beta] } = {}) {
     tilt,
     tuning: {
       motionGravityScale: 3,
-      neutralSampleCount: 2,
+      neutralSampleCount,
     },
     ui: {
       setHint(message) {
@@ -212,7 +215,7 @@ function testLateSensorRecalibratesWithoutSteeringFromHoldingAngle() {
     );
     assert.equal(harness.tilt.smoothX, 0);
     assert.equal(harness.tilt.smoothY, 0);
-    assert.equal(harness.game.phase, "calibrating");
+    assert.equal(harness.game.phase, "running");
 
     harness.controller.onOrientation({ gamma: 12, beta: 45 });
     assertClose(harness.tilt.neutralX, 12);
@@ -299,6 +302,52 @@ function testKeyboardCanStartAfterOneSensorSampleAndCalibrationCanResume() {
     "background calibration must preserve ongoing keyboard momentum",
   );
 }
+
+function testLateHandoffPreservesKeyboardMomentumWithoutKeyRepeat() {
+  for (const source of ["none", "devicemotion fallback"]) {
+    const harness = createHarness({ neutralSampleCount: 18 });
+    harness.sensor.using = source;
+    const keyboard = { x: 0, y: 0, heldKeys: new Set() };
+    const controller = createKeyboardController({
+      game: harness.game,
+      introSequence: { schedule() {} },
+      keyboard,
+      scheduleFrame() {},
+      sensor: harness.sensor,
+      tilt: harness.tilt,
+      closeSettings() {},
+    });
+    Object.assign(harness.marble, { x: 500, y: 500, r: 29, vx: 0, vy: 0 });
+    const context = {
+      marble: harness.marble,
+      tilt: harness.tilt,
+      keyboard,
+      physics: physicsConfig,
+      intro: { released: true },
+      bounds: { left: 0, right: 2000, top: 0, bottom: 2000 },
+      mapState: { obstacles: [], terrainByType: {} },
+    };
+    controller.onKeyDown({ key: "ArrowRight", preventDefault() {} });
+    for (let frame = 0; frame < 22; frame++) {
+      if (frame >= 5) harness.controller.onOrientation({ gamma: 12, beta: 45 });
+      updatePhysicsInput(context, 1);
+      updatePhysics(context, 1, {});
+    }
+    const velocity = harness.marble.vx;
+    const verticalVelocity = harness.marble.vy;
+    assert.ok(velocity > 10, "held keyboard input must build momentum");
+    harness.controller.onOrientation({ gamma: 12, beta: 45 });
+    assert.equal(harness.marble.vx, velocity, "a late handoff must not brake");
+    assert.equal(harness.marble.vy, verticalVelocity);
+    assertClose(harness.tilt.neutralX, 12);
+    assertClose(harness.tilt.neutralY, 45);
+    assert.equal(harness.game.phase, "running");
+    assert.equal(harness.sensor.using, "deviceorientation");
+    assert.equal(keyboard.x, 1);
+  }
+}
+
+testLateHandoffPreservesKeyboardMomentumWithoutKeyRepeat();
 
 function testReadingsAndManualNeutralCannotStartBeforeStart() {
   const harness = createHarness();

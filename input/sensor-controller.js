@@ -47,7 +47,7 @@ export function createSensorController({
       tilt.smoothX = 0;
       tilt.smoothY = 0;
       sensor.using = mode;
-      game.phase = GAME_PHASES.calibrating;
+      // Keep active play running while the new baseline is collected.
       ui.setHint(copy.hints.calibrating);
       ui.setGameStatus(copy.hints.calibrating);
     }

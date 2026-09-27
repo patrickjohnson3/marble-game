@@ -42,8 +42,8 @@ preferences. Findings are reproduced in code/tests unless marked for playtest.
 
 - Sensors accept only complete finite samples. Changing source starts a fresh
   18-sample neutral calibration using the existing tuning and clears smoothed
-  input. Calibration completion stops velocity, as before. This avoids mixed
-  baselines at the cost of a brief interruption when sources change. Keyboard
+  input. Startup calibration stops velocity; background calibration during
+  active play preserves momentum while replacing the source baseline. Keyboard
   input can still start the intro if a partly initialized sensor stream stalls;
   it leaves the sensor's pending neutral intact. Late permission results remain
   recorded but cannot overwrite already running input status.
