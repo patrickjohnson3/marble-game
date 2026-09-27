@@ -1333,4 +1333,52 @@ function testFoodUsesVisibleLiquidFootprints() {
 }
 
 testFoodUsesVisibleLiquidFootprints();
+
+function testCoincidentFoodContactsSeparateAlongTheImpactDirection() {
+  for (const [vx, vy] of [
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+    [0.5, 0],
+    [0, -0.25],
+    [0.3, 0.4],
+    [0, 0],
+  ]) {
+    const mapConfig = {
+      ...kitchenMap("kitchen-floor", []),
+      clusters: [
+        { x: 0.5, y: 0.5, angle: 0, ants: [], cheerios: [[0, 0]], crumbs: [] },
+      ],
+    };
+    const dynamics = createKitchenDynamics();
+    dynamics.reset({ mapConfig, world });
+    const food = dynamics.state.cheerios[0];
+    const marble = { x: 500, y: 500, r: 29, vx, vy };
+    update(dynamics, mapConfig, marble);
+    const separation = Math.hypot(food.pushX, food.pushY);
+    assert.ok(
+      Math.abs(separation - (marble.r + food.radius + 0.5)) < 1e-10,
+      "coincident contact must fully separate by a unit normal",
+    );
+    if (vx !== 0 || vy !== 0) {
+      assert.ok(
+        Math.abs(food.pushX * vy - food.pushY * vx) < 1e-10,
+        "the push must stay parallel to incoming motion",
+      );
+      assert.ok(food.pushX * vx + food.pushY * vy > 0);
+    } else {
+      assert.equal(
+        food.pushX,
+        separation,
+        "stationary overlap uses a deterministic unit fallback",
+      );
+      assert.equal(food.pushY, 0);
+    }
+    assert.ok(Math.abs(food.vx - vx * 0.42) < 1e-10);
+    assert.ok(Math.abs(food.vy - vy * 0.42) < 1e-10);
+  }
+}
+
+testCoincidentFoodContactsSeparateAlongTheImpactDirection();
 console.log("Kitchen dynamics tests passed.");

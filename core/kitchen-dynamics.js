@@ -1195,11 +1195,15 @@ function updateCereal(
     const nx =
       distance > collisionZeroDistanceEpsilon
         ? dx / distance
-        : (marble.vx || 1) / Math.max(speed, 1);
+        : speed > 0
+          ? (marble.vx || 0) / speed
+          : 1;
     const ny =
       distance > collisionZeroDistanceEpsilon
         ? dy / distance
-        : (marble.vy || 0) / Math.max(speed, 1);
+        : speed > 0
+          ? (marble.vy || 0) / speed
+          : 0;
     const amount = shoveDistance - distance + cheerioObstacleSeparation;
     const nextPushX = pushX + nx * amount;
     const nextPushY = pushY + ny * amount;
