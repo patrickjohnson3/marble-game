@@ -6,6 +6,10 @@ import { createSensorController } from "../input/sensor-controller.js";
 import { createSensorWatchdog } from "../input/sensor-watchdog.js";
 import { screenAdjusted } from "../platform/platform.js";
 
+function assertClose(actual, expected) {
+  assert.ok(Math.abs(actual - expected) < 1e-12, `${actual} != ${expected}`);
+}
+
 function createHarness({ adjustScreen = (gamma, beta) => [gamma, beta] } = {}) {
   let frameSchedules = 0;
   let introSchedules = 0;
@@ -98,8 +102,8 @@ function testAutoNeutralStartsIntroCountdownOnce() {
 
   assert.equal(harness.game.phase, "running");
   assert.equal(harness.sensor.using, "deviceorientation");
-  assert.equal(harness.tilt.neutralX, 5);
-  assert.equal(harness.tilt.neutralY, 5);
+  assertClose(harness.tilt.neutralX, 5);
+  assertClose(harness.tilt.neutralY, 5);
   assert.equal(harness.marble.vx, 0);
   assert.equal(harness.marble.vy, 0);
   assert.equal(harness.counts().introSchedules, 1);
@@ -188,8 +192,8 @@ function testSourceHandoffDoesNotMixCalibrationSamples() {
   assert.equal(harness.game.phase, "calibrating");
 
   harness.controller.onOrientation({ gamma: 32, beta: 42 });
-  assert.equal(harness.tilt.neutralX, 31);
-  assert.equal(harness.tilt.neutralY, 41);
+  assertClose(harness.tilt.neutralX, 31);
+  assertClose(harness.tilt.neutralY, 41);
   assert.equal(harness.game.phase, "running");
 }
 
@@ -211,8 +215,8 @@ function testLateSensorRecalibratesWithoutSteeringFromHoldingAngle() {
     assert.equal(harness.game.phase, "calibrating");
 
     harness.controller.onOrientation({ gamma: 12, beta: 45 });
-    assert.equal(harness.tilt.neutralX, 12);
-    assert.equal(harness.tilt.neutralY, 45);
+    assertClose(harness.tilt.neutralX, 12);
+    assertClose(harness.tilt.neutralY, 45);
     assert.equal(harness.game.phase, "running");
   }
 }
@@ -226,8 +230,8 @@ function testPausedReadingsRemainAvailableForManualNeutral() {
   assert.equal(harness.calibration.sampleCount, 0);
   assert.equal(harness.tilt.neutralX, null);
   harness.controller.setNeutralNow();
-  assert.equal(harness.tilt.neutralX, 8);
-  assert.equal(harness.tilt.neutralY, 38);
+  assertClose(harness.tilt.neutralX, 8);
+  assertClose(harness.tilt.neutralY, 38);
   assert.equal(harness.game.paused, true);
   assert.equal(harness.marble.vx, 0);
   assert.equal(harness.marble.vy, 0);
@@ -280,8 +284,8 @@ function testKeyboardCanStartAfterOneSensorSampleAndCalibrationCanResume() {
   assert.ok(velocity.vy < 0, "ArrowUp must establish vertical momentum");
 
   harness.controller.onOrientation({ gamma: 12, beta: 42 });
-  assert.equal(harness.tilt.neutralX, 11);
-  assert.equal(harness.tilt.neutralY, 41);
+  assertClose(harness.tilt.neutralX, 11);
+  assertClose(harness.tilt.neutralY, 41);
   assert.equal(harness.game.phase, "running");
   assert.equal(harness.sensor.using, "deviceorientation");
   assert.deepEqual(keyboard, {
@@ -363,4 +367,82 @@ function testSensorWatchdogResumesWithRemainingDelay() {
 
 testSensorWatchdogResumesWithRemainingDelay();
 
+function testScreenRotationPreservesPhysicalNeutral() {
+  // These readings come from rotating the same gravity vector in the screen
+  // plane, using the W3C Z-X'-Y'' rotation matrix, not swapping Euler angles.
+  const readings = [
+    { angle: 0, beta: 45, gamma: 20 },
+    { angle: 90, beta: 13.995445358891418, gamma: -46.78082110628581 },
+    { angle: 180, beta: -45, gamma: -20 },
+    { angle: 270, beta: -13.995445358891418, gamma: 46.78082110628581 },
+  ];
+  for (const initial of readings) {
+    let angle = initial.angle;
+    const harness = createHarness({
+      adjustScreen: (x, y) =>
+        screenAdjusted(x, y, {
+          screenRef: { orientation: { angle } },
+        }),
+    });
+    harness.controller.onOrientation(initial);
+    harness.controller.onOrientation(initial);
+    Object.assign(harness.marble, { x: 500, y: 500, r: 29 });
+    const context = {
+      marble: harness.marble,
+      tilt: harness.tilt,
+      keyboard: { x: 0, y: 0 },
+      physics: physicsConfig,
+      intro: { released: true },
+      bounds: { left: 0, right: 1000, top: 0, bottom: 1000 },
+      mapState: { obstacles: [], terrainByType: {} },
+    };
+    for (const reading of [...readings, initial]) {
+      angle = reading.angle;
+      harness.controller.onOrientation(reading);
+      assert.ok(
+        Math.abs(harness.tilt.rawX - harness.tilt.neutralX) < 1e-10,
+        "the same screen-relative gravity must preserve horizontal neutral",
+      );
+      assert.ok(
+        Math.abs(harness.tilt.rawY - harness.tilt.neutralY) < 1e-10,
+        "the same screen-relative gravity must preserve vertical neutral",
+      );
+      for (let frame = 0; frame < 60; frame++) {
+        updatePhysicsInput(context, 1);
+        updatePhysics(context, 1, {});
+      }
+      assert.equal(harness.marble.x, 500);
+      assert.equal(harness.marble.y, 500);
+      assert.equal(harness.game.phase, "running");
+      assert.equal(harness.calibration.sampleCount, 2);
+    }
+  }
+}
+
+testScreenRotationPreservesPhysicalNeutral();
+
+function testPortraitOrientationPreservesAngleRanges() {
+  for (const beta of [-179, -120, -90, -45, 0, 45, 90, 120, 179]) {
+    for (const gamma of [-89, -20, 0, 20, 89]) {
+      const harness = createHarness();
+      harness.controller.onOrientation({ beta, gamma });
+      assertClose(harness.tilt.rawX, gamma);
+      assertClose(harness.tilt.rawY, beta);
+    }
+  }
+  const harness = createHarness({
+    adjustScreen: (x, y) =>
+      screenAdjusted(x, y, {
+        screenRef: { orientation: { angle: 90 } },
+      }),
+  });
+  harness.controller.onOrientation({
+    beta: -170.15344806016594,
+    gamma: 61.51876171866054,
+  });
+  assertClose(harness.tilt.rawX, 20);
+  assertClose(harness.tilt.rawY, 120);
+}
+
+testPortraitOrientationPreservesAngleRanges();
 console.log("Sensor controller tests passed.");

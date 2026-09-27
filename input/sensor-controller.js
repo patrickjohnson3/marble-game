@@ -58,8 +58,21 @@ export function createSensorController({
 
   function onOrientation(e) {
     if (!Number.isFinite(e.beta) || !Number.isFinite(e.gamma)) return;
-    const [tx, ty] = adjustScreen(e.gamma, e.beta);
-    acceptSample(SENSOR_MODES.orientation, tx, ty);
+    // Euler angles are successive rotations, not vector components. Rotate
+    // their gravity vector into screen axes before recovering tilt in degrees.
+    const radians = Math.PI / 180;
+    const beta = e.beta * radians;
+    const gamma = e.gamma * radians;
+    const cosBeta = Math.cos(beta);
+    const [x, y] = adjustScreen(cosBeta * Math.sin(gamma), Math.sin(beta));
+    const z = cosBeta * Math.cos(gamma);
+    // Preserve the event's beta range beyond +/-90 degrees when face-down.
+    const facing = z < 0 ? -1 : 1;
+    acceptSample(
+      SENSOR_MODES.orientation,
+      Math.atan2(x * facing, Math.abs(z)) / radians,
+      Math.atan2(y, facing * Math.hypot(x, z)) / radians,
+    );
   }
 
   function onMotion(e) {
