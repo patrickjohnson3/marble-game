@@ -245,17 +245,22 @@ function setupSensors({
         sensor.permission === "denied"
           ? copy.hints.motionDenied
           : copy.hints.noMotionSensor;
-      ui.setHint(message);
-      ui.setGameStatus(message);
       sensor.using = SENSOR_MODES.keyboard;
       game.phase = GAME_PHASES.running;
       tilt.neutralX = 0;
       tilt.neutralY = 0;
+      tilt.rawX = 0;
+      tilt.rawY = 0;
+      tilt.smoothX = 0;
+      tilt.smoothY = 0;
+      ui.setHint(message);
+      ui.setGameStatus(message);
       introSequence.schedule();
       scheduleFrame();
     },
   });
   const sensorController = createSensorController({
+    onSample: sensorWatchdog.refresh,
     calibration,
     game,
     introSequence,

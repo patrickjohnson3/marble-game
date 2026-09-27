@@ -1,4 +1,4 @@
-import { SENSOR_MODES } from "../core/runtime-states.js";
+import { GAME_PHASES, SENSOR_MODES } from "../core/runtime-states.js";
 
 export function createSensorWatchdog({
   delayMs,
@@ -15,9 +15,19 @@ export function createSensorWatchdog({
 
   function run() {
     timer = 0;
+    if (
+      game.paused ||
+      game.phase === GAME_PHASES.waiting ||
+      sensor.using === SENSOR_MODES.keyboard
+    )
+      return;
+    const remaining = remainingDelayMs - (now() - startedAt);
+    if (remaining > 0) {
+      schedule(remaining);
+      return;
+    }
     startedAt = 0;
     remainingDelayMs = delayMs;
-    if (game.paused || sensor.using !== SENSOR_MODES.none) return;
 
     onFallback();
   }
@@ -27,6 +37,13 @@ export function createSensorWatchdog({
     startedAt = now();
     remainingDelayMs = delay;
     timer = setTimeoutFn(run, delay);
+  }
+
+  function refresh() {
+    startedAt = now();
+    remainingDelayMs = delayMs;
+    // Keep one pending timer rather than replacing it at sensor frequency.
+    if (!timer && !game.paused) timer = setTimeoutFn(run, delayMs);
   }
 
   function pause() {
@@ -53,6 +70,7 @@ export function createSensorWatchdog({
   return {
     pause,
     reset,
+    refresh,
     resume,
     schedule,
   };

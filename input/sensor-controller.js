@@ -12,6 +12,7 @@ export function createSensorController({
   tuning,
   ui,
   adjustScreen,
+  onSample = () => {},
 }) {
   function maybeAutoNeutral() {
     if (game.paused || game.phase === GAME_PHASES.waiting) return;
@@ -51,6 +52,7 @@ export function createSensorController({
       ui.setHint(copy.hints.calibrating);
       ui.setGameStatus(copy.hints.calibrating);
     }
+    onSample();
     tilt.rawX = rawX;
     tilt.rawY = rawY;
     maybeAutoNeutral();

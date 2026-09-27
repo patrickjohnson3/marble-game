@@ -16,6 +16,7 @@ import { testCameraZoomVisibility } from "./camera-browser-test.js";
 import { testMapSwitching } from "./map-switch-browser-test.js";
 import {
   testMotionPermissionRecovery,
+  testSensorDropoutRecovery,
   testConstrainedOnboarding,
   testSettingsModality,
   testSinglePointerCameraControls,
@@ -393,6 +394,18 @@ async function testSyntheticLateSensorRecovery(browser, baseUrl) {
       (message) => document.getElementById("hint").textContent === message,
       copy.hints.neutralSet,
     );
+    // This workflow models a healthy recovered stream through the intro and
+    // pinch gesture; silence is exercised separately by the dropout test.
+    await page.evaluate(() => {
+      window.__neutralStream = window.setInterval(() => {
+        const event = new window.Event("deviceorientation");
+        Object.defineProperties(event, {
+          beta: { value: 30 },
+          gamma: { value: 12 },
+        });
+        window.dispatchEvent(event);
+      }, 50);
+    });
     await page.waitForTimeout(250);
     assert.deepEqual(
       await marblePosition(page),
@@ -413,6 +426,7 @@ async function testSyntheticLateSensorRecovery(browser, baseUrl) {
     );
 
     await testSyntheticPinchWorkflow(page);
+    await page.evaluate(() => window.clearInterval(window.__neutralStream));
     await dispatchOrientation(page, { beta: 30, gamma: 30 });
     await page.waitForFunction((before) => {
       const position = document
@@ -959,6 +973,7 @@ try {
   assert.deepEqual(browserErrors, [], "browser smoke test must not log errors");
   await testStartupRecovery(browser, `http://127.0.0.1:${port}/`);
   await testMotionPermissionRecovery(browser, `http://127.0.0.1:${port}/`);
+  await testSensorDropoutRecovery(browser, `http://127.0.0.1:${port}/`);
   await testSettingsModality(browser, `http://127.0.0.1:${port}/`);
   await testConstrainedOnboarding(browser, `http://127.0.0.1:${port}/`);
   await testSinglePointerCameraControls(browser, `http://127.0.0.1:${port}/`);

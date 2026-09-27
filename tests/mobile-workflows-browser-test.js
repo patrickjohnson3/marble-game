@@ -623,3 +623,91 @@ window.__mapPreview = createApp();`,
     await page.close();
   }
 }
+
+export async function testSensorDropoutRecovery(browser, baseUrl) {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    serviceWorkers: "block",
+  });
+  try {
+    await page.route("**/boot.js*", (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: `import { createApp } from "./app.js";
+window.__sensorApp = createApp();`,
+      }),
+    );
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.locator("#start").click();
+    await page.evaluate(() => {
+      window.__orientation = (beta, gamma) => {
+        const event = new window.Event("deviceorientation");
+        Object.defineProperties(event, {
+          beta: { value: beta },
+          gamma: { value: gamma },
+        });
+        window.dispatchEvent(event);
+      };
+      window.__orientation(40, 10);
+      // Orientation stalls after one sample while the motion stream stays healthy.
+      window.__motionTimer = window.setInterval(() => {
+        const event = new window.Event("devicemotion");
+        Object.defineProperty(event, "accelerationIncludingGravity", {
+          value: { x: 1, y: 2, z: 9 },
+        });
+        window.dispatchEvent(event);
+      }, 20);
+    });
+    await page.waitForFunction(() => {
+      const { input, game } = window.__sensorApp.state;
+      return (
+        input.sensor.using === "devicemotion fallback" &&
+        input.tilt.neutralX !== null &&
+        game.phase === "running"
+      );
+    });
+    const neutral = await page.evaluate(() => {
+      const { tilt } = window.__sensorApp.state.input;
+      window.clearInterval(window.__motionTimer);
+      return [tilt.neutralX, tilt.neutralY];
+    });
+    assert.deepEqual(neutral, [-3, 6], "fallback must calibrate its own units");
+    await page.evaluate(() => {
+      for (let i = 0; i < 18; i++) window.__orientation(40, 10);
+      window.__orientation(40, 24);
+    });
+    await page.waitForFunction(
+      () => window.__sensorApp.state.input.tilt.smoothX > 0,
+    );
+    await page.locator("#settingsToggle").click();
+    await page.waitForTimeout(timing.sensorFallbackMs + 100);
+    assert.equal(
+      await page.evaluate(() => window.__sensorApp.state.input.sensor.using),
+      "deviceorientation",
+      "pause must suspend the source timeout",
+    );
+    await page.locator("#resumeGame").click();
+    await page.waitForFunction(
+      () => window.__sensorApp.state.input.sensor.using === "keyboard",
+    );
+    assert.deepEqual(
+      await page.evaluate(() => {
+        const { tilt } = window.__sensorApp.state.input;
+        return [tilt.rawX, tilt.rawY, tilt.smoothX, tilt.smoothY];
+      }),
+      [0, 0, 0, 0],
+      "dropout must stop stale steering",
+    );
+    await page.locator("#settingsToggle").click();
+    assert.equal(await page.locator("#motionRecovery").isVisible(), true);
+    await page.locator("#resumeGame").click();
+    await page.keyboard.down("ArrowRight");
+    assert.equal(
+      await page.evaluate(() => window.__sensorApp.state.input.keyboard.x),
+      1,
+    );
+    await page.keyboard.up("ArrowRight");
+  } finally {
+    await page.close();
+  }
+}

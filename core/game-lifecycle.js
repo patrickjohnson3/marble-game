@@ -73,8 +73,8 @@ export function createLifecycleController({
     resetFrameClock();
     sensorWatchdog.resume(
       () =>
-        game.phase === GAME_PHASES.calibrating &&
-        sensor.using === SENSOR_MODES.none,
+        game.phase !== GAME_PHASES.waiting &&
+        sensor.using !== SENSOR_MODES.keyboard,
     );
     introSequence.resume();
     scheduleFrame();

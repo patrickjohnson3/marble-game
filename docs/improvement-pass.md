@@ -48,8 +48,11 @@ preferences. Findings are reproduced in code/tests unless marked for playtest.
   it leaves the sensor's pending neutral intact. Late permission results remain
   recorded but cannot overwrite already running input status.
 - Both sensor paths use the existing screen-axis transform. Rotation after
-  calibration and sustained sensor dropout are still separate unresolved
-  cases. Set neutral continues to use current paused readings.
+  calibration has deterministic transform coverage. A selected source now
+  expires after 1.4 seconds without a valid reading, clearing stale steering
+  and allowing motion fallback to recalibrate. Paused time is excluded.
+  Real-device rotation/dropout still needs verification. Set neutral continues
+  to use current paused readings.
 - Camera zoom uses the actual clamped scale to preserve its anchor. World-edge
   clamping can necessarily shift that anchor. Existing automatic follow and
   cooldown remain; no extra camera mode or permanent control was introduced.

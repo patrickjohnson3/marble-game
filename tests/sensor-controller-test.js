@@ -13,6 +13,7 @@ function assertClose(actual, expected) {
 function createHarness({
   adjustScreen = (gamma, beta) => [gamma, beta],
   neutralSampleCount = 2,
+  onSample,
 } = {}) {
   let frameSchedules = 0;
   let introSchedules = 0;
@@ -36,6 +37,7 @@ function createHarness({
   const sensor = { using: "none" };
   const controller = createSensorController({
     calibration,
+    onSample,
     game,
     introSequence: {
       schedule() {
@@ -405,16 +407,102 @@ function testSensorWatchdogResumesWithRemainingDelay() {
   watchdog.resume(() => true);
   assert.deepEqual(delays, [100, 60]);
 
+  now += 60;
   callbacks.at(-1)();
   assert.equal(fallbackCount, 1);
 
   watchdog.schedule();
   sensor.using = "deviceorientation";
+  now += 100;
   callbacks.at(-1)();
-  assert.equal(fallbackCount, 1);
+  assert.equal(fallbackCount, 2, "a stalled selected source must expire");
 }
 
 testSensorWatchdogResumesWithRemainingDelay();
+
+function testValidSamplesRefreshWatchdogWithoutBackgroundTimers() {
+  let now = 0;
+  let timerId = 0;
+  const timers = new Map();
+  let fallbacks = 0;
+  const harness = createHarness({ onSample: () => watchdog.refresh() });
+  const watchdog = createSensorWatchdog({
+    delayMs: 100,
+    game: harness.game,
+    sensor: harness.sensor,
+    onFallback() {
+      fallbacks++;
+      harness.sensor.using = "keyboard";
+    },
+    now: () => now,
+    setTimeoutFn(fn, delay) {
+      timers.set(++timerId, { fn, at: now + delay });
+      return timerId;
+    },
+    clearTimeoutFn(id) {
+      timers.delete(id);
+    },
+  });
+  function advance(ms) {
+    const until = now + ms;
+    while (timers.size) {
+      const [id, timer] = timers.entries().next().value;
+      if (timer.at > until) break;
+      now = timer.at;
+      timers.delete(id);
+      timer.fn();
+    }
+    now = until;
+  }
+  watchdog.schedule();
+  advance(80);
+  harness.controller.onOrientation({ gamma: 10, beta: 40 });
+  advance(80);
+  assert.equal(fallbacks, 0, "valid samples renew the grace period");
+  assert.equal(timerId, 2, "samples must not replace a pending timer");
+  harness.controller.onOrientation({ gamma: NaN, beta: 40 });
+  harness.controller.onMotion({ accelerationIncludingGravity: { x: 1, y: 2 } });
+  advance(20);
+  assert.equal(
+    fallbacks,
+    1,
+    "invalid/ignored readings must not keep a source alive",
+  );
+  harness.controller.onMotion({ accelerationIncludingGravity: { x: 1, y: 2 } });
+  harness.controller.onMotion({ accelerationIncludingGravity: { x: 1, y: 2 } });
+  assert.equal(harness.sensor.using, "devicemotion fallback");
+  assert.equal(harness.tilt.neutralX, -3);
+  assert.equal(harness.tilt.neutralY, 6);
+  advance(40);
+  harness.game.paused = true;
+  watchdog.pause();
+  advance(1000);
+  harness.game.paused = false;
+  watchdog.resume(() => true);
+  advance(59);
+  assert.equal(fallbacks, 1, "paused time must not expire a source");
+  advance(1);
+  assert.equal(fallbacks, 2);
+  harness.game.paused = true;
+  harness.controller.onOrientation({ gamma: 8, beta: 30 });
+  assert.equal(timers.size, 0, "paused samples must not arm a timer");
+  advance(1000);
+  harness.controller.setNeutralNow();
+  assertClose(harness.tilt.neutralX, 8);
+  assertClose(harness.tilt.neutralY, 30);
+  harness.game.paused = false;
+  watchdog.resume(() => true);
+  advance(99);
+  assert.equal(fallbacks, 2);
+  advance(1);
+  assert.equal(fallbacks, 3);
+  harness.controller.onOrientation({ gamma: 8, beta: 30 });
+  watchdog.reset();
+  advance(1000);
+  assert.equal(fallbacks, 3, "reset must cancel pending expiry");
+}
+
+testValidSamplesRefreshWatchdogWithoutBackgroundTimers();
 
 function testScreenRotationPreservesPhysicalNeutral() {
   // These readings come from rotating the same gravity vector in the screen
