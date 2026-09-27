@@ -6,6 +6,7 @@ export function createInputManager({
   onMotion,
   onKeyDown,
   onKeyUp,
+  onBlur,
   onPointerDown,
   onPointerMove,
   onPointerEnd,
@@ -30,6 +31,7 @@ export function createInputManager({
     keyboardEnabled = true;
     target.addEventListener("keydown", onKeyDown, { passive: false });
     target.addEventListener("keyup", onKeyUp);
+    target.addEventListener("blur", onBlur);
   }
 
   function enableGestures() {
@@ -58,6 +60,7 @@ export function createInputManager({
     if (keyboardEnabled) {
       target.removeEventListener("keydown", onKeyDown, { passive: false });
       target.removeEventListener("keyup", onKeyUp);
+      target.removeEventListener("blur", onBlur);
       keyboardEnabled = false;
     }
     if (gesturesEnabled) {

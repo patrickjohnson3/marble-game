@@ -29,6 +29,7 @@ const inputManager = createInputManager({
   onMotion() {},
   onKeyDown() {},
   onKeyUp() {},
+  onBlur() {},
   onPointerDown() {},
   onPointerMove() {},
   onPointerEnd() {},
@@ -46,7 +47,7 @@ inputManager.enableKeyboard();
 inputManager.enableKeyboard();
 assert.deepEqual(
   target.listeners.map((listener) => listener.type),
-  ["deviceorientation", "devicemotion", "keydown", "keyup"],
+  ["deviceorientation", "devicemotion", "keydown", "keyup", "blur"],
 );
 
 inputManager.enableGestures();
@@ -67,7 +68,7 @@ inputManager.destroy();
 inputManager.destroy();
 assert.deepEqual(
   target.removedListeners.map((listener) => listener.type),
-  ["deviceorientation", "devicemotion", "keydown", "keyup"],
+  ["deviceorientation", "devicemotion", "keydown", "keyup", "blur"],
 );
 assert.deepEqual(
   gameEl.removedListeners.map((listener) => listener.type),

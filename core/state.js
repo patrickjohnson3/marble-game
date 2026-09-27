@@ -49,6 +49,7 @@ export function createGameState({
         neutralY: null,
       },
       keyboard: {
+        heldKeys: new Set(),
         x: 0,
         y: 0,
       },

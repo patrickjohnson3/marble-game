@@ -304,6 +304,7 @@ function createSettingsRuntime(storage) {
 }
 
 function bindViewportEvents({
+  onHidden,
   cameraController,
   documentRef,
   game,
@@ -315,7 +316,11 @@ function bindViewportEvents({
   windowRef,
   bounds,
 }) {
-  function keepDisplayAwakeWhenVisible() {
+  function onVisibilityChange() {
+    if (documentRef.visibilityState === "hidden") {
+      onHidden();
+      return;
+    }
     if (
       documentRef.visibilityState === "visible" &&
       game.phase !== GAME_PHASES.waiting
@@ -335,7 +340,7 @@ function bindViewportEvents({
   }
 
   windowRef.addEventListener("resize", resize);
-  documentRef.addEventListener("visibilitychange", keepDisplayAwakeWhenVisible);
+  documentRef.addEventListener("visibilitychange", onVisibilityChange);
 }
 
 function createPhysicsContext(state, mapState, kitchenState) {
@@ -545,6 +550,9 @@ export function createApp({
   }
 
   bindViewportEvents({
+    onHidden: () => {
+      if (game.phase !== GAME_PHASES.waiting) openSettings();
+    },
     bounds,
     cameraController,
     documentRef,
@@ -746,6 +754,7 @@ export function createApp({
     onMotion: sensorController.onMotion,
     onKeyDown: keyboardController.onKeyDown,
     onKeyUp: keyboardController.onKeyUp,
+    onBlur: keyboardController.clear,
     onPointerDown: cameraController.onPointerDown,
     onPointerMove: cameraController.onPointerMove,
     onPointerEnd: cameraController.onPointerEnd,
@@ -762,6 +771,14 @@ export function createApp({
   els.mapSelect.disabled = true;
   els.loadMap.disabled = true;
 
+  function openSettings() {
+    if (ui.isSettingsOpen()) return;
+    els.mapSelect.value = mapState.activeMap.variantId;
+    els.mapSelect.disabled = game.phase === GAME_PHASES.waiting;
+    els.loadMap.disabled = els.mapSelect.disabled;
+    gameController.openSettings();
+  }
+
   bindSettingsPanel({
     els,
     settings,
@@ -770,12 +787,7 @@ export function createApp({
     applySettings,
     applyFullscreenSetting,
     saveSettings,
-    onOpenSettings: () => {
-      els.mapSelect.value = mapState.activeMap.variantId;
-      els.mapSelect.disabled = game.phase === GAME_PHASES.waiting;
-      els.loadMap.disabled = els.mapSelect.disabled;
-      gameController.openSettings();
-    },
+    onOpenSettings: openSettings,
     onCloseSettings: gameController.closeSettings,
     onInstallApp: pwaInstallController.promptInstall,
     onRetryMap: retryCurrentMap,

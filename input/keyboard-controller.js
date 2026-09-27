@@ -42,37 +42,46 @@ export function createKeyboardController({
     scheduleFrame();
   }
 
+  function updateDirection() {
+    keyboard.x = 0;
+    keyboard.y = 0;
+    // Set insertion order preserves the last freshly pressed direction per axis.
+    for (const key of keyboard.heldKeys) {
+      if (key === "arrowleft" || key === "a") keyboard.x = -1;
+      if (key === "arrowright" || key === "d") keyboard.x = 1;
+      if (key === "arrowup" || key === "w") keyboard.y = -1;
+      if (key === "arrowdown" || key === "s") keyboard.y = 1;
+    }
+  }
+
+  function clear() {
+    keyboard.heldKeys.clear();
+    updateDirection();
+  }
+
   function onKeyDown(e) {
     const key = e.key.toLowerCase();
-    if (game.paused) return;
+    if (game.paused || !movementKeys.has(key)) return;
+    e.preventDefault();
+    if (game.phase === GAME_PHASES.waiting) return;
+    // A held key must not spring back to life after pause or focus loss.
+    if (e.repeat && !keyboard.heldKeys.has(key)) return;
 
-    if (movementKeys.has(key) && game.phase === GAME_PHASES.waiting) {
-      e.preventDefault();
-      return;
-    }
-
-    if (key === "arrowleft" || key === "a") keyboard.x = -1;
-    if (key === "arrowright" || key === "d") keyboard.x = 1;
-    if (key === "arrowup" || key === "w") keyboard.y = -1;
-    if (key === "arrowdown" || key === "s") keyboard.y = 1;
-    if (movementKeys.has(key)) {
-      e.preventDefault();
-      activateKeyboardFallback();
-    }
+    keyboard.heldKeys.add(key);
+    updateDirection();
+    activateKeyboardFallback();
   }
 
   function onKeyUp(e) {
     const key = e.key.toLowerCase();
     if (key === "escape") closeSettings();
-    if (game.paused) return;
-
-    if ((key === "arrowleft" || key === "a") && keyboard.x < 0) keyboard.x = 0;
-    if ((key === "arrowright" || key === "d") && keyboard.x > 0) keyboard.x = 0;
-    if ((key === "arrowup" || key === "w") && keyboard.y < 0) keyboard.y = 0;
-    if ((key === "arrowdown" || key === "s") && keyboard.y > 0) keyboard.y = 0;
+    if (!movementKeys.has(key)) return;
+    keyboard.heldKeys.delete(key);
+    updateDirection();
   }
 
   return {
+    clear,
     onKeyDown,
     onKeyUp,
   };

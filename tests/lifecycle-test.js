@@ -108,6 +108,7 @@ async function testStartPauseResumeReset() {
   const { calls, controller, state } = harness;
 
   state.input.keyboard.x = 1;
+  state.input.keyboard.heldKeys = new Set(["arrowright"]);
   state.input.sensor.using = SENSOR_MODES.keyboard;
 
   await controller.start();
@@ -115,11 +116,23 @@ async function testStartPauseResumeReset() {
   assert.equal(state.game.paused, false);
   assert.equal(calls.mapReset, 1);
   assert.equal(state.input.keyboard.x, 0);
+  assert.equal(state.input.keyboard.heldKeys.size, 0);
   assert.equal(state.input.sensor.using, SENSOR_MODES.none);
 
+  state.input.keyboard.heldKeys.add("arrowup");
+  state.input.keyboard.y = -1;
+  state.input.tilt.neutralX = 8;
+  state.input.tilt.neutralY = 35;
+  const marbleBeforePause = { ...state.marble };
   controller.openSettings();
   assert.equal(harness.isSettingsOpen(), true);
   assert.equal(state.game.paused, true);
+  assert.equal(state.input.keyboard.heldKeys.size, 0);
+  assert.equal(state.input.keyboard.y, 0);
+  assert.deepEqual(state.marble, marbleBeforePause);
+  assert.equal(state.input.tilt.neutralX, 8);
+  assert.equal(state.input.tilt.neutralY, 35);
+  controller.openSettings();
   assert.equal(calls.sensorPause, 1);
   assert.equal(calls.introPause, 1);
   controller.closeSettings();

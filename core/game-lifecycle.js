@@ -57,6 +57,7 @@ export function createLifecycleController({
     if (game.paused || game.phase === GAME_PHASES.waiting) return false;
 
     game.paused = true;
+    keyboard.heldKeys.clear();
     keyboard.x = 0;
     keyboard.y = 0;
     cameraController.resetGesture();
@@ -92,6 +93,7 @@ export function createLifecycleController({
     sensor.using = SENSOR_MODES.none;
 
     intro.released = false;
+    keyboard.heldKeys.clear();
     keyboard.x = 0;
     keyboard.y = 0;
     tilt.rawX = 0;

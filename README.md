@@ -35,7 +35,9 @@ Then open `http://localhost:8000/`.
 
 - Phone: tap start, hold the phone normally, then tilt.
 - Desktop fallback: use arrow keys or WASD.
-- Settings: use the gear button.
+- Settings: use the gear button. Switching apps or hiding the page pauses play
+  in Settings; press Resume when ready, or Set neutral first if your grip changed.
+  The encounter stays in memory; a browser-discarded page starts fresh.
 - Camera: pinch to zoom and drag with two fingers to pan.
 - Objective: follow the top-left status. Kill all kitchen ants; defeat the living
   room mouse and reach its doorway; hold inside the green circle on older maps.

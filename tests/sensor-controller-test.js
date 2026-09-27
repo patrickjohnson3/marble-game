@@ -236,7 +236,7 @@ function testPausedReadingsRemainAvailableForManualNeutral() {
 function testKeyboardCanStartAfterOneSensorSampleAndCalibrationCanResume() {
   const harness = createHarness();
   let keyboardIntroSchedules = 0;
-  const keyboard = { x: 0, y: 0 };
+  const keyboard = { x: 0, y: 0, heldKeys: new Set() };
   const keyboardController = createKeyboardController({
     game: harness.game,
     introSequence: {
@@ -284,7 +284,11 @@ function testKeyboardCanStartAfterOneSensorSampleAndCalibrationCanResume() {
   assert.equal(harness.tilt.neutralY, 41);
   assert.equal(harness.game.phase, "running");
   assert.equal(harness.sensor.using, "deviceorientation");
-  assert.deepEqual(keyboard, { x: 1, y: -1 });
+  assert.deepEqual(keyboard, {
+    x: 1,
+    y: -1,
+    heldKeys: new Set(["arrowright", "arrowup"]),
+  });
   assert.deepEqual(
     { vx: harness.marble.vx, vy: harness.marble.vy },
     velocity,

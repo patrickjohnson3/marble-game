@@ -44,6 +44,173 @@ async function dispatchOrientation(page, { beta, gamma, count = 1 }) {
   );
 }
 
+async function testInterruptionWorkflow(browser, baseUrl) {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    serviceWorkers: "block",
+  });
+  const browserErrors = collectBrowserErrors(page);
+  try {
+    await page.route("**/boot.js*", (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: `import { createApp } from "./app.js";
+window.__mapPreview = createApp();`,
+      }),
+    );
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.locator("#start").click();
+    await dispatchOrientation(page, {
+      beta: 13,
+      gamma: 7,
+      count: tuning.neutralSampleCount,
+    });
+    await page.waitForFunction(
+      () => window.__mapPreview.state.intro.released,
+      null,
+      { timeout: timing.introReleaseDelayMs + 3000 },
+    );
+
+    await page.keyboard.down("ArrowRight");
+    await page.keyboard.down("ArrowLeft");
+    await page.keyboard.up("ArrowLeft");
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.input.keyboard.x),
+      1,
+      "releasing the opposing key must retain the still-held Right input",
+    );
+    await page.keyboard.down("d");
+    await page.keyboard.up("ArrowRight");
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.input.keyboard.x),
+      1,
+      "releasing one alias must retain another held key for that direction",
+    );
+    await page.keyboard.down("ArrowUp");
+    await page.evaluate(() => window.dispatchEvent(new window.Event("blur")));
+    assert.deepEqual(
+      await page.evaluate(() => {
+        const { x, y } = window.__mapPreview.state.input.keyboard;
+        return { x, y };
+      }),
+      { x: 0, y: 0 },
+      "focus loss must clear both axes even when keyup is missed",
+    );
+    await page.keyboard.up("d");
+    await page.keyboard.up("ArrowUp");
+
+    // Headless Chrome keeps background tabs visible, and its lifecycle CDP
+    // command freezes without hiding. Exercise the real visibility listener
+    // with an explicit synthetic state; this does not test OS app switching.
+    await page.evaluate(() => {
+      window.__testVisibility = "visible";
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => window.__testVisibility,
+      });
+      window.__setTestVisibility = (visibility) => {
+        window.__testVisibility = visibility;
+        document.dispatchEvent(new window.Event("visibilitychange"));
+      };
+      window.__encounterSnapshot = () => {
+        const { state, mapRuntime, kitchenDynamics } = window.__mapPreview;
+        return window.structuredClone({
+          marble: state.marble,
+          calibration: state.input.calibration,
+          neutral: [state.input.tilt.neutralX, state.input.tilt.neutralY],
+          ants: kitchenDynamics.state.ants,
+          cockroach: mapRuntime.state.cockroach,
+          completed: mapRuntime.state.goalCompleted,
+          variant: mapRuntime.state.activeMap.variantId,
+        });
+      };
+    });
+    await page.keyboard.down("ArrowRight");
+    const interrupted = await page.evaluate(() => {
+      const before = window.__encounterSnapshot();
+      window.__setTestVisibility("hidden");
+      return { before, paused: window.__mapPreview.state.game.paused };
+    });
+    assert.equal(
+      interrupted.paused,
+      true,
+      "hiding an active game must pause it",
+    );
+    await page.keyboard.up("ArrowRight");
+    await page.waitForTimeout(150);
+    assert.deepEqual(
+      await page.evaluate(() => window.__encounterSnapshot()),
+      interrupted.before,
+      "a hidden game must preserve encounter, motion and calibration state",
+    );
+    await page.evaluate(() => window.__setTestVisibility("visible"));
+    await page.waitForTimeout(150);
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.game.paused),
+      true,
+      "returning to the page must wait for explicit Resume",
+    );
+    assert.deepEqual(
+      await page.evaluate(() => window.__encounterSnapshot()),
+      interrupted.before,
+      "returning must not reset or advance the interrupted encounter",
+    );
+    assert.equal(await page.locator("#resumeGame").isVisible(), true);
+    assert.equal(await page.locator("#neutral").isVisible(), true);
+    await page.locator("#resumeGame").click();
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.game.paused),
+      false,
+      "Resume must resume the interrupted game",
+    );
+    await page.keyboard.down("ArrowLeft");
+    await page.keyboard.up("ArrowLeft");
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.input.keyboard.x),
+      0,
+      "resume must not restore a key held before the interruption",
+    );
+
+    await page.locator("#settingsToggle").click();
+    await page.locator("#diagnosticsSettingsTitle").click();
+    await page.locator("#mapSelect").selectOption("living-room");
+    const settingsPause = await page.evaluate(() => {
+      const before = window.__encounterSnapshot();
+      window.__setTestVisibility("hidden");
+      window.__setTestVisibility("visible");
+      return before;
+    });
+    await page.waitForTimeout(150);
+    assert.equal(
+      await page.locator("#mapSelect").inputValue(),
+      "living-room",
+      "interruption must preserve an unconfirmed map selection in open settings",
+    );
+    assert.deepEqual(
+      await page.evaluate(() => window.__encounterSnapshot()),
+      settingsPause,
+      "an existing settings pause must survive a visibility round trip",
+    );
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.game.paused),
+      true,
+    );
+    await page.locator("#resumeGame").click();
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.game.paused),
+      false,
+      "visibility changes must preserve the settings dialog's resume ownership",
+    );
+    assert.deepEqual(
+      browserErrors,
+      [],
+      "interruption flow must not log errors",
+    );
+  } finally {
+    await page.close();
+  }
+}
+
 async function testSyntheticOrientationWorkflow(browser, baseUrl) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const browserErrors = collectBrowserErrors(page);
@@ -785,6 +952,7 @@ try {
   await page.keyboard.up("ArrowRight");
 
   assert.deepEqual(browserErrors, [], "browser smoke test must not log errors");
+  await testInterruptionWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticOrientationWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticLateSensorRecovery(browser, `http://127.0.0.1:${port}/`);
   await testShortViewportSettingsRemainReachable(
