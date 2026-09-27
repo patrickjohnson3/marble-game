@@ -40,13 +40,14 @@ function resolveMapConfig(config, variant) {
     ? variant.elements.map((element) => ({ ...element }))
     : variant.elements;
 
+  const composition = cloneMapComposition(variant);
   return {
     ...config,
-    ...cloneMapComposition(variant),
-    objective: variant.objective ? { ...variant.objective } : undefined,
-    mouse: variant.mouse ? { ...variant.mouse } : undefined,
-    cockroach: variant.cockroach ? { ...variant.cockroach } : undefined,
-    regions: variant.regions?.map((region) => ({ ...region })),
+    ...composition,
+    objective: composition.objective || undefined,
+    mouse: composition.mouse || undefined,
+    cockroach: composition.cockroach || undefined,
+    regions: composition.regions ?? undefined,
     variantId: variant.id,
     name: variant.name,
     theme: variant.theme,

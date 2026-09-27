@@ -195,6 +195,45 @@ function testResolveMapConfigCopiesSelectedElements() {
 
 testResolveMapConfigCopiesSelectedElements();
 
+function testSelectedCompositionIsIndependentAndClearsMissingFields() {
+  for (const id of ["kitchen-floor", "living-room"]) {
+    const selected = resolveMapVariantConfig(baseMapConfig, id);
+    const before = globalThis.structuredClone(selected);
+    selected.objective.type = "changed";
+    if (selected.mouse) selected.mouse.x += 100;
+    if (selected.cockroach) selected.cockroach.x += 100;
+    if (selected.regions) selected.regions[0].x += 100;
+    assert.deepEqual(resolveMapVariantConfig(baseMapConfig, id), before);
+
+    for (const absent of [undefined, null]) {
+      const next = resolveMapVariantConfig(
+        {
+          ...selected,
+          variants: [
+            {
+              ...simpleMapConfig.variants[0],
+              objective: absent,
+              mouse: absent,
+              cockroach: absent,
+              regions: absent,
+            },
+          ],
+        },
+        "only",
+      );
+      for (const key of ["objective", "mouse", "cockroach", "regions"]) {
+        assert.equal(
+          next[key],
+          undefined,
+          `${key} must not carry into another map`,
+        );
+      }
+    }
+  }
+}
+
+testSelectedCompositionIsIndependentAndClearsMissingFields();
+
 function testResolveMapVariantConfigIgnoresMalformedVariants() {
   const resolved = resolveMapVariantConfig(malformedVariantConfig, "safe");
 
