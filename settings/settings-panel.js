@@ -153,6 +153,14 @@ export function bindSettingsPanel({
     onStatsChanged(enabled);
     requestRender();
   });
+  // Native dialog controls must not feed the global gameplay key handler.
+  settingsOverlay.addEventListener("keydown", (event) => {
+    event.stopPropagation();
+  });
+  settingsOverlay.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    onCloseSettings();
+  });
   settingsOverlay.addEventListener("click", (event) => {
     if (event.target === settingsOverlay) onCloseSettings();
   });

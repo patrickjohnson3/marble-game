@@ -202,3 +202,133 @@ export async function testMotionPermissionRecovery(browser, baseUrl) {
     await page.close();
   }
 }
+
+export async function testSettingsModality(browser, baseUrl) {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    serviceWorkers: "block",
+  });
+  try {
+    await page.route("**/boot.js*", (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: `import { createApp } from "./app.js";
+window.__mapPreview = createApp();`,
+      }),
+    );
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    const focusedId = () => page.evaluate(() => document.activeElement.id);
+    const settings = page.locator("#settingsToggle");
+    await settings.focus();
+    await settings.tap();
+    assert.equal(
+      await focusedId(),
+      "closeSettings",
+      "opening Settings must move focus to its close action",
+    );
+    await page.locator("#start").evaluate((button) => button.focus());
+    assert.equal(
+      await focusedId(),
+      "closeSettings",
+      "the covered Start control must be inert while Settings is open",
+    );
+    const speed = page.locator("#speedSetting");
+    const previousSpeed = Number(await speed.inputValue());
+    await speed.focus();
+    await page.keyboard.press("ArrowRight");
+    assert.ok(
+      Number(await speed.inputValue()) > previousSpeed,
+      "game movement listeners must not swallow Settings slider keys before Start",
+    );
+    await page.locator("#closeSettings").focus();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Enter");
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.game.phase),
+      "waiting",
+      "Tab and Enter in Settings must not start the covered game",
+    );
+    for (const key of ["Tab", "Shift+Tab"]) {
+      for (let index = 0; index < 24; index++) {
+        await page.keyboard.press(key);
+        assert.equal(
+          await page.evaluate(() => {
+            const active = document.activeElement;
+            // Native Tab traversal may visit browser chrome (BODY in headless
+            // Chromium), but must never reach a background app control.
+            return (
+              active === document.body || !!active.closest("#settingsOverlay")
+            );
+          }),
+          true,
+          `${key} must not reach controls behind Settings`,
+        );
+      }
+    }
+    await page.locator("#closeSettings").tap();
+    assert.equal(await focusedId(), "settingsToggle");
+    assert.equal(await page.locator("#settingsOverlay").isVisible(), false);
+    await settings.tap();
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator("#settingsOverlay").isVisible(), false);
+    assert.equal(await focusedId(), "settingsToggle");
+    assert.equal(await page.locator("#start").isVisible(), true);
+    await settings.tap();
+    await page.touchscreen.tap(2, 2);
+    assert.equal(
+      await page.locator("#settingsOverlay").isVisible(),
+      false,
+      "tapping the overlay outside the sheet must retain dismissal behavior",
+    );
+    assert.equal(await focusedId(), "settingsToggle");
+
+    await page.locator("#start").tap();
+    await page.keyboard.press("ArrowRight");
+    await settings.tap();
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.game.paused),
+      true,
+      "the modal must keep the existing gameplay pause",
+    );
+    const pausedPosition = await page.evaluate(() => {
+      const { x, y } = window.__mapPreview.state.marble;
+      return { x, y };
+    });
+    await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(100);
+    assert.deepEqual(
+      await page.evaluate(() => {
+        const { x, y } = window.__mapPreview.state.marble;
+        return { x, y };
+      }),
+      pausedPosition,
+    );
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator("#settingsOverlay").isVisible(), false);
+    assert.equal(await focusedId(), "settingsToggle");
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.game.paused),
+      false,
+      "Escape must resume a game paused by Settings",
+    );
+
+    await page.evaluate(() => window.__mapPreview.gameController.pause());
+    await settings.tap();
+    await page.locator("#resumeGame").tap();
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.game.paused),
+      true,
+      "closing Settings must preserve a pause owned by another workflow",
+    );
+    assert.equal(await focusedId(), "settingsToggle");
+
+    await page.setViewportSize({ width: 390, height: 300 });
+    await settings.tap();
+    await page.locator("#resumeGame").tap();
+    assert.equal(await page.locator("#settingsOverlay").isVisible(), false);
+    assert.equal(await focusedId(), "settingsToggle");
+  } finally {
+    await page.close();
+  }
+}

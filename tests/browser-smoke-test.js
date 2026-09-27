@@ -16,6 +16,7 @@ import { testCameraZoomVisibility } from "./camera-browser-test.js";
 import { testMapSwitching } from "./map-switch-browser-test.js";
 import {
   testMotionPermissionRecovery,
+  testSettingsModality,
   testStartupRecovery,
 } from "./mobile-workflows-browser-test.js";
 
@@ -932,9 +933,7 @@ try {
 
   await page.locator("#settingsToggle").click();
   assert.equal(
-    await page
-      .locator("#settingsOverlay")
-      .evaluate((element) => element.classList.contains("open")),
+    await page.locator("#settingsOverlay").evaluate((element) => element.open),
     true,
     "settings must open",
   );
@@ -958,6 +957,7 @@ try {
   assert.deepEqual(browserErrors, [], "browser smoke test must not log errors");
   await testStartupRecovery(browser, `http://127.0.0.1:${port}/`);
   await testMotionPermissionRecovery(browser, `http://127.0.0.1:${port}/`);
+  await testSettingsModality(browser, `http://127.0.0.1:${port}/`);
   await testInterruptionWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticOrientationWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticLateSensorRecovery(browser, `http://127.0.0.1:${port}/`);

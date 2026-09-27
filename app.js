@@ -485,6 +485,7 @@ export function createApp({
     motionRecoveryHelp: els.motionRecoveryHelp,
     settings,
     settingsOverlay,
+    settingsToggle: els.settingsToggle,
     startBtn,
     goalIndicator: els.goalIndicator,
     levelLabel: els.levelLabel,

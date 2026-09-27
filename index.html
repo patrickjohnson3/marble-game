@@ -65,7 +65,7 @@
       }
     </style>
     <script>
-      const assetVersion = "3e588064d00716a4";
+      const assetVersion = "511c5e12e882178e";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -225,16 +225,11 @@
       <button id="start" aria-describedby="startHelp"></button>
     </div>
 
-    <div id="settingsOverlay" aria-hidden="true">
-      <div
-        id="settingsModal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settingsTitle"
-      >
+    <dialog id="settingsOverlay" aria-labelledby="settingsTitle">
+      <div id="settingsModal">
         <div id="settingsHeader">
           <h2 id="settingsTitle"></h2>
-          <button id="closeSettings" aria-label=""></button>
+          <button id="closeSettings" aria-label="" autofocus></button>
         </div>
         <div id="pwaStatus" class="settingsStatus" aria-live="polite"></div>
         <details class="settingsHelp">
@@ -339,7 +334,7 @@
           <button id="resumeGame" class="primaryAction"></button>
         </div>
       </div>
-    </div>
+    </dialog>
 
     <script>
       document.getElementById("retryBoot").addEventListener("click", () => {

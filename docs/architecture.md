@@ -98,6 +98,9 @@ and the watchdog supplies the fallback path.
 
 Opening the settings modal pauses the game through `gameController.pause()`.
 Closing it resumes only if opening the modal actually paused active gameplay.
+Settings uses a native modal dialog for focus containment and inert background
+controls. Escape follows the same lifecycle close path, and closing returns
+focus to the Settings button.
 
 ## Runtime Update Loop
 

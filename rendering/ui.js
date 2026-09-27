@@ -18,6 +18,7 @@ export function createUi({
   motionRecoveryHelp,
   settings,
   settingsOverlay,
+  settingsToggle,
   startBtn,
   debugLines,
   state,
@@ -136,7 +137,7 @@ export function createUi({
   }
 
   function isSettingsOpen() {
-    return settingsOverlay.classList.contains("open");
+    return settingsOverlay.open;
   }
 
   function updateDebugPanel({ force = false, now = performance.now() } = {}) {
@@ -198,14 +199,14 @@ export function createUi({
 
   function openSettingsModal() {
     updateMotionRecovery();
-    settingsOverlay.classList.add("open");
-    settingsOverlay.setAttribute("aria-hidden", "false");
+    settingsOverlay.showModal();
     updateDebugPanel({ force: true });
   }
 
   function closeSettingsModal() {
-    settingsOverlay.classList.remove("open");
-    settingsOverlay.setAttribute("aria-hidden", "true");
+    if (!settingsOverlay.open) return;
+    settingsOverlay.close();
+    settingsToggle.focus();
   }
 
   return {

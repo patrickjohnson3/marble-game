@@ -48,7 +48,18 @@ export class FakeElement {
     this.offsetWidth = id === "marble" ? 58 : 0;
     this.textContent = "";
     this.parent = null;
+    this.open = false;
   }
+
+  showModal() {
+    this.open = true;
+  }
+
+  close() {
+    this.open = false;
+  }
+
+  focus() {}
 
   get firstChild() {
     return this.childNodes[0] || null;
