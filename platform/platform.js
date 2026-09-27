@@ -307,14 +307,17 @@ export function registerServiceWorker({
   }
 
   windowRef.addEventListener("load", () => {
-    const hadController = Boolean(navigatorRef.serviceWorker.controller);
+    let controller = navigatorRef.serviceWorker.controller;
     notifyServiceWorkerStatus(onStatusChange, "checking");
-    if (hadController && navigatorRef.serviceWorker.addEventListener) {
-      navigatorRef.serviceWorker.addEventListener(
-        "controllerchange",
-        reloadForActiveUpdate,
-        { once: true },
-      );
+    if (navigatorRef.serviceWorker.addEventListener) {
+      navigatorRef.serviceWorker.addEventListener("controllerchange", () => {
+        const nextController = navigatorRef.serviceWorker.controller;
+        if (!nextController || nextController === controller) return;
+        const isUpdate = Boolean(controller);
+        controller = nextController;
+        // The first claim needs no reload; later replacements still do.
+        if (isUpdate) reloadForActiveUpdate();
+      });
     }
 
     navigatorRef.serviceWorker

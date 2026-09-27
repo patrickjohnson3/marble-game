@@ -458,29 +458,34 @@ async function testServiceWorkerReportsDelayedAndFailedUpdates() {
   ]);
 }
 
-async function testServiceWorkerRegistrationReloadsWhenUpdateTakesControl() {
+async function testServiceWorkerRegistrationReloadsWhenUpdateTakesControl(
+  initiallyControlled,
+) {
   const windowListeners = {};
   const serviceWorkerListeners = {};
   const statuses = [];
   let reloadCount = 0;
+  let updateReadyCount = 0;
+  const serviceWorker = {
+    controller: initiallyControlled ? {} : null,
+    addEventListener(type, listener) {
+      serviceWorkerListeners[type] = listener;
+    },
+    register() {
+      return Promise.resolve({ addEventListener() {} });
+    },
+  };
   const { registerServiceWorker } = await import(
     "../platform/platform.js?test=" + Date.now()
   );
 
   registerServiceWorker({
-    navigatorRef: {
-      serviceWorker: {
-        controller: {},
-        addEventListener(type, listener) {
-          serviceWorkerListeners[type] = listener;
-        },
-        register() {
-          return Promise.resolve({ addEventListener() {} });
-        },
-      },
-    },
+    navigatorRef: { serviceWorker },
     onStatusChange(status) {
       statuses.push(status);
+    },
+    onUpdateReady() {
+      updateReadyCount++;
     },
     windowRef: {
       addEventListener(type, listener) {
@@ -496,10 +501,23 @@ async function testServiceWorkerRegistrationReloadsWhenUpdateTakesControl() {
 
   await windowListeners.load();
   await Promise.resolve();
-  serviceWorkerListeners.controllerchange();
-  serviceWorkerListeners.controllerchange();
+  if (!initiallyControlled) {
+    serviceWorkerListeners.controllerchange?.();
+    serviceWorker.controller = {};
+    serviceWorkerListeners.controllerchange?.();
+    serviceWorkerListeners.controllerchange?.();
+    assert.equal(reloadCount, 0, "first installation must not reload the game");
+    assert.equal(updateReadyCount, 0);
+  }
 
-  assert.equal(reloadCount, 1);
+  serviceWorker.controller = {};
+  serviceWorkerListeners.controllerchange?.();
+  serviceWorkerListeners.controllerchange?.();
+
+  serviceWorker.controller = {};
+  serviceWorkerListeners.controllerchange?.();
+  assert.equal(reloadCount, 1, "a later replacement must reload exactly once");
+  assert.equal(updateReadyCount, 1);
   assert.deepEqual(statuses, ["checking", "ready", "update-ready"]);
 }
 
@@ -516,6 +534,7 @@ await testServiceWorkerRegistrationReportsWaitingUpdate();
 await testServiceWorkerRegistrationReportsInstalledUpdate();
 await testServiceWorkerFirstInstallReturnsToReady();
 await testServiceWorkerReportsDelayedAndFailedUpdates();
-await testServiceWorkerRegistrationReloadsWhenUpdateTakesControl();
+await testServiceWorkerRegistrationReloadsWhenUpdateTakesControl(true);
+await testServiceWorkerRegistrationReloadsWhenUpdateTakesControl(false);
 
 console.log("Platform tests passed.");

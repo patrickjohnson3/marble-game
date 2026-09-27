@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import { runtimeFiles, runtimeModuleScripts } from "../runtime-assets.js";
+import { copy } from "../core/copy.js";
 import {
   closeServer,
   collectBrowserErrors,
@@ -400,6 +401,73 @@ async function testFailedUpgradePreservesShell(browser, releases) {
   }
 }
 
+async function testFirstInstallDocumentUpgrade(browser, releases) {
+  const deployment = createDeploymentServer(releases.a);
+  const port = await listen(deployment.server);
+  const baseUrl = `http://127.0.0.1:${port}${scope}`;
+  const context = await browser.newContext({ serviceWorkers: "allow" });
+  const page = await context.newPage();
+  const errors = collectBrowserErrors(page);
+  let navigations = 0;
+  page.on("framenavigated", (frame) => {
+    if (frame === page.mainFrame()) navigations++;
+  });
+
+  try {
+    await page.goto(baseUrl);
+    await waitForBoot(page, releases.a.version);
+    await page.waitForFunction(
+      () => navigator.serviceWorker.controller !== null,
+      null,
+      { timeout },
+    );
+    await page.waitForLoadState("networkidle");
+    assert.equal(navigations, 1, "the first worker claim must not reload");
+
+    deployment.deploy(releases.b);
+    // Keep the initial document open throughout this update. Its listener must
+    // survive the first claim and reload when a replacement takes control.
+    await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.update();
+    });
+    await waitForActiveRelease(page, releases.b.cacheName);
+    await waitForBoot(page, releases.b.version);
+    await page.waitForFunction(
+      (updateReady) =>
+        !document.getElementById("pwaStatus").textContent.includes(updateReady),
+      copy.pwa.updateReady,
+      { timeout },
+    );
+    await page.waitForLoadState("networkidle");
+    assert.equal(
+      navigations,
+      2,
+      "replacing the first worker must reload the original document exactly once",
+    );
+    await assertCachedShellVersion(page, baseUrl, releases.b);
+    assert.equal(await page.evaluate(() => window.__pwaRelease), "b");
+
+    await disableHttpCache(context, page);
+    await context.setOffline(true);
+    await page.goto(baseUrl);
+    await waitForBoot(page, releases.b.version);
+    assert.equal(
+      navigations,
+      3,
+      "offline boot must not trigger an update loop",
+    );
+    assert.deepEqual(
+      errors,
+      [],
+      "updating a first-install document must preserve normal and offline boot",
+    );
+  } finally {
+    await context.close();
+    await closeServer(deployment.server);
+  }
+}
+
 const temporaryDirectory = mkdtempSync(join(tmpdir(), "marble-pwa-browser-"));
 let browser;
 try {
@@ -411,6 +479,7 @@ try {
   await testModuleWorkerUpgrade(browser, releases);
   await testFailedUpgradePreservesShell(browser, releases);
   await testModuleWorkerUpgrade(browser, releases, "max-age=600");
+  await testFirstInstallDocumentUpgrade(browser, releases);
   console.log("PWA browser regression tests passed.");
 } finally {
   await browser?.close();

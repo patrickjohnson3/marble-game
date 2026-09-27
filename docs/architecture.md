@@ -371,9 +371,9 @@ replacement installation leaves the previous offline version intact. After a
 successful installation it calls `skipWaiting()` and claims clients on
 activation.
 
-If an existing service worker already controls the page, `platform/platform.js` reloads once on
-`controllerchange` so the new version takes effect immediately. A first-time
-installation does not trigger that reload. Update status remains visible in the
+`platform/platform.js` listens for controller changes even on a first visit.
+The initial claim does not reload the game; a later controller replacement
+reloads once so the new version takes effect immediately. Update status remains visible in the
 settings panel during the handoff. Installations still pending after 30 seconds
 report that the update is delayed, and failed installations leave the current
 version available instead of displaying a permanent downloading state.
