@@ -546,7 +546,7 @@ function captureSpongeSoakAnchor(state) {
 }
 
 function updateSponge(state, marble, frameDelta, events, resolveMarbleWalls) {
-  if (!state.sponge || !state.waterPatch || !state.waterPatchOriginal) return;
+  if (!state.sponge) return;
 
   const impact = resolveSpongeCollision(state, marble);
   if (impact > 0) {
@@ -558,6 +558,8 @@ function updateSponge(state, marble, frameDelta, events, resolveMarbleWalls) {
   // Finish that contact before food and ants consume its position.
   if (impact !== null) resolveMarbleWalls?.();
   if (
+    !state.waterPatch ||
+    !state.waterPatchOriginal ||
     !state.spongeDisturbed ||
     !spongeTouchesWater(state.sponge, state.waterPatch)
   ) {

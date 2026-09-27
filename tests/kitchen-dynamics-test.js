@@ -12,7 +12,11 @@ import { pointInEllipsePatch } from "../core/geometry.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
 import { ELLIPTICAL_SURFACE_SHAPES } from "../core/map-elements.js";
 import { createResolvedMapState } from "../core/map-runtime.js";
-import { circleOrientedRectContact } from "../core/physics-collisions.js";
+import { validateMapConfig } from "../core/map-validation.js";
+import {
+  circleOrientedRectContact,
+  handleWallCollisions,
+} from "../core/physics-collisions.js";
 
 const world = { width: 1000, height: 1000 };
 const waterPatch = { type: "waterPatch", x: 100, y: 420, w: 300, h: 180 };
@@ -279,6 +283,89 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
 }
 
 testPlayerCanPushSpongeIntoWaterToShrinkPuddle();
+
+function testSpongeRemainsSolidAndPushableWithoutWater() {
+  const config = {
+    ...resolvedMapConfig,
+    elements: resolvedMapConfig.elements.filter(
+      (element) => element.type !== "waterPatch",
+    ),
+  };
+  assert.deepEqual(
+    validateMapConfig(config),
+    [],
+    "a dry kitchen is a valid authored map",
+  );
+  const runtime = createResolvedMapState(config);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({
+    mapConfig: runtime.activeMap,
+    obstacles: runtime.obstacles,
+    waterPatches: runtime.terrainByType.waterPatch.elements,
+    world: runtime.activeMap.world,
+  });
+  const sponge = dynamics.state.sponge;
+  const initialPosition = { x: sponge.x, y: sponge.y };
+  const cos = Math.cos(sponge.angle);
+  const sin = Math.sin(sponge.angle);
+  // Overlap the middle of the left face by five world units.
+  const offset = sponge.hitboxW / 2 + 29 - 5;
+  const marble = {
+    x: sponge.collisionCenterX - cos * offset,
+    y: sponge.collisionCenterY - sin * offset,
+    r: 29,
+    vx: 10 * cos,
+    vy: 10 * sin,
+  };
+  const previous = { ...marble };
+  const resolveWalls = () =>
+    handleWallCollisions(
+      {
+        marble,
+        obstacles: runtime.obstacles,
+        bounds: {
+          left: 0,
+          top: 0,
+          right: config.world.width,
+          bottom: config.world.height,
+        },
+        intro: { released: true },
+        physics: physicsConfig,
+      },
+      () => {},
+    );
+  resolveWalls();
+  const events = dynamics.update(
+    runtime.activeMap,
+    marble,
+    previous,
+    1,
+    null,
+    resolveWalls,
+  );
+
+  assert.ok(
+    events.spongeImpact > 0,
+    "the dry sponge still receives the marble impact",
+  );
+  assert.equal(circleOrientedRectContact(marble, sponge).intersects, false);
+  assert.ok(
+    Math.hypot(sponge.x - initialPosition.x, sponge.y - initialPosition.y) > 0,
+  );
+  assert.equal(events.spongeChanges, 1);
+  assert.equal(sponge.saturation, 0);
+  assert.equal(events.spongeSoaks, 0);
+  assert.equal(events.waterChanges, 0);
+
+  const pushedPosition = { x: sponge.x, y: sponge.y };
+  update(dynamics, runtime.activeMap, { x: 29, y: 29, r: 29, vx: 0, vy: 0 });
+  assert.ok(
+    Math.hypot(sponge.x - pushedPosition.x, sponge.y - pushedPosition.y) > 0,
+    "the dry sponge retains momentum after contact ends",
+  );
+}
+
+testSpongeRemainsSolidAndPushableWithoutWater();
 
 function testSpongeDoesNotSoakInTransparentPuddleCorner() {
   const authoredWater = {

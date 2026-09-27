@@ -65,8 +65,9 @@ Living-room fixture dimensions and rotation feed both rendering and collision.
 fixtures. Kitchen image fixtures retain their existing fitted geometry and
 transparent sprite margins, including the fork's composite collision parts.
 The existing moving/absorbing sponge belongs to `kitchen-floor` and targets its
-first water patch; the breakfast kitchen's sponge remains a static fixture.
-That specialized behavior stays in `core/kitchen-dynamics.js`.
+first water patch. Without water it remains solid and pushable, with absorption
+inactive. The breakfast kitchen's sponge remains a static fixture. That
+specialized behavior stays in `core/kitchen-dynamics.js`.
 
 Shag expands to `roughPatch` with `material: "shag"`: static textured pile art
 and existing rough-terrain movement. It uses `roughPatchDragRetention` in
