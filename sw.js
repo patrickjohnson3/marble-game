@@ -1,9 +1,9 @@
 import {
   runtimeFiles,
   runtimeModuleScripts,
-} from "./runtime-assets.js?v=bbd07587ec254948";
+} from "./runtime-assets.js?v=383b8ec7f574d9a8";
 
-const cacheVersion = "marble-game-bbd07587ec254948";
+const cacheVersion = "marble-game-383b8ec7f574d9a8";
 const assetVersion = cacheVersion.slice("marble-game-".length);
 const versionedFiles = [...runtimeModuleScripts, "style.css"].map(
   (file) => file + "?v=" + assetVersion,
@@ -32,7 +32,13 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(cacheVersion)
-      .then((cache) => cache.addAll(cacheableFiles.map(cacheKey)))
+      .then((cache) =>
+        cache.addAll(
+          cacheableFiles.map(
+            (file) => new Request(cacheKey(file), { cache: "reload" }),
+          ),
+        ),
+      )
       .then(() => self.skipWaiting()),
   );
 });
@@ -75,32 +81,12 @@ function cacheFirst(event, request) {
   });
 }
 
-function fetchAndCacheNavigation(event, request) {
-  return fetch(request)
-    .then((response) => {
-      if (!response.ok) return response;
-
-      const responseToCache = response.clone();
-      const cacheWrite = caches
-        .open(cacheVersion)
-        .then((cache) => cache.put(cacheKey("index.html"), responseToCache));
-      extendEventLifetime(event, cacheWrite);
-      return response;
-    })
-    .catch(() => caches.match(cacheKey("index.html")));
-}
-
-function navigationCacheFirst(event, request) {
-  const shellKey = cacheKey("index.html");
-  return caches.match(shellKey).then((cached) => {
-    if (!cached) return fetchAndCacheNavigation(event, request);
-
-    extendEventLifetime(
-      event,
-      fetchAndCacheNavigation(event, request).then(() => undefined),
-    );
-    return cached;
-  });
+function navigationCacheFirst(request) {
+  // Keep the shell paired with the assets from this worker's installation.
+  return caches
+    .open(cacheVersion)
+    .then((cache) => cache.match(cacheKey("index.html")))
+    .then((cached) => cached || fetch(request));
 }
 
 self.addEventListener("fetch", (event) => {
@@ -108,7 +94,7 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET" || !sameOrigin(request)) return;
 
   if (request.mode === "navigate") {
-    event.respondWith(navigationCacheFirst(event, request));
+    event.respondWith(navigationCacheFirst(request));
     return;
   }
 

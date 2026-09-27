@@ -119,8 +119,12 @@ function createRelease(directory, name) {
   };
 }
 
-function createDeploymentServer(initialRelease) {
+function createDeploymentServer(
+  initialRelease,
+  shellCacheControl = "no-store",
+) {
   let release = initialRelease;
+  let unavailableFile;
   const requests = [];
   const server = createServer((request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
@@ -135,13 +139,18 @@ function createDeploymentServer(initialRelease) {
       return;
     }
     requests.push({ release: release.name, file });
+    if (file === unavailableFile) {
+      response.writeHead(503, { "cache-control": "no-store" }).end();
+      return;
+    }
     try {
       const content = readFileSync(filePath);
       response.writeHead(200, {
         "content-type":
           contentTypes[extname(file)] ?? "application/octet-stream",
         // Keep shell freshness separate from imported worker module caching.
-        "cache-control": file === "index.html" ? "no-store" : "max-age=600",
+        "cache-control":
+          file === "index.html" ? shellCacheControl : "max-age=600",
       });
       response.end(content);
     } catch {
@@ -153,6 +162,9 @@ function createDeploymentServer(initialRelease) {
     requests,
     deploy(nextRelease) {
       release = nextRelease;
+    },
+    withhold(file) {
+      unavailableFile = file;
     },
   };
 }
@@ -185,8 +197,61 @@ async function cacheState(page) {
   });
 }
 
-async function testModuleWorkerUpgrade(browser, releases) {
-  const deployment = createDeploymentServer(releases.a);
+async function waitForActiveRelease(page, cacheName) {
+  await page.waitForFunction(
+    (expected) => {
+      // Poll resolved state: this browser runner treats a Promise predicate as
+      // truthy before its asynchronous cache lookup has completed.
+      Promise.all([
+        window.caches.keys(),
+        navigator.serviceWorker.getRegistration(),
+      ]).then(([names, registration]) => {
+        window.__pwaActiveCache =
+          names.includes(expected) &&
+          !names.some(
+            (name) => name.startsWith("marble-game-") && name !== expected,
+          ) &&
+          registration?.active?.state === "activated" &&
+          !registration.installing
+            ? expected
+            : null;
+      });
+      return window.__pwaActiveCache === expected;
+    },
+    cacheName,
+    { timeout },
+  );
+}
+
+async function assertCachedShellVersion(page, baseUrl, release) {
+  const versions = await page.evaluate(
+    async ({ cacheName, url }) => {
+      const cache = await window.caches.open(cacheName);
+      return Promise.all(
+        [url, url + "index.html"].map(async (key) => {
+          const response = await cache.match(key);
+          const html = await response?.text();
+          return html?.match(/const assetVersion = "([^"]+)";/)?.[1];
+        }),
+      );
+    },
+    { cacheName: release.cacheName, url: baseUrl },
+  );
+  assert.deepEqual(
+    versions,
+    [release.version, release.version],
+    "both precached shells must match the release that owns their cache",
+  );
+}
+
+async function disableHttpCache(context, page) {
+  const session = await context.newCDPSession(page);
+  await session.send("Network.enable");
+  await session.send("Network.setCacheDisabled", { cacheDisabled: true });
+}
+
+async function testModuleWorkerUpgrade(browser, releases, shellCacheControl) {
+  const deployment = createDeploymentServer(releases.a, shellCacheControl);
   const port = await listen(deployment.server);
   const baseUrl = `http://127.0.0.1:${port}${scope}`;
   const context = await browser.newContext({ serviceWorkers: "allow" });
@@ -222,23 +287,9 @@ async function testModuleWorkerUpgrade(browser, releases) {
     // An ordinary visit must check imported worker modules. registration.update()
     // bypasses their HTTP cache and would hide this regression.
     await page.goto(baseUrl);
+    await waitForActiveRelease(page, releases.b.cacheName);
+    await assertCachedShellVersion(page, baseUrl, releases.b);
     await waitForBoot(page, releases.b.version);
-    await page.waitForFunction(
-      async (expected) => {
-        const names = await window.caches.keys();
-        const registration = await navigator.serviceWorker.getRegistration();
-        return (
-          names.includes(expected) &&
-          !names.some(
-            (name) => name.startsWith("marble-game-") && name !== expected,
-          ) &&
-          registration.active?.state === "activated" &&
-          !registration.installing
-        );
-      },
-      releases.b.cacheName,
-      { timeout },
-    );
     const currentCaches = await cacheState(page);
     assert.deepEqual(
       currentCaches.map((cache) => cache.name),
@@ -258,9 +309,7 @@ async function testModuleWorkerUpgrade(browser, releases) {
 
     // Disable HTTP cache only after the upgrade, so a browser cache hit cannot
     // masquerade as service-worker offline coverage or mask stale imports.
-    const session = await context.newCDPSession(page);
-    await session.send("Network.enable");
-    await session.send("Network.setCacheDisabled", { cacheDisabled: true });
+    await disableHttpCache(context, page);
     await context.setOffline(true);
     const beforeOffline = navigations;
     await page.goto(baseUrl);
@@ -282,6 +331,75 @@ async function testModuleWorkerUpgrade(browser, releases) {
   }
 }
 
+async function testFailedUpgradePreservesShell(browser, releases) {
+  const deployment = createDeploymentServer(releases.a);
+  const port = await listen(deployment.server);
+  const baseUrl = `http://127.0.0.1:${port}${scope}`;
+  const context = await browser.newContext({ serviceWorkers: "allow" });
+  await context.addInitScript(() => {
+    window.__pwaWorkerStates = [];
+    navigator.serviceWorker.ready.then((registration) => {
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        worker.addEventListener("statechange", () => {
+          window.__pwaWorkerStates.push(worker.state);
+        });
+      });
+    });
+  });
+  const page = await context.newPage();
+  const errors = collectBrowserErrors(page);
+
+  try {
+    await page.goto(baseUrl);
+    await waitForBoot(page, releases.a.version);
+    await page.waitForFunction(
+      () => navigator.serviceWorker.controller !== null,
+      null,
+      { timeout },
+    );
+    await assertCachedShellVersion(page, baseUrl, releases.a);
+
+    deployment.deploy(releases.b);
+    deployment.withhold("pwa-lazy-proof.js");
+    await page.goto(baseUrl);
+    await page.waitForFunction(
+      () => window.__pwaWorkerStates.includes("redundant"),
+      null,
+      { timeout },
+    );
+    await page.waitForLoadState("networkidle");
+    await assertCachedShellVersion(page, baseUrl, releases.a);
+    await waitForBoot(page, releases.a.version);
+
+    await disableHttpCache(context, page);
+    await context.setOffline(true);
+    await page.goto(baseUrl);
+    await waitForBoot(page, releases.a.version);
+    await assertCachedShellVersion(page, baseUrl, releases.a);
+
+    deployment.withhold(undefined);
+    await context.setOffline(false);
+    await page.goto(baseUrl);
+    await waitForActiveRelease(page, releases.b.cacheName);
+    await assertCachedShellVersion(page, baseUrl, releases.b);
+    await waitForBoot(page, releases.b.version);
+    assert.equal(await page.evaluate(() => window.__pwaRelease), "b");
+
+    await context.setOffline(true);
+    await page.goto(baseUrl);
+    await waitForBoot(page, releases.b.version);
+    assert.deepEqual(
+      errors,
+      [],
+      "failed upgrade and recovery must preserve boot",
+    );
+  } finally {
+    await context.close();
+    await closeServer(deployment.server);
+  }
+}
+
 const temporaryDirectory = mkdtempSync(join(tmpdir(), "marble-pwa-browser-"));
 let browser;
 try {
@@ -291,6 +409,8 @@ try {
   };
   browser = await launchBrowser();
   await testModuleWorkerUpgrade(browser, releases);
+  await testFailedUpgradePreservesShell(browser, releases);
+  await testModuleWorkerUpgrade(browser, releases, "max-age=600");
   console.log("PWA browser regression tests passed.");
 } finally {
   await browser?.close();

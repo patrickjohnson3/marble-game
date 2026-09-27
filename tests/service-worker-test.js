@@ -22,7 +22,7 @@ globalThis.self = {
     listeners[type] = listener;
   },
   location: {
-    href: "https://example.test/app/",
+    href: "https://example.test/app/sw.js",
     origin: "https://example.test",
   },
   clients: {
@@ -51,6 +51,10 @@ globalThis.caches = {
   open(name) {
     openedCacheName = name;
     return Promise.resolve({
+      match(request) {
+        cacheMatches.push({ request, cacheName: name });
+        return Promise.resolve(matchedResponses.get(String(request)) ?? null);
+      },
       addAll(files) {
         installedFiles = files;
         return Promise.resolve();
@@ -83,17 +87,19 @@ try {
     },
   });
   await installPromise;
+  const activeCacheName = openedCacheName;
+  const installedUrls = installedFiles.map((request) => request.url ?? request);
   assert.equal(skippedWaiting, 1);
   assert.equal(
-    installedFiles.some((url) => url.includes("app.js?v=")),
+    installedUrls.some((url) => url.includes("app.js?v=")),
     true,
   );
   assert.equal(
-    installedFiles.some((url) => url.includes("style.css?v=")),
+    installedUrls.some((url) => url.includes("style.css?v=")),
     true,
   );
   assert.equal(
-    installedFiles.some((url) => url.endsWith("runtime-assets.js")),
+    installedUrls.some((url) => url.endsWith("runtime-assets.js")),
     true,
   );
 
@@ -107,43 +113,38 @@ try {
   assert.deepEqual(deletedCaches, ["marble-game-old"]);
   assert.equal(claimedClients, 1);
 
-  for (const mode of ["same-origin", "navigate"]) {
-    let responsePromise;
-    let lifetimePromise;
-    const request = {
-      method: "GET",
-      mode,
-      url: "https://example.test/app/app.js",
-    };
-    listeners.fetch({
-      request,
-      respondWith(promise) {
-        responsePromise = promise;
-      },
-      waitUntil(promise) {
-        lifetimePromise = promise;
-      },
-    });
+  let responsePromise;
+  let lifetimePromise;
+  const request = {
+    method: "GET",
+    mode: "same-origin",
+    url: "https://example.test/app/app.js",
+  };
+  listeners.fetch({
+    request,
+    respondWith(promise) {
+      responsePromise = promise;
+    },
+    waitUntil(promise) {
+      lifetimePromise = promise;
+    },
+  });
 
-    await responsePromise;
-    assert.ok(
-      lifetimePromise,
-      mode + " cache writes must extend event lifetime",
-    );
-    resolveWrite();
-    await lifetimePromise;
-  }
-
-  assert.equal(writes.length, 2);
+  await responsePromise;
+  assert.ok(lifetimePromise, "runtime cache writes must extend event lifetime");
+  resolveWrite();
+  await lifetimePromise;
+  assert.equal(writes.length, 1);
   assert.equal(
     cacheMatches[0].options,
     undefined,
     "runtime cache lookup must preserve asset-version query strings",
   );
 
-  const cachedShell = { source: "cache" };
+  const cachedShell = { source: "installed release" };
   const networkShell = {
     ok: true,
+    source: "next release whose installation may fail",
     clone() {
       return { cloned: true };
     },
@@ -151,39 +152,58 @@ try {
   const shellKey = "https://example.test/app/index.html";
   matchedResponses.set(shellKey, cachedShell);
   holdCacheWrites = false;
-  let resolveNavigationFetch;
-  globalThis.fetch = () =>
-    new Promise((resolve) => {
-      resolveNavigationFetch = resolve;
-    });
-  let cachedResponsePromise;
-  const cachedNavigationLifetime = [];
-  listeners.fetch({
-    request: {
-      method: "GET",
-      mode: "navigate",
-      url: "https://example.test/app/",
-    },
-    respondWith(promise) {
-      cachedResponsePromise = promise;
-    },
-    waitUntil(promise) {
-      cachedNavigationLifetime.push(promise);
-    },
-  });
+  let navigationFetches = 0;
+  globalThis.fetch = () => {
+    navigationFetches++;
+    return Promise.resolve(networkShell);
+  };
 
+  async function navigate() {
+    let navigationResponse;
+    const lifetimes = [];
+    listeners.fetch({
+      request: {
+        method: "GET",
+        mode: "navigate",
+        url: "https://example.test/app/",
+      },
+      respondWith(promise) {
+        navigationResponse = promise;
+      },
+      waitUntil(promise) {
+        lifetimes.push(promise);
+      },
+    });
+    const response = await navigationResponse;
+    await Promise.all(lifetimes);
+    return response;
+  }
+
+  assert.equal(await navigate(), cachedShell);
+  assert.equal(await navigate(), cachedShell);
   assert.equal(
-    await cachedResponsePromise,
-    cachedShell,
-    "cached navigation should not wait for the network",
+    navigationFetches,
+    0,
+    "navigation must not replace the active shell before a new release installs",
   );
-  assert.equal(typeof resolveNavigationFetch, "function");
-  resolveNavigationFetch(networkShell);
-  await Promise.all(cachedNavigationLifetime);
   assert.equal(
-    writes.at(-1),
-    shellKey,
-    "background navigation should refresh the cached shell",
+    cacheMatches.at(-1).cacheName,
+    activeCacheName,
+    "navigation must use the active worker's own precached shell",
+  );
+  assert.equal(writes.length, 1, "the installed shell must remain unchanged");
+
+  matchedResponses.delete(shellKey);
+  assert.equal(await navigate(), networkShell);
+  assert.equal(navigationFetches, 1);
+  assert.equal(
+    writes.length,
+    1,
+    "a missing shell can fall back to the network without caching another release under the active version",
+  );
+  assert.ok(
+    installedFiles.every((request) => request.cache === "reload"),
+    "installation must fetch fresh release files instead of reusing an HTTP-cached shell or unversioned asset",
   );
   console.log("Service worker tests passed.");
 } finally {

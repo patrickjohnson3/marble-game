@@ -32,6 +32,7 @@ export default [
       globals: {
         caches: "readonly",
         fetch: "readonly",
+        Request: "readonly",
         self: "readonly",
         URL: "readonly",
       },

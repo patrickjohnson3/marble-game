@@ -364,9 +364,14 @@ the URL. `npm run sync-cache` synchronizes that import along with the shell and
 cache versions, so an old page's worker update cannot reuse a previous release's
 HTTP-cached file list.
 
-`sw.js` installs new runtime assets into a versioned cache, calls
-`skipWaiting()`, and claims clients after activation. If an existing service
-worker already controls the page, `platform/platform.js` reloads once on
+`sw.js` fetches fresh release files at installation, bypassing the HTTP cache,
+and precaches the shell and runtime assets together. Navigation serves that
+worker's own installed shell without refreshing it independently, so a failed
+replacement installation leaves the previous offline version intact. After a
+successful installation it calls `skipWaiting()` and claims clients on
+activation.
+
+If an existing service worker already controls the page, `platform/platform.js` reloads once on
 `controllerchange` so the new version takes effect immediately. A first-time
 installation does not trigger that reload. Update status remains visible in the
 settings panel during the handoff. Installations still pending after 30 seconds
