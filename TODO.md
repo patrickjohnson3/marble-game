@@ -21,8 +21,7 @@
 6. Give metal utensils, wooden furniture, and the sponge distinct impact feedback using existing visual and optional haptic effects, scaled by impact strength. Carry material identity through collision feedback, preserve physics and throttling, and keep responses readable without vibration.
 7. Teach existing interactions through small, naturally placed encounters: pushing cereal changes ant gathering, wood versus shag changes approach speed, and direct mouse hits outperform glancing bumps. Make cause and effect easy to observe without compulsory tutorials, new mechanics, or a separate progression system.
 8. Extend the existing map preview and browser-test workflow with named, repeatable encounter scenarios, such as a cockroach attack beside a utensil or a mouse hit from wood versus shag. Reuse the real simulation and renderer with controlled starting state, input, and cadence; avoid a separate editor or configuration system, and retain hands-on playtesting for feel.
-9. Let goo slow cockroach locomotion so circling a spill or repelling it into goo can create escape distance. Reuse existing terrain queries without changing invulnerability, contact impulses, or pursuit/stun/cooldown rules; playtest against permanent trapping or effortless kiting.
-10. Add an optional whole-game tempo setting that slows marble motion, creatures, and gameplay timers together while keeping input and interface feedback responsive. Unlike lowering marble top speed, retain impact effectiveness through simulation velocity; follow the cadence checks in Now and verify timing consistency across systems.
+9. Add an optional whole-game tempo setting that slows marble motion, creatures, and gameplay timers together while keeping input and interface feedback responsive. Unlike lowering marble top speed, retain impact effectiveness through simulation velocity; follow the cadence checks in Now and verify timing consistency across systems.
 
 ## Parking Lot
 

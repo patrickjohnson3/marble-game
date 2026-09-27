@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { cockroachConfig, timing } from "../core/game-config.js";
+import { ELLIPTICAL_SURFACE_SHAPES } from "../core/map-elements.js";
 import { collectBrowserErrors } from "../tools/browser-support.js";
 
 export async function testCockroachEncounter(browser, baseUrl) {
@@ -30,6 +31,85 @@ window.__cockroachApp = createApp();`,
       /Kill all ants/,
     );
     assert.equal(await page.locator("#nextRoom").isHidden(), true);
+
+    async function sampleScurry(inGoo) {
+      const origin = await page.evaluate(
+        ({ inGoo, shape }) => {
+          const app = window.__cockroachApp;
+          app.gameController.pause();
+          const patch = app.mapRuntime.state.terrainByType.gooPatch.elements[0];
+          const x = inGoo ? patch.x + patch.w * shape.centerX : patch.x - 200;
+          const y = patch.y + patch.h * shape.centerY;
+          Object.assign(app.state.marble, { x: 400, y: 500, vx: 0, vy: 0 });
+          Object.assign(app.state.input.tilt, { smoothX: 0, smoothY: 0 });
+          // Keep the same heading briefly so this compares material behavior
+          // through the live physics loop, without steering decisions or contact.
+          Object.assign(app.mapRuntime.state.cockroach, {
+            x,
+            y,
+            vx: 0,
+            vy: 0,
+            angle: Math.PI,
+            mode: "scurry",
+            modeFrames: 0,
+            harassmentIn: 1000,
+            decisionIn: 1000,
+            pendingFrames: 0,
+            knockbackX: 0,
+            knockbackY: 0,
+            contactLatched: false,
+            engaged: false,
+            attackRecoveryFrames: 0,
+          });
+          app.gameController.resume();
+          return {
+            x,
+            outsideX: patch.x - app.mapRuntime.state.cockroach.r - 10,
+          };
+        },
+        { inGoo, shape: ELLIPTICAL_SURFACE_SHAPES.gooPatch },
+      );
+      await page.waitForFunction(
+        () =>
+          window.__cockroachApp.mapRuntime.state.cockroach.harassmentIn <= 988,
+      );
+      return page.evaluate((origin) => {
+        const app = window.__cockroachApp;
+        app.gameController.pause();
+        const roach = app.mapRuntime.state.cockroach;
+        return {
+          distance: origin.x - roach.x,
+          frames: 1000 - roach.harassmentIn,
+          outsideX: origin.outsideX,
+        };
+      }, origin);
+    }
+
+    const floorRun = await sampleScurry(false);
+    const gooRun = await sampleScurry(true);
+    const floorSpeed = floorRun.distance / floorRun.frames;
+    const gooSpeed = gooRun.distance / gooRun.frames;
+    assert.ok(
+      gooSpeed > 0 && gooSpeed < floorSpeed,
+      `real kitchen goo must slow scurrying without trapping: floor=${floorSpeed}, goo=${gooSpeed}`,
+    );
+    await page.evaluate(() => window.__cockroachApp.gameController.resume());
+    await page.waitForFunction(
+      (outsideX) =>
+        window.__cockroachApp.mapRuntime.state.cockroach.x < outsideX,
+      gooRun.outsideX,
+      { timeout: 5000 },
+    );
+    const escapedSpeed = await page.evaluate(() => {
+      const app = window.__cockroachApp;
+      app.gameController.pause();
+      const roach = app.mapRuntime.state.cockroach;
+      return Math.hypot(roach.vx, roach.vy);
+    });
+    assert.ok(
+      Math.abs(escapedSpeed - floorSpeed) < 1e-8,
+      "leaving the actual goo boundary must restore normal scurry speed",
+    );
 
     // The app must supply live kitchen food to the physics-owned roach. Place
     // it facing away from a real cereal cluster and watch it return on its own.

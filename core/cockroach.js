@@ -1,4 +1,5 @@
 import { cockroachConfig } from "./game-config.js";
+import { pointInEllipsePatch } from "./geometry.js";
 import { ELLIPTICAL_SURFACE_SHAPES } from "./map-elements.js";
 import {
   circleObstacleContact,
@@ -169,6 +170,23 @@ function chooseDirection(cockroach, marble, mapState, kitchenState) {
 }
 
 function moveCockroach(cockroach, speed, mapState) {
+  const goo = mapState.terrainByType?.gooPatch?.elements;
+  if (speed > 0 && goo) {
+    for (const patch of goo) {
+      if (
+        pointInEllipsePatch(
+          cockroach.x,
+          cockroach.y,
+          patch,
+          ELLIPTICAL_SURFACE_SHAPES.gooPatch,
+        )
+      ) {
+        // Slow its own steps, not the player's counter-hit knockback.
+        speed *= cockroachConfig.gooSpeedScale;
+        break;
+      }
+    }
+  }
   const retention = Math.pow(cockroachConfig.knockbackRetention, tickFrames);
   let dx = Math.cos(cockroach.angle) * speed * tickFrames;
   let dy = Math.sin(cockroach.angle) * speed * tickFrames;

@@ -25,6 +25,7 @@ Speeds use the same world-units-per-60-Hz-frame convention as marble physics.
 | Ordinary / attacking heading decisions       | 0.3 seconds / 0.1 seconds          |
 | Maximum interception lead                    | 1/6 second (shorter up close)      |
 | Food roaming radius / goo-edge margin        | 70 / 18 world units                |
+| Locomotion speed inside goo                  | 55% of the current mode's speed    |
 | Outward attack kick / resulting speed cap    | 12 / 14                            |
 | Strike recovery / escape distance            | 0.3 seconds / 480 world units      |
 | Incoming marble speed needed to repel        | 7                                  |
@@ -39,6 +40,14 @@ are not attraction targets. Goo edges use the existing shared rotated ellipse
 footprint. There is no copied target list or persistent food reference to reset.
 If no accessible resource exists, the previous wandering behavior remains.
 Foraging neither consumes food nor changes ant behavior or liquid physics.
+
+Inside the shared goo footprint, its own steps slow to 55% speed: scurry,
+harassment and retreat all respond. The center is sampled on each local tick;
+there is no sticky state to clear on leaving or Retry, and overlapping droplets
+do not stack. Counter-hit knockback, behavior timers and contact impulses are
+unchanged. Steering around a spill or repelling the insect into it can buy escape
+distance, but walking remains possible and full speed returns outside the goo.
+Water and other surfaces retain their existing cockroach behavior.
 
 When its timer is ready, it pursues the marble's projected position wherever the
 player has moved in the kitchen. There is no distance gate that can leave a ready
@@ -114,6 +123,11 @@ move under the shove and verify repeated separate impacts. Pressure regressions
 cover the old timeout, distance escape, recovery cadence, wall contact and lateral
 escape. The browser attack starts outside the former acquisition range. The controlled browser attack
 fixtures place actors on clear floor; they do not establish hunting difficulty.
+Goo tests cover walking in all active modes, spill-boundary crossing, no slowdown
+in the empty corners of the spill's bounding box, overlapping droplets,
+30/60/120 Hz and irregular partitions, unchanged counter-hit knockback/recovery,
+and unchanged attack/latch rules. A live-browser comparison checks the actual
+kitchen goo against nearby floor and verifies autonomous exit and speed recovery.
 
 Inspect it through `npm run map:render -- kitchen-floor --phone` or live play.
 On a physical phone, judge whether charges are readable, the shove disrupts
@@ -124,5 +138,7 @@ escaping or a strong repel grants six seconds before another pursuit. Judge the
 480-unit escape threshold and 0.3-second strike spacing in particular; an insect's
 successful hit now deliberately maintains pressure. Test contacts near utensils
 and the sponge, and check that antennae/legs remain clear and animation stays
-smooth. Desktop Chrome
-checks do not establish phone sensor, haptic, GPU or compositor performance.
+smooth. Judge the initial `gooSpeedScale: 0.55` on a physical phone: spills should
+create useful escape opportunities without letting the player kite the insect
+trivially or leaving it stuck beside a utensil. Desktop Chrome checks do not
+establish phone sensor, haptic, GPU or compositor performance.

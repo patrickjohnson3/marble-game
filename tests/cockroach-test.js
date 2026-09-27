@@ -525,6 +525,150 @@ function testMovingObstacleRecovery() {
   assert.ok(Math.hypot(cockroach.x - x, cockroach.y - y) > 30);
 }
 
+function gooFixture(patches, mode = "harass") {
+  const subject = fixture();
+  subject.mapState.terrainByType = { gooPatch: { elements: patches } };
+  // Keep the route straight so only locomotion and terrain differ.
+  Object.assign(subject.cockroach, {
+    mode,
+    angle: 0,
+    decisionIn: 1000,
+    harassmentIn: 1000,
+    modeFrames: 1000,
+  });
+  return subject;
+}
+
+function testGooSlowsWalkingWithoutChangingBehaviorClocks() {
+  const goo = { x: 600, y: 600, w: 800, h: 800 };
+  for (const mode of ["scurry", "harass", "retreat"]) {
+    const floor = gooFixture([], mode);
+    const sticky = gooFixture([goo], mode);
+    const overlap = gooFixture([goo, { ...goo }], mode);
+    for (const subject of [floor, sticky, overlap])
+      advance(subject.cockroach, subject.mapState, 12);
+    assert.ok(sticky.cockroach.x > 1000, `${mode} must not get stuck in goo`);
+    assert.ok(
+      sticky.cockroach.x < floor.cockroach.x,
+      `${mode} must travel less through goo than over floor`,
+    );
+    assert.deepEqual(
+      overlap.cockroach,
+      sticky.cockroach,
+      "overlapping droplets must not multiply the slowdown",
+    );
+    for (const key of ["mode", "modeFrames", "harassmentIn", "decisionIn"])
+      assert.equal(sticky.cockroach[key], floor.cockroach[key]);
+  }
+  const floor = gooFixture([]);
+  const corner = gooFixture([{ x: 990, y: 990, w: 800, h: 800 }]);
+  // Inside the spill's bounding rectangle, but outside its visible ellipse.
+  for (const subject of [floor, corner])
+    advance(subject.cockroach, subject.mapState, 12);
+  assert.deepEqual(corner.cockroach, floor.cockroach);
+  const water = gooFixture([]);
+  water.mapState.terrainByType.waterPatch = { elements: [goo] };
+  advance(water.cockroach, water.mapState, 12);
+  assert.deepEqual(water.cockroach, floor.cockroach, "water is unchanged");
+}
+
+function testGooCrossingExitsAndMatchesAcrossFramePartitions() {
+  const goo = { x: 1200, y: 800, w: 400, h: 400 };
+  let reference;
+  for (const parts of [[2], [1], [0.5], [0.13, 0.8, 1.17, 2.2]]) {
+    const subject = gooFixture([goo]);
+    advance(subject.cockroach, subject.mapState, 100, parts);
+    const { cockroach } = subject;
+    assert.ok(cockroach.x > goo.x + goo.w, "it can leave the spill unaided");
+    near(cockroach.vx, cockroachConfig.harassSpeed);
+    assert.ok(
+      cockroach.x < 1000 + cockroachConfig.harassSpeed * 100,
+      "crossing a spill must buy escape distance",
+    );
+    const values = [
+      cockroach.x,
+      cockroach.y,
+      cockroach.gait,
+      cockroach.modeFrames,
+    ];
+    if (reference) values.forEach((value, i) => near(value, reference[i]));
+    else reference = values;
+  }
+}
+
+function testGooPreservesCounterHitKnockbackAndRecovery() {
+  const goo = { x: 600, y: 600, w: 800, h: 800 };
+  const floor = gooFixture([]);
+  const sticky = gooFixture([goo]);
+  for (const subject of [floor, sticky]) {
+    const { cockroach, mapState } = subject;
+    const impact = hit(cockroach, mapState, 14);
+    assert.equal(impact.result, "repel");
+    subject.marble = impact.marble;
+    advance(
+      cockroach,
+      mapState,
+      cockroachConfig.stunDuration,
+      [1],
+      subject.marble,
+    );
+  }
+  assert.deepEqual(
+    sticky.cockroach,
+    floor.cockroach,
+    "goo must not attenuate the counter-hit kick or extend its stun",
+  );
+  for (const subject of [floor, sticky])
+    advance(
+      subject.cockroach,
+      subject.mapState,
+      cockroachConfig.retreatDuration,
+      [1],
+      subject.marble,
+    );
+  assert.equal(sticky.cockroach.mode, floor.cockroach.mode);
+  assert.equal(sticky.cockroach.modeFrames, floor.cockroach.modeFrames);
+  assert.equal(sticky.cockroach.harassmentIn, floor.cockroach.harassmentIn);
+  assert.ok(
+    sticky.cockroach.x < floor.cockroach.x,
+    "retreat walks more slowly",
+  );
+}
+
+function testGooContactKeepsTheSameAttackAndLatch() {
+  const goo = { x: 600, y: 600, w: 800, h: 800 };
+  for (const patches of [[], [goo]]) {
+    const { cockroach, mapState } = gooFixture(patches);
+    advance(cockroach, mapState, 1);
+    const marble = {
+      x: cockroach.x + cockroach.r + 28,
+      y: cockroach.y,
+      r: 29,
+      vx: 0,
+      vy: 0,
+    };
+    assert.equal(
+      resolveCockroachContact(cockroach, marble, marble, mapState),
+      "attack",
+    );
+    near(marble.vx, cockroachConfig.contactImpulse);
+    const x = cockroach.x;
+    advance(
+      cockroach,
+      mapState,
+      cockroachConfig.attackRecoveryDuration * 2,
+      [1],
+      marble,
+    );
+    near(cockroach.x, x);
+    assert.equal(
+      resolveCockroachContact(cockroach, marble, marble, mapState),
+      null,
+    );
+    near(marble.vx, cockroachConfig.contactImpulse);
+  }
+}
+
 testOnlyKitchenCreatesAnInvulnerableActor();
 testHarassmentDisruptsOncePerContactAndStaysEngaged();
 testOnlyIncomingStrongMarbleContactRepels();
@@ -538,4 +682,8 @@ testObstaclesBoundsAndCadence();
 testMovingTargetInterpolationAndFreshState();
 testRoamingIsIndependentAndSeparatingContactIsHarmless();
 testMovingObstacleRecovery();
+testGooSlowsWalkingWithoutChangingBehaviorClocks();
+testGooCrossingExitsAndMatchesAcrossFramePartitions();
+testGooPreservesCounterHitKnockbackAndRecovery();
+testGooContactKeepsTheSameAttackAndLatch();
 console.log("Cockroach tests passed.");

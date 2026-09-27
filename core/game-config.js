@@ -104,6 +104,7 @@ export const cockroachConfig = {
   interceptFrames: 10,
   forageRadius: 70,
   gooEdgeMargin: 18,
+  gooSpeedScale: 0.55, // Locomotion inside goo; knockback and timers stay intact.
   contactImpulse: 12,
   attackRecoveryDuration: 18, // A brief brace, not a retreat.
   escapeDistance: 480,
