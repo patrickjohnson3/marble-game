@@ -12,32 +12,18 @@ export function createInputManager({
   onPointerEnd,
   onStartClick,
 }) {
-  let motionEnabled = false;
-  let keyboardEnabled = false;
-  let gesturesEnabled = false;
-  let startButtonBound = false;
-
   function enableMotion() {
-    if (motionEnabled) return;
-
-    motionEnabled = true;
     target.addEventListener("deviceorientation", onOrientation, true);
     target.addEventListener("devicemotion", onMotion, true);
   }
 
   function enableKeyboard() {
-    if (keyboardEnabled) return;
-
-    keyboardEnabled = true;
     target.addEventListener("keydown", onKeyDown, { passive: false });
     target.addEventListener("keyup", onKeyUp);
     target.addEventListener("blur", onBlur);
   }
 
   function enableGestures() {
-    if (gesturesEnabled) return;
-
-    gesturesEnabled = true;
     gameEl.addEventListener("pointerdown", onPointerDown);
     gameEl.addEventListener("pointermove", onPointerMove);
     gameEl.addEventListener("pointerup", onPointerEnd);
@@ -45,35 +31,22 @@ export function createInputManager({
   }
 
   function bindStartButton() {
-    if (startButtonBound) return;
-
-    startButtonBound = true;
     startBtn.addEventListener("click", onStartClick);
   }
 
   function destroy() {
-    if (motionEnabled) {
-      target.removeEventListener("deviceorientation", onOrientation, true);
-      target.removeEventListener("devicemotion", onMotion, true);
-      motionEnabled = false;
-    }
-    if (keyboardEnabled) {
-      target.removeEventListener("keydown", onKeyDown, { passive: false });
-      target.removeEventListener("keyup", onKeyUp);
-      target.removeEventListener("blur", onBlur);
-      keyboardEnabled = false;
-    }
-    if (gesturesEnabled) {
-      gameEl.removeEventListener("pointerdown", onPointerDown);
-      gameEl.removeEventListener("pointermove", onPointerMove);
-      gameEl.removeEventListener("pointerup", onPointerEnd);
-      gameEl.removeEventListener("pointercancel", onPointerEnd);
-      gesturesEnabled = false;
-    }
-    if (startButtonBound) {
-      startBtn.removeEventListener("click", onStartClick);
-      startButtonBound = false;
-    }
+    target.removeEventListener("deviceorientation", onOrientation, {
+      capture: true,
+    });
+    target.removeEventListener("devicemotion", onMotion, { capture: true });
+    target.removeEventListener("keydown", onKeyDown, { passive: false });
+    target.removeEventListener("keyup", onKeyUp);
+    target.removeEventListener("blur", onBlur);
+    gameEl.removeEventListener("pointerdown", onPointerDown);
+    gameEl.removeEventListener("pointermove", onPointerMove);
+    gameEl.removeEventListener("pointerup", onPointerEnd);
+    gameEl.removeEventListener("pointercancel", onPointerEnd);
+    startBtn.removeEventListener("click", onStartClick);
   }
 
   return {

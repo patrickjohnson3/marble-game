@@ -1,82 +1,73 @@
 import assert from "node:assert/strict";
 import { createInputManager } from "../input/input-manager.js";
 
-function createTarget() {
-  const listeners = [];
-  const removedListeners = [];
-
-  return {
-    listeners,
-    removedListeners,
-    addEventListener(type, listener, options) {
-      listeners.push({ type, listener, options });
-    },
-    removeEventListener(type, listener, options) {
-      removedListeners.push({ type, listener, options });
-    },
-  };
+const target = new globalThis.EventTarget();
+const gameEl = new globalThis.EventTarget();
+const startBtn = new globalThis.EventTarget();
+const eventTargets = {
+  deviceorientation: target,
+  devicemotion: target,
+  keydown: target,
+  keyup: target,
+  blur: target,
+  pointerdown: gameEl,
+  pointermove: gameEl,
+  pointerup: gameEl,
+  pointercancel: gameEl,
+  click: startBtn,
+};
+const calls = Object.fromEntries(
+  Object.keys(eventTargets).map((type) => [type, 0]),
+);
+function record(event) {
+  calls[event.type] += 1;
+  if (event.type === "keydown") event.preventDefault();
 }
-
-const target = createTarget();
-const gameEl = createTarget();
-const startBtn = createTarget();
-
 const inputManager = createInputManager({
   target,
   gameEl,
   startBtn,
-  onOrientation() {},
-  onMotion() {},
-  onKeyDown() {},
-  onKeyUp() {},
-  onBlur() {},
-  onPointerDown() {},
-  onPointerMove() {},
-  onPointerEnd() {},
-  onStartClick() {},
+  onOrientation: record,
+  onMotion: record,
+  onKeyDown: record,
+  onKeyUp: record,
+  onBlur: record,
+  onPointerDown: record,
+  onPointerMove: record,
+  onPointerEnd: record,
+  onStartClick: record,
 });
 
-inputManager.enableMotion();
-inputManager.enableMotion();
-assert.deepEqual(
-  target.listeners.map((listener) => listener.type),
-  ["deviceorientation", "devicemotion"],
-);
+function dispatchAll(expectedCalls, active) {
+  for (const [type, eventTarget] of Object.entries(eventTargets)) {
+    const event = new globalThis.Event(type, { cancelable: true });
+    eventTarget.dispatchEvent(event);
+    assert.equal(calls[type], expectedCalls, `${type} callback count`);
+    if (type === "keydown") {
+      assert.equal(
+        event.defaultPrevented,
+        active,
+        "keyboard input can prevent scrolling",
+      );
+    }
+  }
+}
 
-inputManager.enableKeyboard();
-inputManager.enableKeyboard();
-assert.deepEqual(
-  target.listeners.map((listener) => listener.type),
-  ["deviceorientation", "devicemotion", "keydown", "keyup", "blur"],
-);
-
-inputManager.enableGestures();
-inputManager.enableGestures();
-assert.deepEqual(
-  gameEl.listeners.map((listener) => listener.type),
-  ["pointerdown", "pointermove", "pointerup", "pointercancel"],
-);
-
-inputManager.bindStartButton();
-inputManager.bindStartButton();
-assert.deepEqual(
-  startBtn.listeners.map((listener) => listener.type),
-  ["click"],
-);
-
+// Cleanup is safe before registration, and a manager can be enabled again.
 inputManager.destroy();
 inputManager.destroy();
-assert.deepEqual(
-  target.removedListeners.map((listener) => listener.type),
-  ["deviceorientation", "devicemotion", "keydown", "keyup", "blur"],
-);
-assert.deepEqual(
-  gameEl.removedListeners.map((listener) => listener.type),
-  ["pointerdown", "pointermove", "pointerup", "pointercancel"],
-);
-assert.deepEqual(
-  startBtn.removedListeners.map((listener) => listener.type),
-  ["click"],
-);
+dispatchAll(0, false);
+for (let cycle = 1; cycle <= 2; cycle++) {
+  for (let repeat = 0; repeat < 2; repeat++) {
+    inputManager.enableMotion();
+    inputManager.enableKeyboard();
+    inputManager.enableGestures();
+    inputManager.bindStartButton();
+  }
+  dispatchAll(cycle, true);
+  inputManager.destroy();
+  inputManager.destroy();
+  dispatchAll(cycle, false);
+}
 
 console.log("Input manager tests passed.");
