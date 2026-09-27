@@ -3,6 +3,7 @@ import { GAME_PHASES, SENSOR_MODES } from "../core/runtime-states.js";
 
 export function createUi({
   controls,
+  cameraControls,
   gameStatus,
   goalIndicator,
   hint,
@@ -131,7 +132,13 @@ export function createUi({
   }
 
   function setStartControls({ visible, disabled, label }) {
-    if (visible !== undefined) controls.hidden = !visible;
+    if (visible !== undefined) {
+      controls.hidden = !visible;
+      if (cameraControls) {
+        cameraControls.hidden = visible;
+        if (visible) cameraControls.open = false;
+      }
+    }
     if (disabled !== undefined) startBtn.disabled = disabled;
     if (label !== undefined) startBtn.textContent = label;
   }

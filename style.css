@@ -957,6 +957,44 @@ button.secondary {
   background: #2e3440;
   color: white;
 }
+#cameraControls {
+  position: fixed;
+  z-index: 5;
+  left: calc(12px + var(--safe-left));
+  bottom: var(--bottom-ui);
+  max-width: calc(100% - 24px - var(--safe-left) - var(--safe-right));
+  max-height: calc(100% - var(--hud-top) - 44px - 12px - var(--bottom-ui));
+  box-sizing: border-box;
+  overflow: auto;
+  border-radius: 12px;
+  background: #101114e6;
+  color: #e4e8ef;
+}
+#cameraControls[open] {
+  width: 232px;
+}
+#cameraControlsTitle {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cameraButtons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(44px, 1fr));
+  gap: 6px;
+  padding: 0 8px 8px;
+}
+.cameraButtons button {
+  min-height: 44px;
+  padding: 8px;
+  border-radius: 8px;
+}
+#centerCamera {
+  grid-column: span 2;
+}
 button.primaryAction {
   width: 100%;
   margin: 4px 0 12px;

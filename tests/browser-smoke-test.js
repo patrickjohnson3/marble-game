@@ -18,6 +18,7 @@ import {
   testMotionPermissionRecovery,
   testConstrainedOnboarding,
   testSettingsModality,
+  testSinglePointerCameraControls,
   testStartupRecovery,
 } from "./mobile-workflows-browser-test.js";
 
@@ -960,6 +961,7 @@ try {
   await testMotionPermissionRecovery(browser, `http://127.0.0.1:${port}/`);
   await testSettingsModality(browser, `http://127.0.0.1:${port}/`);
   await testConstrainedOnboarding(browser, `http://127.0.0.1:${port}/`);
+  await testSinglePointerCameraControls(browser, `http://127.0.0.1:${port}/`);
   await testInterruptionWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticOrientationWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticLateSensorRecovery(browser, `http://127.0.0.1:${port}/`);

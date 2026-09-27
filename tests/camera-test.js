@@ -8,6 +8,7 @@ function createController({
   viewport = { width: () => 300, height: () => 300 },
   world = { width: 1000, height: 1000 },
   intro = { released: true },
+  game = { paused: false },
   camera: cameraOverrides = {},
   tuning: cameraTuning = { gestureCooldownFrames: 10 },
 } = {}) {
@@ -27,7 +28,7 @@ function createController({
   const controller = createCameraController({
     camera,
     cameraEl,
-    game: { paused: false },
+    game,
     intro,
     marble,
     tuning: cameraTuning,
@@ -35,7 +36,7 @@ function createController({
     mapState,
   });
 
-  return { camera, controller, mapState, marble };
+  return { camera, controller, mapState, marble, game };
 }
 
 function testFollowPreservesSmoothFollow() {
@@ -361,6 +362,95 @@ function testVisibilityAndWorldEdgesAgree() {
     }
   }
 }
+
+function testSinglePointerCameraActions() {
+  const { camera, controller, marble, game } = createController({
+    marble: { x: 500, y: 500 },
+    world: { width: 4400, height: 4400 },
+  });
+  controller.centerOnMarble();
+  const marbleBefore = { ...marble };
+  controller.panBy(25, -30);
+  assert.equal(camera.x + marble.x * camera.scale, 175);
+  assert.equal(camera.y + marble.y * camera.scale, 120);
+  const screenPoint = {
+    x: camera.x + marble.x * camera.scale,
+    y: camera.y + marble.y * camera.scale,
+  };
+  controller.zoomBy(1.5);
+  assert.equal(camera.scale, 1.5);
+  assert.equal(camera.x + marble.x * camera.scale, screenPoint.x);
+  assert.equal(camera.y + marble.y * camera.scale, screenPoint.y);
+  const position = { x: camera.x, y: camera.y };
+  controller.updateFollow(1);
+  assert.equal(
+    camera.x,
+    position.x,
+    "button adjustments retain the follow delay",
+  );
+  assert.equal(camera.y, position.y);
+
+  for (const factor of [100, 0.001]) {
+    controller.zoomBy(factor);
+    assert.equal(camera.scale, factor > 1 ? camera.maxScale : camera.minScale);
+    assertMarbleVisible(camera, marble, 300, 300);
+  }
+  for (const [dx, dy] of [
+    [10000, 0],
+    [-10000, 0],
+    [0, 10000],
+    [0, -10000],
+  ]) {
+    controller.panBy(dx, dy);
+    assertMarbleVisible(camera, marble, 300, 300);
+    assert.ok(camera.x <= 0 && camera.x >= 300 - 4400 * camera.scale);
+    assert.ok(camera.y <= 0 && camera.y >= 300 - 4400 * camera.scale);
+  }
+  controller.recenter();
+  assert.equal(camera.x + marble.x * camera.scale, 150);
+  assert.equal(camera.y + marble.y * camera.scale, 150);
+  assert.equal(camera.gestureCooldown, 0);
+  assert.deepEqual(
+    marble,
+    marbleBefore,
+    "camera commands never move the marble",
+  );
+
+  game.paused = true;
+  const pausedCamera = { ...camera };
+  controller.panBy(30, 30);
+  controller.zoomBy(2);
+  controller.recenter();
+  assert.deepEqual(camera, pausedCamera);
+}
+
+function testCameraButtonsReleaseGesturesAndRespectIntro() {
+  const intro = { released: false };
+  const { camera, controller, marble } = createController({
+    intro,
+    marble: { x: 500, y: 500 },
+  });
+  controller.zoomBy(2);
+  controller.panBy(100, 100);
+  assert.equal(camera.x + marble.x * camera.scale, 150);
+  assert.equal(camera.y + marble.y * camera.scale, 150);
+  intro.released = true;
+  controller.onPointerDown({ pointerId: 1, clientX: 100, clientY: 100 });
+  controller.onPointerDown({ pointerId: 2, clientX: 200, clientY: 100 });
+  controller.panBy(20, 0);
+  const position = { x: camera.x, y: camera.y, scale: camera.scale };
+  controller.onPointerMove({ pointerId: 2, clientX: 280, clientY: 100 });
+  assert.deepEqual(
+    { x: camera.x, y: camera.y, scale: camera.scale },
+    position,
+    "discrete controls cancel stale touch gestures",
+  );
+  controller.updateFollow(30);
+  assert.ok(camera.x < position.x, "follow resumes after the button delay");
+}
+
+testSinglePointerCameraActions();
+testCameraButtonsReleaseGesturesAndRespectIntro();
 
 testFollowPreservesSmoothFollow();
 testFollowWaitsForGestureCooldownWhileMarbleIsVisible();

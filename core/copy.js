@@ -2,7 +2,7 @@ export const copy = {
   bootError: "game failed to load. reconnect and try again.",
   title: "marble tilt",
   startHelp:
-    "Tilt your phone to roll, or use arrows/WASD. Kill all kitchen ants, then choose Next room; defeat the living-room mouse with fast hits, then reach its exit. Follow the objective shown above. Pinch to zoom; use two fingers to pan.",
+    "Tilt your phone to roll, or use arrows/WASD. Kill all kitchen ants, then choose Next room; defeat the living-room mouse with fast hits, then reach its exit. Follow the objective shown above. Pinch to zoom; use two fingers to pan, or open Camera.",
   initialHint: "",
   hints: {
     mapOpen: "",
@@ -61,7 +61,8 @@ export const copy = {
     help: {
       title: "Controls & map",
       movement: "Tilt your phone to steer. On desktop, use arrows or WASD.",
-      camera: "Pinch to zoom. Drag with two fingers to pan.",
+      camera:
+        "Pinch to zoom. Drag with two fingers to pan. Or open Camera to zoom, pan nearby, or center on the marble.",
       goal: "Kill all kitchen ants, then choose Next room when ready. Defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above. The Mouse arrow points from your marble toward a distant mouse automatically.",
     },
     sections: {
@@ -82,6 +83,18 @@ export const copy = {
       statsSetting: "stats",
     },
   },
+  camera: {
+    title: "Camera",
+    buttons: {
+      zoomOut: { text: "−", label: "Zoom out" },
+      zoomIn: { text: "+", label: "Zoom in" },
+      centerCamera: { text: "Center", label: "Center on marble" },
+      cameraLeft: { text: "←", label: "Pan left" },
+      cameraUp: { text: "↑", label: "Pan up" },
+      cameraDown: { text: "↓", label: "Pan down" },
+      cameraRight: { text: "→", label: "Pan right" },
+    },
+  },
   debugFallback: "waiting for sensors...",
 };
 
@@ -97,6 +110,11 @@ export function applyDocumentCopy({ document, els }) {
   els.controlsHelpTitle.textContent = copy.settings.help.title;
   els.movementHelp.textContent = copy.settings.help.movement;
   els.cameraHelp.textContent = copy.settings.help.camera;
+  els.cameraControlsTitle.textContent = copy.camera.title;
+  for (const [id, button] of Object.entries(copy.camera.buttons)) {
+    els[id].textContent = button.text;
+    els[id].setAttribute("aria-label", button.label);
+  }
   els.goalHelp.textContent = copy.settings.help.goal;
   els.gameplaySettingsTitle.textContent = copy.settings.sections.gameplay;
   els.deviceSettingsTitle.textContent = copy.settings.sections.device;

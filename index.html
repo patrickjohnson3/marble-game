@@ -65,7 +65,7 @@
       }
     </style>
     <script>
-      const assetVersion = "48e55919610704bb";
+      const assetVersion = "86131636b6bbaf85";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -224,6 +224,19 @@
       <p id="startHelp" tabindex="0"></p>
       <button id="start" aria-describedby="startHelp"></button>
     </div>
+
+    <details id="cameraControls" hidden>
+      <summary id="cameraControlsTitle"></summary>
+      <div class="cameraButtons">
+        <button id="zoomOut" type="button" class="secondary"></button>
+        <button id="zoomIn" type="button" class="secondary"></button>
+        <button id="centerCamera" type="button" class="secondary"></button>
+        <button id="cameraLeft" type="button" class="secondary"></button>
+        <button id="cameraUp" type="button" class="secondary"></button>
+        <button id="cameraDown" type="button" class="secondary"></button>
+        <button id="cameraRight" type="button" class="secondary"></button>
+      </div>
+    </details>
 
     <dialog id="settingsOverlay" aria-labelledby="settingsTitle">
       <div id="settingsModal">

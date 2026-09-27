@@ -108,6 +108,46 @@ export function createCameraController({
     applyTransform();
   }
 
+  function zoomBy(factor) {
+    if (game.paused) return;
+    gestures.resetGesture();
+    const scale = clamp(
+      camera.scale * factor,
+      camera.minScale,
+      camera.maxScale,
+    );
+    // Keep the marble at its screen position before enforcing view bounds.
+    camera.x += marble.x * (camera.scale - scale);
+    camera.y += marble.y * (camera.scale - scale);
+    camera.scale = scale;
+    if (!intro.released) {
+      centerOnMarble();
+      return;
+    }
+    camera.gestureCooldown = tuning.gestureCooldownFrames;
+    updateFollow(0);
+  }
+
+  function panBy(dx, dy) {
+    if (game.paused) return;
+    gestures.resetGesture();
+    if (!intro.released) {
+      centerOnMarble();
+      return;
+    }
+    camera.x += dx;
+    camera.y += dy;
+    camera.gestureCooldown = tuning.gestureCooldownFrames;
+    updateFollow(0);
+  }
+
+  function recenter() {
+    if (game.paused) return;
+    gestures.resetGesture();
+    camera.gestureCooldown = 0;
+    centerOnMarble();
+  }
+
   const gestures = createCameraGestureController({
     camera,
     cameraEl,
@@ -122,6 +162,9 @@ export function createCameraController({
     applyTransform,
     camera,
     centerOnMarble,
+    zoomBy,
+    panBy,
+    recenter,
     onPointerDown: gestures.onPointerDown,
     onPointerEnd: gestures.onPointerEnd,
     onPointerMove: gestures.onPointerMove,

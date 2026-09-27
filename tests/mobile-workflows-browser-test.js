@@ -463,3 +463,163 @@ export async function testConstrainedOnboarding(browser, baseUrl) {
     }
   }
 }
+
+export async function testSinglePointerCameraControls(browser, baseUrl) {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    serviceWorkers: "block",
+  });
+  try {
+    await page.route("**/boot.js*", (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: `import { createApp } from "./app.js";
+window.__mapPreview = createApp();`,
+      }),
+    );
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    const controls = page.locator("#cameraControls");
+    assert.equal(
+      await controls.count(),
+      1,
+      "camera exploration must have single-pointer controls",
+    );
+    assert.equal(await controls.isHidden(), true);
+    await page.locator("#start").tap();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(
+      () => window.__mapPreview.state.intro.released,
+      null,
+      { timeout: timing.introReleaseDelayMs + 3000 },
+    );
+    assert.equal(await controls.isVisible(), true);
+    assert.equal(
+      await controls.evaluate((element) => element.open),
+      false,
+      "camera controls should start collapsed",
+    );
+    await page.locator("#cameraControlsTitle").tap();
+    const cameraState = () =>
+      page.evaluate(() => {
+        const { x, y, scale } = window.__mapPreview.state.camera;
+        return { x, y, scale };
+      });
+    const assertMarbleVisible = async () => {
+      const bounds = await page.locator("#marble").boundingBox();
+      const viewport = page.viewportSize();
+      assert.ok(
+        bounds.x >= -0.5 &&
+          bounds.y >= -0.5 &&
+          bounds.x + bounds.width <= viewport.width + 0.5 &&
+          bounds.y + bounds.height <= viewport.height + 0.5,
+        "camera buttons must keep the complete marble visible",
+      );
+    };
+    for (const [id, name] of [
+      ["zoomIn", "Zoom in"],
+      ["zoomOut", "Zoom out"],
+      ["cameraLeft", "Pan left"],
+      ["cameraRight", "Pan right"],
+      ["cameraUp", "Pan up"],
+      ["cameraDown", "Pan down"],
+      ["centerCamera", "Center on marble"],
+    ]) {
+      assert.equal(
+        await page.getByRole("button", { name, exact: true }).count(),
+        1,
+      );
+      const box = await page.locator(`#${id}`).boundingBox();
+      assert.ok(
+        box.width >= 44 && box.height >= 44,
+        `${name} needs a usable touch target`,
+      );
+    }
+    let before = await cameraState();
+    await page.getByRole("button", { name: "Zoom in", exact: true }).tap();
+    assert.ok((await cameraState()).scale > before.scale);
+    await assertMarbleVisible();
+    before = await cameraState();
+    await page.getByRole("button", { name: "Zoom out", exact: true }).tap();
+    assert.ok((await cameraState()).scale < before.scale);
+    await assertMarbleVisible();
+    for (const [name, axis] of [
+      ["Pan left", "x"],
+      ["Pan right", "x"],
+      ["Pan up", "y"],
+      ["Pan down", "y"],
+    ]) {
+      before = await cameraState();
+      await page.getByRole("button", { name, exact: true }).tap();
+      assert.notEqual(
+        (await cameraState())[axis],
+        before[axis],
+        `${name} must inspect another part of the map`,
+      );
+      await assertMarbleVisible();
+    }
+    before = await cameraState();
+    await page.getByRole("button", { name: "Zoom in", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    assert.ok(
+      (await cameraState()).scale > before.scale,
+      "camera buttons must support keyboard activation",
+    );
+    await page.keyboard.down("ArrowRight");
+    assert.equal(
+      await page.evaluate(() => window.__mapPreview.state.input.keyboard.x),
+      1,
+      "camera button focus must not swallow subsequent marble steering",
+    );
+    await page.keyboard.up("ArrowRight");
+    await page
+      .getByRole("button", { name: "Center on marble", exact: true })
+      .tap();
+    await assertMarbleVisible();
+
+    await page.locator("#settingsToggle").tap();
+    const pausedCamera = await cameraState();
+    await page.locator("#zoomIn").evaluate((button) => button.focus());
+    assert.equal(
+      await page.evaluate(
+        () => document.activeElement.closest("#settingsOverlay") !== null,
+      ),
+      true,
+      "Settings must keep camera controls inert",
+    );
+    await page.locator("#zoomIn").evaluate((button) => button.click());
+    assert.deepEqual(
+      await cameraState(),
+      pausedCamera,
+      "paused camera actions must not alter the view",
+    );
+    await page.locator("#resumeGame").tap();
+
+    for (const viewport of [
+      { width: 320, height: 256 },
+      { width: 844, height: 390 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.waitForTimeout(50);
+      const box = await controls.boundingBox();
+      assert.ok(
+        box.x >= 0 &&
+          box.y >= 0 &&
+          box.x + box.width <= viewport.width &&
+          box.y + box.height <= viewport.height,
+        "expanded camera controls must fit constrained and rotated viewports",
+      );
+      await page
+        .getByRole("button", { name: "Center on marble", exact: true })
+        .tap();
+      await assertMarbleVisible();
+    }
+    await page.evaluate(() => window.__mapPreview.gameController.reset());
+    assert.equal(await controls.isHidden(), true);
+    assert.equal(await controls.evaluate((element) => element.open), false);
+    assert.equal(await page.locator("#start").isVisible(), true);
+  } finally {
+    await page.close();
+  }
+}

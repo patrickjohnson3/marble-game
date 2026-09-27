@@ -474,6 +474,7 @@ export function createApp({
   });
   const ui = createUi({
     controls: controlsEl,
+    cameraControls: els.cameraControls,
     gameStatus: els.gameStatus,
     hint,
     fpsCounter,
@@ -796,6 +797,52 @@ export function createApp({
     // Let focused instructions scroll without feeding gameplay movement keys.
     event.stopPropagation();
   });
+
+  for (const [button, action] of [
+    [els.zoomIn, () => cameraController.zoomBy(tuning.cameraButtonZoomFactor)],
+    [
+      els.zoomOut,
+      () => cameraController.zoomBy(1 / tuning.cameraButtonZoomFactor),
+    ],
+    [els.centerCamera, cameraController.recenter],
+    [
+      els.cameraLeft,
+      () =>
+        cameraController.panBy(
+          viewport.width() * tuning.cameraButtonPanFraction,
+          0,
+        ),
+    ],
+    [
+      els.cameraRight,
+      () =>
+        cameraController.panBy(
+          -viewport.width() * tuning.cameraButtonPanFraction,
+          0,
+        ),
+    ],
+    [
+      els.cameraUp,
+      () =>
+        cameraController.panBy(
+          0,
+          viewport.height() * tuning.cameraButtonPanFraction,
+        ),
+    ],
+    [
+      els.cameraDown,
+      () =>
+        cameraController.panBy(
+          0,
+          -viewport.height() * tuning.cameraButtonPanFraction,
+        ),
+    ],
+  ]) {
+    button.addEventListener("click", () => {
+      action();
+      frameLoop.requestRender();
+    });
+  }
 
   bindSettingsPanel({
     els,

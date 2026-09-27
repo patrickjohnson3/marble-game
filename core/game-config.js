@@ -154,6 +154,8 @@ export const timing = {
 export const tuning = {
   neutralSampleCount: 18,
   gestureCooldownFrames: 90,
+  cameraButtonZoomFactor: 1.25,
+  cameraButtonPanFraction: 0.2,
   motionGravityScale: 3,
   goalIndicatorDistanceMultiplier: 2.4,
   hazardRearmDistanceMultiplier: 3,

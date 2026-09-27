@@ -103,7 +103,7 @@ try {
   );
   assert.equal(
     document.getElementById("cameraHelp").textContent,
-    "Pinch to zoom. Drag with two fingers to pan.",
+    "Pinch to zoom. Drag with two fingers to pan. Or open Camera to zoom, pan nearby, or center on the marble.",
   );
   assert.equal(
     document.getElementById("goalHelp").textContent,

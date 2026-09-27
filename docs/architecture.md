@@ -344,8 +344,10 @@ interpret gameplay.
 arrive. It switches the game into keyboard mode and starts the intro countdown.
 
 Camera transforms and gestures are handled in `input/camera-controller.js` and
-`input/camera-gestures.js`. Pinch zoom is an input/camera concern, not a physics
-concern. Zoom preserves the map point under the finger midpoint, subject to
+`input/camera-gestures.js`. The folded Camera controls call the same controller
+for discrete zoom, pan, and centering. They reuse gesture limits and cooldown,
+enforce marble visibility immediately, and never change marble state. Pinch zoom
+is an input/camera concern, not a physics concern. Zoom preserves the map point under the finger midpoint, subject to
 world bounds. Following stays suspended throughout a two-finger gesture; its
 cooldown begins when the gesture ends. Once the gesture is released, a visibility
 limit keeps the full marble inside the viewport during both cooldown and smooth
