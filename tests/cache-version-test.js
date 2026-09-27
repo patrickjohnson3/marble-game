@@ -41,8 +41,22 @@ function testServiceWorkerNormalizationReplacesVersion() {
   );
 }
 
+function testWorkerAssetListImportIsNormalizedWithItsVersion() {
+  for (const source of [
+    'import { runtimeFiles } from "./runtime-assets.js";',
+    'import { runtimeFiles } from "./runtime-assets.js?v=old-version";',
+  ]) {
+    assert.equal(
+      normalizedCacheContent("sw.js", source),
+      'import { runtimeFiles } from "./runtime-assets.js?v=__CACHE_VERSION__";',
+      "the generated worker import must not feed its version back into the hash",
+    );
+  }
+}
+
 testRuntimeModuleScriptsAssignmentUsesManifestOrder();
 testIndexNormalizationReplacesVersionAndScriptList();
 testServiceWorkerNormalizationReplacesVersion();
+testWorkerAssetListImportIsNormalizedWithItsVersion();
 
 console.log("Cache version tests passed.");

@@ -85,4 +85,5 @@ npm run sync-cache
 ```
 
 This synchronizes the generated asset version and module cache manifest in
-`index.html` with the service-worker cache version in `sw.js`.
+`index.html` with the service-worker cache version and versioned runtime-asset
+import in `sw.js`.

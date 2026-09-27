@@ -359,6 +359,11 @@ schema-owned keys so transient fields cannot leak into localStorage.
 
 ## PWA Updates
 
+The worker imports its runtime asset list with the generated asset version in
+the URL. `npm run sync-cache` synchronizes that import along with the shell and
+cache versions, so an old page's worker update cannot reuse a previous release's
+HTTP-cached file list.
+
 `sw.js` installs new runtime assets into a versioned cache, calls
 `skipWaiting()`, and claims clients after activation. If an existing service
 worker already controls the page, `platform/platform.js` reloads once on

@@ -4,10 +4,17 @@ import {
 } from "./cache-version.js";
 
 const expectedVersion = computeRuntimeAssetHash();
-const { assetVersion, serviceWorkerCacheVersion } = readCurrentCacheVersions();
+const { assetVersion, serviceWorkerCacheVersion, serviceWorkerAssetsVersion } =
+  readCurrentCacheVersions();
 
-if (!assetVersion || assetVersion !== serviceWorkerCacheVersion) {
-  console.error("index.html assetVersion and sw.js cacheVersion must match.");
+if (
+  !assetVersion ||
+  assetVersion !== serviceWorkerCacheVersion ||
+  assetVersion !== serviceWorkerAssetsVersion
+) {
+  console.error(
+    "index.html, sw.js cacheVersion, and the worker asset-list import must match.",
+  );
   console.error("Run: npm run sync-cache");
   process.exit(1);
 }

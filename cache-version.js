@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { runtimeFiles, runtimeModuleScripts } from "./runtime-assets.js";
 
 export const assetVersionPattern = /const assetVersion = "[^"]+";/;
+export const runtimeAssetsImportPattern =
+  /from "\.\/runtime-assets\.js(?:\?v=[^"]+)?";/;
 export const cacheVersionPattern = /const cacheVersion = "marble-game-[^"]+";/;
 export const runtimeModuleScriptsPattern =
   /const runtimeModuleScripts = \[[\s\S]*?\];/;
@@ -25,10 +27,15 @@ export function normalizedCacheContent(path, content) {
   }
 
   if (path === "sw.js") {
-    return content.replace(
-      cacheVersionPattern,
-      'const cacheVersion = "marble-game-__CACHE_VERSION__";',
-    );
+    return content
+      .replace(
+        cacheVersionPattern,
+        'const cacheVersion = "marble-game-__CACHE_VERSION__";',
+      )
+      .replace(
+        runtimeAssetsImportPattern,
+        'from "./runtime-assets.js?v=__CACHE_VERSION__";',
+      );
   }
 
   return content;
@@ -61,6 +68,9 @@ export function readCurrentCacheVersions() {
 
   return {
     assetVersion: html.match(/const assetVersion = "([^"]+)";/)?.[1],
+    serviceWorkerAssetsVersion: serviceWorker.match(
+      /from "\.\/runtime-assets\.js\?v=([^"]+)";/,
+    )?.[1],
     serviceWorkerCacheVersion: serviceWorker.match(
       /const cacheVersion = "marble-game-([^"]+)";/,
     )?.[1],
