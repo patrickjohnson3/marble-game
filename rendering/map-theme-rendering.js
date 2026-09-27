@@ -108,14 +108,20 @@ function appendKitchenDynamicCanvas(parent, world, themeState, dynamicsState) {
     !cheerioSprite.complete &&
     cheerioSprite.addEventListener
   ) {
-    cheerioSprite.addEventListener(
-      "load",
-      () => {
-        themeState.kitchenDynamicNeedsFullRedraw = true;
-        scheduleKitchenDynamicsRender(themeState, dynamicsState, canvas);
-      },
-      { once: true },
-    );
+    const cleanup = () => {
+      cheerioSprite.removeEventListener("load", repaint);
+      cheerioSprite.removeEventListener("error", cleanup);
+      themeState.kitchenCheerioCleanup = null;
+    };
+    const repaint = () => {
+      cleanup();
+      if (themeState.kitchenDynamicCanvas !== canvas) return;
+      themeState.kitchenDynamicNeedsFullRedraw = true;
+      scheduleKitchenDynamicsRender(themeState, dynamicsState, canvas);
+    };
+    themeState.kitchenCheerioCleanup = cleanup;
+    cheerioSprite.addEventListener("load", repaint);
+    cheerioSprite.addEventListener("error", cleanup);
   }
   scheduleKitchenDynamicsRender(themeState, dynamicsState, canvas);
 }
@@ -1013,6 +1019,7 @@ export function renderMapTheme({
   themeState = {},
   world = mapConfig?.world,
 }) {
+  themeState.kitchenCheerioCleanup?.();
   container.replaceChildren();
   overlayContainer.replaceChildren();
   themeState.cockroachCanvas = null;

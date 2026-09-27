@@ -40,6 +40,7 @@ const tests = [
   "tests/settings-panel-test.js",
   "tests/settings-store-test.js",
   "tests/rendering-test.js",
+  "tests/kitchen-image-lifecycle-test.js",
   "tests/liquid-rendering-test.js",
   "tests/effects-test.js",
   "tests/trail-test.js",
