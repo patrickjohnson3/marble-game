@@ -216,77 +216,45 @@ function applyRectStyle(element, rect) {
   element.style.height = rect.h + "px";
 }
 
-function isForkFixture(rect) {
-  return rect.fixture === KITCHEN_FIXTURES.fork;
-}
-
-function isSpongeFixture(rect) {
-  return rect.fixture === KITCHEN_FIXTURES.sponge;
-}
-
-function isSpoonFixture(rect) {
-  return rect.fixture === KITCHEN_FIXTURES.spoon;
-}
+const kitchenFixtureSprites = new WeakMap();
 
 function syncKitchenFixtureSprite(
   layer,
-  parts,
+  sprites,
+  fixture,
   className,
   minWidth,
   minHeight,
 ) {
-  let sprite = layer.children
-    ? Array.from(layer.children).find((child) => child.className === className)
-    : null;
-  if (parts.length === 0) {
-    sprite?.remove();
-    return null;
+  let sprite = sprites.get(fixture);
+  if (!sprite) {
+    sprite = document.createElement("div");
+    sprite.className = className;
+    sprites.set(fixture, sprite);
+    layer.appendChild(sprite);
   }
-
-  const isNew = !sprite;
-  sprite ??= document.createElement("div");
-  const bounds = rectBounds(parts);
-  const fixture = parts[0];
-  const visualWidth = Math.max(fixture.hitboxW ?? bounds.width, minWidth);
-  const visualHeight = Math.max(fixture.hitboxH ?? bounds.height, minHeight);
-
-  sprite.className = className;
+  const visualWidth = Math.max(fixture.hitboxW ?? fixture.w, minWidth);
+  const visualHeight = Math.max(fixture.hitboxH ?? fixture.h, minHeight);
   applyRectStyle(sprite, {
-    x: bounds.left + bounds.width / 2 - visualWidth / 2,
-    y: bounds.top + bounds.height / 2 - visualHeight / 2,
+    x: fixture.x + fixture.w / 2 - visualWidth / 2,
+    y: fixture.y + fixture.h / 2 - visualHeight / 2,
     w: visualWidth,
     h: visualHeight,
   });
-  if (Number.isFinite(fixture.angle)) {
-    sprite.style.setProperty("--fixture-angle", fixture.angle + "rad");
-  }
-  if (isNew) layer.appendChild(sprite);
+  sprite.style.setProperty("--fixture-angle", (fixture.angle ?? 0) + "rad");
   return sprite;
 }
 
-function syncKitchenForkSprite(layer, forkParts) {
-  // Collision pieces retain the authored fixture's unchanged display box.
-  const source = forkParts[0]?.fixtureSource;
-  syncKitchenFixtureSprite(
-    layer,
-    source ? [source] : forkParts,
-    "kitchenForkSprite",
-    KITCHEN_FORK_SPRITE.minWidth,
-    KITCHEN_FORK_SPRITE.minHeight,
-  );
-}
-
-function syncKitchenSpongeSprite(layer, spongeParts) {
+function syncKitchenSpongeSprite(layer, sprites, sponge) {
   const sprite = syncKitchenFixtureSprite(
     layer,
-    spongeParts,
+    sprites,
+    sponge,
     "kitchenSpongeSprite",
     500,
     145,
   );
-  if (!sprite) return;
-
-  const saturation = Math.max(0, Math.min(1, spongeParts[0].saturation ?? 0));
+  const saturation = Math.max(0, Math.min(1, sponge.saturation ?? 0));
   sprite.style.setProperty(
     "--sponge-brightness",
     (1 - saturation * 0.2).toFixed(3),
@@ -301,17 +269,6 @@ function syncKitchenSpongeSprite(layer, spongeParts) {
   );
 }
 
-function syncKitchenSpoonSprite(layer, spoonParts) {
-  const source = spoonParts[0]?.fixtureSource;
-  syncKitchenFixtureSprite(
-    layer,
-    source ? [source] : spoonParts,
-    "kitchenSpoonSprite",
-    KITCHEN_SPOON_SPRITE.minWidth,
-    KITCHEN_SPOON_SPRITE.minHeight,
-  );
-}
-
 function renderKitchenObstacleWalls(container, obstacles) {
   let layer = container.firstChild;
   if (!layer || layer.className !== "kitchenObstacleLayer") {
@@ -319,18 +276,49 @@ function renderKitchenObstacleWalls(container, obstacles) {
     layer.className = "kitchenObstacleLayer";
     layer.setAttribute("aria-hidden", "true");
     container.replaceChildren(layer);
+    kitchenFixtureSprites.set(layer, new Map());
   }
-  const forkParts = obstacles.filter(isForkFixture);
-  const spongeParts = obstacles.filter(isSpongeFixture);
-  const spoonParts = obstacles.filter(isSpoonFixture);
-
-  layer.setAttribute(
-    "data-fixtures",
-    String(forkParts.length + spongeParts.length + spoonParts.length),
-  );
-  syncKitchenForkSprite(layer, forkParts);
-  syncKitchenSpongeSprite(layer, spongeParts);
-  syncKitchenSpoonSprite(layer, spoonParts);
+  const sprites = kitchenFixtureSprites.get(layer);
+  // Utensil collision pieces share one display source; separate utensils do not.
+  const fixtures = new Set();
+  for (const obstacle of obstacles) {
+    const fixture = obstacle.fixtureSource ?? obstacle;
+    if (fixtures.has(fixture)) continue;
+    switch (fixture.fixture) {
+      case KITCHEN_FIXTURES.fork:
+        syncKitchenFixtureSprite(
+          layer,
+          sprites,
+          fixture,
+          "kitchenForkSprite",
+          KITCHEN_FORK_SPRITE.minWidth,
+          KITCHEN_FORK_SPRITE.minHeight,
+        );
+        break;
+      case KITCHEN_FIXTURES.spoon:
+        syncKitchenFixtureSprite(
+          layer,
+          sprites,
+          fixture,
+          "kitchenSpoonSprite",
+          KITCHEN_SPOON_SPRITE.minWidth,
+          KITCHEN_SPOON_SPRITE.minHeight,
+        );
+        break;
+      case KITCHEN_FIXTURES.sponge:
+        syncKitchenSpongeSprite(layer, sprites, fixture);
+        break;
+      default:
+        continue;
+    }
+    fixtures.add(fixture);
+  }
+  for (const [fixture, sprite] of sprites) {
+    if (fixtures.has(fixture)) continue;
+    sprite.remove();
+    sprites.delete(fixture);
+  }
+  layer.setAttribute("data-fixtures", String(fixtures.size));
 }
 
 export function renderObstacleHitboxes(

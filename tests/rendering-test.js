@@ -1,4 +1,5 @@
 import { createResolvedMapState } from "../core/map-runtime.js";
+import { validateMapConfig } from "../core/map-validation.js";
 import { resolvedMapConfig } from "../core/map-config.js";
 import assert from "node:assert/strict";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
@@ -1776,6 +1777,17 @@ testKitchenCheerioUsesActualPreviousMarblePosition();
 
 function testKitchenObstaclesRenderAsFixtures() {
   const container = new FakeElement();
+  const sponge = {
+    fixture: "sponge",
+    x: 520,
+    y: 2340,
+    w: 600,
+    h: 140,
+    hitboxW: 520,
+    hitboxH: 120,
+    angle: 0.16,
+    saturation: 0.75,
+  };
 
   withFakeDocument(() => {
     renderObstacleWalls(
@@ -1792,17 +1804,7 @@ function testKitchenObstaclesRenderAsFixtures() {
           hitboxH: 62,
           angle: -0.42,
         },
-        {
-          fixture: "sponge",
-          x: 520,
-          y: 2340,
-          w: 600,
-          h: 140,
-          hitboxW: 520,
-          hitboxH: 120,
-          angle: 0.16,
-          saturation: 0.75,
-        },
+        sponge,
         {
           fixture: "spoon",
           x: 2480,
@@ -1910,17 +1912,7 @@ function testKitchenObstaclesRenderAsFixtures() {
           hitboxH: 62,
           angle: -0.42,
         },
-        {
-          fixture: "sponge",
-          x: 560,
-          y: 2380,
-          w: 600,
-          h: 140,
-          hitboxW: 520,
-          hitboxH: 120,
-          angle: 0.2,
-          saturation: 1,
-        },
+        Object.assign(sponge, { x: 560, y: 2380, angle: 0.2, saturation: 1 }),
         {
           fixture: "spoon",
           x: 2480,
@@ -1952,6 +1944,109 @@ function testKitchenObstaclesRenderAsFixtures() {
 }
 
 testKitchenObstaclesRenderAsFixtures();
+
+function testMultipleKitchenFixturesHaveIndependentSprites() {
+  const extras = ["fork", "spoon", "sponge"].map((kind, index) => ({
+    ...resolvedMapConfig.elements.find((element) => element.fixture === kind),
+    x: 500 + index * 1100,
+    y: 600,
+    angle: 0.2 * index,
+  }));
+  const map = {
+    ...resolvedMapConfig,
+    elements: [...resolvedMapConfig.elements, ...extras],
+  };
+  assert.deepEqual(
+    validateMapConfig(map),
+    [],
+    "multiple fixtures are valid map data",
+  );
+  const runtime = createResolvedMapState(map);
+  const sources = [
+    ...new Set(
+      runtime.obstacles
+        .filter((obstacle) => obstacle.fixture)
+        .map((obstacle) => obstacle.fixtureSource ?? obstacle),
+    ),
+  ];
+  const container = new FakeElement();
+  const otherContainer = new FakeElement();
+  withFakeDocument(() => {
+    const render = (obstacles = runtime.obstacles, target = container) =>
+      renderObstacleWalls(target, obstacles, { mapConfig: map });
+    render();
+    const layer = container.firstChild;
+    assert.equal(
+      layer.children.length,
+      6,
+      "each fixture must render, not only each kind",
+    );
+    const sprites = new Map();
+    for (const source of sources) {
+      const sprite = layer.children.find(
+        (child) =>
+          Number.parseFloat(child.style.left) +
+            Number.parseFloat(child.style.width) / 2 ===
+            source.x + source.w / 2 &&
+          Number.parseFloat(child.style.top) +
+            Number.parseFloat(child.style.height) / 2 ===
+            source.y + source.h / 2,
+      );
+      assert.ok(sprite, `missing ${source.fixture} at ${source.x},${source.y}`);
+      assert.equal(
+        sprite.style.properties["--fixture-angle"],
+        source.angle + "rad",
+      );
+      sprites.set(source, sprite);
+    }
+    const sponges = sources.filter((source) => source.fixture === "sponge");
+    const stationaryLeft = sprites.get(sponges[1]).style.left;
+    const movingSprite = sprites.get(sponges[0]);
+    const oldLeft = Number.parseFloat(movingSprite.style.left);
+    sponges[0].x += 40;
+    sponges[0].angle += 0.1;
+    sponges[0].saturation = 1;
+    render();
+    assert.ok(
+      layer.children.includes(movingSprite),
+      "movement must reuse its sprite",
+    );
+    assert.equal(Number.parseFloat(movingSprite.style.left), oldLeft + 40);
+    assert.equal(movingSprite.style.properties["--sponge-brightness"], "0.800");
+    assert.equal(sprites.get(sponges[1]).style.left, stationaryLeft);
+    assert.equal(
+      sprites.get(sponges[1]).style.properties["--sponge-brightness"],
+      "1.000",
+    );
+    render(runtime.obstacles, otherContainer);
+    assert.equal(otherContainer.firstChild.children.length, 6);
+    assert.ok(
+      otherContainer.firstChild.children.every(
+        (sprite) => !layer.children.includes(sprite),
+      ),
+      "two views must not steal each other's DOM nodes",
+    );
+    const removed = sources.find((source) => source.fixture === "fork");
+    render(
+      runtime.obstacles.filter(
+        (part) => (part.fixtureSource ?? part) !== removed,
+      ),
+    );
+    assert.equal(layer.children.length, 5);
+    assert.ok(!layer.children.includes(sprites.get(removed)));
+    render(createResolvedMapState(map).obstacles);
+    assert.equal(
+      layer.children.length,
+      6,
+      "Retry replaces retired fixture sources",
+    );
+    assert.ok(
+      layer.children.every((sprite) => ![...sprites.values()].includes(sprite)),
+    );
+  });
+}
+
+testMultipleKitchenFixturesHaveIndependentSprites();
 
 function testUtensilCollisionPartsPreserveSpritePlacement() {
   withFakeDocument(() => {
