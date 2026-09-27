@@ -36,8 +36,8 @@ function reset(dynamics, mapConfig) {
 
 function marbleAt(cheerio, overrides = {}) {
   return {
-    x: cheerio.originX + cheerio.pushX,
-    y: cheerio.originY + cheerio.pushY,
+    x: cheerio.x,
+    y: cheerio.y,
     vx: 3,
     vy: 0,
     r: 29,
@@ -54,8 +54,8 @@ function testCheerioOnlySoaksAfterPlayerDisturbsIt() {
   const mapConfig = kitchenMap();
   reset(dynamics, mapConfig);
   const cheerio = dynamics.state.cheerios[0];
-  cheerio.originX = 250;
-  cheerio.originY = 510;
+  cheerio.x = 250;
+  cheerio.y = 510;
   const distantMarble = { x: 900, y: 900, vx: 0, vy: 0, r: 29 };
 
   update(dynamics, mapConfig, distantMarble, 120);
@@ -89,8 +89,8 @@ function testWaterSoakPersistsAndClamps() {
   const mapConfig = kitchenMap();
   reset(dynamics, mapConfig);
   const cheerio = dynamics.state.cheerios[0];
-  cheerio.originX = 250;
-  cheerio.originY = 510;
+  cheerio.x = 250;
+  cheerio.y = 510;
 
   update(dynamics, mapConfig, marbleAt(cheerio));
   update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 }, 500);
@@ -100,8 +100,8 @@ function testWaterSoakPersistsAndClamps() {
     "water soaking should clamp when complete",
   );
 
-  cheerio.originX = 800;
-  cheerio.originY = 800;
+  cheerio.x = 800;
+  cheerio.y = 800;
   update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 }, 60);
   assert.equal(
     cheerio.waterSoak,
@@ -117,8 +117,8 @@ function testWaterSoakIsAuthoredForKitchenFloorOnly() {
   const mapConfig = kitchenMap("kitchen-breakfast-spill");
   reset(dynamics, mapConfig);
   const cheerio = dynamics.state.cheerios[0];
-  cheerio.originX = 250;
-  cheerio.originY = 510;
+  cheerio.x = 250;
+  cheerio.y = 510;
 
   update(dynamics, mapConfig, marbleAt(cheerio));
   update(dynamics, mapConfig, { x: 900, y: 900, vx: 0, vy: 0, r: 29 }, 120);
@@ -140,16 +140,17 @@ function testCerealWaitsForVisibleMarbleContact() {
       (candidate) => candidate.kind === kind,
     );
     const marbleRadius = 29;
+    const initialX = cereal.x;
 
     update(dynamics, mapConfig, {
-      x: cereal.originX - cereal.radius - marbleRadius - 5,
-      y: cereal.originY,
+      x: cereal.x - cereal.radius - marbleRadius - 5,
+      y: cereal.y,
       vx: 8,
       vy: 0,
       r: marbleRadius,
     });
 
-    assert.equal(cereal.pushX, 0, `${kind} should not move before contact`);
+    assert.equal(cereal.x, initialX, `${kind} should not move before contact`);
   }
 }
 
@@ -165,7 +166,7 @@ function testCerealCarriesMomentumAfterMarbleContact() {
     );
 
     update(dynamics, mapConfig, marbleAt(cereal, { vx: 8 }));
-    const pushAfterContact = cereal.pushX;
+    const xAfterContact = cereal.x;
     update(dynamics, mapConfig, {
       x: 900,
       y: 900,
@@ -175,7 +176,7 @@ function testCerealCarriesMomentumAfterMarbleContact() {
     });
 
     assert.equal(
-      cereal.pushX > pushAfterContact,
+      cereal.x > xAfterContact,
       true,
       `${kind} should keep moving after the marble leaves contact`,
     );
@@ -514,10 +515,8 @@ testSpongeRoundedCornerDoesNotCreateFalseImpact();
 
 function cerealAt(x, y, overrides = {}) {
   return {
-    originX: x,
-    originY: y,
-    pushX: 0,
-    pushY: 0,
+    x,
+    y,
     radius: 20,
     eaten: 0,
     active: true,
@@ -1158,7 +1157,7 @@ function testCerealCoastingMatchesRepeatedReferenceFrames() {
     ["gooPatch", 0.55],
   ]) {
     // Independent oracle: repeat the original unit-frame recurrence.
-    const reference = { x: 0, y: 0, vx: 8, vy: -4 };
+    const reference = { x: 500, y: 500, vx: 8, vy: -4 };
     for (let frame = 0; frame < 6; frame++) {
       reference.vx *= retention;
       reference.vy *= retention;
@@ -1188,8 +1187,8 @@ function testCerealCoastingMatchesRepeatedReferenceFrames() {
       food.vy = -4;
       for (const dt of steps) update(dynamics, mapConfig, farFromAnts, dt);
       for (const [actual, expected] of [
-        [food.pushX, reference.x],
-        [food.pushY, reference.y],
+        [food.x, reference.x],
+        [food.y, reference.y],
         [food.vx, reference.vx],
         [food.vy, reference.vy],
       ]) {
@@ -1202,9 +1201,9 @@ function testCerealCoastingMatchesRepeatedReferenceFrames() {
         update(dynamics, mapConfig, farFromAnts, steps[0]);
       assert.equal(food.vx, 0);
       assert.equal(food.vy, 0);
-      const stopped = [food.pushX, food.pushY];
+      const stopped = [food.x, food.y];
       update(dynamics, mapConfig, farFromAnts, 2);
-      assert.deepEqual([food.pushX, food.pushY], stopped);
+      assert.deepEqual([food.x, food.y], stopped);
       food.vx = 0.021;
       update(dynamics, mapConfig, farFromAnts, 1);
       assert.equal(
@@ -1212,7 +1211,7 @@ function testCerealCoastingMatchesRepeatedReferenceFrames() {
         0,
         "a reference step crossing the settle threshold stops immediately",
       );
-      assert.deepEqual([food.pushX, food.pushY], stopped);
+      assert.deepEqual([food.x, food.y], stopped);
     }
   }
 }
@@ -1373,24 +1372,26 @@ function testCoincidentFoodContactsSeparateAlongTheImpactDirection() {
     const food = dynamics.state.cheerios[0];
     const marble = { x: 500, y: 500, r: 29, vx, vy };
     update(dynamics, mapConfig, marble);
-    const separation = Math.hypot(food.pushX, food.pushY);
+    const dx = food.x - marble.x;
+    const dy = food.y - marble.y;
+    const separation = Math.hypot(dx, dy);
     assert.ok(
       Math.abs(separation - (marble.r + food.radius + 0.5)) < 1e-10,
       "coincident contact must fully separate by a unit normal",
     );
     if (vx !== 0 || vy !== 0) {
       assert.ok(
-        Math.abs(food.pushX * vy - food.pushY * vx) < 1e-10,
+        Math.abs(dx * vy - dy * vx) < 1e-10,
         "the push must stay parallel to incoming motion",
       );
-      assert.ok(food.pushX * vx + food.pushY * vy > 0);
+      assert.ok(dx * vx + dy * vy > 0);
     } else {
       assert.equal(
-        food.pushX,
+        dx,
         separation,
         "stationary overlap uses a deterministic unit fallback",
       );
-      assert.equal(food.pushY, 0);
+      assert.equal(dy, 0);
     }
     assert.ok(Math.abs(food.vx - vx * 0.42) < 1e-10);
     assert.ok(Math.abs(food.vy - vy * 0.42) < 1e-10);
@@ -1443,8 +1444,8 @@ function testKitchenFeedbackCooldownUsesElapsedTime() {
           kind === "ant"
             ? { x: 480 + time, y: 500, r: 29, vx: 1, vy: 0 }
             : {
-                x: food.originX + food.pushX,
-                y: food.originY + food.pushY,
+                x: food.x,
+                y: food.y,
                 r: 29,
                 vx: 1,
                 vy: 0,

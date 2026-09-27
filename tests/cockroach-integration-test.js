@@ -113,10 +113,8 @@ function harness() {
   const cereal = {
     kind: "cheerio",
     active: true,
-    originX: 100,
-    originY: 500,
-    pushX: 0,
-    pushY: 0,
+    x: 100,
+    y: 500,
   };
   context.kitchenState = { cheerios: [cereal] };
   updatePhysics(context, 2, feedback);
@@ -125,7 +123,7 @@ function harness() {
     "the real physics path supplies live food to ordinary roach movement",
   );
   const x = runtime.state.cockroach.x;
-  cereal.pushX = 900;
+  cereal.x += 900;
   runtime.state.cockroach.decisionIn = 0;
   updatePhysics(context, 2, feedback);
   assert.ok(

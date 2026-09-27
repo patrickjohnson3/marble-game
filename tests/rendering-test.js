@@ -981,13 +981,14 @@ function testKitchenCheeriosGiveWayToMarble() {
   const antCanvas = themeState.kitchenDynamicCanvas;
   const drawCallsBefore = antCanvas.context.calls.length;
   const marble = {
-    x: cheerioState.originX,
-    y: cheerioState.originY,
+    x: cheerioState.x,
+    y: cheerioState.y,
     vx: 18,
     vy: 0,
     r: 29,
   };
 
+  const initialX = cheerioState.x;
   updateAndRenderMapThemeDynamics({
     container,
     overlayContainer,
@@ -998,8 +999,8 @@ function testKitchenCheeriosGiveWayToMarble() {
   });
 
   assert.notEqual(
-    cheerioState.pushX,
-    0,
+    cheerioState.x,
+    initialX,
     "nearby Cheerios should be shoved aside",
   );
   assert.equal(
@@ -1013,10 +1014,8 @@ testKitchenCheeriosGiveWayToMarble();
 
 function testKitchenCheeriosDoNotSlideUnderFork() {
   const cheerioState = {
-    originX: 0,
-    originY: 0,
-    pushX: 0,
-    pushY: 0,
+    x: 0,
+    y: 0,
     radius: 23,
     eaten: 0,
     active: true,
@@ -1051,8 +1050,8 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
     dynamics,
     mapConfig,
     marble: {
-      x: cheerioState.originX,
-      y: cheerioState.originY,
+      x: cheerioState.x,
+      y: cheerioState.y,
       vx: 100,
       vy: 0,
       r: 29,
@@ -1071,8 +1070,8 @@ function testKitchenCheeriosDoNotSlideUnderFork() {
   for (const part of dynamics.state.obstacles) {
     const contact = circleOrientedRectContact(
       {
-        x: cheerioState.originX + cheerioState.pushX,
-        y: cheerioState.originY + cheerioState.pushY,
+        x: cheerioState.x,
+        y: cheerioState.y,
         r: cheerioState.radius,
       },
       part,
@@ -1089,10 +1088,8 @@ testKitchenCheeriosDoNotSlideUnderFork();
 
 function testKitchenAntsMunchCheerios() {
   const cheerioState = {
-    originX: 100,
-    originY: 100,
-    pushX: 0,
-    pushY: 0,
+    x: 100,
+    y: 100,
     radius: 23,
     eaten: 0,
     active: true,
@@ -1423,10 +1420,8 @@ function testKitchenDynamicsContinueOutsideCameraView() {
   const dynamics = kitchenDynamicsWith({
     cheerios: [
       {
-        originX: 1010,
-        originY: 1000,
-        pushX: 0,
-        pushY: 0,
+        x: 1010,
+        y: 1000,
         radius: 23,
         eaten: 0,
         active: true,
@@ -1475,8 +1470,8 @@ function testKitchenDynamicsContinueOutsideCameraView() {
     "camera position must not suppress ant collisions",
   );
   assert.notEqual(
-    dynamics.state.cheerios[0].pushX,
-    0,
+    dynamics.state.cheerios[0].x,
+    1010,
     "camera position must not suppress cereal collisions",
   );
 }
@@ -1611,8 +1606,8 @@ function firstKitchenCheerio({ container, overlayContainer }) {
   return { dynamics, state, themeState };
 }
 
-function shovedDistance({ state }) {
-  return Math.hypot(state.pushX, state.pushY);
+function shovedDistance({ state }, origin) {
+  return Math.hypot(state.x - origin.x, state.y - origin.y);
 }
 
 function testKitchenCheerioShoveRespondsToTerrainPatch() {
@@ -1629,8 +1624,8 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
     overlayContainer: gooOverlay,
   });
   const origin = {
-    x: waterCheerio.state.originX,
-    y: waterCheerio.state.originY,
+    x: waterCheerio.state.x,
+    y: waterCheerio.state.y,
   };
   const patch = {
     x: origin.x - 10,
@@ -1697,7 +1692,7 @@ function testKitchenCheerioShoveRespondsToTerrainPatch() {
   });
 
   assert.equal(
-    shovedDistance(waterCheerio) > shovedDistance(gooCheerio),
+    shovedDistance(waterCheerio, origin) > shovedDistance(gooCheerio, origin),
     true,
     "Cheerios should shove farther on water than sticky goo",
   );
@@ -1714,8 +1709,8 @@ function testWaterloggedCheerioVisiblyCloudsThePuddle() {
   });
   const canvas = themeState.kitchenDynamicCanvas;
   state.waterSoak = 0.75;
-  state.waterStainX = state.originX;
-  state.waterStainY = state.originY;
+  state.waterStainX = state.x;
+  state.waterStainY = state.y;
   state.revision += 1;
   canvas.context.calls.length = 0;
 
@@ -1747,13 +1742,14 @@ function testKitchenCheerioUsesActualPreviousMarblePosition() {
     container,
     overlayContainer,
   });
+  const initialX = state.x;
   const previousMarble = {
-    x: state.originX - 80,
-    y: state.originY,
+    x: state.x - 80,
+    y: state.y,
   };
   const marble = {
-    x: state.originX + 80,
-    y: state.originY,
+    x: state.x + 80,
+    y: state.y,
     vx: 0,
     vy: 0,
     r: 29,
@@ -1770,8 +1766,8 @@ function testKitchenCheerioUsesActualPreviousMarblePosition() {
   });
 
   assert.notEqual(
-    state.pushX,
-    0,
+    state.x,
+    initialX,
     "Cheerio sweep should use the real previous marble position, not velocity",
   );
 }

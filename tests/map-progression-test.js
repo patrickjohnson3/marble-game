@@ -118,7 +118,7 @@ function testLoadingCurrentMapRestoresItsFreshState() {
   });
   kitchen.state.ants[0].alive = false;
   kitchen.state.cheerios[0].active = false;
-  kitchen.state.cheerios[0].pushX = 80;
+  kitchen.state.cheerios[0].x += 80;
   kitchen.state.sponge.x += 120;
   kitchen.state.sponge.saturation = 0.8;
   kitchen.state.waterPatch.w /= 2;

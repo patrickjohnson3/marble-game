@@ -81,8 +81,8 @@ try {
 
     const circles = [
       ...initialFood.map((food) => ({
-        x: food.originX,
-        y: food.originY,
+        x: food.x,
+        y: food.y,
         r: food.radius,
       })),
       ...initialAnts.map((ant) => ({ x: ant.x, y: ant.y, r: 7 })),
@@ -121,8 +121,7 @@ try {
     for (const ant of initialAnts) {
       assert.ok(
         initialFood.some(
-          (food) =>
-            Math.hypot(ant.x - food.originX, ant.y - food.originY) < 220,
+          (food) => Math.hypot(ant.x - food.x, ant.y - food.y) < 220,
         ),
         "ants should start close enough to forage in the authored food scenes",
       );
@@ -132,7 +131,7 @@ try {
     for (let frame = 0; frame < 180; frame++)
       dynamics.update(runtime.state.activeMap, marble, marble, 1);
     assert.notDeepEqual(dynamics.state.ants, initialAnts);
-    dynamics.state.cheerios[0].pushX = 100;
+    dynamics.state.cheerios[0].x += 100;
     dynamics.state.cheerios[0].active = false;
     dynamics.state.ants[0].alive = false;
     runtime.setActiveMap(config);

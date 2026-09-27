@@ -92,8 +92,8 @@ function forage(cockroach, mapState, kitchenState) {
   // leave a second set of stale attraction points on the floor.
   for (const cereal of kitchenState?.cheerios ?? []) {
     if (!cereal.active || cereal.kind !== "cheerio") continue;
-    const x = cereal.originX + cereal.pushX;
-    const y = cereal.originY + cereal.pushY;
+    const x = cereal.x;
+    const y = cereal.y;
     const distance = Math.hypot(x - cockroach.x, y - cockroach.y);
     if (distance >= closest || !clearAt(x, y, cockroach.r, mapState)) continue;
     closest = distance;

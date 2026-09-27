@@ -189,7 +189,7 @@ function testRetryRestoresTheCurrentKitchen() {
   kitchen.state.waterPatch.w /= 2;
   kitchen.state.sponge.x += 120;
   kitchen.state.sponge.saturation = 0.8;
-  kitchen.state.cheerios[0].pushX = 200;
+  kitchen.state.cheerios[0].x += 200;
   kitchen.state.cheerios[0].active = false;
   kitchen.state.cheerios[0].eaten = 1;
   kitchen.state.ants[0].alive = false;

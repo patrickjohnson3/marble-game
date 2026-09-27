@@ -122,8 +122,8 @@ window.__cockroachApp = createApp();`,
       Object.assign(app.state.marble, { x: 400, y: 500, vx: 0, vy: 0 });
       Object.assign(app.state.input.tilt, { smoothX: 0, smoothY: 0 });
       Object.assign(app.mapRuntime.state.cockroach, {
-        x: food.originX + food.pushX - 350,
-        y: food.originY + food.pushY,
+        x: food.x - 350,
+        y: food.y,
         angle: Math.PI,
         mode: "scurry",
         harassmentIn: 600,
@@ -141,10 +141,7 @@ window.__cockroachApp = createApp();`,
             (food) =>
               food.active &&
               food.kind === "cheerio" &&
-              Math.hypot(
-                food.originX + food.pushX - roach.x,
-                food.originY + food.pushY - roach.y,
-              ) < 140,
+              Math.hypot(food.x - roach.x, food.y - roach.y) < 140,
           )
         );
       },

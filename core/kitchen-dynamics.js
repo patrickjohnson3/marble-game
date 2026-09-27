@@ -56,10 +56,8 @@ const spongeWaterRedrawSteps = 20;
 function createCereal(world, point, options = {}) {
   return {
     kind: options.kind ?? "cheerio",
-    originX: point.x * world.width,
-    originY: point.y * world.height,
-    pushX: 0,
-    pushY: 0,
+    x: point.x * world.width,
+    y: point.y * world.height,
     vx: 0,
     vy: 0,
     radius: (options.radiusRatio ?? cheerioRadiusRatio) * world.width,
@@ -244,8 +242,8 @@ function soakPlayerDisturbedCheerio(cereal, elements, frameDelta) {
     return;
   }
 
-  const x = cereal.originX + cereal.pushX;
-  const y = cereal.originY + cereal.pushY;
+  const x = cereal.x;
+  const y = cereal.y;
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
     if (
@@ -630,13 +628,7 @@ function antLiquidAt(state, x, y, padding = 0) {
 
 function cerealUnavailableToAnt(cereal, state) {
   if ((cereal.waterSoak ?? 0) >= antWaterSoakRejectionThreshold) return true;
-  return Boolean(
-    antLiquidAt(
-      state,
-      cereal.originX + cereal.pushX,
-      cereal.originY + cereal.pushY,
-    ),
-  );
+  return Boolean(antLiquidAt(state, cereal.x, cereal.y));
 }
 
 function nearestActiveCheerio(ant, state) {
@@ -649,8 +641,8 @@ function nearestActiveCheerio(ant, state) {
       continue;
     }
 
-    const x = cheerio.originX + cheerio.pushX;
-    const y = cheerio.originY + cheerio.pushY;
+    const x = cheerio.x;
+    const y = cheerio.y;
     const dx = x - ant.x;
     const dy = y - ant.y;
     let neighbors = 0;
@@ -816,22 +808,15 @@ function advanceAnt(state, ant, marble, frameDelta) {
     if (target?.active && cerealUnavailableToAnt(target, state)) {
       ant.targetIndex = -1;
       ant.waterAvoidanceFrames = antConfig.waterAvoidanceFrames;
-      ant.angle = Math.atan2(
-        ant.y - target.originY - target.pushY,
-        ant.x - target.originX - target.pushX,
-      );
+      ant.angle = Math.atan2(ant.y - target.y, ant.x - target.x);
       desiredAngle = ant.angle;
     } else {
       if (!target?.active) {
         ant.targetIndex = nearestActiveCheerio(ant, state);
         target = state.cheerios[ant.targetIndex];
       }
-      const dx = target
-        ? target.originX + target.pushX - ant.x
-        : Math.cos(ant.angle);
-      const dy = target
-        ? target.originY + target.pushY - ant.y
-        : Math.sin(ant.angle);
+      const dx = target ? target.x - ant.x : Math.cos(ant.angle);
+      const dy = target ? target.y - ant.y : Math.sin(ant.angle);
       desiredAngle = Math.atan2(dy, dx) + Math.sin(ant.wobble) * 0.16;
       if (
         target &&
@@ -1040,8 +1025,8 @@ function constrainCerealToWorld(circle, world) {
 }
 
 function setCerealFromCircle(cereal, circle) {
-  cereal.pushX = circle.x - cereal.originX;
-  cereal.pushY = circle.y - cereal.originY;
+  cereal.x = circle.x;
+  cereal.y = circle.y;
   cereal.vx = circle.vx;
   cereal.vy = circle.vy;
 }
@@ -1055,8 +1040,8 @@ function advanceCereal(state, cereal, frameDelta) {
     return;
   }
 
-  const currentX = cereal.originX + cereal.pushX;
-  const currentY = cereal.originY + cereal.pushY;
+  const currentX = cereal.x;
+  const currentY = cereal.y;
   const influence = surfaceInfluence(currentX, currentY, state.terrainElements);
   const drag = Math.pow(influence.dragRetention, frameDelta);
   const distanceFactor = coastingDistanceFactor(
@@ -1126,9 +1111,7 @@ function updateCereal(
       soakPlayerDisturbedCheerio(cereal, state.terrainElements, frameDelta);
     }
 
-    const { originX, originY, radius, pushX, pushY } = cereal;
-    const currentX = originX + pushX;
-    const currentY = originY + pushY;
+    const { x: currentX, y: currentY, radius } = cereal;
     const shoveDistance = marble.r + radius;
     const minX = Math.min(previousMarble.x, marble.x) - shoveDistance;
     const maxX = Math.max(previousMarble.x, marble.x) + shoveDistance;
@@ -1168,12 +1151,10 @@ function updateCereal(
           ? (marble.vy || 0) / speed
           : 0;
     const amount = shoveDistance - distance + cheerioObstacleSeparation;
-    const nextPushX = pushX + nx * amount;
-    const nextPushY = pushY + ny * amount;
     transferMarbleMomentum(cereal, marble, nx, ny, influence);
     const cerealCircle = state.collisionCircle;
-    cerealCircle.x = originX + nextPushX;
-    cerealCircle.y = originY + nextPushY;
+    cerealCircle.x = currentX + nx * amount;
+    cerealCircle.y = currentY + ny * amount;
     cerealCircle.r = radius;
     cerealCircle.vx = cereal.vx ?? 0;
     cerealCircle.vy = cereal.vy ?? 0;

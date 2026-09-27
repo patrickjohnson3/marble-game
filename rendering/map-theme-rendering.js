@@ -589,8 +589,8 @@ function setCheerioBounds(target, cheerio) {
     cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
   const waterSoak = cheerio.waterSoak ?? 0;
   const drawRadius = radius * (1 + waterSoak * (kitchenSoggyCheerioScale - 1));
-  const x = cheerio.originX + cheerio.pushX;
-  const y = cheerio.originY + cheerio.pushY;
+  const x = cheerio.x;
+  const y = cheerio.y;
 
   setDynamicBounds(target, x, y, drawRadius);
   if (
@@ -911,8 +911,8 @@ function drawSoggyCheerioFinish(context, x, y, radius, waterSoak) {
 function drawCheerio(context, cheerio) {
   if (!cheerio.active) return;
 
-  const x = cheerio.originX + cheerio.pushX;
-  const y = cheerio.originY + cheerio.pushY;
+  const x = cheerio.x;
+  const y = cheerio.y;
   const radius =
     cheerio.radius * (1 - cheerio.eaten * (1 - kitchenCheerioMinScale));
   const opacity = 1 - cheerio.eaten * (1 - kitchenCheerioOpacityFloor);

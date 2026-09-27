@@ -15,10 +15,8 @@ function cereal(x, y, properties = {}) {
   return {
     kind: "cheerio",
     active: true,
-    originX: x,
-    originY: y,
-    pushX: 0,
-    pushY: 0,
+    x,
+    y,
     radius: 23,
     ...properties,
   };
@@ -58,10 +56,7 @@ function advance(subject, duration, parts = [1]) {
 }
 
 function distanceToFood(cockroach, food) {
-  return Math.hypot(
-    cockroach.x - food.originX - food.pushX,
-    cockroach.y - food.originY - food.pushY,
-  );
+  return Math.hypot(cockroach.x - food.x, cockroach.y - food.y);
 }
 
 function testScurryApproachesAndStaysNearNearestFood() {
@@ -96,8 +91,8 @@ function testFoodUsesLivePositionsAndActiveState() {
   const food = cereal(1400, 1000);
   const subject = fixture([food]);
   advance(subject, 200);
-  food.pushX = 600;
-  food.pushY = 100;
+  food.x += 600;
+  food.y += 100;
   advance(subject, 300);
   assert.ok(
     distanceToFood(subject.cockroach, food) < 180,
