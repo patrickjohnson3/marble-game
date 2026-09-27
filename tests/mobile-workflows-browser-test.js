@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { copy } from "../core/copy.js";
 import { timing } from "../core/game-config.js";
 
 export async function testStartupRecovery(browser, baseUrl) {
@@ -22,6 +23,11 @@ export async function testStartupRecovery(browser, baseUrl) {
         true,
         `missing ${asset} must expose recovery without game modules or CSS`,
       );
+      assert.equal(
+        await page.title(),
+        copy.title,
+        `missing ${asset} must leave recovery identifiable in tabs and assistive navigation`,
+      );
       const retry = page.getByRole("button", { name: "Retry", exact: true });
       assert.equal(await retry.isVisible(), true);
       const retryBox = await retry.boundingBox();
@@ -38,6 +44,7 @@ export async function testStartupRecovery(browser, baseUrl) {
       ]);
       await page.waitForFunction(() => window.__marbleAppBooted === true);
       assert.equal(await page.locator("#bootError").isHidden(), true);
+      assert.equal(await page.title(), copy.title);
       const start = page.locator("#start");
       assert.equal(await start.isVisible(), true);
       assert.ok(
@@ -72,6 +79,11 @@ export async function testStartupRecovery(browser, baseUrl) {
       "startup must wait for the required stylesheet",
     );
     assert.equal(await page.locator("#bootError").isHidden(), true);
+    assert.equal(
+      await page.title(),
+      copy.title,
+      "the shell must have an app title while its stylesheet is still loading",
+    );
     await stylesheet.continue();
     await page.waitForFunction(() => window.__marbleAppBooted === true);
     assert.equal(await page.locator("#start").isVisible(), true);
