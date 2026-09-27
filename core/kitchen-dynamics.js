@@ -248,7 +248,9 @@ export function resetKitchenDynamics(
   return state;
 }
 
-function pointInRect(x, y, rect) {
+function pointOnSurface(x, y, rect) {
+  const shape = ELLIPTICAL_SURFACE_SHAPES[rect.type];
+  if (shape) return pointInEllipsePatch(x, y, rect, shape);
   return (
     x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
   );
@@ -258,7 +260,7 @@ function surfaceInfluence(x, y, elements) {
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
     const influence = surfaceInfluences[element.type];
-    if (influence && pointInRect(x, y, element)) return influence;
+    if (influence && pointOnSurface(x, y, element)) return influence;
   }
 
   return defaultSurfaceInfluence;
@@ -276,7 +278,7 @@ function soakPlayerDisturbedCheerio(cereal, elements, frameDelta) {
     const element = elements[i];
     if (
       element.type !== MAP_ELEMENT_TYPES.waterPatch ||
-      !pointInRect(x, y, element)
+      !pointOnSurface(x, y, element)
     ) {
       continue;
     }

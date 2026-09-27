@@ -1284,4 +1284,53 @@ function testSpongeCoastingMatchesRepeatedReferenceFrames() {
 
 testCerealCoastingMatchesRepeatedReferenceFrames();
 testSpongeCoastingMatchesRepeatedReferenceFrames();
+
+function testFoodUsesVisibleLiquidFootprints() {
+  const cases = [
+    { type: "waterPatch", x: 305, y: 405, h: 200, retention: 0.88, wet: false },
+    { type: "waterPatch", x: 450, y: 504, h: 200, retention: 0.82, wet: true },
+    { type: "gooPatch", x: 305, y: 405, h: 60, retention: 0.88, wet: false },
+    { type: "gooPatch", x: 456, y: 430, h: 60, retention: 0.55, wet: false },
+    // The rotated goo's long tip extends beyond x=600, its authoring box.
+    { type: "gooPatch", x: 604, y: 445, h: 60, retention: 0.55, wet: false },
+    { type: "roughPatch", x: 305, y: 405, h: 200, retention: 0.68, wet: false },
+  ];
+  for (const test of cases) {
+    const patch = { type: test.type, x: 300, y: 400, w: 300, h: test.h };
+    const mapConfig = {
+      ...kitchenMap("kitchen-floor", [patch]),
+      clusters: [
+        {
+          x: test.x / 1000,
+          y: test.y / 1000,
+          angle: 0,
+          ants: [],
+          cheerios: [[0, 0]],
+          crumbs: [],
+        },
+      ],
+    };
+    const dynamics = createKitchenDynamics();
+    dynamics.reset({ mapConfig, world });
+    const food = dynamics.state.cheerios[0];
+    Object.assign(food, { vx: 1, playerDisturbed: true });
+    update(dynamics, mapConfig, farFromAnts);
+    assert.ok(
+      Math.abs(food.vx - test.retention) < 1e-12,
+      `${test.type} at (${test.x},${test.y}) must use its actual footprint`,
+    );
+    assert.equal(food.waterSoak > 0, test.wet);
+    if (test.type === "waterPatch" && !test.wet) {
+      for (let frame = 0; frame < 30; frame++)
+        update(dynamics, mapConfig, farFromAnts);
+      assert.equal(
+        food.waterSoak,
+        0,
+        "food resting on a dry corner must never become waterlogged",
+      );
+    }
+  }
+}
+
+testFoodUsesVisibleLiquidFootprints();
 console.log("Kitchen dynamics tests passed.");
