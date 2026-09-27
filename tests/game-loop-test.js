@@ -252,8 +252,12 @@ function createBehaviorHarness({
     },
     kitchenDynamics: {
       state: {},
-      update(map, marble, previous) {
+      update(map, marble, previous, frameDelta, path) {
         calls.kitchenSweeps.push({
+          path: path?.segments.slice(0, path.count).map((segment) => ({
+            start: { ...segment.start },
+            end: { ...segment.end },
+          })),
           map,
           previous: { ...previous },
           current: { x: marble.x, y: marble.y },
@@ -306,8 +310,8 @@ function createBehaviorHarness({
     calls,
     mapRuntime,
     state,
-    tick() {
-      currentTime += timing.targetFrameMs;
+    tick(frameDelta = 1) {
+      currentTime += timing.targetFrameMs * frameDelta;
       loop.tick();
     },
   };
@@ -563,6 +567,11 @@ function testHazardRecoveryResetsGameplayFeedbackAndRearms() {
     "respawning must not sweep objects between the hazard and spawn",
   );
   assert.deepEqual(calls.kitchenSweeps[0].current, { x: 50, y: 50 });
+  assert.deepEqual(
+    calls.kitchenSweeps[0].path,
+    [],
+    "hazards must discard the movement path",
+  );
   state.input.keyboard.x = 0;
 
   harness.tick();
@@ -692,5 +701,28 @@ testHazardRecoveryResetsGameplayFeedbackAndRearms();
 testMapTransitionDoesNotSweepAcrossTheNewMap();
 testKitchenFeedbackRoutesOnePriorityImpactPerFrame();
 testSpongeAbsorptionRoutesFocusedRenderingAndFeedback();
+
+function testGameLoopForwardsReboundSegmentsAndClearsPreviousFrames() {
+  const activeMap = {
+    ...resolvedMapConfig,
+    world: { width: 1000, height: 1000 },
+    spawn: { x: 160, y: 500, r: 29 },
+    cockroach: null,
+    elements: [{ type: "obstacle", x: 200, y: 0, w: 20, h: 1000 }],
+  };
+  const harness = createBehaviorHarness({ activeMap });
+  harness.state.marble.vx = 14;
+  harness.tick(2);
+  const first = harness.calls.kitchenSweeps[0];
+  assert.ok(first.path.some((segment) => segment.end.x === 171));
+  assert.ok(first.current.x < 168);
+  Object.assign(harness.state.marble, { x: 500, y: 700, vx: 0, vy: 0 });
+  harness.tick();
+  assert.deepEqual(harness.calls.kitchenSweeps[1].path, [
+    { start: { x: 500, y: 700 }, end: { x: 500, y: 700 } },
+  ]);
+}
+
+testGameLoopForwardsReboundSegmentsAndClearsPreviousFrames();
 
 console.log("Game loop tests passed.");

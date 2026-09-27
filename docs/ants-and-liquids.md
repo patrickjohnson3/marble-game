@@ -24,10 +24,12 @@ water or 50% in goo, and can escape. There is no pathfinder or colony simulation
 An approaching marble triggers a short hesitation, a bounded escape attempt,
 then recovery and foraging. Escape is intentionally slower than a committed
 marble pursuit. Near misses can be remembered even after the marble has passed.
-Crushing tests the frame's swept marble segment before ants move, so an ant
+Crushing tests the frame's resolved physics segments before ants move, so an ant
 cannot walk out of an impact that already happened. Actual travel also counts
 when a later utensil collision has reduced the marble's endpoint velocity.
-Hazard/map teleport handling remains unchanged.
+The physics scratch reuses segment records until the next update; hazards discard
+the path, and sponge contact supplies the final corrected endpoint. Ant behavior
+and timers still advance only once per frame.
 
 A fresh crush produces five small brown flecks, the existing impact haptic, and
 a brief visual compression of the marble. Its body flattens and legs curl over

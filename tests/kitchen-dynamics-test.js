@@ -1,6 +1,7 @@
 import { resolvedMapConfig } from "../core/map-config.js";
 import assert from "node:assert/strict";
-import { antConfig } from "../core/game-config.js";
+import { antConfig, physicsConfig } from "../core/game-config.js";
+import { updatePhysics } from "../core/physics.js";
 import { pointInEllipsePatch } from "../core/geometry.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
 import { ELLIPTICAL_SURFACE_SHAPES } from "../core/map-elements.js";
@@ -934,4 +935,202 @@ function testAntColonyIsDeterministicIndividualAndContained() {
 
 testAntColonyIsDeterministicIndividualAndContained();
 
+function testAntCrushIncludesResolvedReboundPath() {
+  const wall = { type: "obstacle", x: 200, y: 0, w: 20, h: 1000 };
+  const mapConfig = {
+    ...kitchenMap("kitchen-floor", [wall]),
+    clusters: [
+      {
+        x: 0.18,
+        y: 0.5345,
+        angle: 0,
+        ants: [[0, 0]],
+        cheerios: [],
+        crumbs: [],
+      },
+    ],
+  };
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({ mapConfig, world });
+  const marble = { x: 160, y: 500, r: 29, vx: 14, vy: 0 };
+  const previous = { ...marble };
+  const context = {
+    marble,
+    physics: physicsConfig,
+    tilt: { smoothX: 0, smoothY: 0 },
+    intro: { released: true },
+    bounds: { left: 0, top: 0, right: 1000, bottom: 1000 },
+    mapState: { obstacles: [wall], terrainByType: {} },
+  };
+  updatePhysics(context, 2, { onSurface() {} });
+  // Wall contact places the center at 200 - 29 = 171. That point is
+  // sqrt(9² + 34.5²) = 35.655 from the ant, inside their combined radius 36.
+  assert.ok(marble.x < 168, "the final position has already rebounded");
+  const events = dynamics.update(
+    mapConfig,
+    marble,
+    previous,
+    2,
+    context.physicsScratch?.movementPath,
+  );
+  assert.equal(
+    events.squishedAnts,
+    1,
+    "the rebound must not erase an earlier crush",
+  );
+  const ant = dynamics.state.ants[0];
+  assert.equal(ant.alive, false);
+  assert.equal(ant.squishAngle, 0, "the crush follows incoming travel");
+  assert.equal(ant.squishAge, 0);
+
+  Object.assign(marble, { x: 500, vx: 0 });
+  updatePhysics(context, 1, { onSurface() {} });
+  dynamics.update(
+    mapConfig,
+    marble,
+    marble,
+    1,
+    context.physicsScratch.movementPath,
+  );
+  assert.equal(events.squishedAnts, 0);
+  assert.equal(
+    ant.squishAge,
+    1,
+    "ant timers advance once per frame, not per segment",
+  );
+}
+
+testAntCrushIncludesResolvedReboundPath();
+
+function testAntOutsideReboundPathIsNotCrushedByEndpointChord() {
+  const wall = { type: "obstacle", x: 200, y: 0, w: 20, h: 1000 };
+  const mapConfig = {
+    ...kitchenMap("kitchen-floor", [wall]),
+    clusters: [
+      {
+        x: 0.13075,
+        y: 0.5215,
+        angle: 0,
+        ants: [[0, 0]],
+        cheerios: [],
+        crumbs: [],
+      },
+    ],
+  };
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({ mapConfig, world });
+  const ant = dynamics.state.ants[0];
+  ant.probeFrames = 100;
+  ant.probeInFrames = 1000;
+  const marble = { x: 160, y: 500, r: 29, vx: 14, vy: 10 };
+  const previous = { ...marble };
+  const context = {
+    marble,
+    physics: physicsConfig,
+    tilt: { smoothX: 0, smoothY: 0 },
+    intro: { released: true },
+    bounds: { left: 0, top: 0, right: 1000, bottom: 1000 },
+    mapState: { obstacles: [wall], terrainByType: {} },
+  };
+  updatePhysics(context, 2, { onSurface() {} });
+  // Independently measured path clearance is 36.29556 > 29 + 7. The
+  // endpoint chord cuts across that path, passing only 35.15247 away.
+  const events = dynamics.update(
+    mapConfig,
+    marble,
+    previous,
+    2,
+    context.physicsScratch.movementPath,
+  );
+  assert.equal(events.squishedAnts, 0);
+  assert.equal(ant.alive, true);
+}
+
+function testAntContactUsesTheSpeedOfItsOwnPathSegment() {
+  const { dynamics, mapConfig, ant } = antScene({ cheerios: [] });
+  const marble = { x: 264.1, y: 500, r: 29, vx: 0.2, vy: 0 };
+  dynamics.update(mapConfig, marble, { x: 254, y: 500 }, 2, {
+    count: 2,
+    segments: [
+      {
+        start: { x: 254, y: 500 },
+        end: { x: 263.9, y: 500 },
+        speed: 14,
+        dt: 1,
+      },
+      { start: { x: 263.9, y: 500 }, end: marble, speed: 0.2, dt: 1 },
+    ],
+  });
+  assert.equal(
+    ant.alive,
+    true,
+    "unrelated fast travel cannot strengthen a slow contact",
+  );
+}
+
+testAntOutsideReboundPathIsNotCrushedByEndpointChord();
+testAntContactUsesTheSpeedOfItsOwnPathSegment();
+
+function testHazardDiscardsEarlierAntContacts() {
+  const mapConfig = {
+    ...kitchenMap("kitchen-floor", []),
+    clusters: [
+      {
+        x: 0.18,
+        y: 0.5345,
+        angle: 0,
+        ants: [[0, 0]],
+        cheerios: [],
+        crumbs: [],
+      },
+    ],
+  };
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({ mapConfig, world });
+  const marble = { x: 160, y: 500, r: 29, vx: 14, vy: 0 };
+  const previous = { ...marble };
+  const context = {
+    marble,
+    physics: physicsConfig,
+    tilt: { smoothX: 0, smoothY: 0 },
+    intro: { released: true },
+    bounds: { left: 0, top: 0, right: 1000, bottom: 1000 },
+    mapState: {
+      obstacles: [],
+      terrainByType: {
+        hazardPatch: { elements: [{ x: 210, y: 490, w: 2, h: 20 }] },
+      },
+    },
+  };
+  let segmentsBeforeReset = 0;
+  updatePhysics(context, 2, {
+    onSurface() {},
+    onHazard() {
+      segmentsBeforeReset = context.physicsScratch.movementPath.count;
+      Object.assign(marble, { x: 800, y: 800, vx: 0, vy: 0 });
+      Object.assign(previous, marble);
+      return true;
+    },
+  });
+  assert.ok(
+    segmentsBeforeReset > 0,
+    "the hazard is reached after earlier movement",
+  );
+  assert.equal(context.physicsScratch.movementPath.count, 0);
+  const events = dynamics.update(
+    mapConfig,
+    marble,
+    previous,
+    2,
+    context.physicsScratch.movementPath,
+  );
+  assert.equal(
+    events.squishedAnts,
+    0,
+    "respawn must cancel the failed movement's ant contacts",
+  );
+  assert.equal(dynamics.state.ants[0].alive, true);
+}
+
+testHazardDiscardsEarlierAntContacts();
 console.log("Kitchen dynamics tests passed.");

@@ -183,6 +183,8 @@ function isOverTerrainPatch(marble, intro, patches, physics) {
 function createPhysicsScratch() {
   return {
     collisionContact: {},
+    // Reused frame-local output for contacts evaluated after physics.
+    movementPath: { segments: [], count: 0 },
     frameFactors: {
       baseDrag: 1,
       gooPatchDrag: 1,
@@ -450,6 +452,7 @@ function physicsStep(context, dt, feedback) {
   const currentSurfaceType = surfaceType(hits);
   feedback.onTerrain?.(currentSurfaceType);
   applySurfaceDrag(context, hits, factors);
+  const incomingSpeed = Math.hypot(context.marble.vx, context.marble.vy);
   const mouse = context.mapState.mouse;
   // Hazard teleports have already invalidated their sweep and returned above.
   // The authored roaming region is obstacle-free; contact uses incoming velocity
@@ -489,16 +492,25 @@ function physicsStep(context, dt, feedback) {
       feedback.onImpact,
     );
   }
+  const path = physicsScratch.movementPath;
+  const segment = (path.segments[path.count++] ??= { start: {}, end: {} });
+  segment.start.x = physicsScratch.previousTerrainMarble.x;
+  segment.start.y = physicsScratch.previousTerrainMarble.y;
+  segment.end.x = context.marble.x;
+  segment.end.y = context.marble.y;
+  segment.speed = incomingSpeed;
+  segment.dt = dt;
   handleSurfaceFeedback(context, feedback.onSurface, currentSurfaceType);
 }
 
 export function updatePhysics(context, dt, feedback) {
+  const physicsScratch = scratch(context);
+  physicsScratch.movementPath.count = 0;
   if (!Number.isFinite(dt) || dt <= 0) return;
 
   const speed = Math.hypot(context.marble.vx, context.marble.vy);
   const steps = physicsSubstepCount(speed, dt, context.physics);
   const stepDt = dt / steps;
-  const physicsScratch = scratch(context);
   physicsScratch.frameFactors.baseDrag = Math.pow(
     context.physics.baseDragRetention,
     stepDt,
@@ -527,7 +539,10 @@ export function updatePhysics(context, dt, feedback) {
   );
 
   for (let i = 0; i < steps; i++) {
-    if (physicsStep(context, stepDt, feedback)) return true;
+    if (physicsStep(context, stepDt, feedback)) {
+      physicsScratch.movementPath.count = 0;
+      return true;
+    }
   }
 }
 

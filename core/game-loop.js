@@ -205,6 +205,7 @@ export function createGameLoop({
         marble,
         previousMarble,
         frameDelta,
+        context.physicsScratch.movementPath,
       );
       if (themeEvents?.waterChanges > 0) {
         terrainView?.renderTerrainType(SURFACE_TYPES.waterPatch);

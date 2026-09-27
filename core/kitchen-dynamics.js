@@ -906,26 +906,49 @@ function advanceAnt(state, ant, marble, frameDelta) {
   moveAnt(state, ant, desiredAngle, speed, frameDelta);
 }
 
-function updateAnts(state, marble, previousMarble, frameDelta, events) {
+function updateAnts(
+  state,
+  marble,
+  previousMarble,
+  frameDelta,
+  events,
+  movementPath,
+) {
   if (frameDelta <= 0) return;
-  const sweepX = marble.x - previousMarble.x;
-  const sweepY = marble.y - previousMarble.y;
-  const sweepLength = Math.hypot(sweepX, sweepY);
-  // A utensil can stop the marble after it has already rolled over an ant.
-  const marbleSpeed = Math.max(
-    Math.hypot(marble.vx || 0, marble.vy || 0),
-    sweepLength / frameDelta,
-  );
   for (const ant of state.ants) {
-    setDistanceToSegment(
-      ant.x,
-      ant.y,
-      previousMarble,
-      marble,
-      state.collisionContact,
-    );
-    const overlapsMarble =
-      state.collisionContact.sweptDistance <= marble.r + antConfig.radius;
+    let overlapsMarble = false;
+    let marbleSpeed = 0;
+    let sweepX = 0;
+    let sweepY = 0;
+    let nearMiss = false;
+    const segmentCount = movementPath?.count || 1;
+    for (let i = 0; i < segmentCount; i++) {
+      const segment = movementPath?.count ? movementPath.segments[i] : null;
+      const start = segment?.start ?? previousMarble;
+      // Sponge contact runs after physics and can correct the final position.
+      const end = i === segmentCount - 1 ? marble : segment.end;
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const length = Math.hypot(dx, dy);
+      const speed = Math.max(
+        segment?.speed ?? Math.hypot(marble.vx || 0, marble.vy || 0),
+        length / (segment?.dt ?? frameDelta),
+      );
+      setDistanceToSegment(ant.x, ant.y, start, end, state.collisionContact);
+      const distance = state.collisionContact.sweptDistance;
+      if (
+        distance <= marble.r + antConfig.radius &&
+        (!overlapsMarble || speed > marbleSpeed)
+      ) {
+        overlapsMarble = true;
+        marbleSpeed = speed;
+        sweepX = length > collisionZeroDistanceEpsilon ? dx : marble.vx || 0;
+        sweepY = length > collisionZeroDistanceEpsilon ? dy : marble.vy || 0;
+      }
+      nearMiss ||=
+        speed >= antConfig.splatMinSpeed &&
+        distance < marble.r + antConfig.radius * 3;
+    }
     if (ant.squished) {
       const oldAge = ant.squishAge ?? antConfig.squishDurationFrames;
       ant.squishAge = Math.min(
@@ -951,10 +974,7 @@ function updateAnts(state, marble, previousMarble, frameDelta, events) {
       ant.squished = true;
       ant.mode = "squished";
       ant.squishAge = 0;
-      ant.squishAngle =
-        sweepLength > collisionZeroDistanceEpsilon
-          ? Math.atan2(sweepY, sweepX)
-          : Math.atan2(marble.vy || 0, marble.vx || 0);
+      ant.squishAngle = Math.atan2(sweepY, sweepX);
       ant.squishStrength = Math.min(
         1,
         marbleSpeed / (antConfig.squishMinSpeed * 6),
@@ -966,12 +986,7 @@ function updateAnts(state, marble, previousMarble, frameDelta, events) {
       events.antCrushes.push(ant);
       continue;
     }
-    if (
-      marbleSpeed >= antConfig.splatMinSpeed &&
-      state.collisionContact.sweptDistance < marble.r + antConfig.radius * 3 &&
-      !(ant.fleeFrames > 0) &&
-      !(ant.recoverFrames > 0)
-    ) {
+    if (nearMiss && !(ant.fleeFrames > 0) && !(ant.recoverFrames > 0)) {
       // A close pass can already be behind an ant when its reaction begins.
       ant.alertFrames = Math.max(ant.alertFrames ?? 0, Number.EPSILON);
     }
@@ -1196,6 +1211,7 @@ export function updateKitchenDynamics(
   marble,
   previousMarble = marble,
   frameDelta = 1,
+  movementPath = null,
 ) {
   const events = state.events;
   events.antCrushes.length = 0;
@@ -1218,7 +1234,7 @@ export function updateKitchenDynamics(
     events,
     mapConfig.variantId === kitchenFloorMapId,
   );
-  updateAnts(state, marble, previousMarble, frameDelta, events);
+  updateAnts(state, marble, previousMarble, frameDelta, events, movementPath);
   state.frameIndex += 1;
   return events;
 }
@@ -1229,13 +1245,14 @@ export function createKitchenDynamics(state = createKitchenDynamicsState()) {
     reset(context) {
       return resetKitchenDynamics(state, context);
     },
-    update(mapConfig, marble, previousMarble, frameDelta) {
+    update(mapConfig, marble, previousMarble, frameDelta, movementPath) {
       return updateKitchenDynamics(
         state,
         mapConfig,
         marble,
         previousMarble,
         frameDelta,
+        movementPath,
       );
     },
   };
