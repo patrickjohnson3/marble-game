@@ -1,14 +1,17 @@
 # Living-room materials and mouse art
 
 The assets below were generated with the built-in `image_gen` tool and
-packaged as lossless WebP, with decoded pixel equality checked against the PNG
-originals. No new runtime dependency is required.
+delivered as quality-90 WebP (Pillow/libwebp, `method=6`, `exact=True`), matching
+our parking-asset convention. Dimensions and the mouse alpha channel are
+unchanged; RGB compression is lossy. Re-encode from the original lossless source
+in Git history rather than repeatedly compressing the delivery files. No new
+runtime dependency is required.
 
-- `assets/sprites/shag.webp`: 1254 × 1254, 2,188,606 bytes. Tiled at 560 world
+- `assets/sprites/shag.webp`: 1254 × 1254, 488,562 bytes. Tiled at 560 world
   pixels, blended over the existing sage backing, clipped exactly to the rough
   terrain rectangle and baked into its existing static canvas. It adds no
   per-frame drawing. Late image loading repaints only the current map contents.
-- `assets/sprites/mouse.webp`: 1254 × 1254 with alpha, 843,698 bytes. A shared
+- `assets/sprites/mouse.webp`: 1254 × 1254 with alpha, 272,526 bytes. A shared
   body/head sprite drawn into a local canvas sized from the actor radius
   (480 × 480 at radius 88). Draw bounds
   account for transparent padding to keep the fur near the
@@ -17,16 +20,19 @@ originals. No new runtime dependency is required.
   defeated pose stays still. A simple shaded fallback works before loading or
   when the asset is unavailable.
 
-- `assets/sprites/oak-floor.webp`: 724 × 2172, 1,727,284 bytes. A repeating
+- `assets/sprites/oak-floor.webp`: 724 × 2172, 298,210 bytes. A repeating
   hardwood material on the existing world-sized CSS floor element. Four boards
   per 840px-wide strip preserve the previous 210px board width, with natural
   grain and staggered end joints. Each strip spans the room length and repeats
   only horizontally, avoiding abrupt horizontal material seams. No additional
   canvas or per-frame work.
 
-The images add about 4.54 MiB of transfer/cache data and up to 18 MiB of decoded
-RGBA storage. The mouse canvas uses about 0.88 MiB (previously 0.22 MiB); other
-canvas allocations are unchanged. The texture is deliberately
+The three images total 1,059,298 bytes (1.01 MiB), down from 4,759,588 bytes:
+3,700,290 fewer bytes for offline installation and each release download.
+The runtime-asset test allows 2 MiB combined, leaving room for art revisions
+while catching accidental lossless re-exports.
+Decoded RGBA storage remains up to 18 MiB; encoding does not reduce canvas
+allocation. The mouse canvas uses about 0.88 MiB. The texture is deliberately
 subdued to preserve marble/mouse readability. Real-phone judgment is still
 needed for texture density, perceived gait, hunting difficulty and smoothness.
 The mouse body is approximately 175 × 94 world pixels beside a 58px-diameter

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { dirname, normalize, relative, resolve } from "node:path";
 import { runtimeScripts } from "../runtime-assets.js";
 
@@ -42,6 +42,18 @@ assert.deepEqual(
   [...runtimeScripts].sort(),
   reachableRuntimeModules("boot.js"),
   "runtime-assets.js must exactly match modules reachable from boot.js",
+);
+
+// Leave room for artwork revisions while catching accidental lossless exports
+// of the three materials that previously added 4.76 MB to every installation.
+const livingRoomImageBytes = ["shag", "oak-floor", "mouse"].reduce(
+  (total, name) =>
+    total + statSync(resolve(root, `assets/sprites/${name}.webp`)).size,
+  0,
+);
+assert.ok(
+  livingRoomImageBytes <= 2 * 1024 * 1024,
+  "living-room delivery images must stay within their combined 2 MiB budget",
 );
 
 console.log("Runtime asset tests passed.");
