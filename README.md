@@ -39,8 +39,10 @@ Then open `http://localhost:8000/`.
   in Settings; press Resume when ready, or Set neutral first if your grip changed.
   The encounter stays in memory; a browser-discarded page starts fresh.
 - Camera: pinch to zoom and drag with two fingers to pan.
-- Objective: follow the top-left status. Kill all kitchen ants; defeat the living
-  room mouse and reach its doorway; hold inside the green circle on older maps.
+- Objective: follow the top-left status. Kill all kitchen ants, then choose
+  **Next room** when ready. The cleared kitchen stays playable until you leave.
+  Defeat the living room mouse and reach its doorway; hold inside the green
+  circle on older maps.
 - The **Mouse** arrow automatically points from your marble toward a distant
   mouse. It disappears when you get close or defeat it. Optional **exit / goal
   arrow** guidance is available in Settings.

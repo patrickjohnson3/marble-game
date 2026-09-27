@@ -482,6 +482,7 @@ export function createApp({
     goalIndicator: els.goalIndicator,
     levelLabel: els.levelLabel,
     objectiveStatus: els.objectiveStatus,
+    nextRoom: els.nextRoom,
     debugLines,
     state,
   });
@@ -658,6 +659,10 @@ export function createApp({
     terrainView,
     timing,
     ui,
+  });
+
+  els.nextRoom.addEventListener("click", () => {
+    if (!game.paused) goalController.depart();
   });
 
   const { sensorController, sensorWatchdog } = setupSensors({

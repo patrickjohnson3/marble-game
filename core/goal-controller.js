@@ -45,10 +45,15 @@ export function createGoalController({
 
   function refreshStatus() {
     const remaining = livingAntCount(kitchenState.ants);
+    const departureAvailable =
+      mapState.departureReady && !mapState.goalCompleted;
+    ui.setDepartureAvailable?.(departureAvailable);
     ui.setObjectiveStatus?.(
       mapState.goalCompleted
         ? "Map complete"
-        : objectiveStatusText(mapState.activeMap, remaining, mapState.mouse),
+        : departureAvailable
+          ? "Kitchen clear · Explore or choose Next room"
+          : objectiveStatusText(mapState.activeMap, remaining, mapState.mouse),
     );
     return remaining;
   }
@@ -56,15 +61,28 @@ export function createGoalController({
   function complete() {
     // Latch before callbacks: a final-ant objective stays true after completion,
     // including when this map has no available successor.
+    const celebrate = !mapState.departureReady;
     mapRuntime.completeGoal();
     onComplete(mapState.activeMap);
-    hapticFeedback.pulseGoal("complete");
+    if (celebrate) hapticFeedback.pulseGoal("complete");
     goalHapticActive = false;
     mapProgression.advanceToNextMap();
     refreshStatus();
     // Map activation clears old particles. Celebrate at the new spawn so
     // completion remains visible when the destination renders.
-    effectsRenderer.spawnGoalComplete();
+    if (celebrate) effectsRenderer.spawnGoalComplete();
+  }
+
+  function depart() {
+    if (
+      !intro.released ||
+      mapState.activeMap.objective?.type !== "eliminate" ||
+      !mapState.departureReady ||
+      mapState.goalCompleted
+    )
+      return false;
+    complete();
+    return true;
   }
 
   function update(frameDelta) {
@@ -76,8 +94,17 @@ export function createGoalController({
       goalHapticActive = false;
       // Validation rejects empty populations; don't treat uninitialized dynamics
       // as a victory if a caller updates before map activation has finished.
-      if (intro.released && kitchenState.ants.length > 0 && remaining === 0) {
-        complete();
+      if (
+        intro.released &&
+        kitchenState.ants.length > 0 &&
+        remaining === 0 &&
+        !mapState.departureReady
+      ) {
+        // Keep the final crush and room live until the player chooses to leave.
+        mapState.departureReady = true;
+        hapticFeedback.pulseGoal("complete");
+        effectsRenderer.spawnGoalComplete();
+        refreshStatus();
       }
       return;
     }
@@ -124,6 +151,7 @@ export function createGoalController({
   }
 
   return {
+    depart,
     refreshStatus,
     update,
   };

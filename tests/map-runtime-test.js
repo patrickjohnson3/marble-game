@@ -118,7 +118,9 @@ assert.equal(terrain(runtime.state, "waterPatch").elements.length, 1);
 assert.equal(runtime.addGoalHold(1000), 0.2);
 runtime.completeGoal();
 assert.equal(runtime.state.goalCompleted, true);
+runtime.state.departureReady = true;
 runtime.setActiveMap(secondMap);
+assert.equal(runtime.state.departureReady, false);
 
 assert.notEqual(runtime.state.activeMap, secondMap);
 assert.deepEqual(runtime.state.activeMap, secondMap);

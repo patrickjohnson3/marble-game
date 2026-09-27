@@ -96,6 +96,7 @@ export function createMapRuntime({
     cockroach: null,
     goalHoldMs: 0,
     goalCompleted: false,
+    departureReady: false,
   };
 
   function resetGoalProgress() {
@@ -113,6 +114,7 @@ export function createMapRuntime({
     state.terrainByType = derived.terrainByType;
     state.mouse = derived.mouse;
     state.cockroach = derived.cockroach;
+    state.departureReady = false;
     resetGoalProgress();
     return state;
   }

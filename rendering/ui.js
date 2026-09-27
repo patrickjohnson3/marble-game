@@ -5,6 +5,7 @@ export function createUi({
   hint,
   levelLabel,
   objectiveStatus,
+  nextRoom,
   fpsCounter,
   debug,
   installApp,
@@ -50,6 +51,10 @@ export function createUi({
 
     objectiveStatus.textContent = message;
     objectiveStatus.hidden = !message;
+  }
+
+  function setDepartureAvailable(available) {
+    if (nextRoom) nextRoom.hidden = !available;
   }
 
   function setLevelLabel(message) {
@@ -196,6 +201,7 @@ export function createUi({
     showLevelLabel,
     setMapObjects,
     setObjectiveStatus,
+    setDepartureAvailable,
     setPwaInstallAvailable,
     setPwaStatus,
     setStartControls,

@@ -94,8 +94,8 @@ scurrying does not stun it.
 Retry recreates every timer, impulse, contact, engagement and strike-recovery
 field. Intro confinement,
 hazard teleports and completed maps skip its processing. A map transition
-replaces both actor state and canvas; final-ant completion needs no cockroach
-state change.
+replaces both actor state and canvas. Clearing the last ant leaves the cockroach
+active while the player lingers; choosing Next room performs the transition.
 
 ## Validation and playtest
 

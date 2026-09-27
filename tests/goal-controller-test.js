@@ -9,6 +9,7 @@ import { createMapRuntime } from "../core/map-runtime.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { baseMapConfig } from "../core/map-config.js";
 import { resolveMouseContact } from "../core/mouse.js";
+import { updateCockroach } from "../core/cockroach.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
 import {
   getObjectiveRegion,
@@ -231,7 +232,14 @@ function objectiveHarness(sourceMap, nextMap = null) {
   const kitchen = createKitchenDynamics();
   const marble = { ...sourceMap.spawn, vx: 0, vy: 0 };
   const intro = { released: true };
-  const calls = { completed: [], advances: 0, effects: 0, statuses: [] };
+  const calls = {
+    completed: [],
+    advances: 0,
+    effects: 0,
+    statuses: [],
+    departures: [],
+    haptics: [],
+  };
   function applyMap(map) {
     runtime.setActiveMap(map);
     kitchen.reset({
@@ -252,7 +260,11 @@ function objectiveHarness(sourceMap, nextMap = null) {
         calls.effects++;
       },
     },
-    hapticFeedback: { pulseGoal() {} },
+    hapticFeedback: {
+      pulseGoal(kind) {
+        calls.haptics.push(kind);
+      },
+    },
     intro,
     kitchenState: kitchen.state,
     mapRuntime: runtime,
@@ -276,6 +288,9 @@ function objectiveHarness(sourceMap, nextMap = null) {
       setHint() {},
       setObjectiveStatus(status) {
         calls.statuses.push(status);
+      },
+      setDepartureAvailable(available) {
+        calls.departures.push(available);
       },
     },
   });
@@ -317,6 +332,7 @@ function testEliminationUsesActualCrushStateAndCompletesOnce() {
   controller.update(1);
   assert.equal(calls.completed.length, 0);
   assert.equal(calls.statuses.at(-1), "Kill all ants · 10 left");
+  assert.equal(controller.depart(), false, "living ants block departure");
 
   while (kitchen.state.ants.some((ant) => ant.alive)) {
     const ant = kitchen.state.ants.find((candidate) => candidate.alive);
@@ -347,23 +363,66 @@ function testEliminationUsesActualCrushStateAndCompletesOnce() {
         "Kill all ants · " + remaining + " left",
       );
     } else {
-      assert.deepEqual(calls.completed, ["kitchen-floor"]);
+      assert.equal(
+        runtime.state.activeMap.variantId,
+        "kitchen-floor",
+        "the final crush must leave its room and remains visible",
+      );
+      assert.deepEqual(calls.completed, []);
       break;
     }
   }
-  assert.equal(runtime.state.activeMap.variantId, "living-test");
+  const finalPosition = { x: marble.x, y: marble.y };
+  assert.equal(runtime.state.departureReady, true);
+  assert.equal(runtime.state.goalCompleted, false);
+  assert.equal(calls.departures.at(-1), true);
+  assert.match(calls.statuses.at(-1), /Kitchen clear/);
+  assert.equal(livingAntCount(kitchen.state.ants), 0);
   assert.equal(
-    cockroach.mode,
-    "harass",
-    "completion needs no cockroach defeat",
+    kitchen.state.ants.length,
+    10,
+    "flattened ants stay in the room",
   );
+  runtime.resetGoalProgress();
+  for (let frame = 0; frame < 10; frame++) controller.update(1);
+  assert.equal(calls.advances, 0);
+  assert.equal(
+    calls.effects,
+    1,
+    "acknowledge clearing exactly once, even after a hold reset",
+  );
+  assert.deepEqual(calls.haptics, ["complete"]);
+  assert.deepEqual({ x: marble.x, y: marble.y }, finalPosition);
+  const roachBefore = globalThis.structuredClone(cockroach);
+  updateCockroach(cockroach, marble, 1, runtime.state, marble, kitchen.state);
+  assert.notDeepEqual(
+    cockroach,
+    roachBefore,
+    "clearing ants must not stop cockroach behavior",
+  );
+  assert.equal(controller.depart(), true);
+  assert.equal(
+    controller.depart(),
+    false,
+    "double activation must not skip another room",
+  );
+  assert.deepEqual(calls.completed, ["kitchen-floor"]);
+  assert.equal(runtime.state.activeMap.variantId, "living-test");
+  assert.equal(runtime.state.departureReady, false);
+  assert.equal(calls.departures.at(-1), false);
+
   assert.equal(
     runtime.state.cockroach,
     null,
     "the old actor cannot follow into the next map",
   );
   assert.equal(calls.advances, 1);
-  assert.equal(calls.effects, 1);
+  assert.equal(
+    calls.effects,
+    1,
+    "departure must not repeat the clearing celebration",
+  );
+  assert.deepEqual(calls.haptics, ["complete"]);
   assert.equal(
     kitchen.state.ants.length,
     0,
@@ -402,6 +461,11 @@ function testEliminationRetryAndMissingSuccessor() {
   intro.released = true;
   controller.update(1);
   controller.update(1);
+  assert.equal(calls.completed.length, 0);
+  assert.equal(calls.advances, 0);
+  assert.equal(runtime.state.departureReady, true);
+  assert.equal(controller.depart(), true);
+  assert.equal(controller.depart(), false);
   assert.equal(calls.completed.length, 1);
   assert.equal(
     calls.advances,
@@ -430,11 +494,19 @@ function testEliminationRetryAndMissingSuccessor() {
   );
   assert.equal(runtime.state.goalCompleted, false);
   assert.equal(livingAntCount(kitchen.state.ants), 10);
+  assert.equal(runtime.state.departureReady, false);
+  assert.equal(
+    controller.depart(),
+    false,
+    "Retry locks departure until the ants are cleared again",
+  );
   controller.update(1);
   assert.equal(calls.completed.length, 1, "Retry must restore living targets");
   assert.equal(calls.statuses.at(-1), "Kill all ants · 10 left");
   for (const ant of kitchen.state.ants) ant.alive = false;
   controller.update(1);
+  assert.equal(calls.completed.length, 1);
+  assert.equal(controller.depart(), true);
   assert.equal(calls.completed.length, 2, "a new run can complete again");
 }
 

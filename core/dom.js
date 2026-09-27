@@ -59,6 +59,7 @@ export const domIds = {
   hint: "hint",
   levelLabel: "levelLabel",
   objectiveStatus: "objectiveStatus",
+  nextRoom: "nextRoom",
   fpsCounter: "fpsCounter",
   debug: "debug",
 };

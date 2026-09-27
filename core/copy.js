@@ -2,7 +2,7 @@ export const copy = {
   bootError: "game failed to load. refresh and try again.",
   title: "marble tilt",
   startHelp:
-    "Tilt your phone to roll, or use arrows/WASD. Kill all ants in the kitchen; defeat the living-room mouse with fast hits, then reach its exit. Follow the objective shown above. Pinch to zoom; use two fingers to pan.",
+    "Tilt your phone to roll, or use arrows/WASD. Kill all kitchen ants, then choose Next room; defeat the living-room mouse with fast hits, then reach its exit. Follow the objective shown above. Pinch to zoom; use two fingers to pan.",
   initialHint: "",
   hints: {
     mapOpen: "",
@@ -40,6 +40,7 @@ export const copy = {
     installApp: "install app",
     neutral: "set neutral",
     retryMap: "retry map",
+    nextRoom: "Next room",
     loadMap: "load map",
     reset: "reset",
     resume: "resume",
@@ -54,7 +55,7 @@ export const copy = {
       title: "Controls & map",
       movement: "Tilt your phone to steer. On desktop, use arrows or WASD.",
       camera: "Pinch to zoom. Drag with two fingers to pan.",
-      goal: "Kill all kitchen ants, defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above. The Mouse arrow points from your marble toward a distant mouse automatically.",
+      goal: "Kill all kitchen ants, then choose Next room when ready. Defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above. The Mouse arrow points from your marble toward a distant mouse automatically.",
     },
     sections: {
       gameplay: "Gameplay",
@@ -97,6 +98,7 @@ export function applyDocumentCopy({ document, els }) {
   els.closeSettings.textContent = copy.buttons.closeSettings;
   els.installApp.textContent = copy.buttons.installApp;
   els.retryMap.textContent = copy.buttons.retryMap;
+  els.nextRoom.textContent = copy.buttons.nextRoom;
   els.loadMap.textContent = copy.buttons.loadMap;
   els.mapSwitchHelp.textContent = copy.settings.mapSwitchHelp;
   els.resetSpeedSetting.textContent = copy.buttons.reset;

@@ -81,9 +81,12 @@ objective: { type: "eliminate", target: "ant", count: "all" }
 ```
 
 The controller counts authoritative ants with `alive === true`. One survivor
-blocks completion; crushing the last ant completes once after kitchen contacts
-finish. Crumbs, cereal, scenery, and crushed remains never count as targets.
-The HUD shows `Kill all ants · N left`. Maps with no authored ants are invalid.
+blocks departure; crushing the last ant celebrates once after kitchen contacts
+finish and reveals **Next room**. The room remains playable, including cockroach
+behavior, until that action completes the map through normal progression.
+Crumbs, cereal, scenery, and crushed remains never count as targets.
+The HUD shows `Kill all ants · N left`, then `Kitchen clear` with the departure
+instruction. Maps with no authored ants are invalid.
 
 The living room declares:
 
@@ -131,8 +134,8 @@ threshold; it hides near the mouse and after defeat. The saved **exit / goal arr
 setting controls optional destination guidance after defeat and on other maps.
 There is no hold timer for reach. Older maps still use their original circular held goals.
 All objectives use the existing completion latch, feedback, and progression;
-Retry restores the current map's actors and clears the latch while retaining
-control settings and calibration.
+Retry restores the current map's actors and clears completion and departure
+readiness while retaining control settings and calibration.
 
 ## Kitchen cockroach
 

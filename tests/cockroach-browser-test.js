@@ -29,6 +29,7 @@ window.__cockroachApp = createApp();`,
       await page.locator("#objectiveStatus").textContent(),
       /Kill all ants/,
     );
+    assert.equal(await page.locator("#nextRoom").isHidden(), true);
 
     // The app must supply live kitchen food to the physics-owned roach. Place
     // it facing away from a real cereal cluster and watch it return on its own.
@@ -238,30 +239,105 @@ window.__cockroachApp = createApp();`,
       "Retry recreates the resting antagonist",
     );
 
-    // Exercise every actual ant crush while the cockroach still exists.
-    const completion = await page.evaluate(() => {
+    async function crushRemainingAnts() {
+      // Position on each real ant; use the actual dynamics/crush path rather
+      // than setting objective progress or living-ant flags in the test.
+      await page.evaluate(() => {
+        const app = window.__cockroachApp;
+        app.gameController.pause();
+        while (app.kitchenDynamics.state.ants.some((ant) => ant.alive)) {
+          const ant = app.kitchenDynamics.state.ants.find((item) => item.alive);
+          Object.assign(app.state.marble, { x: ant.x, y: ant.y, vx: 6, vy: 0 });
+          app.kitchenDynamics.update(
+            app.mapRuntime.state.activeMap,
+            app.state.marble,
+            { x: ant.x - 6, y: ant.y },
+            1,
+          );
+        }
+        app.state.marble.vx = 0;
+        app.cameraController.centerOnMarble();
+        app.gameController.resume();
+      });
+      await page.waitForTimeout(150);
+    }
+
+    await crushRemainingAnts();
+    assert.equal(
+      await page.evaluate(
+        () => window.__cockroachApp.mapRuntime.state.activeMap.variantId,
+      ),
+      "kitchen-floor",
+      "the final ant must leave the player in the kitchen until departure",
+    );
+    assert.equal(
+      await page.evaluate(() =>
+        window.__cockroachApp.kitchenDynamics.state.ants.some(
+          (ant) => ant.alive,
+        ),
+      ),
+      false,
+    );
+    assert.equal(await page.locator("#nextRoom").isVisible(), true);
+    assert.match(await page.locator("#nextRoom").textContent(), /Next room/);
+    assert.equal(await page.locator(".cockroachCanvas").count(), 1);
+
+    const lingering = await page.evaluate(() => {
       const app = window.__cockroachApp;
-      const roach = app.mapRuntime.state.cockroach;
-      while (app.kitchenDynamics.state.ants.some((ant) => ant.alive)) {
-        const ant = app.kitchenDynamics.state.ants.find((item) => item.alive);
-        Object.assign(app.state.marble, { x: ant.x, y: ant.y, vx: 6, vy: 0 });
-        app.kitchenDynamics.update(
-          app.mapRuntime.state.activeMap,
-          app.state.marble,
-          { x: ant.x - 6, y: ant.y },
-          1,
-        );
-      }
-      app.state.marble.vx = 0;
-      app.gameController.resume();
-      return { mode: roach.mode };
+      // Give the player a clear, repeatable lane for post-objective input.
+      Object.assign(app.state.marble, { x: 400, y: 500, vx: 0, vy: 0 });
+      app.cameraController.centerOnMarble();
+      return {
+        x: app.state.marble.x,
+        gait: app.mapRuntime.state.cockroach.gait,
+      };
     });
-    assert.equal(completion.mode, "scurry");
+    await page.keyboard.down("ArrowRight");
+    await page.waitForFunction((before) => {
+      const app = window.__cockroachApp;
+      return (
+        app.state.marble.x > before.x + 10 &&
+        app.mapRuntime.state.cockroach.gait > before.gait
+      );
+    }, lingering);
+    await page.keyboard.up("ArrowRight");
+    assert.equal(await page.locator("#nextRoom").isVisible(), true);
+
+    await page.locator("#settingsToggle").click();
+    await page.locator("#retryMap").click();
+    assert.equal(await page.locator("#nextRoom").isHidden(), true);
+    assert.ok(
+      await page.evaluate(() =>
+        window.__cockroachApp.kitchenDynamics.state.ants.every(
+          (ant) => ant.alive,
+        ),
+      ),
+      "Retry must restore the ants and remove permission to depart",
+    );
+    assert.match(
+      await page.locator("#objectiveStatus").textContent(),
+      /Kill all ants/,
+    );
+
+    await crushRemainingAnts();
+    assert.equal(await page.locator("#nextRoom").isVisible(), true);
+    await page.evaluate(() => {
+      const app = window.__cockroachApp;
+      window.__kitchenDepartures = 0;
+      const advance = app.mapProgression.advanceToNextMap;
+      app.mapProgression.advanceToNextMap = () => {
+        window.__kitchenDepartures++;
+        return advance();
+      };
+    });
+    await page.locator("#nextRoom").dblclick();
     await page.waitForFunction(
       () =>
         window.__cockroachApp.mapRuntime.state.activeMap.variantId ===
         "living-room",
     );
+    assert.equal(await page.evaluate(() => window.__kitchenDepartures), 1);
+    assert.equal(await page.locator("#nextRoom").isHidden(), true);
     assert.equal(await page.locator(".cockroachCanvas").count(), 0);
     assert.equal(
       await page.evaluate(
