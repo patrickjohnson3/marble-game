@@ -792,6 +792,11 @@ export function createApp({
     gameController.openSettings();
   }
 
+  els.startHelp.addEventListener("keydown", (event) => {
+    // Let focused instructions scroll without feeding gameplay movement keys.
+    event.stopPropagation();
+  });
+
   bindSettingsPanel({
     els,
     settings,

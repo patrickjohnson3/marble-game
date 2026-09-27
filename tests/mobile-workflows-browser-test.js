@@ -332,3 +332,134 @@ window.__mapPreview = createApp();`,
     await page.close();
   }
 }
+export async function testConstrainedOnboarding(browser, baseUrl) {
+  for (const scenario of [
+    { width: 320, height: 256, textScale: 1 },
+    { width: 320, height: 568, textScale: 2 },
+    { width: 844, height: 390, textScale: 1, safeLeft: 44, safeRight: 44 },
+    { width: 390, height: 844, textScale: 1, safeTop: 44, safeBottom: 34 },
+  ]) {
+    const page = await browser.newPage({
+      viewport: { width: scenario.width, height: scenario.height },
+      isMobile: true,
+      hasTouch: true,
+      serviceWorkers: "block",
+    });
+    try {
+      await page.goto(baseUrl, { waitUntil: "networkidle" });
+      await page.evaluate((view) => {
+        for (const side of ["Top", "Right", "Bottom", "Left"]) {
+          document.documentElement.style.setProperty(
+            `--safe-${side.toLowerCase()}`,
+            `${view[`safe${side}`] || 0}px`,
+          );
+        }
+        // Emulate enlarged interface text; this does not claim OS font scaling.
+        const fonts = [
+          ...document.querySelectorAll("#controls, #controls *"),
+        ].map((element) => [
+          element,
+          parseFloat(window.getComputedStyle(element).fontSize),
+        ]);
+        for (const [element, size] of fonts) {
+          element.style.fontSize = `${size * view.textScale}px`;
+        }
+      }, scenario);
+      const layout = await page.evaluate(() => {
+        const rect = (id) => {
+          const b = document.getElementById(id).getBoundingClientRect();
+          return { left: b.left, right: b.right, top: b.top, bottom: b.bottom };
+        };
+        const gear = rect("settingsToggle");
+        return {
+          help: rect("startHelp"),
+          start: rect("start"),
+          gearAccessible: !!document
+            .elementFromPoint(
+              (gear.left + gear.right) / 2,
+              (gear.top + gear.bottom) / 2,
+            )
+            ?.closest("#settingsToggle"),
+          documentWidth: document.documentElement.scrollWidth,
+        };
+      });
+      assert.equal(
+        layout.gearAccessible,
+        true,
+        "instructions must not cover Settings",
+      );
+      for (const bounds of [layout.help, layout.start]) {
+        assert.ok(
+          bounds.top >= 0 &&
+            bounds.bottom <= scenario.height - (scenario.safeBottom || 0),
+        );
+        assert.ok(
+          bounds.left >= (scenario.safeLeft || 0) &&
+            bounds.right <= scenario.width - (scenario.safeRight || 0),
+        );
+      }
+      assert.ok(
+        layout.start.bottom - layout.start.top >= 44,
+        "Start must retain its touch target when instructions overflow",
+      );
+      assert.ok(
+        layout.documentWidth <= scenario.width,
+        "onboarding must not create horizontal overflow",
+      );
+      const help = page.locator("#startHelp");
+      const overflow = await help.evaluate(
+        (element) => element.scrollHeight > element.clientHeight,
+      );
+      if (overflow) {
+        await help.focus();
+        await page.keyboard.press("ArrowDown");
+        await page.waitForFunction(
+          () => document.getElementById("startHelp").scrollTop > 0,
+          null,
+          { timeout: 1000 },
+        );
+        await help.evaluate((element) => {
+          element.scrollTop = 0;
+        });
+        const box = await help.boundingBox();
+        const cdp = await page.context().newCDPSession(page);
+        const x = box.x + box.width / 2;
+        const startY = box.y + box.height - 12;
+        const endY = box.y + 12;
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchStart",
+          touchPoints: [{ x, y: startY }],
+        });
+        for (let step = 1; step <= 5; step++) {
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ x, y: startY + ((endY - startY) * step) / 5 }],
+          });
+          await page.waitForTimeout(20);
+        }
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchEnd",
+          touchPoints: [],
+        });
+        assert.ok(
+          await help.evaluate((element) => element.scrollTop > 0),
+          "overflowed instructions must scroll with a finger",
+        );
+        await cdp.detach();
+      }
+      if (scenario.width === 320)
+        assert.equal(
+          overflow,
+          true,
+          "constrained instructions should scroll rather than displace controls",
+        );
+      await page.locator("#settingsToggle").tap();
+      assert.equal(await page.locator("#settingsOverlay").isVisible(), true);
+      await page.locator("#closeSettings").tap();
+      await page.locator("#start").tap();
+      assert.equal(await page.locator("#controls").isHidden(), true);
+    } finally {
+      await page.close();
+    }
+  }
+}

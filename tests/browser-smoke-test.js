@@ -16,6 +16,7 @@ import { testCameraZoomVisibility } from "./camera-browser-test.js";
 import { testMapSwitching } from "./map-switch-browser-test.js";
 import {
   testMotionPermissionRecovery,
+  testConstrainedOnboarding,
   testSettingsModality,
   testStartupRecovery,
 } from "./mobile-workflows-browser-test.js";
@@ -958,6 +959,7 @@ try {
   await testStartupRecovery(browser, `http://127.0.0.1:${port}/`);
   await testMotionPermissionRecovery(browser, `http://127.0.0.1:${port}/`);
   await testSettingsModality(browser, `http://127.0.0.1:${port}/`);
+  await testConstrainedOnboarding(browser, `http://127.0.0.1:${port}/`);
   await testInterruptionWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticOrientationWorkflow(browser, `http://127.0.0.1:${port}/`);
   await testSyntheticLateSensorRecovery(browser, `http://127.0.0.1:${port}/`);
