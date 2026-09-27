@@ -2118,4 +2118,98 @@ testPhysicsSubstepCountFallsBackFromInvalidTuning();
 testInvalidPhysicsStepInputsDoNotPoisonState();
 testSubstepsPreventThinObstacleTunneling();
 
+function testRectangularTerrainHasRoundedSweptCorners() {
+  function hits(marble, patch, velocity = { vx: 0, vy: 0 }) {
+    let count = 0;
+    updateTestPhysics(
+      {
+        marble: { ...marble, ...velocity },
+        tilt: { smoothX: 0, smoothY: 0 },
+        intro: { released: true },
+        bounds: { left: -1000, top: -1000, right: 5000, bottom: 5000 },
+        hazardPatches: [patch],
+        physics: {
+          ...physicsConfig,
+          baseDragRetention: 1,
+          maxStepDistance: 100,
+        },
+      },
+      1,
+      {
+        onHazard() {
+          count++;
+        },
+        onSurface() {},
+      },
+    );
+    return count;
+  }
+  const patch = { x: 100, y: 100, w: 20, h: 20 };
+  for (const sx of [-1, 1]) {
+    for (const sy of [-1, 1]) {
+      const x = sx < 0 ? patch.x : patch.x + patch.w;
+      const y = sy < 0 ? patch.y : patch.y + patch.h;
+      assert.equal(
+        hits({ x: x + sx * 4, y: y + sy * 4, r: 5 }, patch),
+        0,
+        "a square-expanded corner must not count as circular contact",
+      );
+      // A 3-4-5 triangle supplies an exact, independently known tangency.
+      assert.equal(hits({ x: x + sx * 3, y: y + sy * 4, r: 5 }, patch), 1);
+      assert.equal(hits({ x: x + sx * 3.001, y: y + sy * 4, r: 5 }, patch), 0);
+    }
+  }
+  assert.equal(
+    hits({ x: 94, y: 99, r: 5 }, patch, { vx: 5, vy: -5 }),
+    1,
+    "the segment can cross a corner disk with both endpoints outside",
+  );
+  assert.equal(hits({ x: 93, y: 99, r: 5 }, patch, { vx: 6, vy: -6 }), 0);
+  assert.equal(hits({ x: 90, y: 110, r: 0 }, patch, { vx: 30, vy: 0 }), 1);
+  assert.equal(
+    hits({ x: 95, y: 90, r: 5 }, patch, { vx: 0, vy: 40 }),
+    1,
+    "a parallel side tangent still contacts the rectangle",
+  );
+
+  const marble = { x: 1725, y: 2235, r: 29, vx: -1, vy: 0 };
+  let hazards = 0;
+  updateTestPhysics(
+    {
+      marble,
+      tilt: { smoothX: 0, smoothY: 0 },
+      physics: physicsConfig,
+      intro: { released: true },
+      bounds: { left: 0, top: 0, right: 4400, bottom: 6400 },
+      hazardPatches: [{ x: 1440, y: 1950, w: 260, h: 260 }],
+    },
+    1,
+    {
+      onHazard() {
+        hazards++;
+      },
+      onSurface() {},
+    },
+  );
+  assert.equal(hazards, 0, "the parking drain must not reset a clear marble");
+  assertNear(marble.x, 1724.06);
+
+  const floorMarble = { x: 1055, y: 1455, r: 29, vx: 1, vy: 0 };
+  updateTestPhysics(
+    {
+      marble: floorMarble,
+      tilt: { smoothX: 0, smoothY: 0 },
+      physics: physicsConfig,
+      intro: { released: true },
+      bounds: { left: 0, top: 0, right: 4400, bottom: 6400 },
+      roughPatches: [{ x: 1080, y: 1480, w: 2110, h: 1650 }],
+    },
+    1,
+    { onSurface() {} },
+  );
+  assertNear(floorMarble.vx, 0.94, 1e-12);
+}
+
+testRectangularTerrainHasRoundedSweptCorners();
+
 console.log("Physics tests passed.");

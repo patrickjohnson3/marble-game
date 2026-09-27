@@ -225,27 +225,27 @@ function updatePreviousTerrainMarble(context, scratch) {
   scratch.previousTerrainMarble.r = context.marble.r;
 }
 
-function pointInExpandedRect(point, rect, padding) {
+function pointInExpandedRect(point, rect, paddingX, paddingY) {
   return (
-    point.x >= rect.x - padding &&
-    point.x <= rect.x + rect.w + padding &&
-    point.y >= rect.y - padding &&
-    point.y <= rect.y + rect.h + padding
+    point.x >= rect.x - paddingX &&
+    point.x <= rect.x + rect.w + paddingX &&
+    point.y >= rect.y - paddingY &&
+    point.y <= rect.y + rect.h + paddingY
   );
 }
 
-function segmentIntersectsExpandedRect(start, end, rect, padding) {
+function segmentIntersectsRect(start, end, rect, paddingX, paddingY) {
   if (
-    pointInExpandedRect(start, rect, padding) ||
-    pointInExpandedRect(end, rect, padding)
+    pointInExpandedRect(start, rect, paddingX, paddingY) ||
+    pointInExpandedRect(end, rect, paddingX, paddingY)
   ) {
     return true;
   }
 
-  const left = rect.x - padding;
-  const right = rect.x + rect.w + padding;
-  const top = rect.y - padding;
-  const bottom = rect.y + rect.h + padding;
+  const left = rect.x - paddingX;
+  const right = rect.x + rect.w + paddingX;
+  const top = rect.y - paddingY;
+  const bottom = rect.y + rect.h + paddingY;
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   let tMin = 0;
@@ -276,6 +276,39 @@ function segmentIntersectsExpandedRect(start, end, rect, padding) {
   }
 
   return true;
+}
+
+function segmentIntersectsExpandedRect(start, end, rect, padding) {
+  if (!segmentIntersectsRect(start, end, rect, padding, padding)) return false;
+  // A circle expands the rectangle into side strips and rounded corners,
+  // not the square corners of its broad-phase bounding box.
+  if (
+    segmentIntersectsRect(start, end, rect, padding, 0) ||
+    segmentIntersectsRect(start, end, rect, 0, padding)
+  )
+    return true;
+
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSq = dx * dx + dy * dy;
+  for (let ix = 0; ix < 2; ix++) {
+    for (let iy = 0; iy < 2; iy++) {
+      const cornerX = rect.x + ix * rect.w;
+      const cornerY = rect.y + iy * rect.h;
+      const t =
+        lengthSq > 0
+          ? clamp(
+              ((cornerX - start.x) * dx + (cornerY - start.y) * dy) / lengthSq,
+              0,
+              1,
+            )
+          : 0;
+      const gapX = start.x + t * dx - cornerX;
+      const gapY = start.y + t * dy - cornerY;
+      if (gapX * gapX + gapY * gapY <= padding * padding) return true;
+    }
+  }
+  return false;
 }
 
 function segmentIntersectsExpandedEllipse(start, end, patch, shape, padding) {
