@@ -1,4 +1,9 @@
-import { persistedSettingsKeys, settingsSchema } from "./settings-config.js";
+import { clamp } from "../core/geometry.js";
+import {
+  persistedSettingsKeys,
+  settingsConfig,
+  settingsSchema,
+} from "./settings-config.js";
 
 function copyPersistedSettings(settings) {
   return Object.fromEntries(
@@ -6,18 +11,18 @@ function copyPersistedSettings(settings) {
   );
 }
 
-function numberSetting(value, fallback, range, clamp) {
+function numberSetting(value, fallback, range) {
   if (!Number.isFinite(value)) return fallback;
   if (!range) return value;
   return clamp(value, range.min, range.max);
 }
 
-function settingValue({ clamp, controls, defaults, key, saved }) {
+function settingValue(key, saved) {
   const config = settingsSchema[key];
-  const fallback = defaults[key];
+  const fallback = config.defaultValue;
 
   if (config?.type === "number") {
-    return numberSetting(saved[key], fallback, controls[key], clamp);
+    return numberSetting(saved[key], fallback, config.control);
   }
   if (config?.type === "boolean") {
     return typeof saved[key] === "boolean" ? saved[key] : fallback;
@@ -33,37 +38,28 @@ export function availableStorage(getStorage = () => localStorage) {
   }
 }
 
-export function loadSettings({
-  storage,
-  storageKey,
-  defaults,
-  controls,
-  clamp,
-}) {
+export function loadSettings({ storage, storageKey }) {
   try {
-    if (!storage) return { ...defaults };
+    if (!storage) return { ...settingsConfig };
 
     const saved = JSON.parse(storage.getItem(storageKey) || "null");
-    if (!saved || typeof saved !== "object") return { ...defaults };
+    if (!saved || typeof saved !== "object") return { ...settingsConfig };
     const trailDefaultVersion = Number.isFinite(saved.trailDefaultVersion)
       ? saved.trailDefaultVersion
       : 1;
     const shouldUseCurrentTrailDefault =
-      trailDefaultVersion < defaults.trailDefaultVersion;
+      trailDefaultVersion < settingsConfig.trailDefaultVersion;
     const settings = Object.fromEntries(
-      persistedSettingsKeys.map((key) => [
-        key,
-        settingValue({ clamp, controls, defaults, key, saved }),
-      ]),
+      persistedSettingsKeys.map((key) => [key, settingValue(key, saved)]),
     );
 
     settings.trailEnabled = shouldUseCurrentTrailDefault
-      ? defaults.trailEnabled
+      ? settingsConfig.trailEnabled
       : settings.trailEnabled;
-    settings.trailDefaultVersion = defaults.trailDefaultVersion;
+    settings.trailDefaultVersion = settingsConfig.trailDefaultVersion;
     return settings;
   } catch {
-    return { ...defaults };
+    return { ...settingsConfig };
   }
 }
 

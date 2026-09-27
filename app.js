@@ -290,9 +290,6 @@ function createSettingsRuntime(storage) {
   const settings = loadSettings({
     storage,
     storageKey,
-    defaults: settingsConfig,
-    controls: settingsControls,
-    clamp,
   });
   function saveSettings() {
     persistSettings({

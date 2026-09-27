@@ -5,9 +5,10 @@ import {
   saveSettings,
 } from "../settings/settings-store.js";
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
+import {
+  settingsConfig as defaults,
+  settingsControls as controls,
+} from "../settings/settings-config.js";
 
 function storageWith(value) {
   return {
@@ -21,23 +22,6 @@ function storageWith(value) {
   };
 }
 
-const defaults = {
-  maxSpeed: 14,
-  acceleration: 0.115,
-  hapticsEnabled: true,
-  trailEnabled: false,
-  trailDefaultVersion: 2,
-  fullscreenEnabled: true,
-  goalIndicatorEnabled: false,
-  hitboxOverlayEnabled: false,
-  fpsEnabled: false,
-  statsEnabled: false,
-};
-const controls = {
-  maxSpeed: { min: 8, max: 24 },
-  acceleration: { min: 0.06, max: 0.18 },
-};
-
 function testTrailMigrationDefaultsOldSavedTrailOff() {
   const settings = loadSettings({
     storage: storageWith(
@@ -48,9 +32,6 @@ function testTrailMigrationDefaultsOldSavedTrailOff() {
       }),
     ),
     storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
   });
 
   assert.equal(settings.trailEnabled, false);
@@ -68,9 +49,6 @@ function testTrailMigrationPreservesCurrentSavedTrailChoice() {
       }),
     ),
     storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
   });
 
   assert.equal(settings.trailEnabled, true);
@@ -107,9 +85,6 @@ function testUnavailableStorageFallsBackToDefaults() {
     loadSettings({
       storage,
       storageKey: "settings",
-      defaults,
-      controls,
-      clamp,
     }),
     defaults,
   );
@@ -127,9 +102,6 @@ function testMalformedJsonFallsBackToDefaults() {
     loadSettings({
       storage: storageWith("{bad json"),
       storageKey: "settings",
-      defaults,
-      controls,
-      clamp,
     }),
     defaults,
   );
@@ -144,9 +116,6 @@ function testUnknownSavedSettingsDoNotLeakIntoRuntime() {
       }),
     ),
     storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
   });
 
   assert.equal(Object.hasOwn(settings, "secretDevOnlySetting"), false);
@@ -163,9 +132,6 @@ function testStorageReadErrorsFallBackToDefaults() {
     loadSettings({
       storage,
       storageKey: "settings",
-      defaults,
-      controls,
-      clamp,
     }),
     defaults,
   );
@@ -196,9 +162,6 @@ function testFpsSettingPersistsValidChoice() {
       }),
     ),
     storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
   });
 
   assert.equal(settings.fpsEnabled, true);
@@ -213,9 +176,6 @@ function testStatsSettingPersistsValidChoice() {
       }),
     ),
     storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
   });
 
   assert.equal(settings.statsEnabled, true);
@@ -236,9 +196,6 @@ function testMalformedSavedSettingsFallBackToDefaults() {
       }),
     ),
     storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
   });
 
   assert.equal(settings.maxSpeed, defaults.maxSpeed);
@@ -261,9 +218,6 @@ function testNumericSettingsClampToControlRanges() {
       }),
     ),
     storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
   });
   const high = loadSettings({
     storage: storageWith(
@@ -273,9 +227,6 @@ function testNumericSettingsClampToControlRanges() {
       }),
     ),
     storageKey: "settings",
-    defaults,
-    controls,
-    clamp,
   });
 
   assert.equal(low.maxSpeed, controls.maxSpeed.min);
@@ -284,6 +235,21 @@ function testNumericSettingsClampToControlRanges() {
   assert.equal(high.acceleration, controls.acceleration.max);
 }
 
+function testLoadsDoNotShareMutableDefaults() {
+  const original = { ...defaults };
+  for (const storage of [null, storageWith("{bad json"), storageWith("{}")]) {
+    const settings = loadSettings({ storage, storageKey: "settings" });
+    settings.maxSpeed += 1;
+    settings.trailEnabled = !settings.trailEnabled;
+    assert.deepEqual(defaults, original);
+    assert.deepEqual(
+      loadSettings({ storage, storageKey: "settings" }),
+      original,
+    );
+  }
+}
+
+testLoadsDoNotShareMutableDefaults();
 testTrailMigrationDefaultsOldSavedTrailOff();
 testTrailMigrationPreservesCurrentSavedTrailChoice();
 testPersistedSettingsFilterRuntimeOnlyKeys();
