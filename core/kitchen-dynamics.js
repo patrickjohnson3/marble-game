@@ -320,7 +320,7 @@ function moveSponge(state, dx, dy) {
   );
   const moveX = nextX - sponge.x;
   const moveY = nextY - sponge.y;
-  if (Math.abs(moveX) < 0.01 && Math.abs(moveY) < 0.01) return false;
+  if (moveX === 0 && moveY === 0) return false;
 
   sponge.x = nextX;
   sponge.y = nextY;
@@ -420,30 +420,47 @@ function resolveSpongeCollision(state, marble) {
   return -normalSpeed;
 }
 
+// Fractional form of the reference coasting step v' = r*v, x' = x + v'.
+// Use initial velocity for displacement; endpoint velocity is not its average.
+function coastingDistanceFactor(retention, dt) {
+  if (dt === 0 || retention === 0) return 0;
+  if (dt === 1) return retention;
+  if (retention === 1) return dt;
+  return (retention * -Math.expm1(dt * Math.log(retention))) / (1 - retention);
+}
+
 function advanceSponge(state, frameDelta) {
   const sponge = state.sponge;
+  const distanceFactor = coastingDistanceFactor(
+    spongeLinearDragRetention,
+    frameDelta,
+  );
+  let dx = sponge.vx * distanceFactor;
+  let dy = sponge.vy * distanceFactor;
+  let angleDelta =
+    sponge.angularVelocity *
+    coastingDistanceFactor(spongeAngularDragRetention, frameDelta);
   sponge.vx *= Math.pow(spongeLinearDragRetention, frameDelta);
   sponge.vy *= Math.pow(spongeLinearDragRetention, frameDelta);
   sponge.angularVelocity *= Math.pow(spongeAngularDragRetention, frameDelta);
   if (Math.hypot(sponge.vx, sponge.vy) < spongeLinearSettleSpeed) {
     sponge.vx = 0;
     sponge.vy = 0;
+    dx = 0;
+    dy = 0;
   }
   if (Math.abs(sponge.angularVelocity) < spongeAngularSettleSpeed) {
     sponge.angularVelocity = 0;
+    angleDelta = 0;
   }
 
-  const moved = moveSponge(
-    state,
-    sponge.vx * frameDelta,
-    sponge.vy * frameDelta,
-  );
+  const moved = moveSponge(state, dx, dy);
   const previousAngle = sponge.angle ?? 0;
   const nextAngle = Math.max(
     state.spongeOriginAngle - spongeMaxAngleOffset,
     Math.min(
       state.spongeOriginAngle + spongeMaxAngleOffset,
-      previousAngle + sponge.angularVelocity * frameDelta,
+      previousAngle + angleDelta,
     ),
   );
   if (nextAngle !== previousAngle) {
@@ -1077,6 +1094,12 @@ function advanceCereal(state, cereal, frameDelta) {
   const currentY = cereal.originY + cereal.pushY;
   const influence = surfaceInfluence(currentX, currentY, state.terrainElements);
   const drag = Math.pow(influence.dragRetention, frameDelta);
+  const distanceFactor = coastingDistanceFactor(
+    influence.dragRetention,
+    frameDelta,
+  );
+  const dx = vx * distanceFactor;
+  const dy = vy * distanceFactor;
   vx *= drag;
   vy *= drag;
   if (Math.hypot(vx, vy) < cerealLinearSettleSpeed) {
@@ -1086,8 +1109,8 @@ function advanceCereal(state, cereal, frameDelta) {
   }
 
   const circle = state.collisionCircle;
-  circle.x = currentX + vx * frameDelta;
-  circle.y = currentY + vy * frameDelta;
+  circle.x = currentX + dx;
+  circle.y = currentY + dy;
   circle.r = cereal.radius;
   circle.vx = vx;
   circle.vy = vy;

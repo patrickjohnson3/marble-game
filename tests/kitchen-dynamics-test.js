@@ -1133,4 +1133,155 @@ function testHazardDiscardsEarlierAntContacts() {
 }
 
 testHazardDiscardsEarlierAntContacts();
+
+function testCerealCoastingMatchesRepeatedReferenceFrames() {
+  const partitions = [
+    Array(3).fill(2),
+    Array(6).fill(1),
+    Array(12).fill(0.5),
+    [0.25, 1.75, 0.5, 1.5, 2],
+  ];
+  for (const [type, retention] of [
+    ["floor", 0.88],
+    ["gooPatch", 0.55],
+  ]) {
+    // Independent oracle: repeat the original unit-frame recurrence.
+    const reference = { x: 0, y: 0, vx: 8, vy: -4 };
+    for (let frame = 0; frame < 6; frame++) {
+      reference.vx *= retention;
+      reference.vy *= retention;
+      reference.x += reference.vx;
+      reference.y += reference.vy;
+    }
+    for (const steps of partitions) {
+      const elements =
+        type === "floor" ? [] : [{ type, x: 0, y: 0, w: 1000, h: 1000 }];
+      const mapConfig = {
+        ...kitchenMap("kitchen-floor", elements),
+        clusters: [
+          {
+            x: 0.5,
+            y: 0.5,
+            angle: 0,
+            ants: [],
+            cheerios: [[0, 0]],
+            crumbs: [],
+          },
+        ],
+      };
+      const dynamics = createKitchenDynamics();
+      dynamics.reset({ mapConfig, world });
+      const food = dynamics.state.cheerios[0];
+      food.vx = 8;
+      food.vy = -4;
+      for (const dt of steps) update(dynamics, mapConfig, farFromAnts, dt);
+      for (const [actual, expected] of [
+        [food.pushX, reference.x],
+        [food.pushY, reference.y],
+        [food.vx, reference.vx],
+        [food.vy, reference.vy],
+      ]) {
+        assert.ok(
+          Math.abs(actual - expected) < 1e-9,
+          `${type}: ${actual} != ${expected}`,
+        );
+      }
+      for (let i = 0; i < 400; i++)
+        update(dynamics, mapConfig, farFromAnts, steps[0]);
+      assert.equal(food.vx, 0);
+      assert.equal(food.vy, 0);
+      const stopped = [food.pushX, food.pushY];
+      update(dynamics, mapConfig, farFromAnts, 2);
+      assert.deepEqual([food.pushX, food.pushY], stopped);
+      food.vx = 0.021;
+      update(dynamics, mapConfig, farFromAnts, 1);
+      assert.equal(
+        food.vx,
+        0,
+        "a reference step crossing the settle threshold stops immediately",
+      );
+      assert.deepEqual([food.pushX, food.pushY], stopped);
+    }
+  }
+}
+
+function testSpongeCoastingMatchesRepeatedReferenceFrames() {
+  for (const initialVx of [2, 0.015]) {
+    const initialVy = initialVx === 2 ? -1 : 0;
+    const reference = {
+      x: 300,
+      y: 400,
+      angle: 0,
+      vx: initialVx,
+      vy: initialVy,
+      omega: 0.01,
+    };
+    for (let i = 0; i < 6; i++) {
+      reference.vx *= 0.94;
+      reference.vy *= 0.94;
+      reference.omega *= 0.9;
+      reference.x += reference.vx;
+      reference.y += reference.vy;
+      reference.angle += reference.omega;
+    }
+    for (const steps of [
+      Array(3).fill(2),
+      Array(6).fill(1),
+      Array(12).fill(0.5),
+      [0.25, 1.75, 0.5, 1.5, 2],
+    ]) {
+      const sponge = {
+        type: "obstacle",
+        fixture: "sponge",
+        x: 300,
+        y: 400,
+        w: 200,
+        h: 80,
+        angle: 0,
+      };
+      const water = { type: "waterPatch", x: 800, y: 800, w: 100, h: 100 };
+      const mapConfig = {
+        ...kitchenMap("kitchen-floor", [sponge, water]),
+        clusters: [],
+      };
+      const dynamics = createKitchenDynamics();
+      dynamics.reset({ mapConfig, world, waterPatches: [water] });
+      Object.assign(sponge, {
+        vx: initialVx,
+        vy: initialVy,
+        angularVelocity: 0.01,
+      });
+      for (const dt of steps) update(dynamics, mapConfig, farFromAnts, dt);
+      for (const [actual, expected] of [
+        [sponge.x, reference.x],
+        [sponge.y, reference.y],
+        [sponge.angle, reference.angle],
+        [sponge.vx, reference.vx],
+        [sponge.vy, reference.vy],
+        [sponge.angularVelocity, reference.omega],
+      ]) {
+        assert.ok(
+          Math.abs(actual - expected) < 1e-9,
+          `sponge: ${actual} != ${expected}`,
+        );
+      }
+      for (let i = 0; i < 600; i++)
+        update(dynamics, mapConfig, farFromAnts, steps[0]);
+      assert.equal(sponge.vx, 0);
+      assert.equal(sponge.vy, 0);
+      assert.equal(sponge.angularVelocity, 0);
+      const stopped = [sponge.x, sponge.y, sponge.angle];
+      update(dynamics, mapConfig, farFromAnts, 2);
+      assert.deepEqual([sponge.x, sponge.y, sponge.angle], stopped);
+      Object.assign(sponge, { vx: 0.0101, angularVelocity: 0.000051 });
+      update(dynamics, mapConfig, farFromAnts, 1);
+      assert.equal(sponge.vx, 0);
+      assert.equal(sponge.angularVelocity, 0);
+      assert.deepEqual([sponge.x, sponge.y, sponge.angle], stopped);
+    }
+  }
+}
+
+testCerealCoastingMatchesRepeatedReferenceFrames();
+testSpongeCoastingMatchesRepeatedReferenceFrames();
 console.log("Kitchen dynamics tests passed.");
