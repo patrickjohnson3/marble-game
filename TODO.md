@@ -7,8 +7,9 @@
 3. Improve real-world map readability so objects look like what they represent.
 4. Playtest the kitchen sponge's visible height versus collision, movement against other fixtures, and absorption. Sprite transparency already accounts for its apparent width; do not scale its CSS box directly to the hitbox width.
 5. Verify sensor handoffs and anchored pinch on all four mobile browser targets over HTTPS; see [the improvement pass notes](docs/improvement-pass.md). Check rotation after calibration, live sensor dropout, and returning from an app switch or screen lock; the game should remain paused until Resume without changing neutral.
-6. Add service-worker recovery tests for cached responses, failed-navigation fallback, bypassed requests, and cache-write failures.
-7. Compare movement at 30/60/120 Hz before changing acceleration/drag integration; the combined simulation still varies with cadence.
+6. Investigate and fix the reported failure to switch the installed PWA to landscape after removing the manifest's portrait lock. Reproduce on a physical device, record OS/browser and rotation-lock state, and compare fresh versus updated installations; verify portrait/landscape play after the fix.
+7. Add service-worker recovery tests for cached responses, failed-navigation fallback, bypassed requests, and cache-write failures.
+8. Compare movement at 30/60/120 Hz before changing acceleration/drag integration; the combined simulation still varies with cadence.
 
 ## Later
 
