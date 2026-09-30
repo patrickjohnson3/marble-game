@@ -66,6 +66,7 @@ function testCachedLiquidLayers() {
       };
       render(container, [patch], options);
       const canvas = container.firstChild;
+      const backingSize = [canvas.width, canvas.height];
       const firstCalls = canvas.context.calls.slice();
       assert.equal(
         container.children.length,
@@ -97,14 +98,48 @@ function testCachedLiquidLayers() {
         canvas,
         "a shrinking puddle must reuse its terrain canvas",
       );
+      assert.deepEqual(
+        [canvas.width, canvas.height],
+        backingSize,
+        "fixed bounds must not rely on resizing to clear old liquid pixels",
+      );
+      const calls = canvas.context.calls;
+      const clearIndex = calls.findIndex(([name]) => name === "clearRect");
+      assert.deepEqual(
+        calls[clearIndex],
+        ["clearRect", 0, 0, ...backingSize],
+        "a changed patch must clear the entire previous wet footprint",
+      );
+      assert.deepEqual(
+        calls
+          .slice(0, clearIndex)
+          .findLast(([name]) => name === "setTransform"),
+        ["setTransform", 1, 0, 0, 1, 0, 0],
+        "clearRect must use backing pixels, not translated world coordinates",
+      );
+      const drawIndex = calls.findIndex(
+        ([name]) => name === "createLinearGradient",
+      );
       assert.ok(
-        canvas.context.calls.some(
-          ([name, , , width, height]) =>
-            name === "clearRect" &&
-            width === canvas.width &&
-            height === canvas.height,
-        ),
-        "a changed patch must clear the previous wet footprint",
+        drawIndex > clearIndex,
+        "clear old pixels before drawing the new puddle",
+      );
+      const pixelRatio =
+        canvas.width / (options.bounds.width + options.padding * 2);
+      assert.deepEqual(
+        calls
+          .slice(clearIndex + 1, drawIndex)
+          .findLast(([name]) => name === "setTransform"),
+        [
+          "setTransform",
+          pixelRatio,
+          0,
+          0,
+          pixelRatio,
+          -(options.bounds.left - options.padding) * pixelRatio,
+          -(options.bounds.top - options.padding) * pixelRatio,
+        ],
+        "restore world coordinates before creating the puddle's gradients and paths",
       );
       for (const call of canvas.context.calls) {
         for (const value of call.slice(1)) {
