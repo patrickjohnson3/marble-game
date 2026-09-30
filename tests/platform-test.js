@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-async function testWakeLockRequestIsNotDuplicatedWhilePending() {
+async function testWakeLockDeduplicatesRequestsAndReacquiresAfterRelease() {
   let requestCount = 0;
   let resolveWakeLock;
 
@@ -24,9 +24,32 @@ async function testWakeLockRequestIsNotDuplicatedWhilePending() {
   const secondRequest = requestWakeLock({ documentRef, navigatorRef });
 
   assert.equal(requestCount, 1);
-  resolveWakeLock({ addEventListener() {} });
+  const firstLock = new globalThis.EventTarget();
+  resolveWakeLock(firstLock);
   await Promise.all([firstRequest, secondRequest]);
   assert.equal(requestCount, 1);
+
+  const heldRequest = requestWakeLock({ documentRef, navigatorRef });
+  assert.equal(requestCount, 1, "an active lock must not be duplicated");
+  await heldRequest;
+
+  documentRef.visibilityState = "hidden";
+  firstLock.dispatchEvent(new globalThis.Event("release"));
+  const hiddenRequest = requestWakeLock({ documentRef, navigatorRef });
+  assert.equal(requestCount, 1, "a hidden page must not reacquire a lock");
+  await hiddenRequest;
+
+  documentRef.visibilityState = "visible";
+  const reacquiring = requestWakeLock({ documentRef, navigatorRef });
+  assert.equal(
+    requestCount,
+    2,
+    "returning visible must reacquire a released lock",
+  );
+  const secondLock = new globalThis.EventTarget();
+  resolveWakeLock(secondLock);
+  await reacquiring;
+  secondLock.dispatchEvent(new globalThis.Event("release"));
 }
 
 async function testFullscreenUsesInjectedDocument() {
@@ -529,7 +552,7 @@ async function testServiceWorkerRegistrationReloadsWhenUpdateTakesControl(
   assert.deepEqual(statuses, ["checking", "ready", "update-ready"]);
 }
 
-await testWakeLockRequestIsNotDuplicatedWhilePending();
+await testWakeLockDeduplicatesRequestsAndReacquiresAfterRelease();
 await testFullscreenUsesInjectedDocument();
 await testFullscreenSkipsInstalledPwaDisplayMode();
 await testAppDisplayModeDetectsInstalledPwa();
