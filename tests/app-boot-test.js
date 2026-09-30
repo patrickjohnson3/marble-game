@@ -3,6 +3,7 @@ import { createFakeDocument } from "./test-dom.js";
 import { createApp } from "../app.js";
 import { baseMapConfig } from "../core/map-config.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
+import { settingsConfig } from "../settings/settings-config.js";
 
 const originalGlobals = {
   addEventListener: Object.getOwnPropertyDescriptor(
@@ -140,12 +141,56 @@ try {
   const livingDocument = createFakeDocument();
   setTestGlobal("document", livingDocument);
   const initialMap = resolveMapVariantConfig(baseMapConfig, "living-room");
+  const savedSettings = { maxSpeed: 18, acceleration: 0.09 };
   const livingApp = createApp({
     document: livingDocument,
     window: globalThis,
-    storage: globalThis.localStorage,
+    storage: {
+      getItem(key) {
+        return key === "marbleGameSettings"
+          ? JSON.stringify(savedSettings)
+          : null;
+      },
+      setItem() {},
+    },
     initialMap,
   });
+  assert.deepEqual(
+    {
+      maxSpeed: livingApp.state.physics.maxSpeed,
+      acceleration: livingApp.state.physics.accel,
+    },
+    savedSettings,
+    "both saved control preferences must reach live physics on boot",
+  );
+  for (const [setting, physicsKey, inputId, resetId, value] of [
+    ["maxSpeed", "maxSpeed", "speedSetting", "resetSpeedSetting", 20],
+    [
+      "acceleration",
+      "accel",
+      "sensitivitySetting",
+      "resetSensitivitySetting",
+      0.15,
+    ],
+  ]) {
+    const input = livingDocument.getElementById(inputId);
+    input.value = String(value);
+    input.listeners.find(({ type }) => type === "input").listener();
+    assert.equal(
+      livingApp.state.physics[physicsKey],
+      value,
+      `${setting} input must change live physics`,
+    );
+    livingDocument
+      .getElementById(resetId)
+      .listeners.find(({ type }) => type === "click")
+      .listener();
+    assert.equal(
+      livingApp.state.physics[physicsKey],
+      settingsConfig[setting],
+      `${setting} reset must restore live physics defaults`,
+    );
+  }
   assert.equal(livingApp.mapRuntime.state.activeMap.variantId, "living-room");
   assert.equal(livingApp.state.marble.x, initialMap.spawn.x);
   assert.equal(livingApp.kitchenDynamics.state.ants.length, 0);
