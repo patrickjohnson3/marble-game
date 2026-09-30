@@ -71,6 +71,36 @@ async function testFullscreenUsesInjectedDocument() {
   assert.equal(requested, true);
 }
 
+async function testFullscreenExitUsesInjectedDocument(elementKey, exitKey) {
+  let exitCount = 0;
+  let receiver = null;
+  let rejectExit = false;
+  const documentRef = {
+    [elementKey]: {},
+    async [exitKey]() {
+      exitCount++;
+      receiver = this;
+      if (rejectExit) throw new Error("Browser rejected fullscreen exit");
+      this[elementKey] = null;
+    },
+  };
+  const { exitFullscreenMode } = await import(
+    "../platform/platform.js?test=" + Date.now()
+  );
+
+  await exitFullscreenMode({ documentRef });
+  assert.equal(exitCount, 1, `${exitKey} must exit active fullscreen`);
+  assert.equal(receiver, documentRef, "exit must use the injected document");
+
+  await exitFullscreenMode({ documentRef });
+  assert.equal(exitCount, 1, "an inactive document must not request exit");
+
+  documentRef[elementKey] = {};
+  rejectExit = true;
+  await assert.doesNotReject(() => exitFullscreenMode({ documentRef }));
+  assert.equal(exitCount, 2, "a rejected exit must still have been attempted");
+}
+
 async function testFullscreenSkipsInstalledPwaDisplayMode() {
   let requested = false;
   const documentRef = {
@@ -554,6 +584,14 @@ async function testServiceWorkerRegistrationReloadsWhenUpdateTakesControl(
 
 await testWakeLockDeduplicatesRequestsAndReacquiresAfterRelease();
 await testFullscreenUsesInjectedDocument();
+await testFullscreenExitUsesInjectedDocument(
+  "fullscreenElement",
+  "exitFullscreen",
+);
+await testFullscreenExitUsesInjectedDocument(
+  "webkitFullscreenElement",
+  "webkitExitFullscreen",
+);
 await testFullscreenSkipsInstalledPwaDisplayMode();
 await testAppDisplayModeDetectsInstalledPwa();
 await testMotionPermissionUsesInjectedWindow();
