@@ -5,10 +5,13 @@ import { collectBrowserErrors } from "../tools/browser-support.js";
 export async function testCameraZoomVisibility(browser, baseUrl) {
   const page = await browser.newPage({
     viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
     serviceWorkers: "block",
   });
   const errors = collectBrowserErrors(page);
   try {
+    const cdp = await page.context().newCDPSession(page);
     await page.route("**/boot.js*", (route) =>
       route.fulfill({
         contentType: "text/javascript",
@@ -32,8 +35,8 @@ window.__cameraApp = createApp();`,
       await page.setViewportSize(viewport);
       const portrait = viewport.width < viewport.height;
       for (const zoomIn of [true, false]) {
-        await page.evaluate(
-          ({ portrait, zoomIn, duration }) => {
+        const start = await page.evaluate(
+          ({ portrait, zoomIn }) => {
             const app = window.__cameraApp;
             app.gameController.pause();
             const { marble, camera, input } = app.state;
@@ -58,29 +61,74 @@ window.__cameraApp = createApp();`,
             app.cameraController.centerOnMarble();
             app.gameController.resume();
 
-            const game = document.getElementById("game");
-            const cx = window.innerWidth / 2;
-            const cy = window.innerHeight / 2;
-            const endDistance = zoomIn ? 100 * camera.maxScale : 40;
-            for (const [type, pointerId, clientX] of [
-              ["pointerdown", 1, cx - 50],
-              ["pointerdown", 2, cx + 50],
-              ["pointermove", 1, cx - endDistance / 2],
-              ["pointermove", 2, cx + endDistance / 2],
-              ["pointerup", 1, cx - endDistance / 2],
-              ["pointerup", 2, cx + endDistance / 2],
-            ]) {
-              game.dispatchEvent(
-                new window.PointerEvent(type, {
-                  bubbles: true,
-                  pointerId,
-                  pointerType: "touch",
-                  clientX,
-                  clientY: cy,
-                }),
-              );
-            }
-
+            return { x: marble.x, y: marble.y, maxScale: camera.maxScale };
+          },
+          { portrait, zoomIn },
+        );
+        const cx = viewport.width / 2;
+        const cy = viewport.height / 2;
+        const endDistance = zoomIn ? 100 * start.maxScale : 40;
+        // Native touch input exercises hit testing, capture and CSS gesture
+        // arbitration, which dispatching PointerEvents directly bypasses.
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchStart",
+          touchPoints: [
+            { id: 1, x: cx - 50, y: cy },
+            { id: 2, x: cx + 50, y: cy },
+          ],
+        });
+        for (let step = 1; step <= 5; step++) {
+          const fraction = step / 5;
+          const halfDistance = (100 + (endDistance - 100) * fraction) / 2;
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [
+              {
+                id: 1,
+                x: cx + 20 * fraction - halfDistance,
+                y: cy + 20 * fraction,
+              },
+              {
+                id: 2,
+                x: cx + 20 * fraction + halfDistance,
+                y: cy + 20 * fraction,
+              },
+            ],
+          });
+          await page.waitForTimeout(20);
+        }
+        const held = await page.evaluate(({ x, y }) => {
+          const transform = new window.DOMMatrix(
+            window.getComputedStyle(document.getElementById("world")).transform,
+          );
+          return {
+            scale: transform.a,
+            anchorX: transform.e + x * transform.a,
+            anchorY: transform.f + y * transform.d,
+          };
+        }, start);
+        const label = `${portrait ? "portrait" : "landscape"} zoom ${zoomIn ? "in" : "out"}`;
+        assert.ok(
+          Math.abs(
+            held.scale - (zoomIn ? start.maxScale : start.maxScale * 0.4),
+          ) < 0.001,
+          `${label}: native pinch must reach the requested zoom`,
+        );
+        assert.ok(
+          Math.abs(held.anchorX - (cx + 20)) < 1,
+          `${label}: pan X follows the fingers`,
+        );
+        assert.ok(
+          Math.abs(held.anchorY - (cy + 20)) < 1,
+          `${label}: pan Y follows the fingers`,
+        );
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchEnd",
+          touchPoints: [],
+        });
+        await page.evaluate(
+          (duration) => {
+            const { marble, camera } = window.__cameraApp.state;
             const started = performance.now();
             const startX = marble.x;
             const startY = marble.y;
@@ -120,19 +168,13 @@ window.__cameraApp = createApp();`,
             }
             requestAnimationFrame(inspectFrame);
           },
-          {
-            portrait,
-            zoomIn,
-            duration:
-              (tuning.gestureCooldownFrames + 60) * timing.targetFrameMs,
-          },
+          (tuning.gestureCooldownFrames + 60) * timing.targetFrameMs,
         );
         const key = portrait ? "ArrowRight" : "ArrowDown";
         await page.keyboard.down(key);
         await page.waitForFunction(() => window.__cameraSample.complete);
         await page.keyboard.up(key);
         const sample = await page.evaluate(() => window.__cameraSample);
-        const label = `${portrait ? "portrait" : "landscape"} zoom ${zoomIn ? "in" : "out"}`;
         assert.ok(
           zoomIn
             ? sample.scale === sample.maxScale
