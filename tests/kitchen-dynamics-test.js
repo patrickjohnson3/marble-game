@@ -777,6 +777,130 @@ function testAntRemembersNearMissThenReturnsToForaging() {
 
 testAntRemembersNearMissThenReturnsToForaging();
 
+function testFreshCrushScaresNearbySurvivorsRegardlessOfArrayOrder() {
+  for (const victimFirst of [true, false]) {
+    const food = cerealAt(380, 500);
+    const { dynamics, mapConfig, ant: victim } = antScene({ cheerios: [food] });
+    Object.assign(victim, { x: 500, y: 500 });
+    const probing = {
+      ...victim,
+      y: 620,
+      angle: Math.PI / 2,
+      probeFrames: 100,
+      recoverFrames: 45,
+    };
+    const eating = { ...victim, x: 380, angle: Math.PI, targetIndex: 0 };
+    const distant = { ...probing, y: 900 };
+    const remains = {
+      ...victim,
+      y: 660,
+      alive: false,
+      squished: true,
+      mode: "squished",
+      squishAge: antConfig.squishDurationFrames,
+    };
+    const settledRemains = { ...remains };
+    const survivors = [probing, eating, distant, remains];
+    dynamics.state.ants = victimFirst
+      ? [victim, ...survivors]
+      : [...survivors, victim];
+
+    const events = dynamics.update(
+      mapConfig,
+      { x: 650, y: 500, vx: 12, vy: 0, r: 29 },
+      { x: 450, y: 500 },
+    );
+
+    assert.equal(events.squishedAnts, 1);
+    assert.deepEqual(events.antCrushes, [victim]);
+    for (const survivor of [probing, eating]) {
+      assert.equal(survivor.alive, true, "the alarm must not kill a survivor");
+      assert.equal(survivor.mode, "flee", "nearby ants must flee immediately");
+      assert.ok(survivor.fleeFrames > 0);
+      assert.ok(
+        Math.hypot(survivor.x - 500, survivor.y - 500) > 120,
+        "escape must move away from the crush, even after the marble passes",
+      );
+    }
+    assert.equal(food.eaten, 0, "alarm interrupts feeding in the crush frame");
+    assert.notEqual(distant.mode, "flee", "distant ants must remain unaware");
+    assert.equal(distant.fleeFrames, 0);
+    assert.deepEqual(remains, settledRemains, "dead ants cannot react");
+  }
+}
+
+testFreshCrushScaresNearbySurvivorsRegardlessOfArrayOrder();
+
+function testCrushEscapeRemembersTheLocationAfterTheMarblePasses() {
+  const { dynamics, mapConfig, ant: victim } = antScene({ cheerios: [] });
+  const survivor = { ...victim, x: 400, y: 580, angle: 0 };
+  dynamics.state.ants.push(survivor);
+  const marble = { x: 600, y: 500, vx: 12, vy: 0, r: 29 };
+  dynamics.update(mapConfig, marble, { x: 280, y: 500 });
+  update(dynamics, mapConfig, marble, 12);
+
+  assert.equal(survivor.mode, "flee");
+  assert.ok(
+    Math.cos(survivor.angle) > 0 && survivor.x > 400,
+    "escape must continue rightward from the crush, not turn back from the marble",
+  );
+}
+
+testCrushEscapeRemembersTheLocationAfterTheMarblePasses();
+
+function testCrushAlarmExpiresDoesNotReplayAndResets() {
+  const { dynamics, mapConfig, ant: victim } = antScene({ cheerios: [] });
+  const survivor = { ...victim, y: 620, angle: Math.PI / 2 };
+  dynamics.state.ants.push(survivor);
+  update(dynamics, mapConfig, { x: 300, y: 500, vx: 3, vy: 0, r: 29 });
+  const initialEscape = survivor.fleeFrames;
+  assert.ok(initialEscape > 0);
+
+  const events = update(dynamics, mapConfig, farFromAnts, 5);
+  assert.equal(events.antCrushes.length, 0, "a crush event must not replay");
+  assert.equal(survivor.fleeFrames, initialEscape - 5);
+  update(dynamics, mapConfig, farFromAnts, initialEscape + 30);
+  assert.equal(survivor.fleeFrames, 0);
+  assert.equal(survivor.mode, "forage", "survivors resume normal behavior");
+
+  // Trigger another real alarm, then Retry while the survivor is still fleeing.
+  const nextVictim = { ...victim, alive: true, squished: false };
+  Object.assign(survivor, { x: 300, y: 620 });
+  dynamics.state.ants = [nextVictim, survivor];
+  update(dynamics, mapConfig, { x: 300, y: 500, vx: 3, vy: 0, r: 29 });
+  assert.ok(survivor.fleeFrames > 0);
+  reset(dynamics, mapConfig);
+  assert.ok(
+    dynamics.state.ants.every((ant) => ant.alive && ant.fleeFrames === 0),
+    "Retry must discard the previous colony's alarm",
+  );
+  assert.equal(events.antCrushes.length, 0);
+}
+
+testCrushAlarmExpiresDoesNotReplayAndResets();
+
+function testSlowOverlapDoesNotScareNearbyAnts() {
+  const { dynamics, mapConfig, ant: victim } = antScene({ cheerios: [] });
+  const survivor = { ...victim, y: 620, angle: Math.PI / 2 };
+  dynamics.state.ants.push(survivor);
+  const events = update(dynamics, mapConfig, {
+    x: 300,
+    y: 500,
+    vx: 0.1,
+    vy: 0,
+    r: 29,
+  });
+  assert.equal(events.squishedAnts, 0);
+  assert.equal(victim.alive, true);
+  assert.equal(
+    survivor.fleeFrames,
+    0,
+    "an incidental bump is not a kill alarm",
+  );
+}
+
+testSlowOverlapDoesNotScareNearbyAnts();
+
 function testSweptAntCrushSettlesOnceAndPersistsUntilReset() {
   const { dynamics, mapConfig, ant } = antScene({ cheerios: [] });
   const events = dynamics.update(

@@ -95,6 +95,8 @@ function createAnt(world, point, index) {
     alertFrames: 0,
     reactionFrames: antConfig.reactionFrames * (0.7 + individuality * 0.6),
     fleeFrames: 0,
+    fleeFromX: null,
+    fleeFromY: null,
     recoverFrames: 0,
     squishAge: 0,
     squishAngle: 0,
@@ -795,10 +797,17 @@ function advanceAnt(state, ant, marble, frameDelta) {
     antConfig.speed * (ant.speedScale ?? 1) * (1 + Math.sin(ant.wobble) * 0.1);
   if (ant.fleeFrames > 0) {
     ant.mode = "flee";
-    desiredAngle = Math.atan2(awayY, awayX) + (ant.turnBias ?? 1) * 0.28;
+    desiredAngle =
+      Math.atan2(
+        ant.y - (ant.fleeFromY ?? marble.y),
+        ant.x - (ant.fleeFromX ?? marble.x),
+      ) +
+      (ant.turnBias ?? 1) * 0.28;
     speed = antConfig.fleeSpeed * (ant.speedScale ?? 1);
     ant.fleeFrames = Math.max(0, ant.fleeFrames - frameDelta);
     if (ant.fleeFrames === 0) {
+      ant.fleeFromX = null;
+      ant.fleeFromY = null;
       ant.recoverFrames = antConfig.recoverFrames;
       ant.probeFrames = antConfig.probeDurationFrames;
     }
@@ -961,6 +970,29 @@ function updateAnts(
     if (nearMiss && !(ant.fleeFrames > 0) && !(ant.recoverFrames > 0)) {
       // A close pass can already be behind an ant when its reaction begins.
       ant.alertFrames = Math.max(ant.alertFrames ?? 0, Number.EPSILON);
+    }
+  }
+
+  // Resolve every crush before survivors move or eat, independent of array order.
+  for (const ant of state.ants) {
+    if (!ant.alive) continue;
+    let nearestCrush = null;
+    let nearestDistanceSq = antConfig.crushAlarmDistance ** 2;
+    for (const crushed of events.antCrushes) {
+      const distanceSq = (ant.x - crushed.x) ** 2 + (ant.y - crushed.y) ** 2;
+      if (distanceSq > nearestDistanceSq) continue;
+      nearestCrush = crushed;
+      nearestDistanceSq = distanceSq;
+    }
+    if (nearestCrush) {
+      ant.fleeFrames = Math.max(
+        ant.fleeFrames ?? 0,
+        antConfig.fleeDurationFrames * (ant.speedScale ?? 1),
+      );
+      ant.fleeFromX = nearestCrush.x;
+      ant.fleeFromY = nearestCrush.y;
+      ant.alertFrames = 0;
+      ant.probeFrames = 0;
     }
     // Normal play is at most two frame units; slicing also keeps long updates
     // from stepping over a utensil or skipping an entire hesitation.

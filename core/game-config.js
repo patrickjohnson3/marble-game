@@ -129,6 +129,7 @@ export const antConfig = {
   fleeTurnRate: 0.3,
   fleeSpeed: 2.15,
   threatDistance: 72,
+  crushAlarmDistance: 180, // World units; about three marble diameters.
   reactionFrames: 7,
   fleeDurationFrames: 48,
   recoverFrames: 45,
