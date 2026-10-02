@@ -189,6 +189,95 @@ function testCerealCarriesMomentumAfterMarbleContact() {
 
 testCerealCarriesMomentumAfterMarbleContact();
 
+function testGrazingCerealSweepTransfersFirstContactMomentum() {
+  for (const [alongX, alongY] of [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ]) {
+    for (const side of [-1, 1]) {
+      const sideX = -alongY * side;
+      const sideY = alongX * side;
+      for (const dt of [0.5, 1, 2]) {
+        const dynamics = createKitchenDynamics();
+        const mapConfig = { ...kitchenMap("kitchen-floor", []), clusters: [] };
+        reset(dynamics, mapConfig);
+        const cereal = cerealAt(500, 500, {
+          kind: "cheerio",
+          radius: 21,
+          vx: 0,
+          vy: 0,
+          lastHitFeedbackFrame: Number.NEGATIVE_INFINITY,
+        });
+        dynamics.state.cheerios = [cereal];
+        const previous = {
+          x: 500 - alongX * 16 - sideX * 48,
+          y: 500 - alongY * 16 - sideY * 48,
+        };
+        dynamics.update(
+          mapConfig,
+          {
+            x: previous.x + alongX * 16 * dt,
+            y: previous.y + alongY * 16 * dt,
+            vx: alongX * 16,
+            vy: alongY * 16,
+            r: 29,
+          },
+          previous,
+          dt,
+        );
+        // The combined radius is 50; the first contact is a 14-48-50
+        // triangle, giving normal (0.28, 0.96) in travel/side coordinates.
+        // Project 16 onto it, then apply the existing 42% floor transfer.
+        assert.ok(
+          Math.abs(cereal.vx * alongX + cereal.vy * alongY - 0.526848) < 1e-10,
+        );
+        assert.ok(
+          Math.abs(cereal.vx * sideX + cereal.vy * sideY - 1.806336) < 1e-10,
+        );
+        if (dt === 2) {
+          assert.equal(cereal.x, 500 + sideX * 2.5);
+          assert.equal(cereal.y, 500 + sideY * 2.5);
+        }
+      }
+    }
+  }
+}
+
+function testCerealTangencyAndSeparatingOverlapDoNotGainMomentum() {
+  for (const [startX, endX, y, vx] of [
+    [484, 516, 450, 16],
+    [480, 478, 500, -2],
+  ]) {
+    const dynamics = createKitchenDynamics();
+    const mapConfig = { ...kitchenMap("kitchen-floor", []), clusters: [] };
+    reset(dynamics, mapConfig);
+    const cereal = cerealAt(500, 500, {
+      kind: "cheerio",
+      radius: 21,
+      vx: 0,
+      vy: 0,
+    });
+    dynamics.state.cheerios = [cereal];
+    dynamics.update(
+      mapConfig,
+      { x: endX, y, vx, vy: 0, r: 29 },
+      { x: startX, y },
+      2,
+    );
+    assert.equal(cereal.vx, 0);
+    assert.equal(cereal.vy, 0);
+    if (y === 450) {
+      assert.equal(cereal.x, 500);
+      assert.equal(cereal.y, 500);
+    }
+  }
+}
+
+testGrazingCerealSweepTransfersFirstContactMomentum();
+testCerealTangencyAndSeparatingOverlapDoNotGainMomentum();
+
 function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
   const authoredWater = {
     type: "waterPatch",

@@ -1188,7 +1188,29 @@ function updateCereal(
           ? (marble.vy || 0) / speed
           : 0;
     const amount = shoveDistance - distance + cheerioObstacleSeparation;
-    transferMarbleMomentum(cereal, marble, nx, ny, influence);
+    let impactNx = nx;
+    let impactNy = ny;
+    const startX = currentX - previousMarble.x;
+    const startY = currentY - previousMarble.y;
+    const startDistanceSq = startX * startX + startY * startY;
+    const contactRadiusSq = shoveDistance * shoveDistance;
+    if (startDistanceSq > contactRadiusSq) {
+      // Momentum uses the entry normal, not the perpendicular normal at the
+      // sweep's closest point. Keep that closest point for the positional shove.
+      const sweepX = marble.x - previousMarble.x;
+      const sweepY = marble.y - previousMarble.y;
+      const lengthSq = sweepX * sweepX + sweepY * sweepY;
+      const projection = startX * sweepX + startY * sweepY;
+      const c = startDistanceSq - contactRadiusSq;
+      const discriminant = projection * projection - lengthSq * c;
+      if (lengthSq > 0 && discriminant >= 0) {
+        // The rationalized smaller root avoids subtracting nearly equal terms.
+        const time = c / (projection + Math.sqrt(discriminant));
+        impactNx = (startX - sweepX * time) / shoveDistance;
+        impactNy = (startY - sweepY * time) / shoveDistance;
+      }
+    }
+    transferMarbleMomentum(cereal, marble, impactNx, impactNy, influence);
     const cerealCircle = state.collisionCircle;
     cerealCircle.x = currentX + nx * amount;
     cerealCircle.y = currentY + ny * amount;
