@@ -266,9 +266,10 @@ Per-frame visuals:
   a backing store for the entire map.
 - `createUi()` updates hints, FPS, and debug stats.
 
-Important rendering rule: terrain should be redrawn only when the active map
-changes. The frame loop should mostly touch transforms, CSS variables, small
-effect lists, and optional debug text.
+Terrain is redrawn on map activation or explicit layer invalidation,
+such as water shrinking during sponge absorption. Redraw only the affected
+terrain layers for those changes. Routine frames should mostly touch transforms,
+CSS variables, small effect lists, and optional debug text.
 
 ## Map Pipeline
 

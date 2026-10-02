@@ -74,7 +74,8 @@ npm run lint
 npm run format:check
 ```
 
-The pre-push hook runs the same test, lint, and format checks.
+The pre-push hook runs `npm test`, `npm run lint`, and `npm run format:check`.
+Run `npm run test:browser` separately for startup, browser input/UI, or PWA changes.
 The browser smoke test uses local Chrome; set `CHROME_PATH` if Chrome is installed elsewhere.
 
 ## Developer Docs
