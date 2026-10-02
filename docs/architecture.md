@@ -486,7 +486,7 @@ Use this section when deciding where a change belongs.
   follow behavior, and pinch/pan input.
 - `input/*`: browser input binding and input-specific controllers.
 - `platform/platform.js`: browser/platform APIs isolated for testing.
-- `rendering/*`: visual output only.
+- `rendering/*`: visual output and disposable caches, plus the existing bounds/radius synchronization described in [State ownership](state-ownership.md).
 - `settings/*`: settings schema, persistence, application, and modal binding.
 
 ## Common Change Paths
