@@ -34,6 +34,8 @@ function setTestGlobal(name, value) {
 }
 
 const document = createFakeDocument();
+const frames = [];
+const vibrations = [];
 setTestGlobal("addEventListener", () => {});
 setTestGlobal("document", document);
 setTestGlobal("innerHeight", 844);
@@ -44,8 +46,16 @@ setTestGlobal("localStorage", {
   },
   setItem() {},
 });
-setTestGlobal("navigator", {});
-setTestGlobal("requestAnimationFrame", () => 1);
+setTestGlobal("navigator", {
+  vibrate(pattern) {
+    vibrations.push(pattern);
+    return true;
+  },
+});
+setTestGlobal("requestAnimationFrame", (callback) => {
+  frames.push(callback);
+  return frames.length;
+});
 setTestGlobal("screen", { orientation: { angle: 0 } });
 setTestGlobal("setTimeout", () => 1);
 setTestGlobal("clearTimeout", () => {});
@@ -195,6 +205,14 @@ try {
   const trailInput = livingDocument.getElementById("trailSetting");
   trailInput.checked = true;
   trailInput.listeners.find(({ type }) => type === "change").listener();
+  const hapticsInput = livingDocument.getElementById("hapticsSetting");
+  hapticsInput.checked = false;
+  hapticsInput.listeners.find(({ type }) => type === "change").listener();
+  assert.equal(
+    JSON.parse(storage.getItem("marbleGameSettings")).hapticsEnabled,
+    false,
+    "disabling haptics must save the preference",
+  );
 
   const reopenedDocument = createFakeDocument();
   setTestGlobal("document", reopenedDocument);
@@ -204,6 +222,7 @@ try {
     storage,
     initialMap,
   });
+  const tick = frames.at(-1);
   for (const [setting, physicsKey, inputId, , value] of rangeSettings) {
     assert.equal(
       reopenedApp.state.physics[physicsKey],
@@ -213,6 +232,49 @@ try {
     assert.equal(Number(reopenedDocument.getElementById(inputId).value), value);
   }
   assert.equal(reopenedDocument.getElementById("trailSetting").checked, true);
+
+  const reopenedHaptics = reopenedDocument.getElementById("hapticsSetting");
+  assert.equal(reopenedHaptics.checked, false);
+  reopenedApp.state.game.phase = "running";
+  reopenedApp.state.intro.released = true;
+  Object.assign(reopenedApp.state.bounds, {
+    left: 0,
+    top: 0,
+    right: initialMap.world.width,
+    bottom: initialMap.world.height,
+  });
+  function hitLeftBoundary() {
+    const { marble, haptics } = reopenedApp.state;
+    Object.assign(marble, { x: marble.r, y: 1000, vx: -10, vy: 0 });
+    // Make the contact eligible regardless of wall-clock timing between frames.
+    haptics.impact.lastPulse = Number.NEGATIVE_INFINITY;
+    tick();
+    assert.ok(
+      marble.vx > 0,
+      "the scheduled gameplay frame must resolve the hit",
+    );
+  }
+  hitLeftBoundary();
+  assert.deepEqual(
+    vibrations,
+    [],
+    "a saved disabled preference must suppress actual collision feedback on boot",
+  );
+  for (const enabled of [true, false]) {
+    vibrations.length = 0;
+    reopenedHaptics.checked = enabled;
+    reopenedHaptics.listeners.find(({ type }) => type === "change").listener();
+    hitLeftBoundary();
+    assert.equal(
+      vibrations.length > 0,
+      enabled,
+      "the Haptics checkbox must control platform vibration requests",
+    );
+    assert.equal(
+      JSON.parse(storage.getItem("marbleGameSettings")).hapticsEnabled,
+      enabled,
+    );
+  }
 
   setTestGlobal("document", livingDocument);
   for (const [setting, physicsKey, , resetId] of rangeSettings) {
