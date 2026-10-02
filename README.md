@@ -26,7 +26,7 @@ npm run install-hooks
 ## Run Locally
 
 ```sh
-python3 -m http.server 8000
+python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
 Then open `http://localhost:8000/`.
