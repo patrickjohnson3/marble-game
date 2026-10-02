@@ -9,7 +9,7 @@ This is a static vanilla JavaScript game with no runtime build step. `index.html
 - `npm install`: installs the pinned development tools.
 - `npm run install-hooks`: enables the tracked pre-push gate.
 - `npm test`: runs the full Node-based test suite through `test-all.js`.
-- `npm run test:browser`: runs startup and input smoke tests in local Chrome.
+- `npm run test:browser`: runs startup and input/UI checks plus service-worker offline and upgrade regression tests in local Chrome. Requires an existing Chrome or Chromium installation; set `CHROME_PATH` if needed.
 - `npm run lint`: runs ESLint across the repo.
 - `npm run format:check`: verifies Prettier formatting.
 - `npm run format`: applies Prettier formatting.
@@ -32,8 +32,8 @@ Use plain JavaScript ES modules and let Prettier plus `.editorconfig` control fo
 
 ## Commit & Pull Request Guidelines
 
-Use short imperative commit summaries and keep each commit to one behavior, refactor, or visual change. Before pushing, run `npm run format:check`, `npm run lint`, and `npm test`. Visual pull requests require screenshots or mobile verification notes.
+Use short imperative commit summaries and keep each commit to one behavior, refactor, or visual change. Before pushing, run `npm run format:check`, `npm run lint`, and `npm test`. For changes to startup, browser input/UI, or PWA behavior, also run `npm run test:browser`; the pre-push hook does not run it. Visual pull requests require screenshots or mobile verification notes.
 
 ## Agent-Specific Notes
 
-Changes to motion sensors, haptics, fullscreen, wake lock, or PWA behavior must preserve desktop keyboard fallback and add focused tests. Verify platform behavior over HTTPS in Android Chrome, Android Brave, iPhone Safari, and iPhone Chrome. Add engine abstractions only when they remove current complexity.
+Changes to motion sensors, haptics, fullscreen, wake lock, or PWA behavior must preserve desktop keyboard fallback and add focused tests. Verify affected platform behavior over HTTPS in Android Chrome, Android Brave, iPhone Safari, and iPhone Chrome. Report actual device/browser coverage and explicitly identify checks blocked by unavailable hardware; desktop emulation does not establish physical-device behavior. Add engine abstractions only when they remove current complexity.
