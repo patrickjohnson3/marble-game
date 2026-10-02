@@ -582,4 +582,84 @@ function testPortraitOrientationPreservesAngleRanges() {
 }
 
 testPortraitOrientationPreservesAngleRanges();
+
+function testOrientationCalibrationAcrossAngleWrapKeepsMarbleStill() {
+  for (const sign of [-1, 1]) {
+    const harness = createHarness({ neutralSampleCount: 18 });
+    for (let sample = 0; sample < 18; sample++) {
+      harness.controller.onOrientation({
+        beta: sign * (sample % 2 ? -179.7 : 179.7),
+        gamma: 0,
+      });
+    }
+    // The midpoint of these two nearby physical orientations is face-down,
+    // not face-up at zero degrees.
+    assert.ok(Math.abs(Math.abs(harness.tilt.neutralY) - 180) < 1e-10);
+    assert.equal(harness.game.phase, "running");
+    assert.equal(harness.counts().introSchedules, 1);
+    Object.assign(harness.marble, { x: 500, y: 500, r: 29 });
+    const context = {
+      marble: harness.marble,
+      tilt: harness.tilt,
+      keyboard: { x: 0, y: 0 },
+      physics: physicsConfig,
+      intro: { released: true },
+      bounds: { left: 0, right: 1000, top: 0, bottom: 1000 },
+      mapState: { obstacles: [], terrainByType: {} },
+    };
+    for (let frame = 0; frame < 60; frame++) {
+      harness.controller.onOrientation({
+        beta: sign * (frame % 2 ? -179.7 : 179.7),
+        gamma: 0,
+      });
+      updatePhysicsInput(context, 1);
+      updatePhysics(context, 1, {});
+    }
+    assert.equal(harness.marble.x, 500);
+    assert.equal(harness.marble.y, 500);
+    assert.equal(harness.marble.vy, 0);
+  }
+}
+
+function testManualNeutralKeepsSmallWrapCrossingDirection() {
+  for (const sign of [-1, 1]) {
+    const harness = createHarness();
+    harness.controller.onOrientation({ beta: sign * 179, gamma: 0 });
+    harness.controller.setNeutralNow();
+    harness.controller.onOrientation({ beta: sign * -179, gamma: 0 });
+    updatePhysicsInput(
+      {
+        tilt: harness.tilt,
+        keyboard: { x: 0, y: 0 },
+        physics: { ...physicsConfig, smoothing: 1, tiltCurve: 1 },
+      },
+      1,
+    );
+    // Crossing 179 to -179 is a positive two-degree turn, and vice versa.
+    assertClose(harness.tilt.smoothY, sign * 2);
+    assert.equal(harness.tilt.smoothX, 0);
+    assert.equal(harness.marble.vx, 0);
+    assert.equal(harness.marble.vy, 0);
+  }
+}
+
+function testAngleContinuityDoesNotCrossSensorHandoffs() {
+  const harness = createHarness();
+  harness.controller.onOrientation({ beta: 179, gamma: 0 });
+  harness.controller.onOrientation({ beta: -179, gamma: 0 });
+  harness.sensor.using = "keyboard";
+  harness.controller.onMotion({ accelerationIncludingGravity: { x: 1, y: 2 } });
+  assert.equal(harness.tilt.rawX, -3);
+  assert.equal(harness.tilt.rawY, 6);
+  assert.equal(harness.calibration.sampleCount, 1);
+  harness.controller.onOrientation({ beta: -179.7, gamma: 0 });
+  assertClose(harness.tilt.rawY, -179.7);
+  assert.equal(harness.calibration.sampleCount, 1);
+  harness.controller.onOrientation({ beta: -179.7, gamma: 0 });
+  assertClose(harness.tilt.neutralY, -179.7);
+}
+
+testOrientationCalibrationAcrossAngleWrapKeepsMarbleStill();
+testManualNeutralKeepsSmallWrapCrossingDirection();
+testAngleContinuityDoesNotCrossSensorHandoffs();
 console.log("Sensor controller tests passed.");

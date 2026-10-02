@@ -345,6 +345,8 @@ interpret gameplay.
 `input/sensor-controller.js` owns device orientation/motion:
 
 - accepts complete finite readings and transforms both sources to screen axes
+- unwraps consecutive orientation Y angles across ±180° before calibration and
+  neutral subtraction; motion fallback retains its separate scaled-gravity units
 - tracks whether orientation or motion events arrived
 - collects fresh neutral samples on a source change, including delayed sensors
   after keyboard fallback, without mixing the two sources' units

@@ -51,6 +51,10 @@ export function createSensorController({
       // Keep active play running while the new baseline is collected.
       ui.setHint(copy.hints.calibrating);
       ui.setGameStatus(copy.hints.calibrating);
+    } else if (mode === SENSOR_MODES.orientation) {
+      // Keep Y continuous across +/-180 for averaging and neutral subtraction.
+      // A new source starts with its own reading, never the previous units.
+      rawY += 360 * Math.round((tilt.rawY - rawY) / 360);
     }
     onSample();
     tilt.rawX = rawX;
