@@ -7,6 +7,7 @@ import {
   MAP_ELEMENT_TYPES,
 } from "./map-elements.js";
 import {
+  circleObstacleContact,
   circleOrientedRectContact,
   circleOrientedRoundedRectContact,
 } from "./physics-collisions.js";
@@ -49,6 +50,8 @@ const spongeAngularSettleSpeed = 0.00005;
 const spongeMaxAngleOffset = 0.55;
 const spongeCollisionCornerRadius = 18;
 const spongeCollisionSeparation = 0.5;
+const spongeCollisionSweepStep = 2;
+const spongeContactRefinementSteps = 12;
 const spongeWaterSoakRate = 0.01;
 const spongeMaxPuddleLinearShrink = 0.2;
 const spongeWaterRedrawSteps = 20;
@@ -131,6 +134,7 @@ export function createKitchenDynamicsState() {
     lastWaterRenderStep: 0,
     sponge: null,
     spongeContact: {},
+    spongePose: {},
     spongeDisturbed: false,
     spongeOriginAngle: 0,
     spongeSoakAnchorX: 0.5,
@@ -273,39 +277,205 @@ function cappedVectorScale(x, y, maxLength) {
   return maxLength / length;
 }
 
-function moveSponge(state, dx, dy) {
-  const sponge = state.sponge;
-  const halfWidth =
-    sponge.collisionHalfWidth ?? (sponge.hitboxW ?? sponge.w) / 2;
-  const halfHeight =
-    sponge.collisionHalfHeight ?? (sponge.hitboxH ?? sponge.h) / 2;
-  const radius = Math.min(spongeCollisionCornerRadius, halfWidth, halfHeight);
-  const cos = Math.abs(sponge.collisionCos ?? Math.cos(sponge.angle ?? 0));
-  const sin = Math.abs(sponge.collisionSin ?? Math.sin(sponge.angle ?? 0));
+function spongeOverlapsObstacle(state, pose, obstacle) {
+  const oriented = Number.isFinite(obstacle.angle);
+  const halfWidth = oriented
+    ? (obstacle.collisionHalfWidth ?? (obstacle.hitboxW ?? obstacle.w) / 2)
+    : obstacle.w / 2;
+  const halfHeight = oriented
+    ? (obstacle.collisionHalfHeight ?? (obstacle.hitboxH ?? obstacle.h) / 2)
+    : obstacle.h / 2;
+  const radius = oriented
+    ? Math.max(0, Math.min(obstacle.cornerRadius ?? 0, halfWidth, halfHeight))
+    : 0;
+  const cos = oriented
+    ? (obstacle.collisionCos ?? Math.cos(obstacle.angle))
+    : 1;
+  const sin = oriented
+    ? (obstacle.collisionSin ?? Math.sin(obstacle.angle))
+    : 0;
+  const centerX = obstacle.collisionCenterX ?? obstacle.x + obstacle.w / 2;
+  const centerY = obstacle.collisionCenterY ?? obstacle.y + obstacle.h / 2;
+  const dx = centerX - pose.collisionCenterX;
+  const dy = centerY - pose.collisionCenterY;
+  const reach =
+    Math.hypot(pose.collisionHalfWidth, pose.collisionHalfHeight) +
+    Math.hypot(halfWidth, halfHeight);
+  if (dx * dx + dy * dy > reach * reach) return false;
+
+  // Each rounded rectangle is its inner rectangle plus a circular rim.
+  // Intersecting inner rectangles need SAT: crossed edges can overlap even
+  // when none of their corners lies inside the other rectangle.
+  const coreX = pose.collisionHalfWidth - pose.cornerRadius;
+  const coreY = pose.collisionHalfHeight - pose.cornerRadius;
+  const otherCoreX = halfWidth - radius;
+  const otherCoreY = halfHeight - radius;
+  let coresOverlap = true;
+  for (let axis = 0; axis < 4; axis++) {
+    const axisCos = axis < 2 ? pose.collisionCos : cos;
+    const axisSin = axis < 2 ? pose.collisionSin : sin;
+    const nx = axis % 2 === 0 ? axisCos : -axisSin;
+    const ny = axis % 2 === 0 ? axisSin : axisCos;
+    const extent =
+      coreX * Math.abs(nx * pose.collisionCos + ny * pose.collisionSin) +
+      coreY * Math.abs(-nx * pose.collisionSin + ny * pose.collisionCos) +
+      otherCoreX * Math.abs(nx * cos + ny * sin) +
+      otherCoreY * Math.abs(-nx * sin + ny * cos);
+    if (Math.abs(dx * nx + dy * ny) > extent) {
+      coresOverlap = false;
+      break;
+    }
+  }
+  if (coresOverlap) return true;
+
+  // For disjoint rectangles the closest pair includes a vertex. Test the
+  // four core vertices in both directions, reusing the circle contact math.
+  const circle = state.collisionCircle;
+  for (let corner = 0; corner < 4; corner++) {
+    const x = corner & 1 ? coreX : -coreX;
+    const y = corner & 2 ? coreY : -coreY;
+    circle.x =
+      pose.collisionCenterX + pose.collisionCos * x - pose.collisionSin * y;
+    circle.y =
+      pose.collisionCenterY + pose.collisionSin * x + pose.collisionCos * y;
+    circle.r = pose.cornerRadius;
+    if (
+      circleObstacleContact(circle, obstacle, 0, state.collisionContact)
+        .intersects
+    )
+      return true;
+    const otherX = corner & 1 ? otherCoreX : -otherCoreX;
+    const otherY = corner & 2 ? otherCoreY : -otherCoreY;
+    circle.x = centerX + cos * otherX - sin * otherY;
+    circle.y = centerY + sin * otherX + cos * otherY;
+    circle.r = radius;
+    if (
+      circleOrientedRectContact(circle, pose, 0, state.collisionContact)
+        .intersects
+    )
+      return true;
+  }
+  return false;
+}
+
+function setSpongePose(state, centerX, centerY, angle) {
+  const pose = state.spongePose;
+  pose.angle = angle;
+  pose.collisionCos = Math.cos(angle);
+  pose.collisionSin = Math.sin(angle);
+  const radius = pose.cornerRadius;
+  const cos = Math.abs(pose.collisionCos);
+  const sin = Math.abs(pose.collisionSin);
   // The rounded body is an inner rectangle plus a circular rim. Its rotated
   // extents exclude the transparent padding in the authored layout rectangle.
   const extentX =
-    (halfWidth - radius) * cos + (halfHeight - radius) * sin + radius;
+    (pose.collisionHalfWidth - radius) * cos +
+    (pose.collisionHalfHeight - radius) * sin +
+    radius;
   const extentY =
-    (halfWidth - radius) * sin + (halfHeight - radius) * cos + radius;
+    (pose.collisionHalfWidth - radius) * sin +
+    (pose.collisionHalfHeight - radius) * cos +
+    radius;
+  pose.collisionCenterX = Math.max(
+    extentX,
+    Math.min(state.world.width - extentX, centerX),
+  );
+  pose.collisionCenterY = Math.max(
+    extentY,
+    Math.min(state.world.height - extentY, centerY),
+  );
+}
+
+function spongePoseBlocked(state) {
+  for (const obstacle of state.obstacles) {
+    if (obstacle === state.sponge || obstacle.staticCollision === false)
+      continue;
+    if (spongeOverlapsObstacle(state, state.spongePose, obstacle)) return true;
+  }
+  return false;
+}
+
+function moveSponge(state, dx, dy, nextAngle) {
+  const sponge = state.sponge;
+  const pose = state.spongePose;
+  pose.collisionHalfWidth =
+    sponge.collisionHalfWidth ?? (sponge.hitboxW ?? sponge.w) / 2;
+  pose.collisionHalfHeight =
+    sponge.collisionHalfHeight ?? (sponge.hitboxH ?? sponge.h) / 2;
+  pose.cornerRadius = Math.min(
+    spongeCollisionCornerRadius,
+    pose.collisionHalfWidth,
+    pose.collisionHalfHeight,
+  );
   const centerX = sponge.collisionCenterX ?? sponge.x + sponge.w / 2;
   const centerY = sponge.collisionCenterY ?? sponge.y + sponge.h / 2;
-  const targetX = centerX + dx;
-  const targetY = centerY + dy;
-  const nextX = Math.max(
-    extentX,
-    Math.min(state.world.width - extentX, targetX),
+  const previousAngle = sponge.angle ?? 0;
+  const angleDelta = nextAngle - previousAngle;
+  if (dx === 0 && dy === 0 && angleDelta === 0) {
+    setSpongePose(state, centerX, centerY, previousAngle);
+    if (pose.collisionCenterX === centerX && pose.collisionCenterY === centerY)
+      return false;
+  }
+  // Bound travel of every body point to 2px between checks, smaller than the
+  // kitchen's thinnest metal piece. Refine first contact without a visible gap.
+  const steps = Math.max(
+    1,
+    Math.ceil(
+      (Math.hypot(dx, dy) +
+        Math.hypot(pose.collisionHalfWidth, pose.collisionHalfHeight) *
+          Math.abs(angleDelta)) /
+        spongeCollisionSweepStep,
+    ),
   );
-  const nextY = Math.max(
-    extentY,
-    Math.min(state.world.height - extentY, targetY),
+  let accepted = 0;
+  for (let step = 1; step <= steps; step++) {
+    const fraction = step / steps;
+    setSpongePose(
+      state,
+      centerX + dx * fraction,
+      centerY + dy * fraction,
+      previousAngle + angleDelta * fraction,
+    );
+    if (spongePoseBlocked(state)) {
+      let blocked = fraction;
+      for (
+        let iteration = 0;
+        iteration < spongeContactRefinementSteps;
+        iteration++
+      ) {
+        const middle = (accepted + blocked) / 2;
+        setSpongePose(
+          state,
+          centerX + dx * middle,
+          centerY + dy * middle,
+          previousAngle + angleDelta * middle,
+        );
+        if (spongePoseBlocked(state)) blocked = middle;
+        else accepted = middle;
+      }
+      if (dx !== 0 || dy !== 0) sponge.vx = sponge.vy = 0;
+      if (angleDelta !== 0) sponge.angularVelocity = 0;
+      break;
+    }
+    accepted = fraction;
+  }
+  setSpongePose(
+    state,
+    centerX + dx * accepted,
+    centerY + dy * accepted,
+    previousAngle + angleDelta * accepted,
   );
-  const moveX = nextX - centerX;
-  const moveY = nextY - centerY;
-  if ((targetX - nextX) * sponge.vx > 0) sponge.vx = 0;
-  if ((targetY - nextY) * sponge.vy > 0) sponge.vy = 0;
-  if (moveX === 0 && moveY === 0) return false;
+  const moveX = pose.collisionCenterX - centerX;
+  const moveY = pose.collisionCenterY - centerY;
+  if ((centerX + dx * accepted - pose.collisionCenterX) * sponge.vx > 0)
+    sponge.vx = 0;
+  if ((centerY + dy * accepted - pose.collisionCenterY) * sponge.vy > 0)
+    sponge.vy = 0;
+  if (moveX === 0 && moveY === 0 && pose.angle === previousAngle) return false;
 
+  sponge.angle = pose.angle;
+  sponge.collisionCos = pose.collisionCos;
+  sponge.collisionSin = pose.collisionSin;
   sponge.x += moveX;
   sponge.y += moveY;
   if (Number.isFinite(sponge.collisionCenterX)) {
@@ -446,18 +616,15 @@ function advanceSponge(state, frameDelta) {
       previousAngle + angleDelta,
     ),
   );
-  if (nextAngle !== previousAngle) {
-    sponge.angle = nextAngle;
-    sponge.collisionCos = Math.cos(nextAngle);
-    sponge.collisionSin = Math.sin(nextAngle);
-  } else if (
-    nextAngle === state.spongeOriginAngle - spongeMaxAngleOffset ||
-    nextAngle === state.spongeOriginAngle + spongeMaxAngleOffset
+  if (
+    nextAngle === previousAngle &&
+    (nextAngle === state.spongeOriginAngle - spongeMaxAngleOffset ||
+      nextAngle === state.spongeOriginAngle + spongeMaxAngleOffset)
   ) {
     sponge.angularVelocity = 0;
   }
   // Constrain the complete new pose, including any change in rotated extents.
-  return moveSponge(state, dx, dy) || nextAngle !== previousAngle;
+  return moveSponge(state, dx, dy, nextAngle);
 }
 
 function spongePointTouchesWater(

@@ -1818,6 +1818,184 @@ function testRotatedSpongeBoundsAfterTranslationAndRotation() {
 
 testRotatedSpongeBoundsAfterTranslationAndRotation();
 
+function spongeFixtureScene(obstacle, angle = 0) {
+  const mapConfig = {
+    ...kitchenMap("kitchen-floor", [
+      {
+        type: "obstacle",
+        fixture: "sponge",
+        x: 200,
+        y: 430,
+        w: 600,
+        h: 140,
+        hitboxW: 264,
+        hitboxH: 112,
+        angle,
+      },
+      obstacle,
+    ]),
+    clusters: [],
+    world,
+  };
+  const runtime = createResolvedMapState(mapConfig);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({ mapConfig, world, obstacles: runtime.obstacles });
+  return { dynamics, mapConfig, body: dynamics.state.sponge };
+}
+
+function testSpongeStopsAgainstFixtures() {
+  for (const angle of [0, 0.47]) {
+    for (const side of [-1, 1]) {
+      for (const dt of [0.5, 1, 2]) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        // Parallel faces: 132 sponge half-width + 6 obstacle half-width.
+        const separation = 138.25;
+        const obstacle = {
+          type: "obstacle",
+          x: 500 + side * separation * cos - 6,
+          y: 500 + side * separation * sin - 100,
+          w: 12,
+          h: 200,
+          angle,
+        };
+        const { dynamics, mapConfig, body } = spongeFixtureScene(
+          obstacle,
+          angle,
+        );
+        for (let i = 0; i < 20; i++) {
+          body.vx = side * cos * 3.5;
+          body.vy = side * sin * 3.5;
+          update(dynamics, mapConfig, farFromAnts, dt);
+          const distance =
+            side *
+            ((obstacle.x + 6 - body.collisionCenterX) * cos +
+              (obstacle.y + 100 - body.collisionCenterY) * sin);
+          assert.ok(
+            distance >= 138 - 1e-8,
+            "the sponge must not enter a fixture",
+          );
+          assert.ok(
+            distance < 138.001,
+            "contact must not leave an invisible margin",
+          );
+          assert.equal(body.vx, 0);
+          assert.equal(body.vy, 0);
+        }
+        // Contact must not latch the sponge in place when pushed away.
+        const contactX = body.x;
+        body.vx = -side * cos;
+        body.vy = -side * sin;
+        update(dynamics, mapConfig, farFromAnts, dt);
+        assert.ok((body.x - contactX) * side < 0);
+      }
+    }
+  }
+}
+
+function testSpongeRotationStopsAtFixture() {
+  for (const side of [-1, 1]) {
+    for (const dt of [0.5, 1, 2]) {
+      const { dynamics, mapConfig, body } = spongeFixtureScene({
+        type: "obstacle",
+        x: side < 0 ? 357.9 : 632.1,
+        y: 300,
+        w: 10,
+        h: 400,
+      });
+      body.angularVelocity = side * 0.025;
+      update(dynamics, mapConfig, farFromAnts, dt);
+      // Support point of the rounded body's inner corner plus its 18px rim.
+      const cornerX =
+        114 * Math.cos(body.angle) + 38 * Math.abs(Math.sin(body.angle)) + 18;
+      assert.ok(cornerX <= 132.1 + 1e-8, "rotation must not enter a fixture");
+      assert.ok(
+        Math.abs(body.angle) > 0,
+        "accept the clear portion of rotation",
+      );
+      assert.equal(body.angularVelocity, 0);
+      assert.equal(body.collisionCenterX, 500);
+      assert.equal(body.collisionCenterY, 500);
+      assert.equal(body.collisionCos, Math.cos(body.angle));
+      assert.equal(body.collisionSin, Math.sin(body.angle));
+      body.angularVelocity = -body.angle / 2;
+      update(dynamics, mapConfig, farFromAnts, 1);
+      assert.ok(
+        body.angularVelocity * side < 0,
+        "rotation away must remain possible",
+      );
+    }
+  }
+}
+
+function testSpongeUsesRoundedFixtureFootprints() {
+  const { dynamics, mapConfig, body } = spongeFixtureScene({
+    type: "obstacle",
+    x: 629,
+    y: 553,
+    w: 40,
+    h: 40,
+    cornerRadius: 20,
+    angle: 0,
+  });
+  body.vx = 3.5;
+  update(dynamics, mapConfig, farFromAnts, 1);
+  assert.ok(
+    Math.abs(body.x - (200 + 3.5 * 0.94)) < 1e-9,
+    "overlapping layout boxes must not block separated rounded bodies",
+  );
+}
+
+function testPushingSpongeTowardRealSpoon() {
+  const runtime = createResolvedMapState(resolvedMapConfig);
+  const dynamics = createKitchenDynamics();
+  dynamics.reset({
+    mapConfig: runtime.activeMap,
+    world: runtime.activeMap.world,
+    obstacles: runtime.obstacles,
+  });
+  const body = dynamics.state.sponge;
+  const spoon = runtime.obstacles.find(
+    (obstacle) => obstacle.fixture === "spoon",
+  );
+  const angle = Math.atan2(
+    spoon.collisionCenterY - body.collisionCenterY,
+    spoon.collisionCenterX - body.collisionCenterX,
+  );
+  Object.assign(body, {
+    angle,
+    collisionCos: Math.cos(angle),
+    collisionSin: Math.sin(angle),
+  });
+  for (let i = 0; i < 400; i++) {
+    update(dynamics, runtime.activeMap, {
+      x: body.collisionCenterX - body.collisionCos * 151,
+      y: body.collisionCenterY - body.collisionSin * 151,
+      r: 29,
+      vx: body.collisionCos * 14,
+      vy: body.collisionSin * 14,
+    });
+    // This point lies inside visible spoon metal. It cannot be inside the sponge.
+    const dx = spoon.collisionCenterX - body.collisionCenterX;
+    const dy = spoon.collisionCenterY - body.collisionCenterY;
+    const localX = dx * body.collisionCos + dy * body.collisionSin;
+    const localY = -dx * body.collisionSin + dy * body.collisionCos;
+    const distance = Math.hypot(
+      Math.max(Math.abs(localX) - 114, 0),
+      Math.max(Math.abs(localY) - 38, 0),
+    );
+    assert.ok(
+      distance >= 18 - 1e-8,
+      "pushing cannot bury spoon metal in the sponge",
+    );
+  }
+}
+
+testSpongeStopsAgainstFixtures();
+testSpongeRotationStopsAtFixture();
+testSpongeUsesRoundedFixtureFootprints();
+testPushingSpongeTowardRealSpoon();
+
 function testFoodUsesVisibleLiquidFootprints() {
   const cases = [
     { type: "waterPatch", x: 305, y: 405, h: 200, retention: 0.88, wet: false },
