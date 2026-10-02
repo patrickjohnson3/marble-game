@@ -28,7 +28,7 @@ Use plain JavaScript ES modules and let Prettier plus `.editorconfig` control fo
 
 ## Testing Guidelines
 
-`npm test` runs Node `assert` tests and cache validation. Add focused tests beside the affected system. Rendering tests inspect the fake canvas call log rather than pixel snapshots.
+`npm test` runs Node `assert` tests and cache validation. Place focused tests in `tests/`; extend existing suites when practical, and register each new standalone Node suite in `test-all.js`. Rendering tests inspect the fake canvas call log rather than pixel snapshots.
 
 ## Commit & Pull Request Guidelines
 
