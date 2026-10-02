@@ -126,7 +126,47 @@ function testGoalHoldResetAndMapProgression() {
   assert.equal(mapRuntime.state.goalHoldMs, 0, "the closed map gates goals");
 
   intro.released = true;
+  // A radius-5 marble fits in this radius-30 goal up to 25px from its center.
+  for (const [insideX, insideY, outsideX, outsideY] of [
+    [125, 100, 126, 100],
+    [75, 100, 74, 100],
+    [100, 125, 100, 126],
+    [100, 75, 100, 74],
+  ]) {
+    marble.x = outsideX;
+    marble.y = outsideY;
+    controller.update(1);
+    assert.equal(
+      mapRuntime.state.goalHoldMs,
+      0,
+      "a center inside the goal must not qualify when the marble overhangs",
+    );
+
+    marble.x = insideX;
+    marble.y = insideY;
+    controller.update(1);
+    assert.equal(
+      mapRuntime.state.goalHoldMs,
+      10,
+      "internal tangency qualifies",
+    );
+
+    marble.x = outsideX;
+    marble.y = outsideY;
+    controller.update(1);
+    assert.equal(
+      mapRuntime.state.goalHoldMs,
+      0,
+      "partial exit clears the hold",
+    );
+    assert.equal(calls.progress.at(-1), 0);
+    assert.equal(mapRuntime.state.goalCompleted, false);
+    assert.equal(mapRuntime.state.activeMap.variantId, "first");
+    assert.deepEqual(calls.completedMaps, []);
+  }
+
   marble.x = 120;
+  marble.y = 100;
   controller.update(1);
   assert.equal(mapRuntime.state.goalHoldMs > 0, true);
   assert.equal(mapRuntime.state.goalCompleted, false);
