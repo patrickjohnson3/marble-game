@@ -20,11 +20,11 @@ This is a static vanilla JavaScript game with no runtime build step. `index.html
 
 ## Architecture Boundaries
 
-Keep gameplay rules in `core/`, browser APIs in `platform/` or input controllers, and `rendering/` limited to output and disposable caches. Follow `docs/state-ownership.md`; controllers and renderers must not duplicate state owned by `state`, `mapRuntime.state`, or `settings`.
+Keep gameplay rules in `core/`, platform capability integration (permissions, sensors, fullscreen, wake lock, and service workers) in `platform/` or input controllers, and `rendering/` limited to output and disposable caches. Existing DOM lookup and injected frame scheduling helpers may remain in `core/`. Follow `docs/state-ownership.md`; controllers and renderers must not duplicate state owned by `state`, `mapRuntime.state`, or `settings`.
 
 ## Coding Style & Naming Conventions
 
-Use plain JavaScript ES modules and let Prettier plus `.editorconfig` control formatting. Keep gameplay tuning in `core/game-config.js`. Extract helpers when they isolate reusable or independently testable logic; avoid one-use wrappers.
+Use plain JavaScript ES modules and let Prettier plus `.editorconfig` control formatting. Keep shared gameplay tuning in `core/game-config.js`; local implementation constants may stay beside the behavior they govern. Extract helpers when they isolate reusable or independently testable logic; avoid one-use wrappers.
 
 ## Testing Guidelines
 
