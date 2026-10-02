@@ -1129,11 +1129,8 @@ function advanceCereal(state, cereal, frameDelta) {
   setCerealFromCircle(cereal, circle);
 }
 
-function transferMarbleMomentum(cereal, marble, nx, ny, influence) {
-  const incomingSpeed = Math.max(
-    0,
-    (marble.vx ?? 0) * nx + (marble.vy ?? 0) * ny,
-  );
+function transferMarbleMomentum(cereal, marbleVx, marbleVy, nx, ny, influence) {
+  const incomingSpeed = Math.max(0, marbleVx * nx + marbleVy * ny);
   const kindMultiplier = cereal.kind === "crumb" ? crumbMomentumMultiplier : 1;
   const targetSpeed =
     incomingSpeed * influence.momentumTransfer * kindMultiplier;
@@ -1156,6 +1153,7 @@ function updateCereal(
   frameDelta,
   events,
   soakInWater,
+  movementPath,
 ) {
   for (let i = 0; i < state.cheerios.length; i++) {
     const cereal = state.cheerios[i];
@@ -1169,55 +1167,102 @@ function updateCereal(
 
     const { x: currentX, y: currentY, radius } = cereal;
     const shoveDistance = marble.r + radius;
-    const minX = Math.min(previousMarble.x, marble.x) - shoveDistance;
-    const maxX = Math.max(previousMarble.x, marble.x) + shoveDistance;
-    const minY = Math.min(previousMarble.y, marble.y) - shoveDistance;
-    const maxY = Math.max(previousMarble.y, marble.y) + shoveDistance;
-    if (
-      currentX < minX ||
-      currentX > maxX ||
-      currentY < minY ||
-      currentY > maxY
-    ) {
-      continue;
-    }
+    let distance = shoveDistance;
+    let closestX = 0;
+    let closestY = 0;
+    let contactStart = null;
+    let contactEnd = null;
+    let contactVx = marble.vx || 0;
+    let contactVy = marble.vy || 0;
+    let impactNx = 0;
+    let impactNy = 0;
+    const segmentCount = movementPath?.count || 1;
+    for (let i = 0; i < segmentCount; i++) {
+      const segment = movementPath?.count ? movementPath.segments[i] : null;
+      const start = segment?.start ?? previousMarble;
+      // Sponge separation may correct the last physics endpoint.
+      const end = i === segmentCount - 1 ? marble : segment.end;
+      if (
+        currentX < Math.min(start.x, end.x) - shoveDistance ||
+        currentX > Math.max(start.x, end.x) + shoveDistance ||
+        currentY < Math.min(start.y, end.y) - shoveDistance ||
+        currentY > Math.max(start.y, end.y) + shoveDistance
+      ) {
+        continue;
+      }
+      setDistanceToSegment(currentX, currentY, start, end, cereal);
+      const segmentDistance = cereal.sweptDistance;
+      if (segmentDistance >= shoveDistance) continue;
 
-    setDistanceToSegment(currentX, currentY, previousMarble, marble, cereal);
-    const dx = currentX - cereal.sweptClosestX;
-    const dy = currentY - cereal.sweptClosestY;
-    const distance = cereal.sweptDistance;
+      if (contactStart === null) {
+        contactStart = start;
+        contactEnd = end;
+        const travelX = end.x - start.x;
+        const travelY = end.y - start.y;
+        const travelLength = Math.hypot(travelX, travelY);
+        if (segment && travelLength > collisionZeroDistanceEpsilon) {
+          const incomingSpeed =
+            segment.speed ?? travelLength / (segment.dt ?? frameDelta);
+          contactVx = (travelX / travelLength) * incomingSpeed;
+          contactVy = (travelY / travelLength) * incomingSpeed;
+        }
+        const speed = Math.hypot(contactVx, contactVy);
+        impactNx =
+          segmentDistance > collisionZeroDistanceEpsilon
+            ? (currentX - cereal.sweptClosestX) / segmentDistance
+            : speed > 0
+              ? contactVx / speed
+              : 1;
+        impactNy =
+          segmentDistance > collisionZeroDistanceEpsilon
+            ? (currentY - cereal.sweptClosestY) / segmentDistance
+            : speed > 0
+              ? contactVy / speed
+              : 0;
+      }
+      if (segmentDistance < distance) {
+        distance = segmentDistance;
+        closestX = cereal.sweptClosestX;
+        closestY = cereal.sweptClosestY;
+      }
+    }
+    if (contactStart === null) continue;
+
+    // Coast once, transfer the first contact's momentum once, and shove from
+    // the closest actual segment. Substeps must not multiply the interaction.
+    cereal.sweptClosestX = closestX;
+    cereal.sweptClosestY = closestY;
+    cereal.sweptDistance = distance;
+    const dx = currentX - closestX;
+    const dy = currentY - closestY;
     const influence = surfaceInfluence(
       currentX,
       currentY,
       state.terrainElements,
     );
-    if (distance >= shoveDistance) continue;
-
-    const speed = Math.hypot(marble.vx || 0, marble.vy || 0);
+    const speed = Math.hypot(contactVx, contactVy);
     const nx =
       distance > collisionZeroDistanceEpsilon
         ? dx / distance
         : speed > 0
-          ? (marble.vx || 0) / speed
+          ? contactVx / speed
           : 1;
     const ny =
       distance > collisionZeroDistanceEpsilon
         ? dy / distance
         : speed > 0
-          ? (marble.vy || 0) / speed
+          ? contactVy / speed
           : 0;
     const amount = shoveDistance - distance + cheerioObstacleSeparation;
-    let impactNx = nx;
-    let impactNy = ny;
-    const startX = currentX - previousMarble.x;
-    const startY = currentY - previousMarble.y;
+    const startX = currentX - contactStart.x;
+    const startY = currentY - contactStart.y;
     const startDistanceSq = startX * startX + startY * startY;
     const contactRadiusSq = shoveDistance * shoveDistance;
     if (startDistanceSq > contactRadiusSq) {
       // Momentum uses the entry normal, not the perpendicular normal at the
       // sweep's closest point. Keep that closest point for the positional shove.
-      const sweepX = marble.x - previousMarble.x;
-      const sweepY = marble.y - previousMarble.y;
+      const sweepX = contactEnd.x - contactStart.x;
+      const sweepY = contactEnd.y - contactStart.y;
       const lengthSq = sweepX * sweepX + sweepY * sweepY;
       const projection = startX * sweepX + startY * sweepY;
       const c = startDistanceSq - contactRadiusSq;
@@ -1229,7 +1274,14 @@ function updateCereal(
         impactNy = (startY - sweepY * time) / shoveDistance;
       }
     }
-    transferMarbleMomentum(cereal, marble, impactNx, impactNy, influence);
+    transferMarbleMomentum(
+      cereal,
+      contactVx,
+      contactVy,
+      impactNx,
+      impactNy,
+      influence,
+    );
     const cerealCircle = state.collisionCircle;
     cerealCircle.x = currentX + nx * amount;
     cerealCircle.y = currentY + ny * amount;
@@ -1284,6 +1336,7 @@ export function updateKitchenDynamics(
     frameDelta,
     events,
     mapConfig.variantId === kitchenFloorMapId,
+    movementPath,
   );
   updateAnts(state, marble, previousMarble, frameDelta, events, movementPath);
   // Feedback cooldowns use the same 60 Hz time units as movement and timers.

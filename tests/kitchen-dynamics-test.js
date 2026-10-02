@@ -278,6 +278,103 @@ function testCerealTangencyAndSeparatingOverlapDoNotGainMomentum() {
 testGrazingCerealSweepTransfersFirstContactMomentum();
 testCerealTangencyAndSeparatingOverlapDoNotGainMomentum();
 
+function testCerealContactsFollowTheResolvedReboundPath() {
+  for (const [x, y, vy, shouldContact] of [
+    [176, 551.7, 0, true],
+    [115.5, 528, 10, false],
+  ]) {
+    const room = { width: 4400, height: 4400 };
+    const wall = { type: "obstacle", x: 200, y: 0, w: 20, h: room.height };
+    const mapConfig = {
+      ...kitchenMap("kitchen-floor", [wall]),
+      clusters: [
+        {
+          x: x / room.width,
+          y: y / room.height,
+          angle: 0,
+          ants: [],
+          cheerios: [[0, 0]],
+          crumbs: [],
+        },
+      ],
+      world: room,
+    };
+    const runtime = createResolvedMapState(mapConfig);
+    const dynamics = createKitchenDynamics();
+    dynamics.reset({ mapConfig, world: room, obstacles: runtime.obstacles });
+    const cereal = dynamics.state.cheerios[0];
+    const marble = { x: 160, y: 500, r: 29, vx: 14, vy };
+    const previous = { ...marble };
+    const context = {
+      marble,
+      physics: physicsConfig,
+      tilt: { smoothX: 0, smoothY: 0 },
+      intro: { released: true },
+      bounds: { left: 0, top: 0, right: room.width, bottom: room.height },
+      mapState: runtime,
+    };
+    updatePhysics(context, 2, { onSurface() {} });
+    assert.ok(marble.vx < 0, "the wall must reverse the incoming velocity");
+    // Combined radius is 52.1. In the first case the path reaches (171,500),
+    // only sqrt(5² + 51.7²) = 51.9412 from the cereal, then rebounds out of
+    // contact. In the second the real path clears by 0.3500, while its endpoint
+    // chord passes 0.3738 inside the radius. Both food bodies clear the wall.
+    const events = dynamics.update(
+      mapConfig,
+      marble,
+      previous,
+      2,
+      context.physicsScratch.movementPath,
+    );
+    assert.equal(cereal.playerDisturbed, shouldContact);
+    if (shouldContact) {
+      assert.ok(cereal.x > x && cereal.y > y);
+      assert.ok(
+        cereal.vx > 0 && cereal.vy > 0,
+        "momentum must follow the incoming contact, not the later rebound",
+      );
+      assert.equal(events.cerealHits, 1);
+    } else {
+      assert.deepEqual(
+        [cereal.x, cereal.y, cereal.vx, cereal.vy],
+        [x, y, 0, 0],
+      );
+      assert.equal(events.cerealHits, 0);
+    }
+  }
+}
+
+function testCerealStraightPathKeepsShoveAndOneMomentumTransfer() {
+  const dynamics = createKitchenDynamics();
+  const mapConfig = { ...kitchenMap("kitchen-floor", []), clusters: [] };
+  reset(dynamics, mapConfig);
+  const cereal = cerealAt(500, 500, {
+    kind: "cheerio",
+    radius: 21,
+    lastHitFeedbackFrame: Number.NEGATIVE_INFINITY,
+  });
+  dynamics.state.cheerios = [cereal];
+  const marble = { x: 516, y: 452, r: 29, vx: 16, vy: 0 };
+  const events = dynamics.update(mapConfig, marble, { x: 484, y: 452 }, 2, {
+    count: 4,
+    segments: [484, 492, 500, 508].map((x) => ({
+      start: { x, y: 452 },
+      end: { x: x + 8, y: 452 },
+      speed: 16,
+      dt: 0.5,
+    })),
+  });
+  // First contact is the same 14-48-50 triangle as the unsplit sweep above.
+  assert.ok(Math.abs(cereal.vx - 0.526848) < 1e-10);
+  assert.ok(Math.abs(cereal.vy - 1.806336) < 1e-10);
+  assert.deepEqual([cereal.x, cereal.y], [500, 502.5]);
+  assert.equal(events.cerealHits, 1);
+  assert.equal(dynamics.state.frameIndex, 2);
+}
+
+testCerealContactsFollowTheResolvedReboundPath();
+testCerealStraightPathKeepsShoveAndOneMomentumTransfer();
+
 function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
   const authoredWater = {
     type: "waterPatch",
@@ -1382,7 +1479,7 @@ function testAntContactUsesTheSpeedOfItsOwnPathSegment() {
 testAntOutsideReboundPathIsNotCrushedByEndpointChord();
 testAntContactUsesTheSpeedOfItsOwnPathSegment();
 
-function testHazardDiscardsEarlierAntContacts() {
+function testHazardDiscardsEarlierKitchenContacts() {
   const mapConfig = {
     ...kitchenMap("kitchen-floor", []),
     clusters: [
@@ -1391,13 +1488,15 @@ function testHazardDiscardsEarlierAntContacts() {
         y: 0.5345,
         angle: 0,
         ants: [[0, 0]],
-        cheerios: [],
+        cheerios: [[0, -22]],
         crumbs: [],
       },
     ],
   };
   const dynamics = createKitchenDynamics();
   reset(dynamics, mapConfig);
+  const cereal = dynamics.state.cheerios[0];
+  const originalCereal = { ...cereal };
   const marble = { x: 160, y: 500, r: 29, vx: 14, vy: 0 };
   const previous = { ...marble };
   const context = {
@@ -1441,9 +1540,15 @@ function testHazardDiscardsEarlierAntContacts() {
     "respawn must cancel the failed movement's ant contacts",
   );
   assert.equal(dynamics.state.ants[0].alive, true);
+  assert.equal(events.cerealHits, 0);
+  assert.deepEqual(
+    [cereal.x, cereal.y, cereal.vx, cereal.vy, cereal.playerDisturbed],
+    [originalCereal.x, originalCereal.y, 0, 0, false],
+    "respawn must cancel the failed movement's cereal contacts",
+  );
 }
 
-testHazardDiscardsEarlierAntContacts();
+testHazardDiscardsEarlierKitchenContacts();
 
 function testCerealCoastingMatchesRepeatedReferenceFrames() {
   const partitions = [
