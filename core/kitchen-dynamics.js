@@ -275,20 +275,39 @@ function cappedVectorScale(x, y, maxLength) {
 
 function moveSponge(state, dx, dy) {
   const sponge = state.sponge;
+  const halfWidth =
+    sponge.collisionHalfWidth ?? (sponge.hitboxW ?? sponge.w) / 2;
+  const halfHeight =
+    sponge.collisionHalfHeight ?? (sponge.hitboxH ?? sponge.h) / 2;
+  const radius = Math.min(spongeCollisionCornerRadius, halfWidth, halfHeight);
+  const cos = Math.abs(sponge.collisionCos ?? Math.cos(sponge.angle ?? 0));
+  const sin = Math.abs(sponge.collisionSin ?? Math.sin(sponge.angle ?? 0));
+  // The rounded body is an inner rectangle plus a circular rim. Its rotated
+  // extents exclude the transparent padding in the authored layout rectangle.
+  const extentX =
+    (halfWidth - radius) * cos + (halfHeight - radius) * sin + radius;
+  const extentY =
+    (halfWidth - radius) * sin + (halfHeight - radius) * cos + radius;
+  const centerX = sponge.collisionCenterX ?? sponge.x + sponge.w / 2;
+  const centerY = sponge.collisionCenterY ?? sponge.y + sponge.h / 2;
+  const targetX = centerX + dx;
+  const targetY = centerY + dy;
   const nextX = Math.max(
-    0,
-    Math.min(state.world.width - sponge.w, sponge.x + dx),
+    extentX,
+    Math.min(state.world.width - extentX, targetX),
   );
   const nextY = Math.max(
-    0,
-    Math.min(state.world.height - sponge.h, sponge.y + dy),
+    extentY,
+    Math.min(state.world.height - extentY, targetY),
   );
-  const moveX = nextX - sponge.x;
-  const moveY = nextY - sponge.y;
+  const moveX = nextX - centerX;
+  const moveY = nextY - centerY;
+  if ((targetX - nextX) * sponge.vx > 0) sponge.vx = 0;
+  if ((targetY - nextY) * sponge.vy > 0) sponge.vy = 0;
   if (moveX === 0 && moveY === 0) return false;
 
-  sponge.x = nextX;
-  sponge.y = nextY;
+  sponge.x += moveX;
+  sponge.y += moveY;
   if (Number.isFinite(sponge.collisionCenterX)) {
     sponge.collisionCenterX += moveX;
   }
@@ -419,7 +438,6 @@ function advanceSponge(state, frameDelta) {
     angleDelta = 0;
   }
 
-  const moved = moveSponge(state, dx, dy);
   const previousAngle = sponge.angle ?? 0;
   const nextAngle = Math.max(
     state.spongeOriginAngle - spongeMaxAngleOffset,
@@ -438,7 +456,8 @@ function advanceSponge(state, frameDelta) {
   ) {
     sponge.angularVelocity = 0;
   }
-  return moved || nextAngle !== previousAngle;
+  // Constrain the complete new pose, including any change in rotated extents.
+  return moveSponge(state, dx, dy) || nextAngle !== previousAngle;
 }
 
 function spongePointTouchesWater(

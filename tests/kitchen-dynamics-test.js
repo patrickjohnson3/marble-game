@@ -1601,6 +1601,118 @@ function testSpongeCoastingMatchesRepeatedReferenceFrames() {
 testCerealCoastingMatchesRepeatedReferenceFrames();
 testSpongeCoastingMatchesRepeatedReferenceFrames();
 
+function assertSpongeBodyInsideWorld(sponge) {
+  // Construct boundary points on the four rounded corners, then rotate them.
+  // This checks the actual body, not the layout box or a copied AABB formula.
+  for (const normalAngle of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+    const localAngle = normalAngle - sponge.angle;
+    const nx = Math.cos(localAngle);
+    const ny = Math.sin(localAngle);
+    const localX = Math.sign(nx) * (sponge.hitboxW / 2 - 18) + nx * 18;
+    const localY = Math.sign(ny) * (sponge.hitboxH / 2 - 18) + ny * 18;
+    const x =
+      sponge.x +
+      sponge.w / 2 +
+      Math.cos(sponge.angle) * localX -
+      Math.sin(sponge.angle) * localY;
+    const y =
+      sponge.y +
+      sponge.h / 2 +
+      Math.sin(sponge.angle) * localX +
+      Math.cos(sponge.angle) * localY;
+    assert.ok(x >= -1e-9 && x <= world.width + 1e-9, `sponge boundary x=${x}`);
+    assert.ok(y >= -1e-9 && y <= world.height + 1e-9, `sponge boundary y=${y}`);
+  }
+  assert.ok(
+    Math.abs(sponge.collisionCenterX - (sponge.x + sponge.w / 2)) < 1e-9,
+  );
+  assert.ok(
+    Math.abs(sponge.collisionCenterY - (sponge.y + sponge.h / 2)) < 1e-9,
+  );
+}
+
+function testRotatedSpongeBoundsAfterTranslationAndRotation() {
+  // At 45 degrees, a 264x112 body with 18-radius corners has this exact extent:
+  // rotate the (114,38) corner of its inner rectangle and add the circular rim.
+  const extent = (114 + 38) * Math.SQRT1_2 + 18;
+  for (const axis of ["x", "y"]) {
+    for (const side of [-1, 1]) {
+      for (const rotating of [false, true]) {
+        for (const dt of [0.5, 1, 2]) {
+          const sponge = {
+            type: "obstacle",
+            fixture: "sponge",
+            x: 300,
+            y: 400,
+            w: 600,
+            h: 140,
+            hitboxW: 264,
+            hitboxH: 112,
+            angle: Math.PI / 4,
+          };
+          const mapConfig = {
+            ...kitchenMap("kitchen-floor", [sponge]),
+            clusters: [],
+            world,
+          };
+          const runtime = createResolvedMapState(mapConfig);
+          const dynamics = createKitchenDynamics();
+          dynamics.reset({ mapConfig, world, obstacles: runtime.obstacles });
+          const body = dynamics.state.sponge;
+          const center = side < 0 ? extent + 0.1 : world.width - extent - 0.1;
+          body[axis] = center - (axis === "x" ? body.w : body.h) / 2;
+          body[axis === "x" ? "collisionCenterX" : "collisionCenterY"] = center;
+          if (rotating) {
+            // Y grows when turning clockwise here; X grows counterclockwise.
+            body.angularVelocity = axis === "x" ? -0.025 : 0.025;
+            body[axis === "x" ? "vx" : "vy"] = -side * 0.5;
+          } else {
+            body[axis === "x" ? "vx" : "vy"] = side * 3;
+            body[axis === "x" ? "vy" : "vx"] = 0.5;
+          }
+          assertSpongeBodyInsideWorld(body);
+          const events = update(
+            dynamics,
+            mapConfig,
+            { x: 900, y: 900, r: 29, vx: 0, vy: 0 },
+            dt,
+          );
+          assertSpongeBodyInsideWorld(body);
+          assert.equal(events.spongeChanges, 1);
+          if (rotating) {
+            assert.ok(body.angle !== Math.PI / 4);
+            assert.ok(
+              Math.abs(
+                body[axis === "x" ? "vx" : "vy"] +
+                  side * 0.5 * Math.pow(0.94, dt),
+              ) < 1e-9,
+              "an inward velocity must survive correction of rotational penetration",
+            );
+          } else {
+            assert.equal(body[axis === "x" ? "vx" : "vy"], 0);
+            assert.ok(
+              Math.abs(
+                body[axis === "x" ? "vy" : "vx"] - 0.5 * Math.pow(0.94, dt),
+              ) < 1e-9,
+              "a boundary must preserve tangential coasting",
+            );
+            const finalCenter =
+              body[axis] + (axis === "x" ? body.w : body.h) / 2;
+            assert.ok(
+              Math.abs(
+                finalCenter - (side < 0 ? extent : world.width - extent),
+              ) < 1e-9,
+              "the metal boundary, not the transparent layout margin, must stop at the wall",
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
+testRotatedSpongeBoundsAfterTranslationAndRotation();
+
 function testFoodUsesVisibleLiquidFootprints() {
   const cases = [
     { type: "waterPatch", x: 305, y: 405, h: 200, retention: 0.88, wet: false },
