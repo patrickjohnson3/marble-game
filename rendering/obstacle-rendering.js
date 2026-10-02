@@ -8,10 +8,6 @@ import {
 import { renderLivingRoomFixtures } from "./living-room-rendering.js";
 import { renderParkingFixtures } from "./parking-lot-rendering.js";
 
-function rectPath(x, y, w, h) {
-  return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
-}
-
 function coveredByAny(rects, left, top, right, bottom) {
   return rects.some(
     (rect) =>
@@ -56,8 +52,6 @@ function mergedRectGeometry(rects) {
   const covered = [];
   const fillRects = [];
   const outlineSegments = [];
-  let fill = "";
-  let outline = "";
 
   for (let y = 0; y < ys.length - 1; y++) {
     covered[y] = [];
@@ -71,7 +65,6 @@ function mergedRectGeometry(rects) {
           h: ys[y + 1] - ys[y],
         };
         fillRects.push(rect);
-        fill += rectPath(rect.x, rect.y, rect.w, rect.h);
       }
     }
   }
@@ -86,24 +79,20 @@ function mergedRectGeometry(rects) {
       const bottom = ys[y + 1];
       if (!covered[y - 1]?.[x]) {
         outlineSegments.push({ x1: left, y1: top, x2: right, y2: top });
-        outline += "M" + left + " " + top + "H" + right;
       }
       if (!covered[y + 1]?.[x]) {
         outlineSegments.push({ x1: left, y1: bottom, x2: right, y2: bottom });
-        outline += "M" + left + " " + bottom + "H" + right;
       }
       if (!covered[y]?.[x - 1]) {
         outlineSegments.push({ x1: left, y1: top, x2: left, y2: bottom });
-        outline += "M" + left + " " + top + "V" + bottom;
       }
       if (!covered[y]?.[x + 1]) {
         outlineSegments.push({ x1: right, y1: top, x2: right, y2: bottom });
-        outline += "M" + right + " " + top + "V" + bottom;
       }
     }
   }
 
-  return { fill, fillRects, outline, outlineSegments };
+  return { fillRects, outlineSegments };
 }
 
 function drawFillRects(context, rects) {
