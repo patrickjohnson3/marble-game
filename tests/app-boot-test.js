@@ -142,17 +142,21 @@ try {
   setTestGlobal("document", livingDocument);
   const initialMap = resolveMapVariantConfig(baseMapConfig, "living-room");
   const savedSettings = { maxSpeed: 18, acceleration: 0.09 };
+  const storedSettings = new Map([
+    ["marbleGameSettings", JSON.stringify(savedSettings)],
+  ]);
+  const storage = {
+    getItem(key) {
+      return storedSettings.get(key) ?? null;
+    },
+    setItem(key, value) {
+      storedSettings.set(key, value);
+    },
+  };
   const livingApp = createApp({
     document: livingDocument,
     window: globalThis,
-    storage: {
-      getItem(key) {
-        return key === "marbleGameSettings"
-          ? JSON.stringify(savedSettings)
-          : null;
-      },
-      setItem() {},
-    },
+    storage,
     initialMap,
   });
   assert.deepEqual(
@@ -163,7 +167,7 @@ try {
     savedSettings,
     "both saved control preferences must reach live physics on boot",
   );
-  for (const [setting, physicsKey, inputId, resetId, value] of [
+  const rangeSettings = [
     ["maxSpeed", "maxSpeed", "speedSetting", "resetSpeedSetting", 20],
     [
       "acceleration",
@@ -172,7 +176,8 @@ try {
       "resetSensitivitySetting",
       0.15,
     ],
-  ]) {
+  ];
+  for (const [setting, physicsKey, inputId, , value] of rangeSettings) {
     const input = livingDocument.getElementById(inputId);
     input.value = String(value);
     input.listeners.find(({ type }) => type === "input").listener();
@@ -181,6 +186,36 @@ try {
       value,
       `${setting} input must change live physics`,
     );
+    assert.equal(
+      JSON.parse(storage.getItem("marbleGameSettings"))[setting],
+      value,
+      `${setting} input must save under the established storage key`,
+    );
+  }
+  const trailInput = livingDocument.getElementById("trailSetting");
+  trailInput.checked = true;
+  trailInput.listeners.find(({ type }) => type === "change").listener();
+
+  const reopenedDocument = createFakeDocument();
+  setTestGlobal("document", reopenedDocument);
+  const reopenedApp = createApp({
+    document: reopenedDocument,
+    window: globalThis,
+    storage,
+    initialMap,
+  });
+  for (const [setting, physicsKey, inputId, , value] of rangeSettings) {
+    assert.equal(
+      reopenedApp.state.physics[physicsKey],
+      value,
+      `${setting} UI change must survive a fresh application boot`,
+    );
+    assert.equal(Number(reopenedDocument.getElementById(inputId).value), value);
+  }
+  assert.equal(reopenedDocument.getElementById("trailSetting").checked, true);
+
+  setTestGlobal("document", livingDocument);
+  for (const [setting, physicsKey, , resetId] of rangeSettings) {
     livingDocument
       .getElementById(resetId)
       .listeners.find(({ type }) => type === "click")
@@ -190,7 +225,38 @@ try {
       settingsConfig[setting],
       `${setting} reset must restore live physics defaults`,
     );
+    assert.equal(
+      JSON.parse(storage.getItem("marbleGameSettings"))[setting],
+      settingsConfig[setting],
+      `${setting} reset must persist its default`,
+    );
   }
+
+  const resetDocument = createFakeDocument();
+  setTestGlobal("document", resetDocument);
+  const resetApp = createApp({
+    document: resetDocument,
+    window: globalThis,
+    storage,
+    initialMap,
+  });
+  for (const [setting, physicsKey, inputId] of rangeSettings) {
+    assert.equal(
+      resetApp.state.physics[physicsKey],
+      settingsConfig[setting],
+      `${setting} reset must survive a fresh application boot`,
+    );
+    assert.equal(
+      Number(resetDocument.getElementById(inputId).value),
+      settingsConfig[setting],
+    );
+  }
+  assert.equal(
+    resetDocument.getElementById("trailSetting").checked,
+    true,
+    "range resets must preserve the separately saved trail preference",
+  );
+  setTestGlobal("document", livingDocument);
   assert.equal(livingApp.mapRuntime.state.activeMap.variantId, "living-room");
   assert.equal(livingApp.state.marble.x, initialMap.spawn.x);
   assert.equal(livingApp.kitchenDynamics.state.ants.length, 0);
