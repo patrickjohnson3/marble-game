@@ -9,7 +9,11 @@ import { baseMapConfig, resolvedMapConfig } from "../core/map-config.js";
 import { createMapRuntime } from "../core/map-runtime.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { createGameState } from "../core/state.js";
-import { updatePhysics, SURFACE_TYPES } from "../core/physics.js";
+import {
+  updatePhysics,
+  updatePhysicsInput,
+  SURFACE_TYPES,
+} from "../core/physics.js";
 
 function harness() {
   const runtime = createMapRuntime({ initialMap: resolvedMapConfig });
@@ -144,7 +148,7 @@ function harness() {
       decisionIn: 0,
     });
     let elapsed = 0;
-    while (elapsed < 180 && impacts.length < 2) {
+    while (elapsed < 180) {
       updatePhysics(context, dt, feedback);
       elapsed += dt;
     }
@@ -153,12 +157,67 @@ function harness() {
       "separate physical attacks repeat without retreat",
     );
     assert.ok(
+      impacts.length <= 3,
+      "three seconds of idle contact pressure must not become a rapid shove chain",
+    );
+    assert.ok(
       state.marble.x < 2100,
       "the stronger hits physically push the marble back",
     );
     assert.equal(runtime.state.cockroach.mode, "harass");
     assert.equal(runtime.state.cockroach.engaged, true);
   }
+}
+
+// A modest three-degree tilt away should suffice on clear floor. Requiring
+// keyboard-level tilt or a counter-hit makes ordinary ant hunting exhausting.
+for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
+  const { context, runtime, state, feedback, impacts } = harness();
+  const cockroach = runtime.state.cockroach;
+  Object.assign(state.marble, { x: 2200, y: 600 });
+  Object.assign(cockroach, {
+    x: 2254,
+    y: 600,
+    previousX: 2254,
+    previousY: 600,
+    decisionIn: 0,
+  });
+  Object.assign(context.tilt, {
+    rawX: -3,
+    rawY: 0,
+    neutralX: 0,
+    neutralY: 0,
+    smoothX: 0,
+    smoothY: 0,
+  });
+  let elapsed = 0;
+  let index = 0;
+  let escaped = false;
+  while (elapsed < 120 && !escaped) {
+    const dt = Math.min(parts[index++ % parts.length], 120 - elapsed);
+    const wasEngaged = cockroach.engaged;
+    updatePhysicsInput(context, dt);
+    updatePhysics(context, dt, feedback);
+    escaped = wasEngaged && !cockroach.engaged && cockroach.mode === "scurry";
+    elapsed += dt;
+  }
+  assert.equal(
+    impacts.length,
+    1,
+    "modest escape steering avoids a second shove",
+  );
+  assert.equal(
+    escaped,
+    true,
+    "normal steering can disengage within two seconds",
+  );
+  assert.ok(cockroach.harassmentIn > 0, "escape still grants foraging respite");
+  for (let frame = 0; frame < 120; frame++) {
+    updatePhysicsInput(context, 1);
+    updatePhysics(context, 1, feedback);
+    assert.equal(cockroach.mode, "scurry", "escape provides time to hunt ants");
+  }
+  assert.equal(impacts.length, 1, "no immediate reacquisition after escape");
 }
 
 for (const phase of ["intro", "complete", "hazard"]) {

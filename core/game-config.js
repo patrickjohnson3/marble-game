@@ -106,8 +106,8 @@ export const cockroachConfig = {
   gooEdgeMargin: 18,
   gooSpeedScale: 0.55, // Locomotion inside goo; knockback and timers stay intact.
   contactImpulse: 12,
-  attackRecoveryDuration: 18, // A brief brace, not a retreat.
-  escapeDistance: 480,
+  attackRecoveryDuration: 60, // One second to steer away; no automatic retreat.
+  escapeDistance: 300,
   maxDisruptedSpeed: 14,
   repelSpeed: 7,
   maxKnockbackSpeed: 12,

@@ -27,7 +27,7 @@ Speeds use the same world-units-per-60-Hz-frame convention as marble physics.
 | Food roaming radius / goo-edge margin        | 70 / 18 world units                |
 | Locomotion speed inside goo                  | 55% of the current mode's speed    |
 | Outward attack kick / resulting speed cap    | 12 / 14                            |
-| Strike recovery / escape distance            | 0.3 seconds / 480 world units      |
+| Strike recovery / escape distance            | 1 second / 300 world units         |
 | Incoming marble speed needed to repel        | 7                                  |
 | Maximum knockback / per-frame retention      | 12 / 0.9                           |
 | Contact rearm gap                            | 8 world units                      |
@@ -55,13 +55,15 @@ cockroach wandering indefinitely. Attacks now run faster than moderate hunting
 motion, but a marble at its normal top speed can still outrun it. More frequent
 heading decisions and distance-limited prediction improve close interception.
 
-A successful roach hit starts a sustained encounter. The insect braces for 0.3
-seconds, then pursues another contact; it does not flee or start the six-second
+A successful roach hit starts a sustained encounter. The insect braces for one
+second, then pursues another contact; it does not flee or start the six-second
 cooldown after its own attack. Engagement has no timeout while the marble is
-nearby. Putting more than 480 world units (about eight marble diameters) between
+nearby. Putting more than 300 world units (about five marble diameters) between
 the centers ends it and resumes food/goo foraging with six seconds of quiet time.
 A distant initial approach still has a six-second limit, so simply being far away
 when it acquires a target does not immediately cancel the pursuit.
+The longer strike pause and shorter escape distance allow modest tilt steering
+to break contact on clear floor without weakening the shove or pursuit speed.
 
 A strong incoming marble hit retains priority: stun, physical knockback, retreat,
 and cooldown interrupt the encounter. Stun lasts 0.4 seconds, followed by a
@@ -92,7 +94,7 @@ Existing impact particles, marble squash and haptics provide contact feedback.
 No contact projects the marble's position or creates a persistent pushing wall.
 
 One latch covers the whole contact. It rearms only after the bodies separate by
-more than 8 units, and the 0.3-second strike recovery must also expire before
+more than 8 units, and the one-second strike recovery must also expire before
 another attack. While bodies still touch, the pursuing insect stops its own
 locomotion instead of walking through the marble. It never blocks the marble's
 position, so lateral steering remains possible beside a wall. Neither continuous
@@ -123,6 +125,10 @@ move under the shove and verify repeated separate impacts. Pressure regressions
 cover the old timeout, distance escape, recovery cadence, wall contact and lateral
 escape. The browser attack starts outside the former acquisition range. The controlled browser attack
 fixtures place actors on clear floor; they do not establish hunting difficulty.
+Full physics/input regressions verify that a modest three-degree tilt away can
+escape within two seconds without a second shove at 30, 60, 120 Hz and irregular
+partitions, followed by a quiet hunting interval. An idle marble still receives
+repeated separate attacks, with at most three shoves in three seconds.
 Goo tests cover walking in all active modes, spill-boundary crossing, no slowdown
 in the empty corners of the spill's bounding box, overlapping droplets,
 30/60/120 Hz and irregular partitions, unchanged counter-hit knockback/recovery,
@@ -135,7 +141,7 @@ without feeling unfair, and a deliberate fast strike reliably creates breathing
 room. In particular, judge whether the faster, more accurate encounters remain fair
 while hunting ants, and whether the insect visibly belongs around food and goo;
 escaping or a strong repel grants six seconds before another pursuit. Judge the
-480-unit escape threshold and 0.3-second strike spacing in particular; an insect's
+300-unit escape threshold and one-second strike spacing in particular; an insect's
 successful hit now deliberately maintains pressure. Test contacts near utensils
 and the sponge, and check that antennae/legs remain clear and animation stays
 smooth. Judge the initial `gooSpeedScale: 0.55` on a physical phone: spills should
