@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a static vanilla JavaScript game with no runtime build step. `index.html` loads `boot.js`, then `app.js` composes the application. Game systems live in `core/`; browser integration in `input/` and `platform/`; preferences in `settings/`; and visual output in `rendering/`. Maps live in `maps/map-data.js`, assets in `assets/`, and tests in `tests/`.
+This is a static vanilla JavaScript game with no runtime build step. `index.html` loads `boot.js`, then `app.js` composes the application. Game systems live in `core/`; browser integration in `input/` and `platform/`; preferences in `settings/`; and visual output in `rendering/`. Map definitions live under `maps/`; `maps/map-data.js` assembles the catalog and contains legacy layouts. Follow [docs/map-authoring.md](docs/map-authoring.md) for map composition, validation, and visual inspection. Assets live in `assets/`, and tests in `tests/`.
 
 ## Build, Test, and Development Commands
 
