@@ -14,7 +14,7 @@ This is a static vanilla JavaScript game with no runtime build step. `index.html
 - `npm run format:check`: verifies Prettier formatting.
 - `npm run format`: applies Prettier formatting.
 - `npm run sync-cache`: synchronizes generated cache versions and the import-map module list.
-- `python3 -m http.server`: serves desktop and same-device localhost testing. Verify motion sensors and PWA behavior from an HTTPS deployment or secure local endpoint; phone access over LAN HTTP is insufficient.
+- `python3 -m http.server 8000 --bind 127.0.0.1`: serves desktop and same-device localhost testing. Verify motion sensors and PWA behavior from an HTTPS deployment or secure local endpoint; phone access over LAN HTTP is insufficient.
 
 `runtime-assets.js` is the source of truth for browser modules and precached assets. Update it when adding or removing a runtime file. After changing `index.html` or a listed runtime asset, run `npm run sync-cache` before final tests. Do not hand-edit the generated `assetVersion` or `runtimeModuleScripts` values in `index.html`, or `cacheVersion` in `sw.js`.
 
