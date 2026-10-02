@@ -2,6 +2,7 @@ import { drawRoundedRect, renderPatchCanvas } from "./wall-rendering.js";
 import { drawParkingGravel } from "./parking-lot-rendering.js";
 
 const shagTextureSize = 560;
+const maxGritRectsPerFill = 1024;
 const pendingShagRenders = new Map();
 let shagTexture = null;
 
@@ -32,17 +33,27 @@ function drawPatchGritLayer(
   { color, stepX, stepY, startX, startY, size, jitterScale, salt },
 ) {
   context.fillStyle = color;
+  context.beginPath();
+  let batchSize = 0;
   for (let y = patch.y + startY; y < patch.y + patch.h; y += stepY) {
     for (let x = patch.x + startX; x < patch.x + patch.w; x += stepX) {
       const offset = patchDotOffset(x, y, salt);
-      context.fillRect(
+      context.rect(
         x + offset * jitterScale,
         y - offset * jitterScale * 0.7,
         size,
         size,
       );
+      // Dots within a layer do not overlap. Paint them together without
+      // retaining a path proportional to the entire terrain area.
+      if (++batchSize === maxGritRectsPerFill) {
+        context.fill();
+        context.beginPath();
+        batchSize = 0;
+      }
     }
   }
+  if (batchSize > 0) context.fill();
 }
 
 function drawRoughPatch(context, patch, shadowScale) {

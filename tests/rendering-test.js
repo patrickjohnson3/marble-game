@@ -2329,6 +2329,96 @@ function testMapRendererUsesUpdatedWorld() {
 
 testMapRendererUsesUpdatedWorld();
 
+function testRoughGritPaintBudget() {
+  withFakeDocument(() => {
+    const canvas = new FakeCanvasElement();
+    const context = canvas.context;
+    globalThis.document.createElement = () => canvas;
+    Object.defineProperty(context, "fillStyle", {
+      set(value) {
+        context.calls.push(["fillStyle", value]);
+      },
+    });
+    const layers = [
+      {
+        color: "rgba(244,244,240,.86)",
+        count: 9396,
+        first: [446.84, 525.412, 2, 2],
+        last: [1730.28, 1557.804, 2, 2],
+      },
+      {
+        color: "rgba(44,44,42,.34)",
+        count: 5934,
+        first: [453.68, 530.524, 1.8, 1.8],
+        last: [1728.68, 1550.524, 1.8, 1.8],
+      },
+      {
+        color: "rgba(172,172,164,.45)",
+        count: 2773,
+        first: [460.26, 542.118, 2.4, 2.4],
+        last: [1736.26, 1554.118, 2.4, 2.4],
+      },
+    ];
+    const container = new FakeElement();
+    // The first real Sand Lot patch contains 108*87, 86*69, and 59*47
+    // dots. Keep all three layers, including every final partial batch.
+    renderRoughPatches(container, [{ x: 440, y: 520, w: 1300, h: 1040 }]);
+    let color;
+    let path = [];
+    let paintedDots = 0;
+    let paintCalls = 0;
+    let largestBatch = 0;
+    const dotsByColor = new Map(layers.map((layer) => [layer.color, []]));
+    for (const [name, ...args] of context.calls) {
+      if (name === "fillStyle") color = args[0];
+      if (name === "beginPath") path = [];
+      if (name === "rect") path.push(args);
+      const dots = dotsByColor.get(color);
+      if (!dots) continue;
+      if (name === "fill" || name === "fillRect") {
+        const batch = name === "fillRect" ? [args] : path;
+        assert.ok(batch.length > 0, "do not paint empty grit batches");
+        dots.push(...batch);
+        paintedDots += batch.length;
+        paintCalls++;
+        largestBatch = Math.max(largestBatch, batch.length);
+      }
+    }
+    for (const layer of layers) {
+      const dots = dotsByColor.get(layer.color);
+      assert.equal(dots.length, layer.count, "retain every grit dot");
+      for (const [actual, expected] of [
+        [dots[0], layer.first],
+        [dots.at(-1), layer.last],
+      ]) {
+        expected.forEach((value, index) => {
+          assert.ok(
+            Math.abs(actual[index] - value) < 1e-9,
+            "retain authored world-space grit placement and size",
+          );
+        });
+      }
+    }
+    assert.ok(
+      paintCalls < paintedDots / 10,
+      "large rough patches must avoid one native paint operation per grit dot",
+    );
+    assert.ok(
+      largestBatch < paintedDots / 2,
+      "do not replace individual draws with one unbounded world-sized path",
+    );
+    context.calls.length = 0;
+    renderRoughPatches(container, [{ x: 440, y: 520, w: 4, h: 4 }]);
+    assert.equal(container.firstChild, canvas, "reuse the terrain canvas");
+    assert.ok(
+      !context.calls.some(([name]) => name === "rect"),
+      "a patch smaller than the grit spacing must not reuse an old grit path",
+    );
+  });
+}
+
+testRoughGritPaintBudget();
+
 const originalDocument = globalThis.document;
 
 globalThis.document = {
@@ -2450,12 +2540,12 @@ try {
   assert.equal(roughPatchCanvas.style.width, "116px");
   assert.equal(roughPatchCanvas.style.height, "96px");
   assert.equal(
-    roughPatchCanvas.context.calls.some((call) => call[0] === "fillRect"),
+    roughPatchCanvas.context.calls.some((call) => call[0] === "rect"),
     true,
     "rough patch canvas should draw grit",
   );
   assert.equal(
-    roughPatchCanvas.context.calls.filter((call) => call[0] === "fillRect")
+    roughPatchCanvas.context.calls.filter((call) => call[0] === "rect")
       .length >= 40,
     true,
     "rough patch canvas should draw layered grit",
