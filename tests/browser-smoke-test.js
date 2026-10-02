@@ -12,7 +12,10 @@ import { timing, tuning } from "../core/game-config.js";
 import { copy } from "../core/copy.js";
 import { prepareMapCapture } from "../tools/render-map.js";
 import { testCockroachEncounter } from "./cockroach-browser-test.js";
-import { testCameraZoomVisibility } from "./camera-browser-test.js";
+import {
+  testCameraViewportResize,
+  testCameraZoomVisibility,
+} from "./camera-browser-test.js";
 import { testMapSwitching } from "./map-switch-browser-test.js";
 import {
   testMotionPermissionRecovery,
@@ -987,6 +990,7 @@ try {
   await testLivingRoomMouseEncounter(browser, `http://127.0.0.1:${port}/`);
   await testCockroachEncounter(browser, `http://127.0.0.1:${port}/`);
   await testCameraZoomVisibility(browser, `http://127.0.0.1:${port}/`);
+  await testCameraViewportResize(browser, `http://127.0.0.1:${port}/`);
   await testPreviewRejectsCompletedMap(browser, `http://127.0.0.1:${port}/`);
   await testMapSwitching(browser, `http://127.0.0.1:${port}/`);
   console.log("Browser smoke test passed.");

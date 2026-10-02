@@ -363,6 +363,90 @@ function testVisibilityAndWorldEdgesAgree() {
   }
 }
 
+function testViewportResizePreservesViewWithoutAdvancingFollow() {
+  for (const scale of [0.12, 1, 2.5]) {
+    for (const paused of [false, true]) {
+      let size = { width: 390, height: 844 };
+      const cooldown = paused ? 30 : 0;
+      const { camera, controller, marble } = createController({
+        marble: { x: 2200, y: 2200, vx: 14, vy: -5 },
+        world: { width: 4400, height: 4400 },
+        viewport: { width: () => size.width, height: () => size.height },
+        camera: { scale, gestureCooldown: cooldown },
+        game: { paused },
+      });
+      controller.centerOnMarble();
+      const offset = scale === 0.12 ? { x: 0, y: 0 } : { x: 40, y: -30 };
+      camera.x += offset.x;
+      camera.y += offset.y;
+      controller.applyTransform();
+      const marbleBefore = { ...marble };
+      for (const next of [
+        { width: 844, height: 390 },
+        { width: 700, height: 500 },
+        { width: 390, height: 844 },
+        { width: 390, height: 844 },
+      ]) {
+        size = next;
+        controller.resizeViewport();
+        assert.equal(camera.x + marble.x * scale, size.width / 2 + offset.x);
+        assert.equal(camera.y + marble.y * scale, size.height / 2 + offset.y);
+        assertMarbleVisible(camera, marble, size.width, size.height);
+        assert.equal(camera.scale, scale);
+        assert.equal(
+          camera.gestureCooldown,
+          cooldown,
+          "resize does not advance time",
+        );
+        assert.deepEqual(marble, marbleBefore, "resize never changes movement");
+      }
+    }
+  }
+}
+
+function testViewportResizeRespectsEdgesAndClearsOldGestures() {
+  for (const [x, y, released, panY = 0] of [
+    [29, 29, true],
+    [4371, 4371, true],
+    [2200, 2200, true],
+    [2200, 2200, true, 300],
+    [2200, 2200, false],
+  ]) {
+    let size = { width: 390, height: 844 };
+    const { camera, controller, marble } = createController({
+      marble: { x, y },
+      world: { width: 4400, height: 4400 },
+      viewport: { width: () => size.width, height: () => size.height },
+      intro: { released },
+    });
+    controller.centerOnMarble();
+    controller.panBy(0, panY);
+    controller.onPointerDown({ pointerId: 1, clientX: 145, clientY: 422 });
+    controller.onPointerDown({ pointerId: 2, clientX: 245, clientY: 422 });
+    for (const next of [
+      { width: 844, height: 390 },
+      { width: 390, height: 844 },
+    ]) {
+      size = next;
+      controller.resizeViewport();
+      assertMarbleVisible(camera, marble, size.width, size.height);
+      assert.ok(camera.x <= 0 && camera.x >= size.width - 4400);
+      assert.ok(camera.y <= 0 && camera.y >= size.height - 4400);
+      const before = { ...camera };
+      controller.onPointerMove({ pointerId: 2, clientX: 600, clientY: 195 });
+      assert.deepEqual(
+        camera,
+        before,
+        "old screen-space touches are discarded",
+      );
+      if (x === 2200 && panY === 0) {
+        assert.equal(camera.x + marble.x, size.width / 2);
+        assert.equal(camera.y + marble.y, size.height / 2);
+      }
+    }
+  }
+}
+
 function testSinglePointerCameraActions() {
   const { camera, controller, marble, game } = createController({
     marble: { x: 500, y: 500 },
@@ -465,5 +549,7 @@ testSmallScaledWorldCentersInViewport();
 testWorldSizeCanChange();
 testMovingMarbleStaysVisibleAfterZoomAtEveryCadence();
 testVisibilityAndWorldEdgesAgree();
+testViewportResizePreservesViewWithoutAdvancingFollow();
+testViewportResizeRespectsEdgesAndClearsOldGestures();
 
 console.log("Camera tests passed.");

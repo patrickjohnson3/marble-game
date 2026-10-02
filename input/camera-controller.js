@@ -19,8 +19,8 @@ export function createCameraController({
     minX: 0,
     minY: 0,
     scale: null,
-    viewportHeight: null,
-    viewportWidth: null,
+    viewportHeight: viewport.height(),
+    viewportWidth: viewport.width(),
     worldFitsX: false,
     worldFitsY: false,
   };
@@ -108,6 +108,20 @@ export function createCameraController({
     applyTransform();
   }
 
+  function resizeViewport() {
+    gestures.resetGesture();
+    if (!intro.released) {
+      centerOnMarble();
+      return;
+    }
+
+    // Resizing moves the view center, not the marble. Preserve the existing
+    // follow/pan offset instead of making normal follow chase that size change.
+    camera.x += (viewport.width() - boundsCache.viewportWidth) / 2;
+    camera.y += (viewport.height() - boundsCache.viewportHeight) / 2;
+    updateFollow(0);
+  }
+
   function zoomBy(factor) {
     if (game.paused) return;
     gestures.resetGesture();
@@ -169,6 +183,7 @@ export function createCameraController({
     onPointerEnd: gestures.onPointerEnd,
     onPointerMove: gestures.onPointerMove,
     resetGesture: gestures.resetGesture,
+    resizeViewport,
     invalidateWorldBounds,
     updateFollow,
   };

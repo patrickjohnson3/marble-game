@@ -2,6 +2,114 @@ import assert from "node:assert/strict";
 import { timing, tuning } from "../core/game-config.js";
 import { collectBrowserErrors } from "../tools/browser-support.js";
 
+export async function testCameraViewportResize(browser, baseUrl) {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    serviceWorkers: "block",
+  });
+  const errors = collectBrowserErrors(page);
+  try {
+    await page.route("**/boot.js*", (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: `import { createApp } from "./app.js";
+window.__cameraApp = createApp();`,
+      }),
+    );
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.locator("#start").click();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(
+      () => window.__cameraApp.state.intro.released,
+      null,
+      { timeout: timing.introReleaseDelayMs + 5000 },
+    );
+    await page.evaluate(() => {
+      // Pause motion to isolate viewport-induced jumps from actual travel.
+      window.__cameraApp.gameController.pause();
+      window.__resizeViews = [];
+      window.__readCameraView = () => {
+        const rect = document.getElementById("marble").getBoundingClientRect();
+        return {
+          offsetX: (rect.left + rect.right - window.innerWidth) / 2,
+          offsetY: (rect.top + rect.bottom - window.innerHeight) / 2,
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: window.innerWidth,
+          height: window.innerHeight,
+        };
+      };
+      // Registered after the app listener: inspect its immediate response,
+      // before a later frame could hide the jump by following the marble.
+      window.addEventListener("resize", () => {
+        window.__resizeViews.push(window.__readCameraView());
+      });
+    });
+    for (const scale of [1, 2.5]) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.evaluate((scale) => {
+        const { state, cameraController } = window.__cameraApp;
+        Object.assign(state.marble, {
+          x: 2200,
+          y: 2200,
+          vx: 0,
+          vy: 0,
+          impactSquash: 0,
+        });
+        state.camera.scale = scale;
+        cameraController.centerOnMarble();
+        state.camera.x += 40;
+        state.camera.y -= 30;
+        cameraController.applyTransform();
+        state.camera.gestureCooldown = 30;
+        window.dispatchEvent(new window.Event("resize"));
+      }, scale);
+      await page.evaluate(
+        () => new Promise((done) => requestAnimationFrame(done)),
+      );
+      const before = await page.evaluate(() => window.__readCameraView());
+      for (const viewport of [
+        { width: 844, height: 390 },
+        { width: 700, height: 500 },
+        { width: 390, height: 844 },
+      ]) {
+        await page.evaluate(() => (window.__resizeViews.length = 0));
+        await page.setViewportSize(viewport);
+        await page.waitForFunction(() => window.__resizeViews.length > 0);
+        const views = await page.evaluate(() => [
+          ...window.__resizeViews,
+          window.__readCameraView(),
+        ]);
+        for (const view of views) {
+          assert.ok(
+            Math.abs(view.offsetX - before.offsetX) < 0.1 &&
+              Math.abs(view.offsetY - before.offsetY) < 0.1,
+            `resize at zoom ${scale} preserves the rendered view before follow: ${JSON.stringify(view)}`,
+          );
+          assert.ok(
+            view.left >= 0 &&
+              view.top >= 0 &&
+              view.right <= view.width &&
+              view.bottom <= view.height,
+            "the full marble is visible immediately after resize",
+          );
+        }
+      }
+    }
+    assert.deepEqual(
+      errors,
+      [],
+      "viewport changes must not log browser errors",
+    );
+  } finally {
+    await page.close();
+  }
+}
+
 export async function testCameraZoomVisibility(browser, baseUrl) {
   const page = await browser.newPage({
     viewport: { width: 390, height: 844 },

@@ -341,8 +341,7 @@ function bindViewportEvents({
     if (!intro.released) mapRenderer.updateIntroBounds();
     marble.x = clamp(marble.x, bounds.left + marble.r, bounds.right - marble.r);
     marble.y = clamp(marble.y, bounds.top + marble.r, bounds.bottom - marble.r);
-    if (!intro.released) cameraController.centerOnMarble();
-    else cameraController.applyTransform();
+    cameraController.resizeViewport();
     requestRender();
   }
 
