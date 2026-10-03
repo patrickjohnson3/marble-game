@@ -75,6 +75,7 @@ export const pwaFiles = [
   "assets/icons/marble-icon.svg",
   "assets/icons/marble-maskable.svg",
   "assets/sprites/cheerio.png",
+  "assets/sprites/popcorn.webp",
   "assets/sprites/fork.png",
   "assets/sprites/sponge.png",
   "assets/sprites/spoon.png",

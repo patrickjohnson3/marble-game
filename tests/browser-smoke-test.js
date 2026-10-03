@@ -17,6 +17,7 @@ import {
   testCameraZoomVisibility,
 } from "./camera-browser-test.js";
 import { testMapSwitching } from "./map-switch-browser-test.js";
+import { testPopcornSpill } from "./popcorn-browser-test.js";
 import {
   testMotionPermissionRecovery,
   testSensorDropoutRecovery,
@@ -988,6 +989,7 @@ try {
     `http://127.0.0.1:${port}/`,
   );
   await testLivingRoomMouseEncounter(browser, `http://127.0.0.1:${port}/`);
+  await testPopcornSpill(browser, `http://127.0.0.1:${port}/`);
   await testCockroachEncounter(browser, `http://127.0.0.1:${port}/`);
   await testCameraZoomVisibility(browser, `http://127.0.0.1:${port}/`);
   await testCameraViewportResize(browser, `http://127.0.0.1:${port}/`);

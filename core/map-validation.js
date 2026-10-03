@@ -533,6 +533,31 @@ function validateComposition(config, { world, obstacles, errors, spawn }) {
       label: `scenery '${item.kind}'`,
     });
   }
+  if (config.popcorn?.length > 0 && config.theme !== "livingRoom")
+    errors.push("popcorn needs the livingRoom theme");
+  for (const [index, piece] of (config.popcorn ?? []).entries()) {
+    const label = `popcorn ${index}`;
+    if (![piece.x, piece.y, piece.r].every(Number.isFinite)) {
+      errors.push(`${label} needs finite center and radius`);
+      continue;
+    }
+    if (piece.r <= 0) errors.push(`${label} radius must be positive`);
+    if (piece.angle !== undefined && !Number.isFinite(piece.angle))
+      errors.push(`${label} angle must be finite`);
+    if (
+      piece.x - piece.r < 0 ||
+      piece.y - piece.r < 0 ||
+      piece.x + piece.r > world.width ||
+      piece.y + piece.r > world.height
+    )
+      errors.push(`${label} must fit inside world bounds`);
+    if (
+      obstacles.some(
+        (obstacle) => circleObstacleContact(piece, obstacle).intersects,
+      )
+    )
+      errors.push(`${label} must not start inside furniture`);
+  }
   for (const item of config.elements ?? []) {
     if (item.fixture && !fixtureKinds.includes(item.fixture))
       errors.push(`unknown fixture '${item.fixture}'`);
@@ -737,6 +762,7 @@ export function validateMapConfig(config, { normalizedObstacles, spawn } = {}) {
       "regions",
       "clusters",
       "scenery",
+      "popcorn",
       "views",
       "route",
     ]) {

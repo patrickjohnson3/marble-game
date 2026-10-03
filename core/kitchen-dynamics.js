@@ -57,14 +57,14 @@ const spongeWaterSoakRate = 0.01;
 const spongeMaxPuddleLinearShrink = 0.2;
 const spongeWaterRedrawSteps = 20;
 
-function createCereal(world, point, options = {}) {
+function createCereal(point, radius, options = {}) {
   return {
     kind: options.kind ?? "cheerio",
-    x: point.x * world.width,
-    y: point.y * world.height,
+    x: point.x,
+    y: point.y,
     vx: 0,
     vy: 0,
-    radius: (options.radiusRatio ?? cheerioRadiusRatio) * world.width,
+    radius,
     eaten: 0,
     active: true,
     playerDisturbed: false,
@@ -180,20 +180,46 @@ export function resetKitchenDynamics(
   state.waterPatch = null;
   state.waterPatchOriginal = null;
   state.world = world ?? null;
-  if (mapConfig?.theme !== "kitchenFloor" || !world) return state;
+  if (
+    !world ||
+    (mapConfig?.theme !== "kitchenFloor" && mapConfig?.theme !== "livingRoom")
+  )
+    return state;
 
+  state.obstacles = obstacles;
+  state.terrainElements = (mapConfig.elements ?? []).filter(
+    (element) => surfaceInfluences[element.type],
+  );
+  if (mapConfig.theme === "livingRoom") {
+    for (const piece of mapConfig.popcorn ?? []) {
+      state.cheerios.push(
+        createCereal(piece, piece.r, {
+          kind: "popcorn",
+          rotation: piece.angle ?? 0,
+        }),
+      );
+    }
+    return state;
+  }
   const clusters = mapConfig.clusters ?? [];
   for (const cluster of clusters) {
     for (const point of cluster.cheerios) {
-      state.cheerios.push(createCereal(world, kitchenPoint(cluster, point)));
+      const position = kitchenPoint(cluster, point);
+      position.x *= world.width;
+      position.y *= world.height;
+      state.cheerios.push(
+        createCereal(position, cheerioRadiusRatio * world.width),
+      );
     }
   }
   for (const cluster of clusters) {
     for (const point of cluster.crumbs) {
+      const position = kitchenPoint(cluster, point);
+      position.x *= world.width;
+      position.y *= world.height;
       state.cheerios.push(
-        createCereal(world, kitchenPoint(cluster, point), {
+        createCereal(position, crumbRadiusRatio * world.width, {
           kind: "crumb",
-          radiusRatio: crumbRadiusRatio,
           rotation: cluster.angle + point[0] * 0.01,
         }),
       );
@@ -204,10 +230,6 @@ export function resetKitchenDynamics(
       );
     }
   }
-  state.obstacles = obstacles;
-  state.terrainElements = (mapConfig.elements ?? []).filter(
-    (element) => surfaceInfluences[element.type],
-  );
   if (mapConfig.variantId === kitchenFloorMapId) {
     state.sponge = state.obstacles.find(
       (obstacle) => obstacle.fixture === KITCHEN_FIXTURES.sponge,
@@ -1494,9 +1516,11 @@ export function updateKitchenDynamics(
   events.spongeSoaks = 0;
   events.squishedAnts = 0;
   events.waterChanges = 0;
-  if (mapConfig?.theme !== "kitchenFloor" || !marble) return events;
+  const kitchen = mapConfig?.theme === "kitchenFloor";
+  if ((!kitchen && mapConfig?.theme !== "livingRoom") || !marble) return events;
 
-  updateSponge(state, marble, frameDelta, events, resolveMarbleWalls);
+  if (kitchen)
+    updateSponge(state, marble, frameDelta, events, resolveMarbleWalls);
   updateCereal(
     state,
     marble,
@@ -1506,7 +1530,8 @@ export function updateKitchenDynamics(
     mapConfig.variantId === kitchenFloorMapId,
     movementPath,
   );
-  updateAnts(state, marble, previousMarble, frameDelta, events, movementPath);
+  if (kitchen)
+    updateAnts(state, marble, previousMarble, frameDelta, events, movementPath);
   // Feedback cooldowns use the same 60 Hz time units as movement and timers.
   state.frameIndex += frameDelta;
   return events;

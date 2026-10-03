@@ -8,6 +8,7 @@ export function cloneMapComposition(map) {
     "regions",
     "clusters",
     "scenery",
+    "popcorn",
     "views",
     "route",
   ]) {
@@ -48,6 +49,7 @@ function resolveMapConfig(config, variant) {
     mouse: composition.mouse || undefined,
     cockroach: composition.cockroach || undefined,
     regions: composition.regions ?? undefined,
+    popcorn: composition.popcorn ?? undefined,
     variantId: variant.id,
     name: variant.name,
     theme: variant.theme,

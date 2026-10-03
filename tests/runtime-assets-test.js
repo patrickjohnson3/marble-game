@@ -54,7 +54,7 @@ assert.deepEqual(
 
 // Leave room for artwork revisions while catching accidental lossless exports
 // of the three materials that previously added 4.76 MB to every installation.
-const livingRoomImageBytes = ["shag", "oak-floor", "mouse"].reduce(
+const livingRoomImageBytes = ["shag", "oak-floor", "mouse", "popcorn"].reduce(
   (total, name) =>
     total + statSync(resolve(root, `assets/sprites/${name}.webp`)).size,
   0,

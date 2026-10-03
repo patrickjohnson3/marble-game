@@ -53,6 +53,7 @@ for (const definition of mapDefinitions) {
   if (active.regions?.length) active.regions[0].x += 200;
   if (active.clusters?.length) active.clusters[0].ants[0][0] += 200;
   if (active.scenery?.length) active.scenery[0].x += 200;
+  if (active.popcorn?.length) active.popcorn[0].x += 200;
   runtime.setActiveMap(resolved(definition));
   assert.deepEqual(
     runtime.state.activeMap,
@@ -100,6 +101,7 @@ for (const field of [
   "surfaces",
   "obstacles",
   "scenery",
+  "popcorn",
   "clusters",
   "regions",
   "views",
@@ -118,6 +120,7 @@ for (const field of [
   "regions",
   "clusters",
   "scenery",
+  "popcorn",
   "views",
   "route",
 ]) {
@@ -152,6 +155,36 @@ for (const field of ["hitboxW", "hitboxH"]) {
     },
     "hitbox dimensions must match",
   );
+}
+
+for (const [edit, message] of [
+  [
+    (piece) => {
+      piece.r = 0;
+    },
+    "radius must be positive",
+  ],
+  [
+    (piece) => {
+      piece.x = -1;
+    },
+    "must fit inside world bounds",
+  ],
+  [
+    (piece) => {
+      piece.angle = NaN;
+    },
+    "angle must be finite",
+  ],
+  [
+    (piece) => {
+      piece.x = 1000;
+      piece.y = 1000;
+    },
+    "must not start inside furniture",
+  ],
+]) {
+  rejectsEdit(livingRoomMap, (map) => edit(map.popcorn[0]), message);
 }
 
 // A rounded generic block has the same curved silhouette as a named fixture.

@@ -6,7 +6,7 @@ export const livingRoomMap = {
   name: "living room",
   theme: "livingRoom",
   objectSummary:
-    "objects: sofa, chest table, bookcase, shag rug, toy blocks, mouse.",
+    "objects: sofa, chest table, bookcase, shag rug, toy blocks, pushable popcorn, mouse.",
   difficulty: 2,
   world: { width: 4400, height: 4400 },
   spawn: { x: 680, y: 3740, r: 29 },
@@ -93,7 +93,34 @@ export const livingRoomMap = {
   // Thin paper and flattened socks are cosmetic; the blocks above are solid.
   clusters: [{ kind: "readingPile", x: 2920, y: 1160, angle: 0.2 }],
   scenery: [{ kind: "sock", x: 760, y: 2990, w: 220, h: 100, angle: -0.4 }],
+  // A dropped handful beside the sofa, with a few pieces kicked onto the rug.
+  // Centers/radii are world units; these share the kitchen cereal's push rules.
+  popcorn: [
+    { x: 1990, y: 1340, r: 21, angle: 0.3 },
+    { x: 2055, y: 1380, r: 24, angle: -0.6 },
+    { x: 2120, y: 1330, r: 19, angle: 1.8 },
+    { x: 2190, y: 1365, r: 23, angle: 2.6 },
+    { x: 2250, y: 1320, r: 20, angle: -1.2 },
+    { x: 2020, y: 1445, r: 22, angle: 1.1 },
+    { x: 2100, y: 1430, r: 25, angle: -2.1 },
+    { x: 2170, y: 1460, r: 21, angle: 0.7 },
+    { x: 2240, y: 1420, r: 23, angle: -0.3 },
+    { x: 2320, y: 1390, r: 20, angle: 2.2 },
+    { x: 2370, y: 1450, r: 24, angle: -1.5 },
+    { x: 2290, y: 1510, r: 22, angle: 1.4 },
+    { x: 2210, y: 1535, r: 18, angle: -2.7 },
+    { x: 2120, y: 1510, r: 21, angle: 2.9 },
+    { x: 2060, y: 1580, r: 23, angle: -0.8 },
+    { x: 1940, y: 1490, r: 19, angle: 1.9 },
+    { x: 1850, y: 1390, r: 20, angle: -1.8 },
+    { x: 2390, y: 1575, r: 22, angle: 0.2 },
+    { x: 2455, y: 1660, r: 21, angle: 2.4 },
+    { x: 2530, y: 1530, r: 24, angle: -2.4 },
+    { x: 2630, y: 1690, r: 20, angle: 0.9 },
+    { x: 2780, y: 1620, r: 18, angle: -1.1 },
+  ],
   views: [
+    { id: "popcorn", x: 2220, y: 1480 },
     { id: "mouse", x: 2160, y: 3360 },
     { id: "entry-toys", x: 900, y: 3620 },
     { id: "rug-route", x: 1420, y: 2680 },

@@ -27,7 +27,7 @@ Named regions are axis-aligned rectangles, never legacy circles.
 
 Expansion produces existing `elements`, kitchen clusters, and flat scenery.
 Map activation copies this content into `mapRuntime.state.activeMap`; Retry
-recreates it. Ants/cereal remain owned by `kitchenDynamics.state`. Renderers never
+recreates it. Ants and pushable food remain owned by `kitchenDynamics.state`. Renderers never
 advance objectives or actors. Authoring data is not rebuilt per frame.
 
 ## Concrete vocabulary
@@ -43,6 +43,7 @@ Run `npm run map:validate -- --list` for available ids and kinds.
 | `obstacles` | Plain/rotated rectangles, optional `cornerRadius`                                                     | Solid walls, currently supported by living-room rendering                       |
 | `clusters`  | Kitchen: `cerealPacket`, `breakfastNapkin`, `cleanupScraps`, `drinkSpill`; living room: `readingPile` | Kitchen recipes include live ants and pushable cereal; reading pile is cosmetic |
 | `scenery`   | Living room: `sock`, `magazine`                                                                       | Flat cosmetic dressing, no collision                                            |
+| `popcorn`   | Living room: `{x, y, r, angle?}` circles                                                              | Pushable food; terrain drag and furniture contact                               |
 | `views`     | `{id, x, y, scale?}`                                                                                  | Screenshot targets only                                                         |
 | `route`     | Array of `{x, y}` waypoints                                                                           | Development clearance check only                                                |
 
@@ -72,6 +73,15 @@ specialized behavior stays in `core/kitchen-dynamics.js`.
 Shag expands to `roughPatch` with `material: "shag"`: static textured pile art
 and existing rough-terrain movement. It uses `roughPatchDragRetention` in
 `core/game-config.js`; this pass does not retune that constant or the integrator.
+
+Living-room `popcorn` is an authored array of `{x, y, r, angle?}` circles with
+world-coordinate centers, radii, and radians. See the dropped handful by the sofa
+in `maps/living-room.js`. These pieces are pushable food, not scenery or static
+obstacles: they use the existing cereal momentum, terrain drag, furniture contact,
+and bounds rules in `core/kitchen-dynamics.js`. Shag slows their coasting, Retry
+restores them, and they do not affect the mouse or completion. The renderer uses
+one shared sprite and changes small DOM transforms only when pieces move; it
+adds no room-sized canvas. Validation checks shape, bounds and furniture overlap.
 
 ## Objectives
 

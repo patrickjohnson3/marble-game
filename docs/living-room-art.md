@@ -46,6 +46,44 @@ map geometry are unchanged. Movement and timed post-hit flight are described in
 
 ## Generation prompts
 
+### Popcorn
+
+`assets/sprites/popcorn.webp` is one shared transparent 256 × 256 food sprite,
+20,284 bytes, generated with the built-in `image_gen` tool. The original lossless
+image is retained at
+`/home/pjohnson/.codex/generated_images/01a0782d-51b7-7352-9502-82f9ba7d39b0/exec-fb50501a-c89a-43c9-ae2b-1a490d78cfb4.png`.
+Delivery uses Pillow Lanczos downsampling and quality-90 WebP, `method=6`,
+`exact=True`, preserving alpha. The 22 authored pieces share this image, with
+varied radii and rotations. CSS draws it in each piece's circle-sized box with
+a small shadow; only moved pieces update their transforms. No full-room canvas
+or additional simulation/asset dependency is introduced. See the authored
+spill and `popcorn` vocabulary in [map authoring](map-authoring.md).
+
+Desktop Chrome keyboard checks push, coast and settle a piece, restore the spill
+through Retry, and remove it on a kitchen transition. The authored route still
+validates. The phone-size capture uses 15,159,296 bytes of canvas backing storage;
+popcorn adds no canvas. Inspect [the spill at gameplay scale](screenshots/living-room-popcorn-phone.png).
+This is a desktop capture at 390 × 844, not physical-phone validation. On a phone,
+judge whether the pieces read as dropped popcorn, their size feels plausible,
+and pushing through the spill stays smooth and does not hinder mouse encounters.
+
+Final generation prompt:
+
+> Use case: photorealistic-natural. Asset type: small top-down food sprite for a
+> browser marble game. Generate ONE single popped popcorn kernel isolated on a
+> genuinely transparent background, centered in a square canvas. Exactly
+> orthographic overhead view. Recognizable irregular compact three-lobed
+> butterfly popcorn: matte creamy ivory puffed starch, softly crinkled bubbly
+> surface, subtle warm pale-yellow tips, one small toasted golden-brown crease
+> where the hull opened. Natural tactile detail and softly shaded folds, no
+> cartoon outline. The body must fill about 90 percent of the square width and
+> height with even transparent padding, approximately round overall so a simple
+> circle collision fits it. Soft diffuse overhead indoor light, very restrained
+> baked shadow within the kernel, no cast shadow outside it. It will render
+> about 40 world pixels wide beside a blue marble on honey oak and sage shag
+> carpet. Prioritize the silhouette, pale lobes and small toasted center at tiny
+> scale. No bowl, floor, other kernels, loose debris, hand, face, text or watermark.
+
 ### Rug
 
 > Use case: photorealistic-natural. Asset type: seamless square material texture

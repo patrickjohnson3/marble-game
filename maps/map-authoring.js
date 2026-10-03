@@ -65,6 +65,7 @@ export function expandMap(definition) {
     "obstacles",
     "clusters",
     "scenery",
+    "popcorn",
     "regions",
     "views",
     "route",

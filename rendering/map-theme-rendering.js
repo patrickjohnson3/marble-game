@@ -1,5 +1,8 @@
 import { drawKitchenFloorDetails } from "./kitchen-floor-details.js";
-import { renderLivingRoom } from "./living-room-rendering.js";
+import {
+  renderLivingRoom,
+  renderLivingRoomPopcorn,
+} from "./living-room-rendering.js";
 import { renderAuthoredParkingLot } from "./parking-lot-rendering.js";
 import { appendMouseCanvas, renderMouse } from "./mouse-rendering.js";
 import {
@@ -1005,6 +1008,7 @@ export function renderMapThemeDynamics({
   if (mapConfig?.theme === "kitchenFloor") {
     renderKitchenDynamics(themeState, dynamicsState);
   }
+  if (mapConfig?.theme === "livingRoom") renderLivingRoomPopcorn(themeState);
   renderMouse(themeState, mouse);
   renderCockroach(themeState, cockroach);
 }
@@ -1039,6 +1043,7 @@ export function renderMapTheme({
   themeState.kitchenDynamicDirtyRects = [];
   themeState.kitchenDynamicEntries = [];
   themeState.kitchenDynamicFullBounds = {};
+  themeState.popcornEntries = [];
   const theme = mapConfig?.theme;
   if (!theme || !renderers[theme] || !world) return;
 

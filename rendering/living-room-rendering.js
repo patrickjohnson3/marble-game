@@ -6,7 +6,14 @@ function placeBox(element, rect) {
   element.style.transform = "rotate(" + (rect.angle ?? 0) + "rad)";
 }
 
-export function renderLivingRoom({ underlay, overlay, mapConfig, world }) {
+export function renderLivingRoom({
+  underlay,
+  overlay,
+  mapConfig,
+  world,
+  dynamicsState,
+  themeState = {},
+}) {
   const floor = document.createElement("div");
   floor.className = "mapThemeSurface livingRoomSurface";
   placeBox(floor, { x: 0, y: 0, w: world.width, h: world.height });
@@ -17,6 +24,44 @@ export function renderLivingRoom({ underlay, overlay, mapConfig, world }) {
     item.className = "themeObject livingRoomDressing " + scenery.kind;
     placeBox(item, scenery);
     overlay.appendChild(item);
+  }
+  themeState.popcornEntries = [];
+  for (const piece of dynamicsState?.cheerios ?? []) {
+    if (piece.kind !== "popcorn") continue;
+    const element = document.createElement("div");
+    element.className = "themeObject livingRoomPopcorn";
+    element.style.left = "0px";
+    element.style.top = "0px";
+    element.style.width = piece.radius * 2 + "px";
+    element.style.height = piece.radius * 2 + "px";
+    overlay.appendChild(element);
+    themeState.popcornEntries.push({
+      piece,
+      element,
+      x: null,
+      y: null,
+      active: null,
+    });
+  }
+  renderLivingRoomPopcorn(themeState);
+}
+
+export function renderLivingRoomPopcorn(themeState) {
+  // Cache only the last painted pose. Physics owns every piece, and stationary
+  // food needs neither canvas redraws nor repeated style changes.
+  for (const entry of themeState.popcornEntries ?? []) {
+    const { piece, element } = entry;
+    if (
+      entry.x === piece.x &&
+      entry.y === piece.y &&
+      entry.active === piece.active
+    )
+      continue;
+    element.style.display = piece.active ? "" : "none";
+    element.style.transform = `translate(${piece.x - piece.radius}px, ${piece.y - piece.radius}px) rotate(${piece.rotation}rad)`;
+    entry.x = piece.x;
+    entry.y = piece.y;
+    entry.active = piece.active;
   }
 }
 
