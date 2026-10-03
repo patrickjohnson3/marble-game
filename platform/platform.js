@@ -218,6 +218,47 @@ export function createPwaInstallController({
 
 const serviceWorkerUpdateStatusTimeoutMs = 30000;
 
+export async function checkServiceWorkerUpdate({
+  navigatorRef = globalThis.navigator,
+  onStatusChange,
+} = {}) {
+  notifyServiceWorkerStatus(onStatusChange, "checking");
+  try {
+    if (navigatorRef.onLine === false) throw new Error("Offline");
+    const registration = await navigatorRef.serviceWorker.getRegistration();
+    if (!registration) throw new Error("No app registration");
+    await registration.update();
+    notifyServiceWorkerStatus(
+      onStatusChange,
+      registration.installing
+        ? "update-installing"
+        : registration.waiting
+          ? "update-ready"
+          : "current",
+    );
+    return true;
+  } catch {
+    notifyServiceWorkerStatus(onStatusChange, "check-failed");
+    return false;
+  }
+}
+
+export async function applyServiceWorkerUpdate({
+  navigatorRef = globalThis.navigator,
+  onStatusChange,
+} = {}) {
+  notifyServiceWorkerStatus(onStatusChange, "applying");
+  try {
+    const registration = await navigatorRef.serviceWorker.getRegistration();
+    if (!registration?.waiting) throw new Error("No downloaded update");
+    registration.waiting.postMessage({ type: "APPLY_UPDATE" });
+    return true;
+  } catch {
+    notifyServiceWorkerStatus(onStatusChange, "update-failed");
+    return false;
+  }
+}
+
 function watchServiceWorkerRegistration({
   clearTimeoutFn,
   navigatorRef,
@@ -232,9 +273,12 @@ function watchServiceWorkerRegistration({
     notifyUpdateReady();
   }
 
-  registration.addEventListener("updatefound", () => {
-    notifyServiceWorkerStatus(onStatusChange, "update-installing");
+  let watchedWorker;
+  function watchInstallingWorker() {
     const worker = registration.installing;
+    if (worker && worker === watchedWorker) return;
+    watchedWorker = worker;
+    notifyServiceWorkerStatus(onStatusChange, "update-installing");
     if (!worker?.addEventListener) {
       notifyServiceWorkerStatus(onStatusChange, "ready");
       return;
@@ -251,6 +295,7 @@ function watchServiceWorkerRegistration({
       if (finished) return;
 
       finished = true;
+      watchedWorker = null;
       clearTimeoutFn(statusTimeout);
       if (status === "update-ready") {
         notifyUpdateReady();
@@ -273,7 +318,9 @@ function watchServiceWorkerRegistration({
 
     worker.addEventListener("statechange", handleStateChange);
     handleStateChange();
-  });
+  }
+  registration.addEventListener("updatefound", watchInstallingWorker);
+  if (registration.installing) watchInstallingWorker();
 }
 
 export function registerServiceWorker({
@@ -281,6 +328,7 @@ export function registerServiceWorker({
   onStatusChange,
   onUpdateReady,
   windowRef = globalThis.window,
+  documentRef = windowRef?.document,
   scriptUrl = "sw.js",
   setTimeoutFn = globalThis.setTimeout,
   clearTimeoutFn = globalThis.clearTimeout,
@@ -321,23 +369,38 @@ export function registerServiceWorker({
       });
     }
 
-    navigatorRef.serviceWorker
-      .register(scriptUrl, { type: "module" })
-      .then((registration) => {
-        notifyServiceWorkerStatus(onStatusChange, "ready");
-        watchServiceWorkerRegistration({
-          clearTimeoutFn,
-          navigatorRef,
-          onStatusChange,
-          notifyUpdateReady,
-          registration,
-          setTimeoutFn,
+    let watchedRegistration;
+    function registerApp() {
+      return navigatorRef.serviceWorker
+        .register(scriptUrl, { type: "module", updateViaCache: "none" })
+        .then((registration) => {
+          notifyServiceWorkerStatus(onStatusChange, "ready");
+          if (registration === watchedRegistration) return registration;
+          watchedRegistration = registration;
+          watchServiceWorkerRegistration({
+            clearTimeoutFn,
+            navigatorRef,
+            onStatusChange,
+            notifyUpdateReady,
+            registration,
+            setTimeoutFn,
+          });
+          return registration;
+        })
+        .catch((error) => {
+          notifyServiceWorkerStatus(onStatusChange, "error");
+          console.warn("service worker registration failed", error);
         });
-      })
-      .catch((error) => {
-        notifyServiceWorkerStatus(onStatusChange, "error");
-        console.warn("service worker registration failed", error);
-      });
+    }
+    async function checkUpdates() {
+      if (!watchedRegistration && !(await registerApp())) return;
+      return checkServiceWorkerUpdate({ navigatorRef, onStatusChange });
+    }
+    windowRef.addEventListener("online", checkUpdates);
+    documentRef?.addEventListener("visibilitychange", () => {
+      if (documentRef.visibilityState === "visible") return checkUpdates();
+    });
+    return registerApp();
   });
   return true;
 }

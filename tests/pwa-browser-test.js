@@ -601,6 +601,196 @@ async function testFirstInstallDocumentUpgrade(browser, releases) {
   }
 }
 
+async function testInAppUpdateChecksAndConfirmedActivation(browser, releases) {
+  const deployment = createDeploymentServer(releases.a, "max-age=600");
+  const port = await listen(deployment.server);
+  const baseUrl = `http://127.0.0.1:${port}${scope}`;
+  const context = await browser.newContext({
+    serviceWorkers: "allow",
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  const errors = collectBrowserErrors(page);
+  let navigations = 0;
+  page.on("framenavigated", (frame) => {
+    if (frame === page.mainFrame()) navigations++;
+  });
+  try {
+    await page.goto(baseUrl);
+    await waitForBoot(page, releases.a.version);
+    await page.waitForFunction(
+      () => navigator.serviceWorker.controller !== null,
+    );
+    assert.equal(
+      await page.locator("#appVersion").textContent(),
+      "Release " + releases.a.version,
+    );
+    await page.locator("#start").click();
+    await page.keyboard.press("ArrowRight");
+    await page.locator("#settingsToggle").click();
+    await page.locator("#checkAppUpdates").click();
+    await page.waitForFunction(
+      (text) => document.querySelector("#pwaStatus").textContent.includes(text),
+      copy.pwa.current,
+    );
+    assert.equal(await page.locator("#updateApp").isHidden(), true);
+    assert.deepEqual(
+      errors,
+      [],
+      "initial boot and online check must not log errors",
+    );
+
+    await context.setOffline(true);
+    await page.locator("#checkAppUpdates").click();
+    await page.waitForFunction(
+      (text) => document.querySelector("#pwaStatus").textContent.includes(text),
+      copy.pwa.checkFailed,
+    );
+    assert.equal(
+      await page.locator("#checkAppUpdates").isEnabled(),
+      true,
+      "an offline check can be retried",
+    );
+    assert.equal(
+      await page.locator("#appVersion").textContent(),
+      "Release " + releases.a.version,
+    );
+    const errorCountAfterOffline = errors.length;
+    assert.ok(
+      errors.every((message) =>
+        message.includes("net::ERR_INTERNET_DISCONNECTED"),
+      ),
+      "an offline check must not hide unrelated browser errors",
+    );
+    await context.setOffline(false);
+    // Explicitly deliver the browser reconnect event: desktop CDP network
+    // emulation does not establish an installed phone's connectivity lifecycle.
+    await page.evaluate(() => window.dispatchEvent(new window.Event("online")));
+    await page.waitForFunction(
+      (text) => document.querySelector("#pwaStatus").textContent.includes(text),
+      copy.pwa.current,
+    );
+
+    const encounter = await page.evaluate(() => ({
+      phase: window.__pwaApp.state.game.phase,
+      marble: window.__pwaApp.state.marble,
+      ants: window.__pwaApp.kitchenDynamics.state.ants,
+    }));
+    assert.notEqual(encounter.phase, "waiting");
+    deployment.deploy(releases.b);
+    // Exercise the real visibility listener with controlled event ordering;
+    // this is not a physical-device app-switching claim.
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      document.dispatchEvent(new window.Event("visibilitychange"));
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      document.dispatchEvent(new window.Event("visibilitychange"));
+    });
+    await waitForWaitingRelease(page, releases.b);
+    await page.locator("#updateApp").waitFor({ state: "visible" });
+    assert.equal(navigations, 1, "resume checks cannot reload an encounter");
+    assert.equal(
+      await page.locator("#appVersion").textContent(),
+      "Release " + releases.a.version,
+      "a downloaded update is not the running release",
+    );
+    assert.equal(
+      await page.locator("#pwaUpdateHelp").textContent(),
+      copy.pwa.updateHelp,
+    );
+
+    const secondPage = await context.newPage();
+    const secondErrors = collectBrowserErrors(secondPage);
+    let secondNavigations = 0;
+    secondPage.on("framenavigated", (frame) => {
+      if (frame === secondPage.mainFrame()) secondNavigations++;
+    });
+    await secondPage.goto(baseUrl);
+    await waitForBoot(secondPage, releases.a.version);
+    await secondPage.waitForLoadState("networkidle");
+
+    page.once("dialog", (dialog) => {
+      assert.equal(dialog.type(), "confirm");
+      assert.equal(dialog.message(), copy.pwa.confirmUpdate);
+      dialog.dismiss();
+    });
+    await page.locator("#updateApp").click();
+    assert.equal(navigations, 1);
+    assert.equal(secondNavigations, 1);
+    assert.deepEqual(
+      await page.evaluate(() => ({
+        phase: window.__pwaApp.state.game.phase,
+        marble: window.__pwaApp.state.marble,
+        ants: window.__pwaApp.kitchenDynamics.state.ants,
+      })),
+      encounter,
+      "canceling an update must preserve the paused encounter",
+    );
+
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.screenshot({
+      path: join(releases.b.directory, "update-settings.png"),
+    });
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.locator("#updateApp").click();
+    await waitForBoot(page, releases.b.version);
+    await waitForBoot(secondPage, releases.b.version);
+    await page.waitForLoadState("networkidle");
+    await secondPage.waitForLoadState("networkidle");
+    assert.equal(
+      navigations,
+      2,
+      "confirmed update reloads the initiating window exactly once",
+    );
+    assert.equal(
+      secondNavigations,
+      2,
+      "confirmed update reloads the other old window exactly once",
+    );
+    for (const client of [page, secondPage]) {
+      assert.equal(
+        await client.locator("#appVersion").textContent(),
+        "Release " + releases.b.version,
+      );
+      assert.equal(
+        await client.evaluate(() => window.__pwaApp.state.game.phase),
+        "waiting",
+      );
+    }
+    await waitForActiveRelease(page, releases.b.cacheName);
+    await assertCachedShellVersion(page, baseUrl, releases.b);
+    assert.equal(await page.evaluate(() => window.__pwaRelease), "b");
+    assert.deepEqual(
+      [...errors.slice(errorCountAfterOffline), ...secondErrors],
+      [],
+      "confirmed upgrade cannot introduce browser errors",
+    );
+
+    await disableHttpCache(context, page);
+    await context.setOffline(true);
+    await page.goto(baseUrl);
+    await waitForBoot(page, releases.b.version);
+    assert.equal(
+      await page.locator("#appVersion").textContent(),
+      "Release " + releases.b.version,
+    );
+    assert.equal(
+      navigations,
+      3,
+      "the updated cached release boots offline without a loop",
+    );
+  } finally {
+    await context.close();
+    await closeServer(deployment.server);
+  }
+}
+
 const temporaryDirectory = mkdtempSync(join(tmpdir(), "marble-pwa-browser-"));
 let browser;
 try {
@@ -613,6 +803,7 @@ try {
   await testFailedUpgradePreservesShell(browser, releases);
   await testModuleWorkerUpgrade(browser, releases, "max-age=600");
   await testFirstInstallDocumentUpgrade(browser, releases);
+  await testInAppUpdateChecksAndConfirmedActivation(browser, releases);
   console.log("PWA browser regression tests passed.");
 } finally {
   await browser?.close();

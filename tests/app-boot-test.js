@@ -68,6 +68,12 @@ try {
     storage: globalThis.localStorage,
   });
   assert.equal(globalThis.__marbleAppBooted, true);
+  assert.equal(
+    document.getElementById("appVersion").textContent,
+    "Release development",
+  );
+  assert.equal(document.getElementById("checkAppUpdates").disabled, true);
+  assert.equal(document.getElementById("updateApp").hidden, true);
   const mapSelect = document.getElementById("mapSelect");
   assert.deepEqual(
     mapSelect.children.map((option) => option.value),

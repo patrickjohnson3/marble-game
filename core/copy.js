@@ -21,7 +21,15 @@ export const copy = {
     goalNoNextMap: "goal reached. no next map available.",
   },
   pwa: {
+    current: "up to date at the last successful check.",
     checking: "checking for app updates...",
+    checkFailed:
+      "could not check for updates. reconnect and try again; this may be an older release.",
+    applying: "applying update and restarting game windows...",
+    updateHelp:
+      "Updating restarts all open game windows. Current runs will be lost.",
+    confirmUpdate:
+      "Update and restart all open game windows? Current runs will be lost.",
     error: "offline app setup failed. refresh online and try again.",
     installedFullscreen:
       "installed app mode. fullscreen is handled by the app.",
@@ -31,7 +39,7 @@ export const copy = {
     updateFailed: "app update failed. current version is still available.",
     updateInstalling: "downloading app update...",
     updateReady:
-      "update ready. when finished, close all game tabs and windows, then reopen to apply it. your current game can continue.",
+      "update ready. choose Update now, or finish your game and close all game tabs and windows, then reopen. your current game can continue until you apply it.",
   },
   intro: {
     countdown: "map opens in",
@@ -40,6 +48,8 @@ export const copy = {
     start: "start",
     closeSettings: "×",
     installApp: "install app",
+    checkAppUpdates: "Check for updates",
+    updateApp: "Update now",
     neutral: "set neutral",
     retryMap: "retry map",
     retryMotion: "Reload to retry motion",
@@ -122,6 +132,9 @@ export function applyDocumentCopy({ document, els }) {
   els.closeSettings.setAttribute("aria-label", copy.settings.closeLabel);
   els.closeSettings.textContent = copy.buttons.closeSettings;
   els.installApp.textContent = copy.buttons.installApp;
+  els.checkAppUpdates.textContent = copy.buttons.checkAppUpdates;
+  els.updateApp.textContent = copy.buttons.updateApp;
+  els.pwaUpdateHelp.textContent = copy.pwa.updateHelp;
   els.retryMap.textContent = copy.buttons.retryMap;
   els.retryMotion.textContent = copy.buttons.retryMotion;
   els.nextRoom.textContent = copy.buttons.nextRoom;

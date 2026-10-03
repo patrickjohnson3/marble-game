@@ -264,7 +264,7 @@ async function testServiceWorkerRegistrationIsDeferredUntilLoad() {
   await listeners.load();
   await Promise.resolve();
   assert.deepEqual(registration, {
-    options: { type: "module" },
+    options: { type: "module", updateViaCache: "none" },
     scriptUrl: "sw.js",
   });
   assert.deepEqual(statuses, ["checking", "ready"]);
@@ -582,6 +582,226 @@ async function testServiceWorkerRegistrationReloadsWhenUpdateTakesControl(
   assert.deepEqual(statuses, ["checking", "ready", "update-ready"]);
 }
 
+async function testServiceWorkerChecksReportOnlyVerifiedFreshness() {
+  const { checkServiceWorkerUpdate } = await import("../platform/platform.js");
+  for (const [waiting, installing, expected] of [
+    [null, null, "current"],
+    [{}, null, "update-ready"],
+    [null, {}, "update-installing"],
+    [{}, {}, "update-installing"],
+  ]) {
+    const statuses = [];
+    let checks = 0;
+    const success = await checkServiceWorkerUpdate({
+      navigatorRef: {
+        serviceWorker: {
+          getRegistration: async () => ({
+            waiting,
+            installing,
+            async update() {
+              checks++;
+            },
+          }),
+        },
+      },
+      onStatusChange: (status) => statuses.push(status),
+    });
+    assert.equal(success, true);
+    assert.equal(checks, 1, "freshness requires a real worker update check");
+    assert.deepEqual(statuses, ["checking", expected]);
+  }
+  for (const registration of [
+    undefined,
+    {
+      async update() {
+        throw new Error("offline");
+      },
+    },
+  ]) {
+    const statuses = [];
+    assert.equal(
+      await checkServiceWorkerUpdate({
+        navigatorRef: {
+          serviceWorker: { getRegistration: async () => registration },
+        },
+        onStatusChange: (status) => statuses.push(status),
+      }),
+      false,
+    );
+    assert.deepEqual(
+      statuses,
+      ["checking", "check-failed"],
+      "an offline or missing registration cannot establish freshness",
+    );
+  }
+  const offlineStatuses = [];
+  assert.equal(
+    await checkServiceWorkerUpdate({
+      navigatorRef: {
+        onLine: false,
+        serviceWorker: {
+          getRegistration() {
+            assert.fail("a known offline state cannot verify a release");
+          },
+        },
+      },
+      onStatusChange: (status) => offlineStatuses.push(status),
+    }),
+    false,
+  );
+  assert.deepEqual(offlineStatuses, ["checking", "check-failed"]);
+}
+
+async function testServiceWorkerChecksOnResumeAndReconnectWithoutApplying() {
+  const { registerServiceWorker } = await import("../platform/platform.js");
+  const windowListeners = {},
+    documentListeners = {},
+    statuses = [];
+  const documentRef = {
+    visibilityState: "hidden",
+    addEventListener(type, callback) {
+      documentListeners[type] = callback;
+    },
+  };
+  let checks = 0;
+  const registration = {
+    addEventListener() {},
+    async update() {
+      checks++;
+    },
+    waiting: {
+      postMessage() {
+        assert.fail("checking must not apply the update");
+      },
+    },
+  };
+  registerServiceWorker({
+    documentRef,
+    navigatorRef: {
+      serviceWorker: {
+        controller: {},
+        register: async () => registration,
+        getRegistration: async () => registration,
+      },
+    },
+    windowRef: {
+      addEventListener(type, callback) {
+        windowListeners[type] = callback;
+      },
+      location: {
+        reload() {
+          assert.fail("checking must not restart a game");
+        },
+      },
+    },
+    onStatusChange: (status) => statuses.push(status),
+  });
+  await windowListeners.load();
+  await Promise.resolve();
+  await documentListeners.visibilitychange();
+  assert.equal(checks, 0, "backgrounding must not trigger an update request");
+  documentRef.visibilityState = "visible";
+  await documentListeners.visibilitychange();
+  assert.equal(checks, 1, "returning to the app must check for new releases");
+  await windowListeners.online();
+  assert.equal(checks, 2, "reconnecting must retry an update check");
+  assert.equal(statuses.at(-1), "update-ready");
+}
+
+async function testServiceWorkerAppliesOnlyADownloadedUpdate() {
+  const { applyServiceWorkerUpdate } = await import("../platform/platform.js");
+  const messages = [],
+    statuses = [];
+  assert.equal(
+    await applyServiceWorkerUpdate({
+      navigatorRef: {
+        serviceWorker: {
+          getRegistration: async () => ({
+            waiting: {
+              postMessage(message) {
+                messages.push(message);
+              },
+            },
+          }),
+        },
+      },
+      onStatusChange: (status) => statuses.push(status),
+    }),
+    true,
+  );
+  assert.deepEqual(messages, [{ type: "APPLY_UPDATE" }]);
+  assert.deepEqual(statuses, ["applying"]);
+  assert.equal(
+    await applyServiceWorkerUpdate({
+      navigatorRef: {
+        serviceWorker: { getRegistration: async () => ({ waiting: null }) },
+      },
+      onStatusChange: (status) => statuses.push(status),
+    }),
+    false,
+  );
+  assert.equal(
+    messages.length,
+    1,
+    "no activation command without a waiting release",
+  );
+  assert.equal(statuses.at(-1), "update-failed");
+}
+
+async function testServiceWorkerRetriesFailedSetupAfterReconnect() {
+  const { registerServiceWorker } = await import("../platform/platform.js");
+  const listeners = {},
+    statuses = [];
+  let registrations = 0,
+    checks = 0;
+  const registration = {
+    addEventListener() {},
+    async update() {
+      checks++;
+    },
+  };
+  const warn = console.warn;
+  const warnings = [];
+  console.warn = (...args) => warnings.push(args);
+  try {
+    registerServiceWorker({
+      navigatorRef: {
+        serviceWorker: {
+          controller: {},
+          async register() {
+            if (++registrations === 1) throw new Error("offline setup");
+            return registration;
+          },
+          getRegistration: async () => registration,
+        },
+      },
+      windowRef: {
+        addEventListener(type, callback) {
+          listeners[type] = callback;
+        },
+      },
+      onStatusChange: (status) => statuses.push(status),
+    });
+    await listeners.load();
+    assert.equal(statuses.at(-1), "error");
+    assert.equal(warnings.length, 1);
+    await listeners.online();
+    assert.equal(
+      registrations,
+      2,
+      "reconnect must recover setup that failed offline",
+    );
+    assert.equal(checks, 1);
+    assert.equal(statuses.at(-1), "current");
+  } finally {
+    console.warn = warn;
+  }
+}
+
+await testServiceWorkerChecksReportOnlyVerifiedFreshness();
+await testServiceWorkerChecksOnResumeAndReconnectWithoutApplying();
+await testServiceWorkerAppliesOnlyADownloadedUpdate();
+await testServiceWorkerRetriesFailedSetupAfterReconnect();
 await testWakeLockDeduplicatesRequestsAndReacquiresAfterRelease();
 await testFullscreenUsesInjectedDocument();
 await testFullscreenExitUsesInjectedDocument(

@@ -54,6 +54,8 @@ import { createSensorController } from "./input/sensor-controller.js";
 import { createSensorWatchdog } from "./input/sensor-watchdog.js";
 import {
   createPwaInstallController,
+  checkServiceWorkerUpdate,
+  applyServiceWorkerUpdate,
   exitFullscreenMode,
   requestFullscreenMode,
   requestMotionPermissionIfNeeded,
@@ -391,6 +393,9 @@ function pwaUpdateStatusText(status) {
   return (
     {
       checking: copy.pwa.checking,
+      current: copy.pwa.current,
+      "check-failed": copy.pwa.checkFailed,
+      applying: copy.pwa.applying,
       error: copy.pwa.error,
       ready: "",
       unsupported: copy.pwa.unsupported,
@@ -506,7 +511,20 @@ export function createApp({
       : "";
     pwaUpdateStatus = pwaUpdateStatusText(status);
     ui.setPwaStatus([displayStatus, pwaUpdateStatus].filter(Boolean).join(" "));
+    els.checkAppUpdates.disabled = [
+      "checking",
+      "update-installing",
+      "applying",
+      "unsupported",
+    ].includes(status);
+    els.updateApp.hidden = status !== "update-ready";
+    els.updateApp.disabled = status === "applying";
+    els.pwaUpdateHelp.hidden = els.updateApp.hidden;
   }
+  els.appVersion.textContent =
+    "Release " +
+    (new globalThis.URL(import.meta.url).searchParams.get("v") ??
+      "development");
   updatePwaStatus();
   ui.setMapObjects(mapObjectSummary(mapState.activeMap));
   const pwaInstallController = createPwaInstallController({
@@ -856,6 +874,19 @@ export function createApp({
     onOpenSettings: openSettings,
     onCloseSettings: gameController.closeSettings,
     onInstallApp: pwaInstallController.promptInstall,
+    onCheckAppUpdates: () =>
+      checkServiceWorkerUpdate({
+        navigatorRef: windowRef.navigator,
+        onStatusChange: updatePwaStatus,
+      }),
+    onUpdateApp: () => {
+      if (windowRef.confirm(copy.pwa.confirmUpdate)) {
+        applyServiceWorkerUpdate({
+          navigatorRef: windowRef.navigator,
+          onStatusChange: updatePwaStatus,
+        });
+      }
+    },
     onRetryMap: retryCurrentMap,
     onRetryMotion: () => windowRef.location.reload(),
     onLoadMap: loadMap,
@@ -884,6 +915,7 @@ export function createApp({
     registerServiceWorker({
       navigatorRef: windowRef.navigator,
       onStatusChange: updatePwaStatus,
+      documentRef,
       windowRef,
     });
   } catch (error) {

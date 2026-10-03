@@ -65,7 +65,7 @@
       }
     </style>
     <script>
-      const assetVersion = "251f4cb1f65f5910";
+      const assetVersion = "63a55517d0af52e9";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -244,7 +244,17 @@
           <h2 id="settingsTitle"></h2>
           <button id="closeSettings" aria-label="" autofocus></button>
         </div>
+        <div id="appVersion" class="settingsStatus"></div>
         <div id="pwaStatus" class="settingsStatus" aria-live="polite"></div>
+        <button id="checkAppUpdates" type="button" class="secondary"></button>
+        <p id="pwaUpdateHelp" class="settingsStatus" hidden></p>
+        <button
+          id="updateApp"
+          type="button"
+          class="secondary"
+          aria-describedby="pwaUpdateHelp"
+          hidden
+        ></button>
         <details class="settingsHelp">
           <summary id="controlsHelpTitle"></summary>
           <div class="settingsHelpContent">

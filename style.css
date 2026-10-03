@@ -1098,6 +1098,8 @@ button.primaryAction {
 }
 #settingsModal #neutral,
 #settingsModal #installApp,
+#settingsModal #checkAppUpdates,
+#settingsModal #updateApp,
 #settingsModal #retryMap,
 #settingsModal #loadMap {
   width: 100%;

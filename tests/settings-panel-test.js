@@ -29,6 +29,8 @@ function createPanelHarness() {
   let retryCount = 0;
   const loadedMaps = [];
   let installCount = 0;
+  let updateCheckCount = 0;
+  let updateCount = 0;
   const settings = {
     maxSpeed: 14,
     acceleration: 0.115,
@@ -47,6 +49,8 @@ function createPanelHarness() {
   const goalIndicatorSetting = fakeControl();
   const hitboxOverlaySetting = fakeControl();
   const installApp = fakeControl();
+  const checkAppUpdates = fakeButton();
+  const updateApp = fakeButton();
   const statsSetting = fakeControl();
   const speedSetting = fakeControl();
   const speedSettingValue = { textContent: "" };
@@ -67,6 +71,8 @@ function createPanelHarness() {
       mapSelect,
       loadMap,
       installApp,
+      checkAppUpdates,
+      updateApp,
       speedSetting,
       speedSettingValue,
       resetSpeedSetting,
@@ -103,6 +109,12 @@ function createPanelHarness() {
     onCloseSettings() {},
     onInstallApp() {
       installCount++;
+    },
+    onCheckAppUpdates() {
+      updateCheckCount++;
+    },
+    onUpdateApp() {
+      updateCount++;
     },
     onRetryMap() {
       retryCount++;
@@ -146,6 +158,10 @@ function createPanelHarness() {
     hitboxOverlaySetting,
     installApp,
     installCount: () => installCount,
+    checkAppUpdates,
+    updateApp,
+    updateCheckCount: () => updateCheckCount,
+    updateCount: () => updateCount,
     resetSpeedSetting,
     speedSetting,
     speedSettingValue,
@@ -163,6 +179,22 @@ function testInstallButtonRunsInstallCommand() {
 }
 
 testInstallButtonRunsInstallCommand();
+
+function testUpdateButtonsUseTheirActionsAndRespectDisabledState() {
+  const { checkAppUpdates, updateApp, updateCheckCount, updateCount } =
+    createPanelHarness();
+  checkAppUpdates.listeners.click();
+  updateApp.listeners.click();
+  assert.equal(updateCheckCount(), 1);
+  assert.equal(updateCount(), 1);
+  checkAppUpdates.disabled = updateApp.disabled = true;
+  checkAppUpdates.listeners.click();
+  updateApp.listeners.click();
+  assert.equal(updateCheckCount(), 1);
+  assert.equal(updateCount(), 1);
+}
+
+testUpdateButtonsUseTheirActionsAndRespectDisabledState();
 
 function testRangeSettingsExposePositionAndResetToDefaults() {
   const {
@@ -302,6 +334,8 @@ function testInstalledPwaDisablesFullscreenToggle() {
       mapSelect: fakeControl(),
       loadMap: fakeButton(),
       installApp: fakeButton(),
+      checkAppUpdates: fakeButton(),
+      updateApp: fakeButton(),
       speedSetting: fakeControl(),
       speedSettingValue: { textContent: "" },
       resetSpeedSetting: fakeButton(),

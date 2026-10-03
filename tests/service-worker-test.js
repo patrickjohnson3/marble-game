@@ -107,6 +107,22 @@ try {
     true,
   );
 
+  listeners.message({ data: { type: "UNKNOWN" } });
+  assert.equal(skippedWaiting, 0, "unrelated messages cannot apply an update");
+  let applyPromise;
+  listeners.message({
+    data: { type: "APPLY_UPDATE" },
+    waitUntil(promise) {
+      applyPromise = promise;
+    },
+  });
+  await applyPromise;
+  assert.equal(
+    skippedWaiting,
+    1,
+    "an explicit update request activates the downloaded release",
+  );
+
   let activatePromise;
   listeners.activate({
     waitUntil(promise) {

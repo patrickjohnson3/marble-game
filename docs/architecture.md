@@ -390,16 +390,24 @@ and precaches the shell and runtime assets together. Navigation serves that
 worker's own installed shell without refreshing it independently, so a failed
 replacement installation leaves the previous offline version intact. After a
 successful replacement installation it waits until all windows using the old
-worker close. This preserves active encounters and their cached assets. First
+worker close, unless the player explicitly applies it. This preserves active
+encounters during automatic checks and downloads. First
 installation activates normally and claims clients; activation still removes
 retired caches.
 
 `platform/platform.js` listens for controller changes even on a first visit.
 The initial claim does not reload the game; a later controller replacement
-reloads once to preserve shell/worker pairing if a replacement is forced externally.
-Normal updates wait instead: Settings tells players to close all game tabs/windows
-and reopen when finished. Reloading one tab while another remains open does not
-apply a waiting update. Installations still pending after 30 seconds
+reloads once to preserve shell/worker pairing. Registration bypasses the HTTP
+cache for the worker and its imports. Foreground and reconnect events retry update
+checks, including setup that initially failed offline. Settings displays the
+running module's generated release identifier and offers **Check for updates**;
+failed or offline checks do not claim the release is current.
+
+Normal updates wait: players can close all game tabs/windows and reopen when
+finished. Reloading one tab while another remains open does not apply a waiting
+update. **Update now** confirms that all open game windows will restart and lose
+their current runs, then messages the waiting worker to activate. Each controlled
+window reloads once when the replacement takes control. Installations still pending after 30 seconds
 report that the update is delayed, and failed installations leave the current
 version available instead of displaying a permanent downloading state.
 

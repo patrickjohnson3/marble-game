@@ -1,9 +1,9 @@
 import {
   runtimeFiles,
   runtimeModuleScripts,
-} from "./runtime-assets.js?v=251f4cb1f65f5910";
+} from "./runtime-assets.js?v=63a55517d0af52e9";
 
-const cacheVersion = "marble-game-251f4cb1f65f5910";
+const cacheVersion = "marble-game-63a55517d0af52e9";
 const assetVersion = cacheVersion.slice("marble-game-".length);
 const versionedFiles = [...runtimeModuleScripts, "style.css"].map(
   (file) => file + "?v=" + assetVersion,
@@ -30,8 +30,8 @@ function cacheKey(path) {
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    // Let replacements wait until every old game window closes. Activating
-    // early would evict its assets and force an in-progress game to restart.
+    // Wait for old game windows to close unless the player explicitly applies
+    // the update. Automatic installation must not restart an encounter.
     caches
       .open(cacheVersion)
       .then((cache) =>
@@ -42,6 +42,12 @@ self.addEventListener("install", (event) => {
         ),
       ),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "APPLY_UPDATE") {
+    event.waitUntil(self.skipWaiting());
+  }
 });
 
 self.addEventListener("activate", (event) => {

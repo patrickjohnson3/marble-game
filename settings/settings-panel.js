@@ -9,6 +9,8 @@ export function bindSettingsPanel({
   onOpenSettings,
   onCloseSettings,
   onInstallApp = () => {},
+  onCheckAppUpdates,
+  onUpdateApp,
   onRetryMap,
   onRetryMotion,
   onLoadMap,
@@ -28,6 +30,8 @@ export function bindSettingsPanel({
   const {
     neutralBtn,
     installApp,
+    checkAppUpdates,
+    updateApp,
     settingsToggle,
     settingsOverlay,
     closeSettings,
@@ -113,6 +117,12 @@ export function bindSettingsPanel({
     if (!loadMap.disabled) onLoadMap(mapSelect.value);
   });
   installApp.addEventListener("click", onInstallApp);
+  checkAppUpdates.addEventListener("click", () => {
+    if (!checkAppUpdates.disabled) onCheckAppUpdates();
+  });
+  updateApp.addEventListener("click", () => {
+    if (!updateApp.disabled) onUpdateApp();
+  });
   neutralBtn.addEventListener("click", onSetNeutral);
 
   bindRangeSetting(speedSetting, speedSettingValue, "maxSpeed");
