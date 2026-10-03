@@ -25,7 +25,7 @@ Speeds use the same world-units-per-60-Hz-frame convention as marble physics.
 | Ordinary / attacking heading decisions       | 0.3 seconds / 0.1 seconds          |
 | Maximum interception lead                    | 1/6 second (shorter up close)      |
 | Food roaming radius / goo-edge margin        | 70 / 18 world units                |
-| Locomotion speed inside goo                  | 55% of the current mode's speed    |
+| Locomotion speed inside goo                  | 10% of the current mode's speed    |
 | Outward attack kick / resulting speed cap    | 12 / 14                            |
 | Strike recovery / escape distance            | 1 second / 300 world units         |
 | Incoming marble speed needed to repel        | 7                                  |
@@ -41,8 +41,10 @@ footprint. There is no copied target list or persistent food reference to reset.
 If no accessible resource exists, the previous wandering behavior remains.
 Foraging neither consumes food nor changes ant behavior or liquid physics.
 
-Inside the shared goo footprint, its own steps slow to 55% speed: scurry,
-harassment and retreat all respond. The center is sampled on each local tick;
+Inside the shared goo footprint, its own steps slow to 10% speed: scurry,
+harassment and retreat all respond (0.3 / 1.05 / 0.55 world units per frame).
+Even a charge is substantially slower than a purposefully steered marble rolling
+through the same goo. The center is sampled on each local tick;
 there is no sticky state to clear on leaving or Retry, and overlapping droplets
 do not stack. Counter-hit knockback, behavior timers and contact impulses are
 unchanged. Steering around a spill or repelling the insect into it can buy escape
@@ -134,6 +136,10 @@ in the empty corners of the spill's bounding box, overlapping droplets,
 30/60/120 Hz and irregular partitions, unchanged counter-hit knockback/recovery,
 and unchanged attack/latch rules. A live-browser comparison checks the actual
 kitchen goo against nearby floor and verifies autonomous exit and speed recovery.
+The full-physics tests compare parallel travel through the same goo using a
+12-degree tilt and keyboard steering: a charging cockroach must travel less than
+half as far as the marble at 30/60/120 Hz and irregular partitions. This does not
+promise to outrun the insect with an idle or barely moving marble.
 
 Inspect it through `npm run map:render -- kitchen-floor --phone` or live play.
 On a physical phone, judge whether charges are readable, the shove disrupts
@@ -144,7 +150,7 @@ escaping or a strong repel grants six seconds before another pursuit. Judge the
 300-unit escape threshold and one-second strike spacing in particular; an insect's
 successful hit now deliberately maintains pressure. Test contacts near utensils
 and the sponge, and check that antennae/legs remain clear and animation stays
-smooth. Judge the initial `gooSpeedScale: 0.55` on a physical phone: spills should
+smooth. Judge `gooSpeedScale: 0.1` on a physical phone: spills should
 create useful escape opportunities without letting the player kite the insect
 trivially or leaving it stuck beside a utensil. Desktop Chrome checks do not
 establish phone sensor, haptic, GPU or compositor performance.

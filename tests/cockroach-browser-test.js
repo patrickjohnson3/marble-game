@@ -38,7 +38,11 @@ window.__cockroachApp = createApp();`,
           const app = window.__cockroachApp;
           app.gameController.pause();
           const patch = app.mapRuntime.state.terrainByType.gooPatch.elements[0];
-          const x = inGoo ? patch.x + patch.w * shape.centerX : patch.x - 200;
+          // Start near the edge so even the sluggish insect can exit during
+          // this short browser check; the deterministic suite crosses a full spill.
+          const x = inGoo
+            ? patch.x + app.mapRuntime.state.cockroach.r * 2
+            : patch.x - 200;
           const y = patch.y + patch.h * shape.centerY;
           Object.assign(app.state.marble, { x: 400, y: 500, vx: 0, vy: 0 });
           Object.assign(app.state.input.tilt, { smoothX: 0, smoothY: 0 });
@@ -90,8 +94,8 @@ window.__cockroachApp = createApp();`,
     const floorSpeed = floorRun.distance / floorRun.frames;
     const gooSpeed = gooRun.distance / gooRun.frames;
     assert.ok(
-      gooSpeed > 0 && gooSpeed < floorSpeed,
-      `real kitchen goo must slow scurrying without trapping: floor=${floorSpeed}, goo=${gooSpeed}`,
+      gooSpeed > 0 && gooSpeed <= floorSpeed * 0.2,
+      `real kitchen goo must remove most scurry speed without trapping: floor=${floorSpeed}, goo=${gooSpeed}`,
     );
     await page.evaluate(() => window.__cockroachApp.gameController.resume());
     await page.waitForFunction(

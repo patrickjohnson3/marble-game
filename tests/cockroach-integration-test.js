@@ -220,6 +220,66 @@ for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
   assert.equal(impacts.length, 1, "no immediate reacquisition after escape");
 }
 
+// Compare actual travel through the same material, including the marble's
+// input shaping and drag. Even a charge must be much slower than a steered marble.
+for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
+  for (const input of ["tilt", "keyboard"]) {
+    const { context, runtime, state, feedback, impacts } = harness();
+    const cockroach = runtime.state.cockroach;
+    runtime.state.obstacles = [];
+    runtime.state.terrainByType.gooPatch.elements = [
+      { x: 500, y: 500, w: 2500, h: 2500 },
+    ];
+    Object.assign(state.marble, { x: 1500, y: 1500 });
+    Object.assign(context.tilt, {
+      rawX: input === "tilt" ? 12 : 0,
+      rawY: 0,
+      neutralX: 0,
+      neutralY: 0,
+      smoothX: 0,
+      smoothY: 0,
+    });
+    context.keyboard.x = input === "keyboard" ? 1 : 0;
+    // Warm up steering on goo, then compare parallel lanes without contact or
+    // heading changes obscuring the speed difference.
+    runtime.state.cockroach = null;
+    let elapsed = 0;
+    let index = 0;
+    while (elapsed < 60) {
+      const dt = Math.min(parts[index++ % parts.length], 60 - elapsed);
+      updatePhysicsInput(context, dt);
+      updatePhysics(context, dt, feedback);
+      elapsed += dt;
+    }
+    runtime.state.cockroach = cockroach;
+    Object.assign(cockroach, {
+      x: state.marble.x,
+      y: 1900,
+      angle: 0,
+      decisionIn: 1000,
+      modeFrames: 1000,
+      harassmentIn: 1000,
+    });
+    const startX = state.marble.x;
+    elapsed = 0;
+    while (elapsed < 30) {
+      const dt = Math.min(parts[index++ % parts.length], 30 - elapsed);
+      updatePhysicsInput(context, dt);
+      updatePhysics(context, dt, feedback);
+      elapsed += dt;
+    }
+    const marbleTravel = state.marble.x - startX;
+    const roachTravel = cockroach.x - startX;
+    assert.ok(roachTravel > 0, "goo slows the cockroach without freezing it");
+    assert.ok(
+      roachTravel < marbleTravel * 0.5,
+      `a charging cockroach in goo must travel less than half as far as the ${input}-steered marble: roach=${roachTravel}, marble=${marbleTravel}`,
+    );
+    assert.equal(cockroach.mode, "harass");
+    assert.equal(impacts.length, 0, "the comparison excludes contact impulses");
+  }
+}
+
 for (const phase of ["intro", "complete", "hazard"]) {
   const { context, runtime, state, feedback, impacts } = harness();
   if (phase === "intro") state.intro.released = false;

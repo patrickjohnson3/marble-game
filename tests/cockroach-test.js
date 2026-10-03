@@ -549,8 +549,8 @@ function testGooSlowsWalkingWithoutChangingBehaviorClocks() {
       advance(subject.cockroach, subject.mapState, 12);
     assert.ok(sticky.cockroach.x > 1000, `${mode} must not get stuck in goo`);
     assert.ok(
-      sticky.cockroach.x < floor.cockroach.x,
-      `${mode} must travel less through goo than over floor`,
+      sticky.cockroach.x - 1000 <= (floor.cockroach.x - 1000) * 0.2,
+      `${mode} must lose most of its walking speed in goo`,
     );
     assert.deepEqual(
       overlap.cockroach,
@@ -577,12 +577,17 @@ function testGooCrossingExitsAndMatchesAcrossFramePartitions() {
   let reference;
   for (const parts of [[2], [1], [0.5], [0.13, 0.8, 1.17, 2.2]]) {
     const subject = gooFixture([goo]);
-    advance(subject.cockroach, subject.mapState, 100, parts);
+    // Allow a sluggish crossing without reaching a world wall afterward.
+    subject.mapState.activeMap = {
+      ...map,
+      world: { ...map.world, width: 5000 },
+    };
+    advance(subject.cockroach, subject.mapState, 600, parts);
     const { cockroach } = subject;
     assert.ok(cockroach.x > goo.x + goo.w, "it can leave the spill unaided");
     near(cockroach.vx, cockroachConfig.harassSpeed);
     assert.ok(
-      cockroach.x < 1000 + cockroachConfig.harassSpeed * 100,
+      cockroach.x < 1000 + cockroachConfig.harassSpeed * 600,
       "crossing a spill must buy escape distance",
     );
     const values = [
