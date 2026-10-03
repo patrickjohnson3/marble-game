@@ -38,7 +38,8 @@ const cerealHitMinSpeed = 0.8;
 const cerealHitFeedbackCooldownFrames = 20;
 const kitchenFloorMapId = "kitchen-floor";
 const cheerioWaterSoakRate = 0.006;
-const spongeMass = 4;
+// Match the unit-mass marble so gentle contact shares motion instead of braking.
+const spongeMass = 1;
 const spongeInverseMass = 1 / spongeMass;
 const spongeRestitution = 0;
 const spongeLinearDragRetention = 0.94;

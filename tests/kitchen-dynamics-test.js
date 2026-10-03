@@ -7,7 +7,7 @@ import {
   tuning,
 } from "../core/game-config.js";
 import { createHapticsController } from "../core/haptics.js";
-import { updatePhysics } from "../core/physics.js";
+import { updatePhysics, updatePhysicsInput } from "../core/physics.js";
 import { pointInEllipsePatch } from "../core/geometry.js";
 import { createKitchenDynamics } from "../core/kitchen-dynamics.js";
 import { ELLIPTICAL_SURFACE_SHAPES } from "../core/map-elements.js";
@@ -552,6 +552,79 @@ function testSpongeRemainsSolidAndPushableWithoutWater() {
 }
 
 testSpongeRemainsSolidAndPushableWithoutWater();
+
+function testGentleSustainedPushMovesSponge() {
+  for (const hz of [30, 60, 120]) {
+    for (const side of [-1, 1]) {
+      const fixture = resolvedMapConfig.elements.find(
+        (element) => element.fixture === "sponge",
+      );
+      const mapConfig = {
+        ...kitchenMap("kitchen-floor", [
+          { ...fixture, x: 200, y: 430, angle: 0 },
+        ]),
+        clusters: [],
+        world,
+      };
+      const runtime = createResolvedMapState(mapConfig);
+      const dynamics = createKitchenDynamics();
+      dynamics.reset({ mapConfig, world, obstacles: runtime.obstacles });
+      const sponge = dynamics.state.sponge;
+      const initialX = sponge.x;
+      const marble = {
+        x: sponge.collisionCenterX - side * (sponge.hitboxW / 2 + 29 + 1),
+        y: sponge.collisionCenterY,
+        r: 29,
+        vx: 0,
+        vy: 0,
+      };
+      const context = {
+        marble,
+        physics: physicsConfig,
+        keyboard: { x: 0, y: 0 },
+        tilt: {
+          rawX: side * 2,
+          rawY: 0,
+          neutralX: 0,
+          neutralY: 0,
+          smoothX: 0,
+          smoothY: 0,
+        },
+        intro: { released: true },
+        bounds: { left: 0, top: 0, right: world.width, bottom: world.height },
+        mapState: runtime,
+      };
+      const dt = 60 / hz;
+      const previous = { x: marble.x, y: marble.y };
+      for (let i = 0; i < hz * 2; i++) {
+        previous.x = marble.x;
+        previous.y = marble.y;
+        updatePhysicsInput(context, dt);
+        updatePhysics(context, dt, { onSurface() {} });
+        dynamics.update(
+          runtime.activeMap,
+          marble,
+          previous,
+          dt,
+          context.physicsScratch.movementPath,
+        );
+      }
+      assert.ok(
+        side * (sponge.x - initialX) >= 2 * marble.r,
+        `a two-degree push should move the sponge at least one marble diameter in two seconds (${hz} Hz, side ${side})`,
+      );
+      assert.equal(circleOrientedRectContact(marble, sponge).intersects, false);
+      assert.ok(side * marble.vx > 0, "gentle pushing must not rebound");
+      assert.ok(
+        side * marble.vx >= side * sponge.vx,
+        "the sponge should remain within reach of the pushing marble",
+      );
+      assert.equal(sponge.angle, 0, "a centered push must not add rotation");
+    }
+  }
+}
+
+testGentleSustainedPushMovesSponge();
 
 function testSpongeDoesNotSoakInTransparentPuddleCorner() {
   const authoredWater = {
