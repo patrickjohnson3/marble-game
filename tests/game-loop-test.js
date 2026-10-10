@@ -179,10 +179,13 @@ function createBehaviorHarness({
     effectClears: 0,
     antCrushes: [],
     effectImpacts: [],
+    effectMaterials: [],
+    spongeReactions: [],
     goalResets: 0,
     goalIndicators: [],
     cockroachCues: [],
     hapticImpacts: [],
+    hapticMaterials: [],
     hapticSurfaces: [],
     hints: [],
     kitchenSweeps: [],
@@ -230,8 +233,10 @@ function createBehaviorHarness({
         calls.antCrushes.push(ant);
       },
       spawnGooSplat() {},
-      spawnImpact(impact) {
+      spawnImpact(impact, material) {
         calls.effectImpacts.push(impact);
+        calls.effectMaterials.push(material);
+        return true;
       },
       spawnWaterRipple() {},
     },
@@ -242,8 +247,9 @@ function createBehaviorHarness({
     },
     game: state.game,
     hapticFeedback: {
-      pulseImpact(impact) {
+      pulseImpact(impact, material) {
         calls.hapticImpacts.push(impact);
+        calls.hapticMaterials.push(material);
       },
       pulseSurface(speed, surfaceType) {
         calls.hapticSurfaces.push([speed, surfaceType]);
@@ -281,6 +287,9 @@ function createBehaviorHarness({
     scheduleFrame() {},
     settings,
     terrainView: {
+      reactToSpongeImpact(...args) {
+        calls.spongeReactions.push(args);
+      },
       renderMapThemeDynamics() {},
       renderMovedObstacles() {
         calls.obstacleRenders++;
@@ -703,6 +712,7 @@ function testKitchenFeedbackRoutesOnePriorityImpactPerFrame() {
 }
 
 function testSpongeAbsorptionRoutesFocusedRenderingAndFeedback() {
+  const sponge = { fixture: "sponge" };
   const activeMap = {
     ...resolvedMapConfig,
     world: { width: 400, height: 400 },
@@ -716,6 +726,13 @@ function testSpongeAbsorptionRoutesFocusedRenderingAndFeedback() {
       {
         spongeChanges: 1,
         spongeImpact: 3.2,
+        spongeImpactContact: {
+          obstacle: sponge,
+          x: 200,
+          y: 200,
+          nx: -1,
+          ny: 0,
+        },
         spongeSoaks: 1,
         waterChanges: 1,
       },
@@ -733,7 +750,35 @@ function testSpongeAbsorptionRoutesFocusedRenderingAndFeedback() {
   ]);
   assert.deepEqual(harness.calls.effectImpacts, [3.2]);
   assert.deepEqual(harness.calls.hapticImpacts, [3.2]);
+  assert.deepEqual(harness.calls.effectMaterials, ["sponge"]);
+  assert.deepEqual(harness.calls.hapticMaterials, ["sponge"]);
+  assert.deepEqual(harness.calls.spongeReactions, [[sponge, 3.2, -1, 0]]);
 }
+
+function testWoodenFixturesAndUnclassifiedWallsKeepTheirFeedbackIdentity() {
+  for (const fixture of ["coffeeTable", "bookcase", "toyBlock", undefined]) {
+    const harness = createBehaviorHarness({
+      activeMap: {
+        ...resolvedMapConfig,
+        theme: "livingRoom",
+        world: { width: 400, height: 400 },
+        spawn: { x: 90, y: 100, r: 8 },
+        elements: [{ type: "obstacle", fixture, x: 100, y: 50, w: 40, h: 100 }],
+      },
+    });
+    harness.state.marble.vx = 8;
+    harness.tick();
+    const expected = fixture ? "wood" : undefined;
+    assert.deepEqual(harness.calls.effectMaterials, [expected]);
+    assert.deepEqual(harness.calls.hapticMaterials, [expected]);
+    assert.ok(
+      harness.state.marble.vx < 0,
+      "feedback does not replace the ordinary bounce",
+    );
+  }
+}
+
+testWoodenFixturesAndUnclassifiedWallsKeepTheirFeedbackIdentity();
 
 testHazardRecoveryResetsGameplayFeedbackAndRearms();
 testMapTransitionDoesNotSweepAcrossTheNewMap();

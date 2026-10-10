@@ -5,6 +5,15 @@ import { handleWallCollisions } from "./physics-collisions.js";
 import { GAME_PHASES } from "./runtime-states.js";
 import { getObjectiveRegion, mouseDefeatRequired } from "./map-objectives.js";
 
+const impactMaterials = {
+  fork: "metal",
+  spoon: "metal",
+  sponge: "sponge",
+  coffeeTable: "wood",
+  bookcase: "wood",
+  toyBlock: "wood",
+};
+
 export function elapsedMsToFrameDelta(elapsedMs, timing) {
   // Long frames intentionally run as capped slow-motion instead of catching up
   // with a large physics step that can tunnel through collision geometry.
@@ -57,13 +66,22 @@ export function createGameLoop({
     lastSurfaceType = SURFACE_TYPES.floor;
   }
 
-  function onImpact(impact) {
+  function onImpact(impact, contact = null) {
+    const material = impactMaterials[contact?.obstacle?.fixture];
     marble.impactSquash = Math.max(
       marble.impactSquash,
       clamp(impact / visualConfig.marble.impactSquashDivisor, 0, 1),
     );
-    effectsRenderer.spawnImpact(impact);
-    hapticFeedback.pulseImpact(impact);
+    const shown = effectsRenderer.spawnImpact(impact, material, contact);
+    if (shown && material === "sponge") {
+      terrainView.reactToSpongeImpact(
+        contact.obstacle,
+        impact,
+        contact.nx,
+        contact.ny,
+      );
+    }
+    hapticFeedback.pulseImpact(impact, material);
   }
 
   function resolveMarbleWalls() {
@@ -226,7 +244,7 @@ export function createGameLoop({
       }
       terrainView?.renderMapThemeDynamics();
       if (themeEvents?.spongeImpact > 0) {
-        onImpact(themeEvents.spongeImpact);
+        onImpact(themeEvents.spongeImpact, themeEvents.spongeImpactContact);
       }
       if (themeEvents?.squishedAnts > 0) {
         marble.impactSquash = Math.max(

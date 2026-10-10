@@ -225,6 +225,31 @@ function testObstacleBounce() {
   assert.deepEqual(impacts, [8]);
 }
 
+function testImpactFeedbackRetainsFixtureAndContactWithoutChangingBounce() {
+  const fixture = { fixture: "spoon" };
+  const obstacle = { x: 100, y: 30, w: 40, h: 40, fixtureSource: fixture };
+  const marble = { x: 90, y: 50, vx: 8, vy: 0, r: 12 };
+  let hit;
+  resolveObstacleCollision(
+    marble,
+    obstacle,
+    { bounce: 0.5 },
+    (strength, contact) => {
+      hit = { strength, ...contact };
+    },
+  );
+  assert.equal(
+    hit.obstacle,
+    fixture,
+    "sprite collision pieces retain their authored fixture",
+  );
+  assert.deepEqual([hit.x, hit.y, hit.nx, hit.ny], [100, 50, -1, 0]);
+  assert.equal(hit.strength, 8);
+  assert.deepEqual([marble.x, marble.y, marble.vx, marble.vy], [88, 50, -4, 0]);
+}
+
+testImpactFeedbackRetainsFixtureAndContactWithoutChangingBounce();
+
 function testObstacleCollisionDoesNotBounceWhenMovingAway() {
   const marble = { x: 90, y: 50, vx: -8, vy: 0, r: 12 };
   const obstacle = { x: 100, y: 30, w: 40, h: 40 };

@@ -306,7 +306,13 @@ export function resolveObstacleCollision(
   const impact = marble.vx * nx + marble.vy * ny;
   if (impact < 0) {
     const tangent = Math.abs(marble.vx * -ny + marble.vy * nx);
-    onImpact(collisionFeedback(-impact, tangent, physics));
+    // Feedback consumes this immediately: the collision scratch is reused.
+    contact.obstacle = obstacle.fixtureSource ?? obstacle;
+    contact.x = marble.x - nx * marble.r;
+    contact.y = marble.y - ny * marble.r;
+    contact.nx = nx;
+    contact.ny = ny;
+    onImpact(collisionFeedback(-impact, tangent, physics), contact);
     marble.vx -= (1 + physics.bounce) * impact * nx;
     marble.vy -= (1 + physics.bounce) * impact * ny;
   }

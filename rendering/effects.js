@@ -5,6 +5,11 @@ import {
 } from "../core/map-elements.js";
 import { traceLiquidPatchPath } from "./liquid-patch-shape.js";
 
+const materialImpacts = {
+  metal: { lifeMs: 150, minSize: 12, extraSize: 18 },
+  wood: { lifeMs: 260, minSize: 20, extraSize: 26 },
+};
+
 function setVelocityUnit(marble, target) {
   const speed = Math.hypot(marble.vx, marble.vy);
   if (speed <= 0.001) {
@@ -124,7 +129,9 @@ function clipLiquid(context, particle) {
 function drawParticle(context, particle, progress) {
   context.save();
   clipLiquid(context, particle);
-  if (particle.kind === "waterRipple") {
+  if (particle.kind === "metal" || particle.kind === "wood") {
+    drawMaterialImpact(context, particle, progress);
+  } else if (particle.kind === "waterRipple") {
     drawWaterRipple(context, particle, progress);
   } else if (particle.kind === "gooSplat") {
     drawGooWake(context, particle, progress);
@@ -136,6 +143,51 @@ function drawParticle(context, particle, progress) {
     drawCircle(context, particle, progress, "#ffd166");
   }
   context.restore();
+}
+
+function drawMaterialImpact(context, particle, progress) {
+  const radius = (particle.size * (0.7 + progress * 0.75)) / 2;
+  context.globalAlpha = particle.opacity * (1 - progress);
+  context.lineCap = "round";
+  context.beginPath();
+  if (particle.kind === "metal") {
+    // A small polished glint, not a shower of sparks or flying metal chips.
+    for (let i = -1; i <= 1; i++) {
+      const angle = particle.angle + (i * Math.PI) / 3;
+      context.moveTo(particle.x, particle.y);
+      context.lineTo(
+        particle.x + Math.cos(angle) * radius,
+        particle.y + Math.sin(angle) * radius,
+      );
+    }
+    context.strokeStyle = "#38434a";
+    context.lineWidth = 3;
+    context.stroke();
+    context.strokeStyle = "#fffdf2";
+    context.lineWidth = 1.3;
+    context.stroke();
+  } else {
+    // Two short rounded waves read as a knock, distinct even without color.
+    context.strokeStyle = "#745032";
+    context.lineWidth = 2;
+    for (let i = 0; i < 2; i++) {
+      const scale = i === 0 ? 0.6 : 1;
+      context.moveTo(
+        particle.x + Math.cos(particle.angle - 0.8) * radius * scale,
+        particle.y + Math.sin(particle.angle - 0.8) * radius * scale,
+      );
+      context.ellipse(
+        particle.x,
+        particle.y,
+        radius * scale,
+        radius * scale,
+        0,
+        particle.angle - 0.8,
+        particle.angle + 0.8,
+      );
+    }
+    context.stroke();
+  }
 }
 
 function resetDirtyBounds(bounds) {
@@ -317,13 +369,32 @@ export function createEffectsRenderer({
     }
   }
 
-  function spawnImpact(impact) {
-    if (impact < config.impactMin) return;
+  function spawnImpact(impact, material, contact = null) {
+    if (impact < config.impactMin) return false;
     const currentTime = now();
-    if (currentTime - lastImpactAt < config.impactCooldownMs) return;
+    if (currentTime - lastImpactAt < config.impactCooldownMs) return false;
     lastImpactAt = currentTime;
 
     const intensity = clamp(impact / config.impactReference, 0, 1);
+    // The same threshold/cooldown gates the sponge's sprite compression.
+    if (material === "sponge") return true;
+    const profile = materialImpacts[material];
+    if (profile) {
+      const particle = spawn(
+        material,
+        contact.x,
+        contact.y,
+        0,
+        0,
+        profile.minSize + profile.extraSize * intensity,
+        profile.lifeMs,
+        config.impactOpacity,
+      );
+      // Draw onto the contacted surface: the marble is above this canvas and
+      // would hide short rays/waves pointing out along the contact normal.
+      particle.angle = Math.atan2(contact.ny, contact.nx) + Math.PI;
+      return true;
+    }
     const count = Math.round(
       config.impactMinParticles + intensity * config.impactExtraParticles,
     );
@@ -345,6 +416,7 @@ export function createEffectsRenderer({
         config.impactOpacity,
       );
     }
+    return true;
   }
 
   function spawnGoalComplete() {

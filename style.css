@@ -604,6 +604,8 @@ body {
 }
 .effectsCanvas {
   position: absolute;
+  /* Contact feedback sits on fixtures, below hitboxes and the marble. */
+  z-index: 3;
   left: 0;
   top: 0;
   pointer-events: none;

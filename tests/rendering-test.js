@@ -21,6 +21,7 @@ import {
 import {
   renderObstacleHitboxes,
   renderObstacleWalls,
+  renderSpongeImpact,
 } from "../rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "../rendering/rough-patch-rendering.js";
 import { renderWaterPatches } from "../rendering/water-patch-rendering.js";
@@ -2066,6 +2067,54 @@ function testKitchenObstaclesRenderAsFixtures() {
 
   const originalLayer = layer;
   const originalSpongeSprite = spongeSprite;
+  const poseBeforeReaction = JSON.stringify(sponge);
+  let reactionFrames;
+  let canceled = 0;
+  spongeSprite.getAnimations = () => [{ cancel: () => canceled++ }];
+  spongeSprite.animate = (frames) => {
+    reactionFrames = frames;
+  };
+  const cos = Math.cos(sponge.angle);
+  const sin = Math.sin(sponge.angle);
+  function compressionAxes() {
+    return reactionFrames[1].transform
+      .match(/scale\(([^)]+)\)$/)[1]
+      .split(",")
+      .map(Number);
+  }
+  renderSpongeImpact(container, sponge, 2, -cos, -sin);
+  const lightCompression = compressionAxes()[0];
+  renderSpongeImpact(container, sponge, 8, -cos, -sin);
+  const strongCompression = compressionAxes();
+  assert.ok(
+    strongCompression[0] < lightCompression && strongCompression[0] > 0.9,
+  );
+  assert.equal(
+    strongCompression[1],
+    1,
+    "side impact compresses the local contact axis only",
+  );
+  renderSpongeImpact(container, sponge, 8, sin, -cos);
+  const topCompression = compressionAxes();
+  assert.equal(topCompression[0], 1);
+  assert.ok(topCompression[1] < 1 && topCompression[1] > 0.9);
+  assert.deepEqual(
+    reactionFrames[0],
+    reactionFrames.at(-1),
+    "the sprite returns to its resting pose",
+  );
+  assert.ok(reactionFrames[1].transform.includes("var(--fixture-angle)"));
+  assert.ok(reactionFrames[1].transform.includes("var(--sponge-scale)"));
+  assert.equal(
+    canceled,
+    3,
+    "repeated hits replace rather than stack compression animations",
+  );
+  assert.equal(
+    JSON.stringify(sponge),
+    poseBeforeReaction,
+    "compression is cosmetic and leaves physics untouched",
+  );
   withFakeDocument(() => {
     renderObstacleWalls(
       container,

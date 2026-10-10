@@ -434,6 +434,39 @@ Feedback sources:
 Haptics are intentionally best-effort. Lack of support or blocked vibration
 must never prevent gameplay.
 
+Obstacle feedback retains the displayed fixture and world contact point/normal.
+The collision scratch is consumed synchronously; feedback must not retain it.
+`core/game-loop.js` maps existing fixture kinds to three material responses:
+
+| Fixtures                           | Visual reaction                                             | Optional vibration       |
+| ---------------------------------- | ----------------------------------------------------------- | ------------------------ |
+| Spoon, fork                        | Brief three-ray glint on the surface                        | Short tick               |
+| Sponge                             | Small compression along the local impact axis, then rebound | Short press/rebound pair |
+| Coffee table, bookcase, toy blocks | Two rounded knock waves on the surface                      | Longer knock             |
+
+Other impacts retain the generic effect. Strength scales each response within
+bounds. The existing visual threshold/cooldown also gates sponge compression;
+all materials share the existing haptic cooldown. Sprite animation is cosmetic,
+uses live angle/wetness properties, and never changes collision geometry.
+The feedback canvas paints above fixtures and below the marble; glints and knock
+waves point onto the contacted surface so the marble does not hide them.
+Visual tuning lives in `rendering/effects.js` and
+`rendering/obstacle-rendering.js`; vibration tuning is in `hapticTuning` in
+`core/game-config.js`. No audio system is introduced.
+
+Desktop Chrome inspection includes real collisions at 390×844 portrait and
+844×390 landscape with haptics disabled:
+[metal](screenshots/material-impact-metal-phone.png),
+[sponge](screenshots/material-impact-sponge-phone.png), and
+[wood](screenshots/material-impact-wood-landscape.png).
+These are paused reactions from the real renderer; the sponge animation is held
+at its compression phase. The browser suite checks keyboard-driven sponge
+contact, live pose changes, rebound, and Retry cleanup. On physical Android
+Chrome/Brave and iPhone Safari/Chrome over HTTPS, still check subtlety/readability
+at normal speed and optional vibration feel under repeated contacts. Those
+devices were unavailable for this change; desktop checks establish neither
+hardware vibration nor compositor performance.
+
 ## State Ownership
 
 The main mutable state is created by `createGameState()` and composed in

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHapticsController } from "../core/haptics.js";
+import { hapticTuning } from "../core/game-config.js";
 
 const vibrations = [];
 let currentTime = 1000;
@@ -69,5 +70,66 @@ assert.deepEqual(
   [30, 6, 12, 6, [18, 40, 28]],
   "re-enabling haptics must restore every feedback type on the same controller",
 );
+
+function testMaterialImpactsShareCooldownAndRespectPreference() {
+  let time = 0;
+  const pulses = [];
+  const materialState = {
+    enabled: true,
+    impact: {
+      cooldownMs: hapticTuning.impactCooldownMs,
+      minImpact: hapticTuning.impactMin,
+      lastPulse: -Infinity,
+    },
+  };
+  const controller = createHapticsController(materialState, hapticTuning, {
+    now: () => time,
+    vibrate: (pulse) => pulses.push(pulse),
+  });
+  for (const material of ["metal", "wood", "sponge"]) {
+    time += 1000;
+    controller.pulseImpact(8, material);
+    const count = pulses.length;
+    controller.pulseImpact(8, material);
+    controller.pulseImpact(8, material === "metal" ? "wood" : "metal");
+    assert.equal(
+      pulses.length,
+      count,
+      "switching materials cannot bypass the shared cooldown",
+    );
+  }
+  assert.ok(
+    pulses[0] < pulses[1],
+    "metal ticks are shorter than wooden knocks",
+  );
+  assert.ok(
+    Array.isArray(pulses[2]) && pulses[2].length === 3,
+    "sponge has a short press/rebound pair",
+  );
+  assert.ok(pulses[2][0] < pulses[1] && pulses[2][2] < pulses[1]);
+  time += 1000;
+  controller.pulseImpact(1000, "sponge");
+  assert.ok(
+    pulses.at(-1).reduce((a, b) => a + b) <= materialState.impact.cooldownMs,
+    "a bounded rebound pattern finishes before another impact can play",
+  );
+  const count = pulses.length;
+  for (const material of ["metal", "wood", "sponge"]) {
+    time += 1000;
+    controller.pulseImpact(0.1, material);
+    materialState.enabled = false;
+    controller.pulseImpact(10, material);
+    materialState.enabled = true;
+  }
+  assert.equal(
+    pulses.length,
+    count,
+    "incidental touches and disabled haptics stay silent",
+  );
+  const unsupported = createHapticsController(materialState, hapticTuning);
+  assert.doesNotThrow(() => unsupported.pulseImpact(8, "sponge"));
+}
+
+testMaterialImpactsShareCooldownAndRespectPreference();
 
 console.log("Haptics tests passed.");

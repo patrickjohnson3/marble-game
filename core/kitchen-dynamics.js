@@ -128,6 +128,7 @@ export function createKitchenDynamicsState() {
       splatHits: 0,
       spongeChanges: 0,
       spongeImpact: 0,
+      spongeImpactContact: {},
       spongeSoaks: 0,
       squishedAnts: 0,
       waterChanges: 0,
@@ -169,6 +170,8 @@ export function resetKitchenDynamics(
   state.events.antCrushes.length = 0;
   state.events.squishedAnts = 0;
   state.events.splatHits = 0;
+  state.events.spongeImpact = 0;
+  state.events.spongeImpactContact.obstacle = null;
   state.obstacles = [];
   state.terrainElements = [];
   state.lastWaterRenderStep = 0;
@@ -575,6 +578,13 @@ function resolveSpongeCollision(state, marble) {
   const relativeVelocityY = marble.vy - contactVelocityY;
   const normalSpeed = relativeVelocityX * normalX + relativeVelocityY * normalY;
   if (normalSpeed >= 0) return 0;
+
+  const feedbackContact = state.events.spongeImpactContact;
+  feedbackContact.obstacle = sponge;
+  feedbackContact.x = contactX;
+  feedbackContact.y = contactY;
+  feedbackContact.nx = normalX;
+  feedbackContact.ny = normalY;
 
   const width = sponge.hitboxW ?? sponge.w;
   const height = sponge.hitboxH ?? sponge.h;

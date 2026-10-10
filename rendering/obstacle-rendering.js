@@ -206,6 +206,44 @@ function applyRectStyle(element, rect) {
 }
 
 const kitchenFixtureSprites = new WeakMap();
+const spongeImpact = {
+  durationMs: 280,
+  referenceSpeed: 10,
+  minCompression: 0.02,
+  extraCompression: 0.05,
+};
+
+export function renderSpongeImpact(container, sponge, strength, nx, ny) {
+  const sprite = kitchenFixtureSprites.get(container.firstChild)?.get(sponge);
+  if (!sprite) return;
+  const angle = sponge.angle ?? 0;
+  const localX = Math.abs(nx * Math.cos(angle) + ny * Math.sin(angle));
+  const localY = Math.abs(ny * Math.cos(angle) - nx * Math.sin(angle));
+  const compression =
+    spongeImpact.minCompression +
+    spongeImpact.extraCompression *
+      Math.min(1, strength / spongeImpact.referenceSpeed);
+  const resting = "rotate(var(--fixture-angle)) scale(var(--sponge-scale))";
+  // Keep live pose/wetness variables, so a moving sponge still rotates/swells.
+  for (const animation of sprite.getAnimations()) animation.cancel();
+  sprite.animate(
+    [
+      { transform: resting },
+      {
+        transform:
+          resting +
+          " scale(" +
+          (1 - localX * compression) +
+          ", " +
+          (1 - localY * compression) +
+          ")",
+        offset: 0.25,
+      },
+      { transform: resting },
+    ],
+    { duration: spongeImpact.durationMs, easing: "ease-out" },
+  );
+}
 
 function syncKitchenFixtureSprite(
   layer,

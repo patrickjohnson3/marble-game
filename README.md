@@ -14,6 +14,8 @@ Live version: [https://patrickjohnson3.github.io/marble-game/](https://patrickjo
 - Map-specific objectives: eliminate kitchen ants, cross the living room to its
   exit, or hold in the older maps' goal zones.
 - Haptic feedback for impacts, terrain, and goals where supported.
+- Material impact cues: metal glints, sponge compression/rebound, and wooden
+  knock waves, with optional matching vibration.
 - Settings modal for calibration, fullscreen, haptics, FPS, and stats.
 
 ## Local Setup

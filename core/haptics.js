@@ -11,7 +11,7 @@ export function createHapticsController(
     return state.enabled && typeof vibrate === "function";
   }
 
-  function pulseImpact(impact) {
+  function pulseImpact(impact, material) {
     if (!canVibrate()) return;
     if (impact < state.impact.minImpact) return;
 
@@ -19,12 +19,23 @@ export function createHapticsController(
     if (currentTime - state.impact.lastPulse < state.impact.cooldownMs) return;
 
     state.impact.lastPulse = currentTime;
+    const scale =
+      material === "metal"
+        ? tuning.metalImpactScale
+        : material === "sponge"
+          ? tuning.spongeImpactScale
+          : tuning.impactScale;
+    const duration = clamp(
+      Math.round(impact * scale),
+      tuning.impactMinDurationMs,
+      material === "sponge"
+        ? tuning.spongeImpactMaxDurationMs
+        : tuning.impactMaxDurationMs,
+    );
     vibrate(
-      clamp(
-        Math.round(impact * tuning.impactScale),
-        tuning.impactMinDurationMs,
-        tuning.impactMaxDurationMs,
-      ),
+      material === "sponge"
+        ? [duration, tuning.spongeReboundGapMs, duration]
+        : duration,
     );
   }
 

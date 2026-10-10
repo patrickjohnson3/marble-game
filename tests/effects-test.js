@@ -307,4 +307,136 @@ async function testLiquidWakeClippingAndSquishLifecycle() {
 
 await testLiquidWakeClippingAndSquishLifecycle();
 
+async function testMaterialImpactShapesStrengthAndSharedThrottle() {
+  const originalDocument = globalThis.document;
+  globalThis.document = { createElement: () => new FakeCanvasElement() };
+  try {
+    const { createEffectsRenderer } = await import("../rendering/effects.js");
+    let time = 0;
+    const effects = createEffectsRenderer({
+      effectsEl: new FakeElement(),
+      marble: { x: 129, y: 140, vx: -8, vy: 0, r: 29 },
+      config: { ...visualConfig.effects, maxParticles: 2 },
+      random: () => 0.5,
+      now: () => time,
+      world: { width: 1200, height: 1200 },
+    });
+    const contact = { x: 100, y: 140, nx: 1, ny: 0 };
+    const calls = effects.canvas.context.calls;
+    function sample(material, strength) {
+      effects.clear();
+      calls.length = 0;
+      assert.equal(effects.spawnImpact(strength, material, contact), true);
+      effects.render();
+      return calls.filter((call) => call[0] === "lineTo");
+    }
+    const weakGlint = sample("metal", 2);
+    assert.equal(effects.activeCount(), 1, "metal uses one restrained glint");
+    assert.equal(
+      calls.some((call) => call[0] === "ellipse"),
+      false,
+    );
+    for (const start of calls.filter((call) => call[0] === "moveTo")) {
+      assert.deepEqual(
+        start.slice(1),
+        [100, 140],
+        "glints start on the fixture, not the marble's post-bounce edge",
+      );
+    }
+    const strongGlint = sample("metal", 8);
+    assert.ok(
+      Math.hypot(strongGlint[0][1] - 100, strongGlint[0][2] - 140) >
+        Math.hypot(weakGlint[0][1] - 100, weakGlint[0][2] - 140),
+      "stronger hits enlarge the cue",
+    );
+    for (const [, x, y] of strongGlint) {
+      assert.ok(
+        Math.hypot(x - 129, y - 140) > 29,
+        "the overlaid marble must not hide the contact glint",
+      );
+    }
+    const cappedGlint = sample("metal", 1000);
+    const maximumGlint = sample("metal", visualConfig.effects.impactReference);
+    assert.deepEqual(
+      cappedGlint,
+      maximumGlint,
+      "extreme speed cannot grow an unbounded cue",
+    );
+    time += 200;
+    effects.render();
+    assert.equal(effects.activeCount(), 0, "metal glints expire quickly");
+
+    sample("wood", 8);
+    const arcs = calls.filter((call) => call[0] === "ellipse");
+    assert.equal(
+      arcs.length,
+      2,
+      "wood uses rounded knock waves, rather than metal rays",
+    );
+    for (const arc of arcs) {
+      assert.deepEqual(arc.slice(1, 3), [100, 140]);
+      const [, x, y, radius, , , start, end] = arc;
+      const angle = (start + end) / 2;
+      assert.ok(
+        Math.hypot(
+          x + Math.cos(angle) * radius - 129,
+          y + Math.sin(angle) * radius - 140,
+        ) > 29,
+        "wooden knock waves remain outside the marble silhouette too",
+      );
+    }
+    assert.equal(
+      effects.spawnImpact(8, "metal", contact),
+      false,
+      "materials share the original cooldown",
+    );
+    time += 200;
+    effects.render();
+    assert.equal(
+      effects.activeCount(),
+      1,
+      "the wood knock settles more slowly than the metal tick",
+    );
+    effects.spawnImpact(8, "wood", contact);
+    time += 100;
+    effects.spawnImpact(8, "metal", contact);
+    assert.equal(
+      effects.activeCount(),
+      2,
+      "material marks share the particle cap",
+    );
+
+    effects.clear();
+    assert.equal(effects.spawnImpact(0.1, "sponge", contact), false);
+    assert.equal(effects.spawnImpact(8, "sponge", contact), true);
+    assert.equal(
+      effects.activeCount(),
+      0,
+      "a sponge compresses instead of shedding sparks",
+    );
+    assert.equal(
+      effects.spawnImpact(8, "sponge", contact),
+      false,
+      "compression is throttled too",
+    );
+    effects.setWorld({ width: 1200, height: 1200 });
+    assert.equal(
+      effects.spawnImpact(8, "sponge", contact),
+      true,
+      "Retry clears visual cooldowns",
+    );
+    effects.clear();
+    effects.spawnImpact(8);
+    assert.equal(
+      effects.activeCount(),
+      2,
+      "unclassified impacts retain their existing particles and cap",
+    );
+  } finally {
+    globalThis.document = originalDocument;
+  }
+}
+
+await testMaterialImpactShapesStrengthAndSharedThrottle();
+
 console.log("Effects tests passed.");

@@ -424,6 +424,17 @@ function testPlayerCanPushSpongeIntoWaterToShrinkPuddle() {
   );
 
   assert.equal(sponge.x > 225, true, "the marble should shove the sponge");
+  assert.equal(events.spongeImpactContact.obstacle, sponge);
+  assert.deepEqual(
+    [
+      events.spongeImpactContact.x,
+      events.spongeImpactContact.y,
+      events.spongeImpactContact.nx,
+      events.spongeImpactContact.ny,
+    ],
+    [235, 470, -1, 0],
+    "feedback uses the actual contact before the sponge moves",
+  );
   assert.equal(
     runtimeWater.w < authoredWater.w,
     true,

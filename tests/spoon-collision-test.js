@@ -121,7 +121,15 @@ function assertNeckResponse(state) {
           obstacles: parts,
           physics: physicsConfig,
         },
-        (impact) => impacts.push(impact),
+        (impact, hit) => {
+          assert.equal(
+            hit.obstacle,
+            parts[0].fixtureSource,
+            "every metal part reports the same displayed spoon",
+          );
+          assert.ok(Math.abs(hit.nx * nx + hit.ny * ny - 1) < 1e-8);
+          impacts.push(impact);
+        },
       );
       assert.ok(
         (marble.x - circle.x) * nx + (marble.y - circle.y) * ny > 0.2,

@@ -43,6 +43,7 @@ import { createMarbleView } from "./rendering/marble-view.js";
 import {
   renderObstacleHitboxes,
   renderObstacleWalls,
+  renderSpongeImpact,
 } from "./rendering/obstacle-rendering.js";
 import { renderRoughPatches } from "./rendering/rough-patch-rendering.js";
 import { renderWaterPatches } from "./rendering/water-patch-rendering.js";
@@ -199,6 +200,7 @@ function setupRenderers({
         padding: visualConfig.map.obstacleCanvasPadding,
       }),
     renderObstacleHitboxes,
+    renderSpongeImpact,
     goalFillEdgePercent: visualConfig.map.goalFillEdgePercent,
     hitboxOverlayEnabled: settings.hitboxOverlayEnabled,
   });

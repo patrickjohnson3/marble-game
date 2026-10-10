@@ -17,6 +17,7 @@ export function createTerrainView({
   renderMapThemeDynamics: drawMapThemeDynamics = () => {},
   renderObstacleWalls,
   renderObstacleHitboxes,
+  renderSpongeImpact,
   goalFillEdgePercent = 70.8,
   hitboxOverlayEnabled = false,
 }) {
@@ -76,6 +77,10 @@ export function createTerrainView({
   function renderMovedObstacles() {
     renderObstacles();
     if (currentHitboxOverlayEnabled) renderHitboxes();
+  }
+
+  function reactToSpongeImpact(sponge, strength, nx, ny) {
+    renderSpongeImpact(obstaclesEl, sponge, strength, nx, ny);
   }
 
   function renderTerrainType(type) {
@@ -149,6 +154,7 @@ export function createTerrainView({
   }
 
   return {
+    reactToSpongeImpact,
     renderMovedObstacles,
     renderTerrain,
     renderTerrainType,
