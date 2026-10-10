@@ -70,6 +70,38 @@ function advance(subject, marble, duration, parts = [1], onStep = () => {}) {
   }
 }
 
+function testClosePursuitContinuesBeforeTheFirstHit() {
+  for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
+    const subject = fixture();
+    const { cockroach, mapState } = subject;
+    mapState.activeMap = { ...map, world: { width: 8000, height: 4000 } };
+    const marble = { x: 1400, y: 1000, vx: 9.8, vy: 0, r: 29 };
+    let elapsed = 0;
+    let index = 0;
+    let hit = false;
+    while (elapsed < 600 && !hit) {
+      const dt = Math.min(parts[index++ % parts.length], 600 - elapsed);
+      const previous = { x: marble.x, y: marble.y };
+      marble.x += marble.vx * dt;
+      updateCockroach(cockroach, marble, dt, mapState, previous);
+      hit =
+        resolveCockroachContact(cockroach, marble, previous, mapState) ===
+        "attack";
+      elapsed += dt;
+      assert.equal(
+        cockroach.mode,
+        "harass",
+        "a nearby, slower target must not escape just because no hit landed yet",
+      );
+    }
+    assert.ok(hit, "sustained pursuit eventually catches a slower target");
+    assert.ok(
+      elapsed > 360,
+      "this encounter must outlast the old six-second limit",
+    );
+  }
+}
+
 function testShoveReversesEveryWeakIncomingHit() {
   for (const speed of [0, 4, cockroachConfig.repelSpeed - 0.001]) {
     const subject = fixture();
@@ -163,6 +195,7 @@ function testStrongCounterHitStillWorksDuringRecovery() {
   const subject = fixture();
   attack(subject);
   const { cockroach, mapState } = subject;
+  cockroach.escapeFrames = cockroachConfig.escapeDuration / 2;
   const { previous, marble } = incomingMarble(
     cockroach,
     cockroachConfig.repelSpeed + 2,
@@ -174,41 +207,82 @@ function testStrongCounterHitStillWorksDuringRecovery() {
   );
   assert.equal(cockroach.mode, "stunned");
   assert.equal(cockroach.engaged, false);
+  assert.equal(cockroach.escapeFrames, 0);
   assert.ok(cockroach.knockbackX > 0);
 }
 
 function testEscapeReturnsToFoodAndProvidesRespite() {
-  const subject = fixture();
-  attack(subject);
-  const { cockroach, mapState } = subject;
-  const escaped = {
-    x: cockroach.x + cockroachConfig.escapeDistance + 100,
-    y: cockroach.y,
-    vx: 0,
-    vy: 0,
-    r: 29,
-  };
-  updateCockroach(cockroach, escaped, 0.5, mapState);
-  resolveCockroachContact(cockroach, escaped, escaped, mapState);
-  assert.equal(cockroach.mode, "scurry");
-  assert.equal(cockroach.engaged, false);
-  assert.ok(cockroach.harassmentIn > cockroachConfig.postContactCooldown / 2);
-  advance(
-    subject,
-    escaped,
-    cockroachConfig.postContactCooldown / 2,
-    [1],
-    () => {
-      assert.equal(
-        cockroach.mode,
-        "scurry",
-        "escaping grants a quiet foraging interval",
-      );
-    },
-  );
-  const fresh = createCockroach(map);
-  assert.equal(fresh.engaged, false);
-  assert.equal(fresh.attackRecoveryFrames, 0);
+  for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
+    const subject = fixture();
+    attack(subject);
+    const { cockroach, mapState } = subject;
+    const escaped = {
+      x: cockroach.x + cockroachConfig.escapeDistance + 1500,
+      y: cockroach.y,
+      vx: 0,
+      vy: 0,
+      r: 29,
+    };
+    const separate = () =>
+      resolveCockroachContact(cockroach, escaped, escaped, mapState);
+    advance(
+      subject,
+      escaped,
+      cockroachConfig.escapeDuration / 2,
+      parts,
+      separate,
+    );
+    assert.equal(cockroach.mode, "harass", "a momentary lead is not escape");
+    assert.ok(cockroach.escapeFrames > 0);
+    const nearby = {
+      ...escaped,
+      x: cockroach.x + cockroachConfig.escapeDistance,
+    };
+    updateCockroach(cockroach, nearby, 0.5, mapState);
+    assert.equal(
+      cockroach.escapeFrames,
+      0,
+      "returning close cancels escape progress",
+    );
+    advance(
+      subject,
+      escaped,
+      cockroachConfig.escapeDuration - 1,
+      parts,
+      separate,
+    );
+    assert.equal(
+      cockroach.mode,
+      "harass",
+      "the full uninterrupted lead is required",
+    );
+    assert.ok(
+      cockroach.x > 1000,
+      "the roach pursues during the escape countdown after strike recovery",
+    );
+    advance(subject, escaped, 1, parts, separate);
+    assert.equal(cockroach.mode, "scurry");
+    assert.equal(cockroach.engaged, false);
+    assert.equal(cockroach.escapeFrames, 0);
+    assert.ok(cockroach.harassmentIn > cockroachConfig.postContactCooldown / 2);
+    advance(
+      subject,
+      escaped,
+      cockroachConfig.postContactCooldown / 2,
+      [1],
+      () => {
+        assert.equal(
+          cockroach.mode,
+          "scurry",
+          "escaping grants a quiet foraging interval",
+        );
+      },
+    );
+    const fresh = createCockroach(map);
+    assert.equal(fresh.engaged, false);
+    assert.equal(fresh.escapeFrames, 0);
+    assert.equal(fresh.attackRecoveryFrames, 0);
+  }
 }
 
 function testRecoveryAdvancesBySimulationTime() {
@@ -264,6 +338,7 @@ function testWallContactCannotStackShovesOrPreventLateralEscape() {
   );
 }
 
+testClosePursuitContinuesBeforeTheFirstHit();
 testShoveReversesEveryWeakIncomingHit();
 testCloseEngagementPersistsWithoutPassingThroughTheMarble();
 testSeparationAndRecoveryAreBothRequiredForAnotherAttack();

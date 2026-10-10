@@ -95,7 +95,7 @@ export const cockroachConfig = {
   harassSpeed: 10.5,
   retreatSpeed: 5.5,
   harassmentInterval: 180,
-  harassmentDuration: 360, // Initial approach only; close encounters need escape.
+  harassmentDuration: 360, // Distant approach only; proximity starts a chase.
   postContactCooldown: 360, // After escape, failed approach, or a strong repel.
   retreatDuration: 120,
   stunDuration: 24,
@@ -107,7 +107,8 @@ export const cockroachConfig = {
   gooSpeedScale: 0.1, // Sluggish even beside a marble rolling through the same goo.
   contactImpulse: 12,
   attackRecoveryDuration: 60, // One second to steer away; no automatic retreat.
-  escapeDistance: 300,
+  escapeDistance: 480, // About eight marble diameters: a clear lead, not a shove.
+  escapeDuration: 90, // Hold the lead for 1.5 seconds to end pursuit.
   maxDisruptedSpeed: 14,
   repelSpeed: 7,
   maxKnockbackSpeed: 12,

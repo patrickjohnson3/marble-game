@@ -27,7 +27,8 @@ Speeds use the same world-units-per-60-Hz-frame convention as marble physics.
 | Food roaming radius / goo-edge margin        | 70 / 18 world units                |
 | Locomotion speed inside goo                  | 10% of the current mode's speed    |
 | Outward attack kick / resulting speed cap    | 12 / 14                            |
-| Strike recovery / escape distance            | 1 second / 300 world units         |
+| Strike recovery / escape distance            | 1 second / 480 world units         |
+| Uninterrupted escape time                    | 1.5 seconds                        |
 | Incoming marble speed needed to repel        | 7                                  |
 | Maximum knockback / per-frame retention      | 12 / 0.9                           |
 | Contact rearm gap                            | 8 world units                      |
@@ -57,15 +58,18 @@ cockroach wandering indefinitely. Attacks now run faster than moderate hunting
 motion, but a marble at its normal top speed can still outrun it. More frequent
 heading decisions and distance-limited prediction improve close interception.
 
-A successful roach hit starts a sustained encounter. The insect braces for one
-second, then pursues another contact; it does not flee or start the six-second
-cooldown after its own attack. Engagement has no timeout while the marble is
-nearby. Putting more than 300 world units (about five marble diameters) between
-the centers ends it and resumes food/goo foraging with six seconds of quiet time.
-A distant initial approach still has a six-second limit, so simply being far away
-when it acquires a target does not immediately cancel the pursuit.
-The longer strike pause and shorter escape distance allow modest tilt steering
-to break contact on clear floor without weakening the shove or pursuit speed.
+Coming within 480 world units starts a sustained encounter; a successful hit
+also engages. Contact is not required to keep chasing a nearby marble. The insect
+braces for one second after each strike, then pursues another contact; it does
+not flee or start the six-second cooldown after its own attack. Engagement has
+no timeout while the marble is nearby. To escape, put more than 480 world units
+(about eight marble diameters) between the centers and hold that lead for 1.5
+seconds. It keeps pursuing during this interval, and coming back within range
+cancels accumulated escape time. A sustained escape resumes food/goo foraging
+with six seconds of quiet time. A distant initial approach still has a six-second
+limit if it never gets near the marble, so a distant approach cannot continue
+indefinitely without closing the gap. The one-second strike pause and higher marble
+top speed leave room for deliberate escape without weakening the shove.
 
 A strong incoming marble hit retains priority: stun, physical knockback, retreat,
 and cooldown interrupt the encounter. Stun lasts 0.4 seconds, followed by a
@@ -104,7 +108,7 @@ overlap nor successive physics substeps can repeat the effect. Strong separated
 counter-hits still work during strike recovery. Weak incidental contact while
 scurrying does not stun it.
 
-Retry recreates every timer, impulse, contact, engagement and strike-recovery
+Retry recreates every timer, impulse, contact, engagement, escape and strike-recovery
 field. Intro confinement,
 hazard teleports and completed maps skip its processing. A map transition
 replaces both actor state and canvas. Clearing the last ant leaves the cockroach
@@ -124,13 +128,16 @@ goo-edge residency, unchanged attack/retreat/stun modes and cadence equivalence.
 Stationary-target kitchen tests check acquisition at nearby/distant positions,
 then sustained engagement without contact spam. Full physics tests let the marble
 move under the shove and verify repeated separate impacts. Pressure regressions
-cover the old timeout, distance escape, recovery cadence, wall contact and lateral
-escape. The browser attack starts outside the former acquisition range. The controlled browser attack
-fixtures place actors on clear floor; they do not establish hunting difficulty.
-Full physics/input regressions verify that a modest three-degree tilt away can
-escape within two seconds without a second shove at 30, 60, 120 Hz and irregular
-partitions, followed by a quiet hunting interval. An idle marble still receives
-repeated separate attacks, with at most three shoves in three seconds.
+cover proximity engagement before the first hit, pursuit past the old timeout,
+uninterrupted distance escape, canceled escape progress, recovery cadence, wall
+contact and lateral escape. The browser attack starts outside the former
+acquisition range. The controlled browser attack fixtures place actors on clear
+floor; they do not establish hunting difficulty.
+Full physics/input regressions verify that a shove with light three-degree
+steering does not immediately end pursuit. Deliberate twelve-degree steering
+then earns escape within four seconds without a second shove at 30, 60, 120 Hz
+and irregular partitions, followed by a quiet hunting interval. An idle marble
+still receives repeated separate attacks, with at most three shoves in three seconds.
 Goo tests cover walking in all active modes, spill-boundary crossing, no slowdown
 in the empty corners of the spill's bounding box, overlapping droplets,
 30/60/120 Hz and irregular partitions, unchanged counter-hit knockback/recovery,
@@ -147,9 +154,9 @@ without feeling unfair, and a deliberate fast strike reliably creates breathing
 room. In particular, judge whether the faster, more accurate encounters remain fair
 while hunting ants, and whether the insect visibly belongs around food and goo;
 escaping or a strong repel grants six seconds before another pursuit. Judge the
-300-unit escape threshold and one-second strike spacing in particular; an insect's
-successful hit now deliberately maintains pressure. Test contacts near utensils
-and the sponge, and check that antennae/legs remain clear and animation stays
+480-unit lead, 1.5-second escape time and one-second strike spacing in particular:
+escaping should require a readable chase without exhausting normal ant hunting.
+Test contacts near utensils and the sponge, and check that antennae/legs remain clear and animation stays
 smooth. Judge `gooSpeedScale: 0.1` on a physical phone: spills should
 create useful escape opportunities without letting the player kite the insect
 trivially or leaving it stuck beside a utensil. Desktop Chrome checks do not

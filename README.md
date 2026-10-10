@@ -51,8 +51,9 @@ Then open `http://localhost:8000/`.
 - The **Mouse** arrow automatically points from your marble toward a distant
   mouse. It disappears when you get close or defeat it. Optional **exit / goal
   arrow** guidance is available in Settings.
-- The main kitchen cockroach occasionally charges and shoves the marble. It is
-  invulnerable: roll into it fast to knock it away and buy a quiet interval. Goo
+- The main kitchen cockroach periodically chases and shoves the marble. Build
+  and hold a clear lead to escape and earn a quiet interval. It is invulnerable:
+  roll into it fast to knock it away and interrupt the chase. Goo
   slows its steps, so circling a spill can help you escape. Only ants count toward
   kitchen completion.
 - Retry map in Settings restores the current map and its objects to their

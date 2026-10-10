@@ -246,7 +246,8 @@ function testAttackIsBoundedAndDoesNotProjectTheMarble() {
 
 function testHarassmentReacquiresAfterRespiteAndStillTimesOut() {
   const { cockroach, mapState } = fixture();
-  const marble = { x: 100, y: 100, vx: 0, vy: 0, r: 29 };
+  mapState.activeMap = { ...map, world: { width: 8000, height: 2200 } };
+  const marble = { x: 7800, y: 100, vx: 0, vy: 0, r: 29 };
   advance(
     cockroach,
     mapState,
@@ -282,7 +283,7 @@ function testHarassmentReacquiresAfterRespiteAndStillTimesOut() {
   assert.equal(
     cockroach.mode,
     "scurry",
-    "an unsuccessful chase returns to ordinary foraging without fleeing",
+    "a distant approach that never gets near returns to ordinary foraging",
   );
   assert.ok(cockroach.harassmentIn > 0);
   // Keep resolving contact so real separation can rearm the next encounter.

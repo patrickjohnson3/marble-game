@@ -63,6 +63,7 @@ window.__cockroachApp = createApp();`,
             knockbackY: 0,
             contactLatched: false,
             engaged: false,
+            escapeFrames: 0,
             attackRecoveryFrames: 0,
           });
           app.gameController.resume();
@@ -173,6 +174,7 @@ window.__cockroachApp = createApp();`,
         pendingFrames: 0,
         contactLatched: false,
         engaged: false,
+        escapeFrames: 0,
         attackRecoveryFrames: 0,
       });
       app.cameraController.centerOnMarble();
@@ -230,6 +232,19 @@ window.__cockroachApp = createApp();`,
     // roaming resumes instead of immediately starting another attack.
     await page.keyboard.down("ArrowLeft");
     await page.waitForFunction(
+      () => window.__cockroachApp.mapRuntime.state.cockroach.escapeFrames > 0,
+    );
+    const escaping = await page.evaluate(() => {
+      const roach = window.__cockroachApp.mapRuntime.state.cockroach;
+      return { mode: roach.mode, engaged: roach.engaged };
+    });
+    assert.equal(
+      escaping.mode,
+      "harass",
+      "pursuit continues while losing the marble",
+    );
+    assert.equal(escaping.engaged, true);
+    await page.waitForFunction(
       () => {
         const roach = window.__cockroachApp.mapRuntime.state.cockroach;
         return (
@@ -260,6 +275,7 @@ window.__cockroachApp = createApp();`,
         pendingFrames: 0,
         contactLatched: false,
         engaged: false,
+        escapeFrames: 0,
         attackRecoveryFrames: 0,
       });
       app.gameController.resume();
@@ -313,6 +329,7 @@ window.__cockroachApp = createApp();`,
           roach.mode === "scurry" &&
           !roach.contactLatched &&
           !roach.engaged &&
+          roach.escapeFrames === 0 &&
           roach.attackRecoveryFrames === 0 &&
           roach.harassmentIn > interval - 10
         );

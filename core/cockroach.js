@@ -38,6 +38,7 @@ export function createCockroach(map) {
     knockbackY: 0,
     contactLatched: false,
     engaged: false,
+    escapeFrames: 0,
     attackRecoveryFrames: 0,
   };
 }
@@ -286,20 +287,30 @@ export function updateCockroach(
       0,
       cockroach.attackRecoveryFrames - tickFrames,
     );
-    // Distant acquisition still has a timeout. Once a hit starts an encounter,
-    // only escape distance (or a strong counter-hit) ends the pressure.
+    // Nearby pursuit is an encounter even before contact. Escape requires a
+    // sustained lead; a shove or a brief excursion must not end the chase.
+    if (cockroach.mode === "harass") {
+      const distance = Math.hypot(
+        cockroach.x - targetMarble.x,
+        cockroach.y - targetMarble.y,
+      );
+      if (distance <= cockroachConfig.escapeDistance) {
+        cockroach.engaged = true;
+        cockroach.escapeFrames = 0;
+      } else if (cockroach.engaged) {
+        cockroach.escapeFrames += tickFrames;
+      }
+    }
     if (
       cockroach.mode === "harass" &&
       (cockroach.engaged
-        ? Math.hypot(
-            cockroach.x - targetMarble.x,
-            cockroach.y - targetMarble.y,
-          ) > cockroachConfig.escapeDistance
+        ? cockroach.escapeFrames >= cockroachConfig.escapeDuration
         : cockroach.modeFrames <= 0)
     ) {
       cockroach.mode = "scurry";
       cockroach.modeFrames = 0;
       cockroach.engaged = false;
+      cockroach.escapeFrames = 0;
       cockroach.attackRecoveryFrames = 0;
       cockroach.decisionIn = 0;
       cockroach.harassmentIn = cockroachConfig.postContactCooldown;
@@ -323,6 +334,7 @@ export function updateCockroach(
     ) {
       cockroach.mode = "harass";
       cockroach.engaged = false;
+      cockroach.escapeFrames = 0;
       cockroach.modeFrames = cockroachConfig.harassmentDuration;
       cockroach.decisionIn = 0;
     }
@@ -408,6 +420,7 @@ export function resolveCockroachContact(
   if (marbleIncoming >= cockroachConfig.repelSpeed) {
     cockroach.mode = "stunned";
     cockroach.engaged = false;
+    cockroach.escapeFrames = 0;
     cockroach.attackRecoveryFrames = 0;
     cockroach.modeFrames = cockroachConfig.stunDuration;
     cockroach.harassmentIn = cockroachConfig.postContactCooldown;
@@ -432,6 +445,7 @@ export function resolveCockroachContact(
     marble.vy *= cockroachConfig.maxDisruptedSpeed / speed;
   }
   cockroach.engaged = true;
+  cockroach.escapeFrames = 0;
   cockroach.attackRecoveryFrames = cockroachConfig.attackRecoveryDuration;
   onImpact(cockroachConfig.contactImpulse);
   return "attack";

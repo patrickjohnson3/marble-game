@@ -169,16 +169,16 @@ function harness() {
   }
 }
 
-// A modest three-degree tilt away should suffice on clear floor. Requiring
-// keyboard-level tilt or a counter-hit makes ordinary ant hunting exhausting.
+// A shove and light steering no longer cancel pursuit immediately. Deliberate
+// steering must still build and hold a lead, then grant time to hunt ants.
 for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
   const { context, runtime, state, feedback, impacts } = harness();
   const cockroach = runtime.state.cockroach;
-  Object.assign(state.marble, { x: 2200, y: 600 });
+  Object.assign(state.marble, { x: 3200, y: 600 });
   Object.assign(cockroach, {
-    x: 2254,
+    x: 3254,
     y: 600,
-    previousX: 2254,
+    previousX: 3254,
     previousY: 600,
     decisionIn: 0,
   });
@@ -192,26 +192,35 @@ for (const parts of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
   });
   let elapsed = 0;
   let index = 0;
-  let escaped = false;
-  while (elapsed < 120 && !escaped) {
-    const dt = Math.min(parts[index++ % parts.length], 120 - elapsed);
-    const wasEngaged = cockroach.engaged;
+  while (elapsed < 60) {
+    const dt = Math.min(parts[index++ % parts.length], 60 - elapsed);
     updatePhysicsInput(context, dt);
     updatePhysics(context, dt, feedback);
-    escaped = wasEngaged && !cockroach.engaged && cockroach.mode === "scurry";
+    elapsed += dt;
+  }
+  assert.equal(cockroach.mode, "harass", "a shove must lead to a real chase");
+  assert.equal(cockroach.engaged, true);
+  context.tilt.rawX = -12;
+  let escaped = false;
+  while (elapsed < 240 && !escaped) {
+    const dt = Math.min(parts[index++ % parts.length], 240 - elapsed);
+    updatePhysicsInput(context, dt);
+    updatePhysics(context, dt, feedback);
+    escaped = !cockroach.engaged && cockroach.mode === "scurry";
     elapsed += dt;
   }
   assert.equal(
     impacts.length,
     1,
-    "modest escape steering avoids a second shove",
+    "a deliberate escape does not require suffering another shove",
   );
   assert.equal(
     escaped,
     true,
-    "normal steering can disengage within two seconds",
+    "deliberate steering can outrun the roach and disengage within four seconds",
   );
   assert.ok(cockroach.harassmentIn > 0, "escape still grants foraging respite");
+  context.tilt.rawX = 0;
   for (let frame = 0; frame < 120; frame++) {
     updatePhysicsInput(context, 1);
     updatePhysics(context, 1, feedback);
@@ -306,6 +315,7 @@ for (const phase of ["intro", "complete", "hazard"]) {
 {
   const { runtime } = harness();
   const actor = runtime.state.cockroach;
+  actor.escapeFrames = cockroachConfig.escapeDuration / 2;
   const authored = resolvedMapConfig.cockroach;
   runtime.state.activeMap.cockroach.x += 100;
   assert.notEqual(
@@ -319,6 +329,7 @@ for (const phase of ["intro", "complete", "hazard"]) {
   assert.equal(runtime.state.cockroach.mode, "scurry");
   assert.equal(runtime.state.cockroach.contactLatched, false);
   assert.equal(runtime.state.cockroach.engaged, false);
+  assert.equal(runtime.state.cockroach.escapeFrames, 0);
   assert.equal(runtime.state.cockroach.attackRecoveryFrames, 0);
   assert.ok(runtime.state.cockroach.harassmentIn > 0);
   for (const variantId of [
