@@ -55,7 +55,9 @@ Then open `http://localhost:8000/`.
   and hold a clear lead to escape and earn a quiet interval. It is invulnerable:
   roll into it fast to knock it away and interrupt the chase. Goo
   slows its steps, so circling a spill can help you escape. Only ants count toward
-  kitchen completion.
+  kitchen completion. **Roach chasing** appears during pursuit, with an arrow
+  toward the insect when it is offscreen; flee away from the arrow. **Escaped**
+  briefly confirms the quiet interval after escape or a strong counter-hit.
 - Retry map in Settings restores the current map and its objects to their
   starting state, while keeping your control settings and neutral position.
 

@@ -31,6 +31,7 @@ window.__cockroachApp = createApp();`,
       /Kill all ants/,
     );
     assert.equal(await page.locator("#nextRoom").isHidden(), true);
+    assert.equal(await page.locator("#cockroachCue").isHidden(), true);
 
     async function sampleScurry(inGoo) {
       const origin = await page.evaluate(
@@ -182,6 +183,17 @@ window.__cockroachApp = createApp();`,
     });
     await page.waitForFunction(
       () =>
+        document.querySelector("#cockroachCueText").textContent ===
+        "Roach chasing",
+    );
+    assert.equal(await page.locator("#cockroachCue").isVisible(), true);
+    assert.equal(await page.locator("#cockroachArrow").isVisible(), true);
+    assert.equal(
+      await page.locator("#cockroachArrow").getAttribute("aria-label"),
+      "Roach offscreen right",
+    );
+    await page.waitForFunction(
+      () =>
         window.__cockroachApp.mapRuntime.state.cockroach.engaged &&
         window.__cockroachApp.mapRuntime.state.cockroach.attackRecoveryFrames >
           0,
@@ -199,6 +211,11 @@ window.__cockroachApp = createApp();`,
     assert.ok(attack.speed > 8, "contact delivers a strong outward kick");
     assert.equal(attack.mode, "harass", "a hit does not trigger retreat");
     assert.ok(attack.squash > 0);
+    assert.equal(
+      await page.locator("#cockroachCueText").textContent(),
+      "Roach chasing",
+    );
+    assert.equal(await page.locator("#cockroachArrow").isHidden(), true);
 
     await page.evaluate(() => window.__cockroachApp.gameController.resume());
     const repeated = await page.evaluate(async () => {
@@ -255,6 +272,19 @@ window.__cockroachApp = createApp();`,
       { timeout: 6000 },
     );
     await page.keyboard.up("ArrowLeft");
+    await page.evaluate(() => window.__cockroachApp.gameController.pause());
+    assert.equal(
+      await page.locator("#cockroachCueText").textContent(),
+      "Escaped",
+    );
+    assert.equal(await page.locator("#cockroachCue").isVisible(), true);
+    assert.equal(await page.locator("#cockroachArrow").isHidden(), true);
+    await page.evaluate(() => window.__cockroachApp.gameController.resume());
+    await page.waitForFunction(
+      () => document.querySelector("#cockroachCue").hidden,
+      null,
+      { timeout: 4000 },
+    );
     await page.evaluate(() => window.__cockroachApp.gameController.pause());
 
     // Set a clear run-up, then let real keyboard input and collisions repel it.
@@ -336,6 +366,7 @@ window.__cockroachApp = createApp();`,
       }, cockroachConfig.harassmentInterval),
       "Retry recreates the resting antagonist",
     );
+    assert.equal(await page.locator("#cockroachCue").isHidden(), true);
 
     async function crushRemainingAnts() {
       // Position on each real ant; use the actual dynamics/crush path rather
@@ -437,6 +468,7 @@ window.__cockroachApp = createApp();`,
     assert.equal(await page.evaluate(() => window.__kitchenDepartures), 1);
     assert.equal(await page.locator("#nextRoom").isHidden(), true);
     assert.equal(await page.locator(".cockroachCanvas").count(), 0);
+    assert.equal(await page.locator("#cockroachCue").isHidden(), true);
     assert.equal(
       await page.evaluate(
         () => window.__cockroachApp.mapRuntime.state.cockroach,

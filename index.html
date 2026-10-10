@@ -65,7 +65,7 @@
       }
     </style>
     <script>
-      const assetVersion = "a350030da9013a70";
+      const assetVersion = "0d5023916f85e2ae";
       const runtimeModuleScripts = [
         "app.js",
         "boot.js",
@@ -206,6 +206,24 @@
     <div id="panel">
       <div id="levelLabel" role="status" aria-live="polite"></div>
       <div id="objectiveStatus" role="status" aria-live="polite"></div>
+      <div id="cockroachCue" hidden>
+        <span
+          id="cockroachCueText"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        ></span>
+        <span
+          id="cockroachArrow"
+          role="img"
+          aria-label="Roach offscreen"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M3 9h10V4l8 8-8 8v-5H3Z" />
+          </svg>
+        </span>
+      </div>
       <button id="nextRoom" type="button" hidden></button>
       <div id="fpsCounter" hidden></div>
       <div id="debug" hidden></div>

@@ -570,6 +570,174 @@ function testGoalIndicatorUpdatesVisibilityAndAngle() {
 
 testGoalIndicatorUpdatesVisibilityAndAngle();
 
+function createCockroachCueHarness() {
+  const cockroachCue = new FakeElement();
+  const cockroachCueText = new FakeElement();
+  const cockroachArrow = new FakeElement();
+  const state = {
+    game: { phase: "running" },
+    intro: { released: true },
+    camera: { x: 0, y: 0, scale: 1 },
+    marble: { x: 195, y: 422 },
+  };
+  const size = { width: 390, height: 844 };
+  const ui = createUi({
+    cockroachCue,
+    cockroachCueText,
+    cockroachArrow,
+    fpsCounter: new FakeElement(),
+    debug: new FakeElement(),
+    settings: { fpsEnabled: false, statsEnabled: false },
+    state,
+    viewport: { width: () => size.width, height: () => size.height },
+  });
+  return { ui, state, size, cockroachCue, cockroachCueText, cockroachArrow };
+}
+
+function testCockroachPursuitCueAndOffscreenDirection() {
+  const { ui, state, size, cockroachCue, cockroachCueText, cockroachArrow } =
+    createCockroachCueHarness();
+  const roach = { x: 260, y: 422, r: 24, mode: "scurry", harassmentIn: 180 };
+  ui.renderCockroachCue(roach, 1);
+  assert.equal(cockroachCue.hidden, true, "quiet roaming needs no HUD clutter");
+  roach.mode = "harass";
+  ui.renderCockroachCue(roach, 1);
+  assert.equal(cockroachCue.hidden, false);
+  assert.equal(cockroachCueText.textContent, "Roach chasing");
+  assert.equal(cockroachArrow.hidden, true, "visible roaches need no arrow");
+
+  for (const [x, y, angle, direction] of [
+    [500, 422, 0, "right"],
+    [195, 900, Math.PI / 2, "below"],
+    [-100, 422, Math.PI, "left"],
+    [195, -100, -Math.PI / 2, "above"],
+  ]) {
+    Object.assign(roach, { x, y });
+    ui.renderCockroachCue(roach, 1);
+    assert.equal(cockroachArrow.hidden, false);
+    assert.ok(
+      Math.abs(
+        Number.parseFloat(cockroachArrow.style.transform.slice(7)) - angle,
+      ) < 0.001,
+    );
+    assert.equal(
+      cockroachArrow.attributes["aria-label"],
+      "Roach offscreen " + direction,
+    );
+  }
+
+  // Use the actual translated/scaled viewport, not a world-distance heuristic.
+  Object.assign(roach, { x: 500, y: 422 });
+  state.camera.x = -200;
+  ui.renderCockroachCue(roach, 1);
+  assert.equal(
+    cockroachArrow.hidden,
+    true,
+    "panning the roach into view hides the arrow",
+  );
+  state.camera.scale = 2;
+  ui.renderCockroachCue(roach, 1);
+  assert.equal(cockroachArrow.hidden, false, "zooming can move it out of view");
+  size.width = 844;
+  size.height = 390;
+  Object.assign(roach, { y: 100 });
+  ui.renderCockroachCue(roach, 1);
+  assert.equal(
+    cockroachArrow.hidden,
+    true,
+    "landscape dimensions are read live",
+  );
+  state.camera.x = 0;
+  state.camera.scale = 1;
+  Object.assign(roach, { x: size.width + 23 });
+  ui.renderCockroachCue(roach, 1);
+  assert.equal(
+    cockroachArrow.hidden,
+    true,
+    "a partially visible body is still onscreen",
+  );
+  roach.x += 2;
+  ui.renderCockroachCue(roach, 1);
+  assert.equal(cockroachArrow.hidden, false);
+}
+
+testCockroachPursuitCueAndOffscreenDirection();
+
+function testCockroachEscapeCueIsTransientAndResets() {
+  for (const cadence of [[1], [0.5], [2], [0.5, 2, 1.5]]) {
+    const { ui, state, cockroachCue, cockroachCueText, cockroachArrow } =
+      createCockroachCueHarness();
+    const roach = { x: 500, y: 422, r: 24, mode: "harass", harassmentIn: 0 };
+    ui.renderCockroachCue(roach, 1);
+    Object.assign(roach, { mode: "scurry", harassmentIn: 360 });
+    ui.renderCockroachCue(roach, 1);
+    assert.equal(cockroachCueText.textContent, "Escaped");
+    assert.equal(cockroachArrow.hidden, true);
+    // Opening Settings/background pause must not consume the confirmation.
+    for (let i = 0; i < 150; i++) ui.renderCockroachCue(roach, 0);
+    assert.equal(cockroachCue.hidden, false);
+    let elapsed = 0;
+    let step = 0;
+    while (elapsed < 60) {
+      const dt = cadence[step++ % cadence.length];
+      elapsed += dt;
+      ui.renderCockroachCue(roach, dt);
+    }
+    assert.equal(
+      cockroachCue.hidden,
+      false,
+      "confirmation lasts long enough to notice",
+    );
+    while (elapsed < 180) {
+      const dt = cadence[step++ % cadence.length];
+      elapsed += dt;
+      ui.renderCockroachCue(roach, dt);
+    }
+    assert.equal(
+      cockroachCue.hidden,
+      true,
+      "quiet frames cannot retrigger Escaped",
+    );
+
+    roach.mode = "harass";
+    ui.renderCockroachCue(roach, 1);
+    Object.assign(roach, { mode: "stunned", harassmentIn: 360 });
+    ui.renderCockroachCue(roach, 1);
+    assert.equal(
+      cockroachCueText.textContent,
+      "Escaped",
+      "a counter-hit also earns quiet time",
+    );
+    ui.renderCockroachCue({ ...roach, mode: "scurry" }, 1);
+    assert.equal(
+      cockroachCue.hidden,
+      true,
+      "Retry replaces the actor and clears the toast",
+    );
+
+    roach.mode = "harass";
+    ui.renderCockroachCue(roach, 1);
+    state.intro.released = false;
+    ui.renderCockroachCue(roach, 1);
+    assert.equal(
+      cockroachCue.hidden,
+      true,
+      "intro confinement suppresses pursuit feedback",
+    );
+    state.intro.released = true;
+    ui.renderCockroachCue(roach, 1);
+    ui.renderCockroachCue(null, 1);
+    assert.equal(
+      cockroachCue.hidden,
+      true,
+      "rooms without a roach clear the cue",
+    );
+    assert.equal(cockroachArrow.hidden, true);
+  }
+}
+
+testCockroachEscapeCueIsTransientAndResets();
+
 function testMarbleVisibleOnlyAfterValidLayout() {
   const marbleEl = new FakeElement("marble");
   const marble = { x: 100, y: 120, vx: 0, vy: 0, r: 0, roll: 0 };

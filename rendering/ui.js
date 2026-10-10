@@ -1,11 +1,26 @@
 import { copy } from "../core/copy.js";
 import { GAME_PHASES, SENSOR_MODES } from "../core/runtime-states.js";
 
+const escapedCueFrames = 120; // Two seconds of active simulation time.
+const cockroachDirections = [
+  "right",
+  "below-right",
+  "below",
+  "below-left",
+  "left",
+  "above-left",
+  "above",
+  "above-right",
+];
+
 export function createUi({
   controls,
   cameraControls,
   gameStatus,
   goalIndicator,
+  cockroachCue,
+  cockroachCueText,
+  cockroachArrow,
   hint,
   levelLabel,
   objectiveStatus,
@@ -23,6 +38,7 @@ export function createUi({
   startBtn,
   debugLines,
   state,
+  viewport,
   setTimeoutFn = globalThis.setTimeout,
   clearTimeoutFn = globalThis.clearTimeout,
 }) {
@@ -41,6 +57,12 @@ export function createUi({
   let lastDebugText = "";
   let lastDebugUpdate = Number.NEGATIVE_INFINITY;
   let levelLabelTimer = 0;
+  // Disposable presentation history; gameplay remains owned by map runtime.
+  let lastCockroach = null;
+  let wasPursuing = false;
+  let escapedFrames = 0;
+  let cockroachArrowAngle = null;
+  let cockroachArrowDirection = null;
 
   function setHint(message) {
     hint.textContent = message;
@@ -128,6 +150,64 @@ export function createUi({
         "--goal-indicator-angle",
         angleKey / 1000 + "rad",
       );
+    }
+  }
+
+  function renderCockroachCue(cockroach, frameDelta) {
+    if (!state.intro.released || state.game.phase === GAME_PHASES.waiting) {
+      cockroach = null;
+    }
+    if (cockroach !== lastCockroach) {
+      lastCockroach = cockroach;
+      wasPursuing = false;
+      escapedFrames = 0;
+    }
+    const pursuing = cockroach?.mode === "harass";
+    if (wasPursuing && !pursuing && cockroach.harassmentIn > 0) {
+      // Sustained escape, failed approach, or a counter-hit earns quiet time.
+      escapedFrames = escapedCueFrames;
+    } else {
+      escapedFrames = Math.max(0, escapedFrames - frameDelta);
+    }
+    wasPursuing = pursuing;
+    const text = pursuing
+      ? copy.cockroach.pursuit
+      : escapedFrames > 0
+        ? copy.cockroach.escaped
+        : "";
+    if (cockroachCueText.textContent !== text)
+      cockroachCueText.textContent = text;
+    cockroachCue.hidden = !text;
+    if (!pursuing) {
+      cockroachArrow.hidden = true;
+      return;
+    }
+
+    const { camera, marble } = state;
+    const x = cockroach.x * camera.scale + camera.x;
+    const y = cockroach.y * camera.scale + camera.y;
+    const radius = cockroach.r * camera.scale;
+    const offscreen =
+      x + radius < 0 ||
+      x - radius > viewport.width() ||
+      y + radius < 0 ||
+      y - radius > viewport.height();
+    cockroachArrow.hidden = !offscreen;
+    if (!offscreen) return;
+
+    // Positive world Y points down, like CSS rotation. Pan and uniform zoom
+    // affect visibility, but not the direction from marble to insect.
+    const angle = Math.atan2(cockroach.y - marble.y, cockroach.x - marble.x);
+    const angleKey = Math.round(angle * 1000);
+    if (cockroachArrowAngle !== angleKey) {
+      cockroachArrowAngle = angleKey;
+      cockroachArrow.style.transform = "rotate(" + angleKey / 1000 + "rad)";
+    }
+    const direction =
+      cockroachDirections[(Math.round(angle / (Math.PI / 4)) + 8) % 8];
+    if (cockroachArrowDirection !== direction) {
+      cockroachArrowDirection = direction;
+      cockroachArrow.setAttribute("aria-label", "Roach offscreen " + direction);
     }
   }
 
@@ -220,6 +300,7 @@ export function createUi({
     closeSettingsModal,
     isSettingsOpen,
     openSettingsModal,
+    renderCockroachCue,
     setFpsEnabled,
     setGameStatus,
     setGoalIndicator,

@@ -134,6 +134,7 @@ function testActiveFrameRunsGameplayBeforeRendering() {
       },
     },
     ui: {
+      renderCockroachCue() {},
       setGoalIndicator() {},
       updateDebugPanel() {},
       updateFps() {},
@@ -180,6 +181,7 @@ function createBehaviorHarness({
     effectImpacts: [],
     goalResets: 0,
     goalIndicators: [],
+    cockroachCues: [],
     hapticImpacts: [],
     hapticSurfaces: [],
     hints: [],
@@ -296,6 +298,9 @@ function createBehaviorHarness({
       update() {},
     },
     ui: {
+      renderCockroachCue(cockroach, dt) {
+        calls.cockroachCues.push({ cockroach, dt });
+      },
       setGoalIndicator(visible, angle, label) {
         calls.goalIndicators.push({ visible, angle, label });
       },
@@ -318,6 +323,37 @@ function createBehaviorHarness({
     },
   };
 }
+
+function testCockroachCueUsesLiveActorAndActiveSimulationTime() {
+  const harness = createBehaviorHarness({ activeMap: resolvedMapConfig });
+  const { calls, mapRuntime, state } = harness;
+  harness.tick(1);
+  assert.equal(
+    calls.cockroachCues.at(-1).cockroach,
+    mapRuntime.state.cockroach,
+  );
+  assert.ok(calls.cockroachCues.at(-1).dt > 0);
+  state.game.paused = true;
+  harness.tick(2);
+  assert.equal(
+    calls.cockroachCues.at(-1).dt,
+    0,
+    "pausing freezes visual countdowns",
+  );
+  const previousActor = mapRuntime.state.cockroach;
+  mapRuntime.setActiveMap(resolvedMapConfig);
+  harness.tick();
+  assert.notEqual(mapRuntime.state.cockroach, previousActor);
+  assert.equal(
+    calls.cockroachCues.at(-1).cockroach,
+    mapRuntime.state.cockroach,
+  );
+  mapRuntime.state.goalCompleted = true;
+  harness.tick();
+  assert.equal(calls.cockroachCues.at(-1).cockroach, null);
+}
+
+testCockroachCueUsesLiveActorAndActiveSimulationTime();
 
 function testGoalIndicatorUsesTheCurrentObjective() {
   const activeMap = {

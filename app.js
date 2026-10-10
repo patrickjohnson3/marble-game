@@ -478,6 +478,7 @@ export function createApp({
     navigatorRef: windowRef.navigator,
     windowRef,
   });
+  const viewport = createViewport(windowRef);
   const ui = createUi({
     controls: controlsEl,
     cameraControls: els.cameraControls,
@@ -495,14 +496,17 @@ export function createApp({
     settingsToggle: els.settingsToggle,
     startBtn,
     goalIndicator: els.goalIndicator,
+    cockroachCue: els.cockroachCue,
+    cockroachCueText: els.cockroachCueText,
+    cockroachArrow: els.cockroachArrow,
     levelLabel: els.levelLabel,
     objectiveStatus: els.objectiveStatus,
     nextRoom: els.nextRoom,
     debugLines,
     state,
+    viewport,
   });
   const frameLoop = createFrameLoop();
-  const viewport = createViewport(windowRef);
 
   let pwaUpdateStatus = "";
   function updatePwaStatus(status = "") {

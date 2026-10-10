@@ -9,6 +9,16 @@ its live state. No combat framework or additional objective counter is involved.
 The small `rendering/cockroach-rendering.js` Canvas follows position, heading,
 travelled distance and stun state. There is no health bar or death animation.
 
+The HUD shows **Roach chasing** only during harassment. An arrow beside the text
+points from the marble toward a pursuer whose body is offscreen, using the live camera
+translation, zoom and viewport dimensions. Flee away from that arrow. When pursuit
+ends with quiet time (distance escape, failed approach or a strong counter-hit),
+**Escaped** replaces it for two seconds of active simulation time. Pausing freezes
+the confirmation; Retry and room changes clear it. Text and an arrow shape convey
+the state without color or vibration. The text is a polite status announcement,
+and the arrow has an accessible direction name without repeated live announcements.
+`rendering/ui.js` owns only disposable transition/confirmation history, not AI state.
+
 ## Behavior and tuning
 
 All gameplay parameters live in `cockroachConfig` in `core/game-config.js`.
@@ -121,6 +131,18 @@ objective, reset, authoring and fake-canvas tests. `npm run test:browser` also
 exercises the real app's food-directed roaming, a cockroach shove,
 repeated attacks, keyboard-driven escape/repel, Retry and actual ant crushes
 followed by progression.
+UI regressions cover temporary chase/escape text, camera-relative offscreen
+guidance, pause and cadence consistency, and actor replacement. The browser
+encounter checks these cues through actual pursuit, keyboard-driven escape,
+Retry and departure.
+
+HUD captures from the real renderer: [portrait pursuit](screenshots/roach-cue-phone.png),
+[landscape pursuit](screenshots/roach-cue-landscape.png), and
+[escape confirmation](screenshots/roach-escaped-phone.png). Desktop Chrome checks
+at 390×844, 844×390 and 320×568 keep the cue inside the viewport, clear of Settings,
+and transparent to pointer input. These controlled captures do not establish
+physical-phone readability or screen-reader behavior.
+
 New deterministic coverage requires a pursuit starting 400 units behind a
 moderately moving marble to make contact before timeout at 30, 60, 120 Hz and
 irregular step partitions. Food tests cover staying nearby, pushed/consumed food,
@@ -149,7 +171,10 @@ half as far as the marble at 30/60/120 Hz and irregular partitions. This does no
 promise to outrun the insect with an idle or barely moving marble.
 
 Inspect it through `npm run map:render -- kitchen-floor --phone` or live play.
-On a physical phone, judge whether charges are readable, the shove disrupts
+On a physical phone, judge whether charges are readable without relying on
+vibration or color, whether the pursuit arrow is understandable,
+and whether **Escaped** stays visible long enough without covering the hunt. Check
+screen-reader announcements on supported mobile browsers. Judge whether the shove disrupts
 without feeling unfair, and a deliberate fast strike reliably creates breathing
 room. In particular, judge whether the faster, more accurate encounters remain fair
 while hunting ants, and whether the insect visibly belongs around food and goo;
