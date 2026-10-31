@@ -8,6 +8,7 @@ import { ELLIPTICAL_SURFACE_SHAPES } from "../core/map-elements.js";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
 import { renderMapTheme } from "../rendering/map-theme-rendering.js";
 import { FakeCanvasElement, FakeElement } from "./test-dom.js";
+import { antConfig } from "../core/game-config.js";
 
 const originalDocument = globalThis.document;
 globalThis.document = {
@@ -32,8 +33,8 @@ try {
     reset();
     assert.equal(
       dynamics.state.ants.length,
-      10,
-      "composition must not increase the live ant budget",
+      12,
+      "both kitchens have 20% more ants than the original ten",
     );
     assert.equal(
       dynamics.state.cheerios.filter((food) => food.kind === "cheerio").length,
@@ -126,6 +127,43 @@ try {
         "ants should start close enough to forage in the authored food scenes",
       );
     }
+
+    const victim = dynamics.state.ants.find((ant) =>
+      dynamics.state.ants.some((other) => {
+        const gap = Math.hypot(ant.x - other.x, ant.y - other.y);
+        return (
+          other !== ant &&
+          gap > config.spawn.r * 2 &&
+          gap < antConfig.crushAlarmDistance
+        );
+      }),
+    );
+    assert.ok(
+      victim,
+      "authored food scenes include a visible nearby-crush encounter",
+    );
+    const survivor = dynamics.state.ants.find((ant) => {
+      const gap = Math.hypot(ant.x - victim.x, ant.y - victim.y);
+      return (
+        ant !== victim &&
+        gap > config.spawn.r * 2 &&
+        gap < antConfig.crushAlarmDistance
+      );
+    });
+    const charge = {
+      x: victim.x,
+      y: victim.y,
+      r: config.spawn.r,
+      vx: 6,
+      vy: 0,
+    };
+    const events = dynamics.update(runtime.state.activeMap, charge, charge, 1);
+    assert.ok(events.antCrushes.includes(victim));
+    assert.ok(
+      survivor.alive && survivor.mode === "flee",
+      "a real authored neighbor flees the crushed ant",
+    );
+    reset();
 
     const marble = { x: 4200, y: 4100, r: 29, vx: 0, vy: 0 };
     for (let frame = 0; frame < 180; frame++)

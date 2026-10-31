@@ -477,6 +477,7 @@ function drawAntBody(context, flatten, headOffset, squished) {
 function drawAnt(context, ant, detail) {
   const gait = ant.gaitPhase ?? 0;
   const antenna = ant.antennaPhase ?? 0;
+  const worried = ant.alertFrames > 0 || ant.mode === "flee";
   const headOffset = ant.mode === "eat" ? Math.sin(antenna * 2) * 0.35 : 0;
 
   context.save();
@@ -507,10 +508,13 @@ function drawAnt(context, ant, detail) {
   context.lineWidth = 1.6;
   context.beginPath();
   for (let side = -1; side <= 1; side += 2) {
-    const feeler = Math.sin(antenna + side * 0.9) * 0.9;
+    const feeler = Math.sin(antenna + side * 0.9) * (worried ? 1.5 : 0.9);
     context.moveTo(8 + headOffset, side * 1.6);
     context.lineTo(12 + headOffset, side * (3 + feeler * 0.3));
-    context.lineTo(15.3 + headOffset - feeler * 0.4, side * (5.4 + feeler));
+    context.lineTo(
+      15.3 + headOffset - feeler * 0.4,
+      side * ((worried ? 7 : 5.4) + feeler),
+    );
   }
   context.stroke();
   drawAntBody(context, 1, headOffset, false);

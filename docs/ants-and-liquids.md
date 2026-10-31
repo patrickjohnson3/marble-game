@@ -12,18 +12,25 @@ translucent oval with regular dots.
 Ants now have distinct head, thorax, abdomen, waist, six jointed legs, and two
 probing antennae. Feet advance with actual distance, stop during probing, and
 alternate in tripods. Small deterministic differences in size, speed, reaction
-delay, turn preference, and probe timing keep the ten ants from synchronizing.
-Two existing spawn points moved closer to the opening route; population is
-unchanged.
+delay, turn preference, and probe timing keep the ants from synchronizing.
+Both kitchens now start with twelve ants, up from ten (+20%). The two added
+ants belong to the cleanup and drink-spill food clusters, close enough to
+existing ants to make a nearby-crush reaction visible. Retry restores all twelve.
 
 Foraging ants spread between food targets, make local course corrections, and
 steer around other ants, utensil hitboxes, and water/goo. Wet or sticky food is
 ineligible. An ant already inside a spill keeps moving, at 75% walking speed in
 water or 50% in goo, and can escape. There is no pathfinder or colony simulation.
 
-An approaching marble triggers a short hesitation, a bounded escape attempt,
-then recovery and foraging. Escape is intentionally slower than a committed
-marble pursuit. Near misses can be remembered even after the marble has passed.
+A marble within 125 world units of clearance (154 from its center at normal
+size) interrupts feeding or probing even when stationary. Ants briefly plant
+their feet and turn away, spreading and moving their antennae faster, then
+make a bounded escape attempt before recovering and foraging. Ordinary walking
+speed is 1.15 and escape speed is 2.6 world units per 60 Hz frame, with the
+existing small individual variations. Probing pauses last ten frame units.
+Escape is intentionally slower than a committed marble pursuit; a slower
+pursuit may need to steer after the ant rather than drive past it.
+Near misses can be remembered even after the marble has passed.
 A fresh crush immediately scares living ants within 180 world units (about three
 marble diameters), interrupting feeding and probing. Survivors use the existing
 escape speed and duration while steering away from the nearest fresh crush,
@@ -74,7 +81,30 @@ steering may take an indirect route around obstacles. The retained canvas scale
 favors memory and frame time over sharp microscopic detail when zoomed in.
 Remains persist; particles fade. Population does not replenish during a run.
 
-## Validation and measurements
+## Liveliness follow-up validation
+
+Focused tests cover stationary-marble awareness during feeding and probing,
+quiet behavior at a distance, active foraging at marble scale, response/recovery
+at 30/60/120 Hz update cadences, fast charges and slower steered pursuits,
+non-color antenna poses, and twelve-ant initialization/Retry/progression. The
+existing fresh-crush alarm tests remain, including distance, feeding interruption,
+array-order independence, expiry, old remains, and reset. Both actual authored
+kitchens now also exercise a crush with a surviving neighbor in layout tests.
+
+Desktop Chrome at 390×844 exercised both kitchens: a stationary marble caused a
+nearby ant to flee, a positioned keyboard charge crushed an ant and sent its
+neighbor fleeing from the recorded crush location, the HUD changed from twelve
+to eleven, and Retry restored twelve calm living ants. The marble was positioned
+for these encounters; this was not a complete keyboard hunt or physical-phone
+tilt test. Inspect [presence](screenshots/ants-alert-phone.png) and
+[crush flight](screenshots/ants-crush-flight-phone.png), captured at 1.2× zoom.
+No page errors occurred. Hardware tilt feel and whether this balance feels lively
+without making cleanup tedious still need hands-on testing.
+
+## Original pass validation and measurements
+
+The measurements below describe the earlier ten-ant implementation, not the
+current twelve-ant population.
 
 Baseline unit, browser, lint, formatting, and cache checks passed before edits.
 New coverage in kitchen, rendering, effects, game-loop, and liquid-rendering

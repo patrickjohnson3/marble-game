@@ -983,19 +983,19 @@ function moveAnt(state, ant, desiredAngle, speed, frameDelta) {
 function advanceAnt(state, ant, marble, frameDelta) {
   ant.mode = "forage";
   ant.antennaPhase =
-    ((ant.antennaPhase ?? 0) + 0.16 * frameDelta) % (Math.PI * 2);
+    ((ant.antennaPhase ?? 0) +
+      (ant.alertFrames > 0 || ant.fleeFrames > 0
+        ? antConfig.alertAntennaRate
+        : antConfig.antennaRate) *
+        frameDelta) %
+    (Math.PI * 2);
   ant.wobble = ((ant.wobble ?? 0) + 0.07 * frameDelta) % (Math.PI * 2);
   ant.recoverFrames = Math.max(0, (ant.recoverFrames ?? 0) - frameDelta);
 
   const awayX = ant.x - marble.x;
   const awayY = ant.y - marble.y;
   const distance = Math.hypot(awayX, awayY);
-  const approach =
-    ((marble.vx ?? 0) * awayX + (marble.vy ?? 0) * awayY) /
-    Math.max(1, distance);
-  const threatened =
-    distance < marble.r + antConfig.threatDistance &&
-    (approach > 0.25 || distance < marble.r + antConfig.radius * 3);
+  const threatened = distance < marble.r + antConfig.threatDistance;
   if (
     !(ant.fleeFrames > 0) &&
     (threatened || ant.alertFrames > 0) &&
@@ -1004,6 +1004,11 @@ function advanceAnt(state, ant, marble, frameDelta) {
     ant.alertFrames = (ant.alertFrames ?? 0) + frameDelta;
     if (ant.alertFrames < (ant.reactionFrames ?? antConfig.reactionFrames)) {
       ant.mode = "probe";
+      turnAntToward(
+        ant,
+        Math.atan2(awayY, awayX),
+        antConfig.fleeTurnRate * frameDelta,
+      );
       return;
     }
     ant.fleeFrames = antConfig.fleeDurationFrames * (ant.speedScale ?? 1);

@@ -91,12 +91,12 @@ try {
   assert.equal(document.getElementById("loadMap").disabled, true);
   assert.equal(
     app.kitchenDynamics.state.ants.length,
-    10,
+    12,
     "boot initializes objective targets before Start",
   );
   assert.equal(
     document.getElementById("objectiveStatus").textContent,
-    "Kill all ants · 10 left",
+    "Kill all ants · 12 left",
   );
   assert.equal(
     document.getElementById("settingsTitle").textContent,

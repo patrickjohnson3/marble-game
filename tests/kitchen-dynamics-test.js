@@ -1008,24 +1008,124 @@ function testAntsProbeWithoutSlidingTheirFeetAndResumeSearching() {
 
 testAntsProbeWithoutSlidingTheirFeetAndResumeSearching();
 
-function testAntHesitatesThenEscapesButCanBeCaught() {
-  const { dynamics, mapConfig, ant } = antScene();
-  const marble = { x: 220, y: 500, vx: 4, vy: 0, r: 29 };
-  update(dynamics, mapConfig, marble);
-  assert.equal(ant.mode, "probe", "the ant needs time to sense the approach");
-  assert.equal(ant.x, 300, "threat sensing should read as a brief hesitation");
-  update(dynamics, mapConfig, marble, Math.ceil(ant.reactionFrames));
-  assert.equal(ant.mode, "flee");
-  assert.equal(ant.x > 300, true);
-
-  let squishes = 0;
-  for (let frame = 0; frame < 60; frame++) {
-    const previousMarble = { ...marble };
-    marble.x += marble.vx;
-    squishes += dynamics.update(mapConfig, marble, previousMarble).squishedAnts;
+function testNearbyStationaryMarbleInterruptsFeedingAndProbing() {
+  for (const probing of [false, true]) {
+    const food = cerealAt(probing ? 800 : 315, 500);
+    const { dynamics, mapConfig, ant } = antScene({ cheerios: [food] });
+    Object.assign(ant, {
+      angle: Math.PI,
+      targetIndex: 0,
+      probeFrames: probing ? 100 : 0,
+    });
+    update(dynamics, mapConfig, farFromAnts);
+    assert.equal(ant.mode, probing ? "probe" : "eat");
+    const eatenBefore = food.eaten;
+    const angleBefore = ant.angle;
+    const marble = { x: 180, y: 500, vx: 0, vy: 0, r: 29 };
+    update(dynamics, mapConfig, marble);
+    assert.ok(ant.alertFrames > 0, "nearby presence is enough to worry an ant");
+    assert.equal(ant.mode, "probe");
+    assert.deepEqual([ant.x, ant.y], [300, 500], "alert feet stay planted");
+    assert.notEqual(ant.angle, angleBefore, "hesitation begins a turn away");
+    assert.equal(food.eaten, eatenBefore, "a threat interrupts a meal");
+    update(dynamics, mapConfig, marble, 20);
+    assert.equal(ant.mode, "flee");
+    assert.ok(Math.hypot(ant.x - marble.x, ant.y - marble.y) > 120);
+    assert.equal(ant.alive, true);
   }
-  assert.equal(ant.squished, true, "a committed pursuit must catch the ant");
-  assert.equal(squishes, 1, "pursuit must produce only one fresh crush");
+  const food = cerealAt(315, 500);
+  const { dynamics, mapConfig, ant } = antScene({ cheerios: [food] });
+  update(dynamics, mapConfig, { x: 80, y: 500, vx: 0, vy: 0, r: 29 });
+  assert.equal(
+    ant.alertFrames,
+    0,
+    "a distant marble must not scare the colony",
+  );
+  assert.ok(food.eaten > 0);
+}
+
+testNearbyStationaryMarbleInterruptsFeedingAndProbing();
+
+function testForagingCoversAMarbleWidthPerSecond() {
+  const { dynamics, mapConfig, ant } = antScene({ cheerios: [] });
+  let distance = 0;
+  for (let frame = 0; frame < 60; frame++) {
+    const { x, y } = ant;
+    update(dynamics, mapConfig, farFromAnts);
+    distance += Math.hypot(ant.x - x, ant.y - y);
+  }
+  assert.ok(
+    distance >= farFromAnts.r * 2,
+    "uninterrupted foraging is lively at marble scale",
+  );
+}
+
+testForagingCoversAMarbleWidthPerSecond();
+
+function testPresenceEscapeAndRecoveryAtSupportedCadences() {
+  for (const frameDelta of [0.5, 1, 2]) {
+    const { dynamics, mapConfig, ant } = antScene();
+    const marble = { x: 180, y: 500, vx: 0, vy: 0, r: 29 };
+    for (let elapsed = 0; elapsed < 20; elapsed += frameDelta)
+      update(dynamics, mapConfig, marble, frameDelta);
+    assert.equal(
+      ant.mode,
+      "flee",
+      `${frameDelta}: nearby presence causes escape`,
+    );
+    assert.ok(ant.x > 300 && ant.alive);
+    for (let elapsed = 0; elapsed < 100; elapsed += frameDelta)
+      update(dynamics, mapConfig, farFromAnts, frameDelta);
+    assert.equal(
+      ant.fleeFrames,
+      0,
+      "escape remains bounded after the marble leaves",
+    );
+    assert.equal(ant.mode, "forage");
+  }
+}
+
+testPresenceEscapeAndRecoveryAtSupportedCadences();
+
+function testAntHesitatesThenEscapesButCanBeCaught() {
+  for (const steering of [false, true]) {
+    const { dynamics, mapConfig, ant } = antScene();
+    const marble = { x: 220, y: 500, vx: 4, vy: 0, r: 29 };
+    update(dynamics, mapConfig, marble);
+    assert.equal(ant.mode, "probe", "the ant needs time to sense the approach");
+    assert.equal(
+      ant.x,
+      300,
+      "threat sensing should read as a brief hesitation",
+    );
+    update(dynamics, mapConfig, marble, Math.ceil(ant.reactionFrames));
+    assert.equal(ant.mode, "flee");
+    assert.equal(ant.x > 300, true);
+
+    let squishes = 0;
+    for (let frame = 0; frame < 60; frame++) {
+      const previousMarble = { ...marble };
+      if (steering) {
+        // A slower pursuit needs to follow the ant's sidestep, not drive past it.
+        const dx = ant.x - marble.x;
+        const dy = ant.y - marble.y;
+        const distance = Math.hypot(dx, dy) || 1;
+        marble.vx = (dx / distance) * 4;
+        marble.vy = (dy / distance) * 4;
+      } else {
+        marble.vx = 8;
+      }
+      marble.x += marble.vx;
+      marble.y += marble.vy;
+      squishes += dynamics.update(
+        mapConfig,
+        marble,
+        previousMarble,
+      ).squishedAnts;
+    }
+    assert.equal(ant.squished, true, "a committed pursuit must catch the ant");
+    assert.equal(squishes, 1, "pursuit must produce only one fresh crush");
+  }
 }
 
 testAntHesitatesThenEscapesButCanBeCaught();
@@ -1149,7 +1249,7 @@ function testCrushAlarmExpiresDoesNotReplayAndResets() {
 
 testCrushAlarmExpiresDoesNotReplayAndResets();
 
-function testSlowOverlapDoesNotScareNearbyAnts() {
+function testSlowOverlapDoesNotSendACrushAlarm() {
   const { dynamics, mapConfig, ant: victim } = antScene({ cheerios: [] });
   const survivor = { ...victim, y: 620, angle: Math.PI / 2 };
   dynamics.state.ants.push(survivor);
@@ -1167,9 +1267,14 @@ function testSlowOverlapDoesNotScareNearbyAnts() {
     0,
     "an incidental bump is not a kill alarm",
   );
+  assert.equal(
+    survivor.fleeFromX,
+    null,
+    "ordinary proximity must not invent a remembered crush location",
+  );
 }
 
-testSlowOverlapDoesNotScareNearbyAnts();
+testSlowOverlapDoesNotSendACrushAlarm();
 
 function testSweptAntCrushSettlesOnceAndPersistsUntilReset() {
   const { dynamics, mapConfig, ant } = antScene({ cheerios: [] });

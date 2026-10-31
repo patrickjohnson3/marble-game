@@ -21,10 +21,12 @@ on purpose; it gives the goal and the dense scenes some breathing room.
 
 `maps/kitchen-layout.js` holds authored anchors and food/ant offsets. Both
 `core/kitchen-dynamics.js` and `rendering/kitchen-floor-details.js` use those
-anchors. Initialization still creates 34 pushable Cheerios, 12 pushable
-crumbs, and 10 ants. Retry reconstructs their original positions and state.
-Ants now start near food; their foraging, avoidance, panic, and crushing rules
-are unchanged. Food can consequently be eaten sooner than with the old
+anchors. Initialization creates 34 pushable Cheerios, 12 pushable
+crumbs, and 12 ants (increased from ten in the later
+[liveliness pass](ants-and-liquids.md#liveliness-follow-up-validation)).
+Retry reconstructs their original positions and state.
+Ants start near food; foraging, avoidance, panic, and crushing rules remain owned
+by `core/kitchen-dynamics.js`. Food can consequently be eaten sooner than with the old
 distant ant spawns. Flat litter remains after food has been eaten or pushed.
 
 All newly painted packet, napkin, rice, flakes, wear, wipe marks, dried drops,

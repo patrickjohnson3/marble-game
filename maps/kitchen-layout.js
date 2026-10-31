@@ -66,6 +66,7 @@ const breakfastScatter = [
     ants: [
       [-242, 8],
       [237, 224],
+      [125, 165],
     ],
   },
   {
@@ -87,6 +88,7 @@ const breakfastScatter = [
     ants: [
       [-181, 69],
       [345, 205],
+      [220, 170],
     ],
   },
 ];

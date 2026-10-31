@@ -371,7 +371,7 @@ function testEliminationUsesActualCrushStateAndCompletesOnce() {
   cockroach.mode = "harass";
   controller.update(1);
   assert.equal(calls.completed.length, 0);
-  assert.equal(calls.statuses.at(-1), "Kill all ants · 10 left");
+  assert.equal(calls.statuses.at(-1), "Kill all ants · 12 left");
   assert.equal(controller.depart(), false, "living ants block departure");
 
   while (kitchen.state.ants.some((ant) => ant.alive)) {
@@ -420,7 +420,7 @@ function testEliminationUsesActualCrushStateAndCompletesOnce() {
   assert.equal(livingAntCount(kitchen.state.ants), 0);
   assert.equal(
     kitchen.state.ants.length,
-    10,
+    12,
     "flattened ants stay in the room",
   );
   runtime.resetGoalProgress();
@@ -533,7 +533,7 @@ function testEliminationRetryAndMissingSuccessor() {
     "Retry restores cockroach position, behavior and all cooldown/contact state",
   );
   assert.equal(runtime.state.goalCompleted, false);
-  assert.equal(livingAntCount(kitchen.state.ants), 10);
+  assert.equal(livingAntCount(kitchen.state.ants), 12);
   assert.equal(runtime.state.departureReady, false);
   assert.equal(
     controller.depart(),
@@ -542,7 +542,7 @@ function testEliminationRetryAndMissingSuccessor() {
   );
   controller.update(1);
   assert.equal(calls.completed.length, 1, "Retry must restore living targets");
-  assert.equal(calls.statuses.at(-1), "Kill all ants · 10 left");
+  assert.equal(calls.statuses.at(-1), "Kill all ants · 12 left");
   for (const ant of kitchen.state.ants) ant.alive = false;
   controller.update(1);
   assert.equal(calls.completed.length, 1);

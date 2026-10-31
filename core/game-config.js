@@ -122,18 +122,20 @@ export const cockroachConfig = {
 
 export const antConfig = {
   radius: 7,
-  speed: 0.9,
+  speed: 1.15,
   munchDistance: 20,
   munchRate: 0.006,
   squishMinSpeed: 1.2,
   splatMinSpeed: 0.7,
   splatFeedbackCooldownFrames: 24,
   probeIntervalFrames: 150,
-  probeDurationFrames: 16,
+  probeDurationFrames: 10,
+  antennaRate: 0.16,
+  alertAntennaRate: 0.36,
   turnRate: 0.13,
   fleeTurnRate: 0.3,
-  fleeSpeed: 2.15,
-  threatDistance: 72,
+  fleeSpeed: 2.6,
+  threatDistance: 125, // Clearance from the marble's edge, in world units.
   crushAlarmDistance: 180, // World units; about three marble diameters.
   reactionFrames: 7,
   fleeDurationFrames: 48,

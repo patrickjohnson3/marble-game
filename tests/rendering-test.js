@@ -1003,7 +1003,7 @@ function testKitchenThemeRendersQuietCeramicFloor() {
   );
   assert.equal(
     dynamics.state.ants.length,
-    10,
+    12,
     "kitchen floor should seed a small capped ant colony",
   );
   assert.equal(
@@ -1473,6 +1473,45 @@ function testKitchenAntAnatomyFacesItsHeading() {
 }
 
 testKitchenAntAnatomyFacesItsHeading();
+
+function testWorriedAntsSpreadTheirFeelersWithoutChangingGaitOrState() {
+  const poses = [];
+  for (const overrides of [
+    { mode: "probe", alertFrames: 0 },
+    { mode: "probe", alertFrames: 1 },
+    { mode: "flee", alertFrames: 0 },
+  ]) {
+    const fixture = antRenderingFixture(overrides);
+    const before = { ...fixture.ant };
+    fixture.render();
+    const appendages = canvasPolylines(fixture.canvas.context.calls).filter(
+      (path) => path.length === 3,
+    );
+    const feelers = appendages.filter((path) => path[0][0] > 5);
+    poses.push({
+      spread: feelers.reduce((sum, path) => sum + Math.abs(path.at(-1)[1]), 0),
+      legs: appendages.filter((path) => path[0][0] <= 5),
+    });
+    assert.deepEqual(
+      fixture.ant,
+      before,
+      "worry is read from simulation state",
+    );
+  }
+  for (const worried of poses.slice(1)) {
+    assert.ok(
+      worried.spread > poses[0].spread,
+      "alert and flight have a distinct pose without a color cue",
+    );
+    assert.deepEqual(
+      worried.legs,
+      poses[0].legs,
+      "worry does not override the simulated walking gait",
+    );
+  }
+}
+
+testWorriedAntsSpreadTheirFeelersWithoutChangingGaitOrState();
 
 function testKitchenAntPoseRedrawsWithinItsDirtyBounds() {
   const fixture = antRenderingFixture();

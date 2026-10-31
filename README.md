@@ -11,6 +11,8 @@ Live version: [https://patrickjohnson3.github.io/marble-game/](https://patrickjo
 - Large scrollable maps with real-world themes and obstacle layouts.
 - Terrain surfaces including ice, rough ground, water, and sticky goo.
 - Kitchen-floor objects including a fork obstacle and pushable Cheerios.
+- Twelve ants in each kitchen forage, notice a nearby marble, and flee when a
+  neighboring ant is crushed.
 - Map-specific objectives: eliminate kitchen ants, cross the living room to its
   exit, or hold in the older maps' goal zones.
 - Haptic feedback for impacts, terrain, and goals where supported.
