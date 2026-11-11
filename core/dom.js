@@ -72,6 +72,7 @@ export const domIds = {
   trailSetting: "trailSetting",
   fullscreenSetting: "fullscreenSetting",
   goalIndicatorSetting: "goalIndicatorSetting",
+  cockroachCueSetting: "cockroachCueSetting",
   hitboxOverlaySetting: "hitboxOverlaySetting",
   fpsSetting: "fpsSetting",
   statsSetting: "statsSetting",

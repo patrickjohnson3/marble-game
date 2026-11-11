@@ -281,6 +281,11 @@ function testPhysicsAndSettingsRanges() {
     "goal indicator defaults off",
   );
   assert.equal(
+    settingsConfig.cockroachCueEnabled,
+    false,
+    "roach chase hints default off",
+  );
+  assert.equal(
     settingsConfig.hitboxOverlayEnabled,
     false,
     "hitbox overlay defaults off",

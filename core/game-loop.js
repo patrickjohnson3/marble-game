@@ -280,7 +280,9 @@ export function createGameLoop({
     const renderBudgetStart = performance.now();
     updateGoalIndicator(physicsContext);
     ui.renderCockroachCue(
-      mapState.goalCompleted ? null : mapState.cockroach,
+      settings.cockroachCueEnabled && !mapState.goalCompleted
+        ? mapState.cockroach
+        : null,
       active ? frameDelta : 0,
     );
     marbleView.render();

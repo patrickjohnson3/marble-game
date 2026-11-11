@@ -92,6 +92,7 @@ export const copy = {
       trailSetting: "trail",
       fullscreenSetting: "fullscreen",
       goalIndicatorSetting: "exit / goal arrow",
+      cockroachCueSetting: "roach chase hints",
       hitboxOverlaySetting: "hitboxes",
       fpsSetting: "fps",
       statsSetting: "stats",

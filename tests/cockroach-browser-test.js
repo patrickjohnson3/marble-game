@@ -32,6 +32,15 @@ window.__cockroachApp = createApp();`,
     );
     assert.equal(await page.locator("#nextRoom").isHidden(), true);
     assert.equal(await page.locator("#cockroachCue").isHidden(), true);
+    const chaseHints = page.getByRole("checkbox", {
+      name: "roach chase hints",
+      exact: true,
+    });
+    assert.equal(
+      await page.locator("#cockroachCueSetting").isChecked(),
+      false,
+      "fresh installations default off",
+    );
 
     async function sampleScurry(inGoo) {
       const origin = await page.evaluate(
@@ -181,6 +190,38 @@ window.__cockroachApp = createApp();`,
       app.cameraController.centerOnMarble();
       app.gameController.resume();
     });
+    await page.waitForFunction(
+      () => window.__cockroachApp.mapRuntime.state.cockroach.mode === "harass",
+    );
+    assert.equal(
+      await page.locator("#cockroachCue").isHidden(),
+      true,
+      "default-off hides an actual pursuit",
+    );
+    assert.equal(await page.locator("#cockroachArrow").isHidden(), true);
+    await page.locator("#settingsToggle").click();
+    const pausedActor = await page.evaluate(() =>
+      JSON.stringify(window.__cockroachApp.mapRuntime.state.cockroach),
+    );
+    await chaseHints.check();
+    await page.waitForFunction(
+      () => !document.querySelector("#cockroachCue").hidden,
+    );
+    assert.equal(await page.locator("#cockroachArrow").isVisible(), true);
+    await chaseHints.uncheck();
+    await page.waitForFunction(
+      () => document.querySelector("#cockroachCue").hidden,
+    );
+    assert.equal(await page.locator("#cockroachArrow").isHidden(), true);
+    assert.equal(
+      await page.evaluate(() =>
+        JSON.stringify(window.__cockroachApp.mapRuntime.state.cockroach),
+      ),
+      pausedActor,
+      "changing display preferences cannot advance or replace the paused actor",
+    );
+    await chaseHints.check();
+    await page.locator("#resumeGame").click();
     await page.waitForFunction(
       () =>
         document.querySelector("#cockroachCueText").textContent ===
@@ -474,6 +515,17 @@ window.__cockroachApp = createApp();`,
         () => window.__cockroachApp.mapRuntime.state.cockroach,
       ),
       null,
+    );
+    await page.reload({ waitUntil: "networkidle" });
+    await page.locator("#settingsToggle").click();
+    assert.equal(await chaseHints.isChecked(), true, "opt-in survives reload");
+    await chaseHints.uncheck();
+    await page.reload({ waitUntil: "networkidle" });
+    await page.locator("#settingsToggle").click();
+    assert.equal(
+      await chaseHints.isChecked(),
+      false,
+      "opting out persists too",
     );
     assert.deepEqual(errors, []);
   } finally {

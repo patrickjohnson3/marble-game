@@ -334,8 +334,20 @@ function createBehaviorHarness({
 }
 
 function testCockroachCueUsesLiveActorAndActiveSimulationTime() {
-  const harness = createBehaviorHarness({ activeMap: resolvedMapConfig });
+  const settings = { cockroachCueEnabled: false };
+  const harness = createBehaviorHarness({
+    activeMap: resolvedMapConfig,
+    settings,
+  });
   const { calls, mapRuntime, state } = harness;
+  harness.tick();
+  assert.equal(
+    calls.cockroachCues.at(-1).cockroach,
+    null,
+    "hints stay off while the roach remains active",
+  );
+  assert.ok(mapRuntime.state.cockroach);
+  settings.cockroachCueEnabled = true;
   harness.tick(1);
   assert.equal(
     calls.cockroachCues.at(-1).cockroach,
@@ -349,6 +361,22 @@ function testCockroachCueUsesLiveActorAndActiveSimulationTime() {
     0,
     "pausing freezes visual countdowns",
   );
+  const actor = mapRuntime.state.cockroach;
+  settings.cockroachCueEnabled = false;
+  harness.tick();
+  assert.equal(
+    calls.cockroachCues.at(-1).cockroach,
+    null,
+    "disabling clears the cue even while paused",
+  );
+  assert.equal(
+    mapRuntime.state.cockroach,
+    actor,
+    "the option does not remove the antagonist",
+  );
+  settings.cockroachCueEnabled = true;
+  harness.tick();
+  assert.equal(calls.cockroachCues.at(-1).cockroach, actor);
   const previousActor = mapRuntime.state.cockroach;
   mapRuntime.setActiveMap(resolvedMapConfig);
   harness.tick();

@@ -50,6 +50,7 @@ export function bindSettingsPanel({
     trailSetting,
     fullscreenSetting,
     goalIndicatorSetting,
+    cockroachCueSetting,
     hitboxOverlaySetting,
     fpsSetting,
     statsSetting,
@@ -75,6 +76,7 @@ export function bindSettingsPanel({
   fullscreenSetting.checked = settings.fullscreenEnabled;
   fullscreenSetting.disabled = fullscreenManagedByPwa;
   goalIndicatorSetting.checked = settings.goalIndicatorEnabled;
+  cockroachCueSetting.checked = settings.cockroachCueEnabled;
   hitboxOverlaySetting.checked = settings.hitboxOverlayEnabled;
   fpsSetting.checked = settings.fpsEnabled;
   statsSetting.checked = settings.statsEnabled;
@@ -145,6 +147,9 @@ export function bindSettingsPanel({
     applyFullscreenSetting();
   });
   bindCheckboxSetting(goalIndicatorSetting, "goalIndicatorEnabled", () => {
+    requestRender();
+  });
+  bindCheckboxSetting(cockroachCueSetting, "cockroachCueEnabled", () => {
     requestRender();
   });
   bindCheckboxSetting(

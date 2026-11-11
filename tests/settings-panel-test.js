@@ -38,6 +38,7 @@ function createPanelHarness() {
     trailEnabled: false,
     fullscreenEnabled: true,
     goalIndicatorEnabled: false,
+    cockroachCueEnabled: false,
     hitboxOverlayEnabled: false,
     fpsEnabled: false,
     statsEnabled: false,
@@ -47,6 +48,7 @@ function createPanelHarness() {
   const fpsSetting = fakeControl();
   const fullscreenSetting = fakeControl();
   const goalIndicatorSetting = fakeControl();
+  const cockroachCueSetting = fakeControl();
   const hitboxOverlaySetting = fakeControl();
   const installApp = fakeControl();
   const checkAppUpdates = fakeButton();
@@ -83,6 +85,7 @@ function createPanelHarness() {
       trailSetting: fakeControl(),
       fullscreenSetting,
       goalIndicatorSetting,
+      cockroachCueSetting,
       hitboxOverlaySetting,
       fpsSetting,
       statsSetting,
@@ -155,6 +158,7 @@ function createPanelHarness() {
     fpsSetting,
     fullscreenSetting,
     goalIndicatorSetting,
+    cockroachCueSetting,
     hitboxOverlaySetting,
     installApp,
     installCount: () => installCount,
@@ -285,6 +289,29 @@ function testGoalIndicatorTogglePersistsAndRenders() {
 
 testGoalIndicatorTogglePersistsAndRenders();
 
+function testCockroachCueTogglePersistsAndRenders() {
+  const { counts, cockroachCueSetting, settings } = createPanelHarness();
+  assert.equal(cockroachCueSetting.checked, false);
+  for (const enabled of [true, false]) {
+    cockroachCueSetting.checked = enabled;
+    cockroachCueSetting.listeners.change();
+    assert.equal(settings.cockroachCueEnabled, enabled);
+  }
+  assert.equal(counts().saveCount, 2);
+  assert.equal(
+    counts().renderCount,
+    2,
+    "both changes request a paused-frame render",
+  );
+  assert.equal(
+    counts().applyCount,
+    0,
+    "display choices need no physics projection",
+  );
+}
+
+testCockroachCueTogglePersistsAndRenders();
+
 function testHitboxOverlayTogglePersistsAndRenders() {
   const { counts, hitboxOverlaySetting, settings } = createPanelHarness();
 
@@ -316,6 +343,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
     trailEnabled: false,
     fullscreenEnabled: true,
     goalIndicatorEnabled: false,
+    cockroachCueEnabled: false,
     hitboxOverlayEnabled: false,
     fpsEnabled: false,
     statsEnabled: false,
@@ -346,6 +374,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
       trailSetting: fakeControl(),
       fullscreenSetting,
       goalIndicatorSetting: fakeControl(),
+      cockroachCueSetting: fakeControl(),
       hitboxOverlaySetting: fakeControl(),
       fpsSetting: fakeControl(),
       statsSetting: fakeControl(),

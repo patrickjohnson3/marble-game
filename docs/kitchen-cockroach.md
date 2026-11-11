@@ -9,7 +9,13 @@ its live state. No combat framework or additional objective counter is involved.
 The small `rendering/cockroach-rendering.js` Canvas follows position, heading,
 travelled distance and stun state. There is no health bar or death animation.
 
-The HUD shows **Roach chasing** only during harassment. An arrow beside the text
+**Roach chase hints** in Settings → Gameplay controls the pursuit label,
+offscreen arrow, and escape confirmation together. It defaults off, including
+for older saved settings without this preference, and persists through reload
+and Retry. Toggling it updates the display immediately, including while paused,
+without changing the roach's behavior. Disabling clears pending confirmations.
+
+When enabled, the HUD shows **Roach chasing** only during harassment. An arrow beside the text
 points from the marble toward a pursuer whose body is offscreen, using the live camera
 translation, zoom and viewport dimensions. Flee away from that arrow. When pursuit
 ends with quiet time (distance escape, failed approach or a strong counter-hit),
@@ -135,6 +141,10 @@ UI regressions cover temporary chase/escape text, camera-relative offscreen
 guidance, pause and cadence consistency, and actor replacement. The browser
 encounter checks these cues through actual pursuit, keyboard-driven escape,
 Retry and departure.
+Preference regressions cover default-off behavior, paused toggling, and both
+saved choices after reload. The checkbox was inspected in desktop Chrome at
+390×844 and 844×390; see the [default-off option](screenshots/roach-cue-setting-phone.png).
+These viewport checks do not establish physical-phone behavior.
 
 HUD captures from the real renderer: [portrait pursuit](screenshots/roach-cue-phone.png),
 [landscape pursuit](screenshots/roach-cue-landscape.png), and
