@@ -16,8 +16,9 @@ positions and orientations to suit their existing utensils and liquids:
 - Rice, tiny toast flakes, and dull wipe marks near the cleanup area.
 - A dried drink ring and food on the dry side of a spill.
 
-The lower and eastern travel lanes stay open. The upper floor remains quiet
-on purpose; it gives the goal and the dense scenes some breathing room.
+In this original pass the lower and eastern travel lanes stayed open and the
+upper floor remained quiet. The later [edge composition follow-up](#edge-composition-follow-up)
+fills that upper area while preserving wide travel lanes.
 
 `maps/kitchen-layout.js` holds authored anchors and food/ant offsets. Both
 `core/kitchen-dynamics.js` and `rendering/kitchen-floor-details.js` use those
@@ -127,3 +128,82 @@ work, finished map-variant forwarding, refined authored placement and spill
 spacing, completed regression coverage, synchronized cache metadata, and
 performed the final browser/visual/performance checks. The implementation was left
 uncommitted at completion, pending a separate user instruction to commit.
+
+## Edge composition follow-up
+
+`maps/kitchen-floor.js` now frames the top and left edges with closed cabinet
+toe-kicks and a brushed-metal appliance skirt with two protruding round feet.
+The closed panels are solid; the gaps between the separate feet remain real.
+The existing `drinkSpill` recipe moved as a unit to (1750, 880), placing its
+food, ants, and dried ring in the upper third. A tipped blue ceramic cup points
+its rim toward the existing water. The breakfast kitchen layout is unchanged.
+World dimensions, spawn, objective, liquids, utensils, sponge, 12 ants, and
+46 food pieces retain their prior rules and counts.
+
+The authored escape loop runs through the lower/eastern floor, above the cup,
+and back down the left side of the central scenes. The normal validator checks
+its steering clearance; `kitchen-layout-test.js` additionally samples a
+240-unit-wide static corridor, over four marble diameters. This proves static
+clearance along that loop, not that every possible live chase is escapable.
+The native bases use existing cached fixture DOM nodes, with art and collision
+sharing dimensions/rounding. The cup reuses the utensil sprite/composite
+collision path. Its handle opening stays empty. No new canvases or per-frame
+map expansion were added; DPR-1 backing storage remains 37,879,104 bytes.
+
+Visual evidence from the real renderer at a 390×844 desktop Chrome viewport:
+[overview](screenshots/kitchen-edges-overview.png),
+[cabinet and relocated food](screenshots/kitchen-edges-cabinet.png),
+[appliance feet](screenshots/kitchen-edges-appliance.png), and
+[cup beside water](screenshots/kitchen-edges-cup.png).
+An [844×390 landscape view](screenshots/kitchen-edges-landscape.png) checks the
+relocated cluster and cup at a wider aspect ratio.
+
+Keyboard playtesting traversed the entire loop with the roach active, crushing
+two ants along the way. Separate positioned keyboard checks reached the
+cabinet edge, round foot, gap between feet, and ceramic body. Retry restored
+12 ants and 46 food pieces. Focused tests cover the populated upper third,
+clear corridor, invalid base dimensions/facing/bounds, blocked routes,
+round-foot corners, and cup contact against independently measured opaque
+image boundaries at three rotations. These are desktop checks; physical-device
+tilt feel, mobile compositor performance, and whether the composition feels
+inhabited enough still need human judgment.
+
+Final checks passed: `npm test`, `npm run map:validate`, `npm run lint`,
+`npm run format:check`, `npm run check-cache`, and
+`node tests/browser-smoke-test.js`. The service-worker-enabled
+`tests/pwa-browser-test.js` timed out waiting for a new worker in the
+`max-age=600` upgrade scenario (line 802). The identical timeout reproduced
+on an isolated archive of the starting commit `c33192b`; it is a pre-existing
+failure, left outside this composition change.
+
+### Cup asset
+
+`assets/sprites/tipped-cup.webp` is a single 1261×1247 RGBA sprite, 120,106 bytes,
+generated using the built-in `image_gen` tool and delivered with the established
+quality-90 WebP encoding (`method=6`, `exact=True`). Dimensions and alpha are
+preserved; no crop or resize was applied. Original generation output:
+`/home/pjohnson/.codex/generated_images/01a0782d-51b7-7352-9502-82f9ba7d39b0/exec-d88e2720-2fba-4816-a176-6a2ce262a07c.png`.
+The sprite is registered in `runtime-assets.js` for offline use. Collision
+parts measured from it live in `core/map-obstacles.js`, with the same centered
+contain transform used by the renderer. Tiny alpha fringe is not solid.
+
+Final generation prompt:
+
+> Use case: product-mockup. Asset type: a single realistic transparent game sprite
+> for a top-down household marble game. Generate ONE plain pale blue glazed ceramic
+> mug knocked onto its SIDE, seen from exactly vertically overhead, orthographic
+> camera. Mouth/open circular rim faces RIGHT (+X), cylinder body extends LEFT;
+> thick curved handle projects above the body toward the TOP edge of the image.
+> The opening is a narrow foreshortened ellipse, with believable cream interior
+> and thick ceramic lip, not a round upright cup seen from above. The straight-sided
+> cylindrical body, subtle glazed highlights, slightly worn foot ring at left,
+> and curved handle should be immediately readable. Neutral soft indoor overhead
+> light, tactile realistic pottery, restrained gloss, no illustrated outlines.
+> Center the whole mug including handle in a square image; use about 85% of the
+> width and 70% of height, generous even transparent padding. True transparent
+> alpha background; no floor, tile, water, liquid, droplets, scenery, cast shadow
+> outside the object, additional objects, text, branding, watermark, checkerboard,
+> or UI. This will render around 280 world pixels long beside a 58-pixel-diameter
+> marble; prioritize a clean simple silhouette so collision can follow the body
+> and handle. Photorealistic household prop matching existing photographic spoon
+> and sponge assets.

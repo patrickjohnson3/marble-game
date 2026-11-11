@@ -9,7 +9,7 @@ export const kitchenFloorMap = {
   objective: { type: "eliminate", target: "ant", count: "all" },
   cockroach: { x: 1400, y: 3500 },
   objectSummary:
-    "objects: fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants, invulnerable cockroach.",
+    "objects: cabinet bases, appliance feet, tipped cup, fork, spoon, sponge, water, green goo, Cheerios, crumbs, ants, invulnerable cockroach.",
   surfaces: [
     { kind: "goo", x: 1240, y: 1800, w: 560, h: 460 },
     // The existing sponge interaction absorbs the first water patch.
@@ -20,6 +20,28 @@ export const kitchenFloorMap = {
     { kind: "goo", x: 1730, y: 2200, w: 70, h: 60 },
   ],
   fixtures: [
+    // Closed toe-kicks frame two edges; the center and perimeter escape loop
+    // remain open. Separate feet leave real gaps beneath the appliance skirt.
+    { kind: "cabinetBase", x: 0, y: 0, w: 4400, h: 360, facing: "down" },
+    { kind: "cabinetBase", x: 0, y: 360, w: 360, h: 1100, facing: "right" },
+    { kind: "applianceBase", x: 0, y: 1460, w: 300, h: 1320, facing: "right" },
+    {
+      kind: "applianceFoot",
+      x: 260,
+      y: 1590,
+      w: 110,
+      h: 110,
+      cornerRadius: 55,
+    },
+    {
+      kind: "applianceFoot",
+      x: 260,
+      y: 2520,
+      w: 110,
+      h: 110,
+      cornerRadius: 55,
+    },
+    { kind: "tippedCup", x: 2400, y: 1070, w: 380, h: 380, angle: Math.PI / 2 },
     {
       kind: "sponge",
       x: 1490,
@@ -55,12 +77,24 @@ export const kitchenFloorMap = {
     { kind: "cerealPacket", x: 1113.2, y: 3498, angle: -0.25 },
     { kind: "breakfastNapkin", x: 2934.8, y: 3374.8, angle: 0.12 },
     { kind: "cleanupScraps", x: 1078, y: 2340.8, angle: 0.42 },
-    { kind: "drinkSpill", x: 3366, y: 1628, angle: -0.62 },
+    { kind: "drinkSpill", x: 1750, y: 880, angle: -0.62 },
+  ],
+  // Development-only clearance certificate, not a prescribed player path.
+  route: [
+    { x: 840, y: 3640 },
+    { x: 3800, y: 3640 },
+    { x: 3800, y: 900 },
+    { x: 1000, y: 600 },
+    { x: 700, y: 3100 },
+    { x: 840, y: 3640 },
   ],
   views: [
     { id: "cerealPacket", x: 1113.2, y: 3498 },
     { id: "breakfastNapkin", x: 2934.8, y: 3374.8 },
     { id: "cleanupScraps", x: 1078, y: 2340.8 },
-    { id: "drinkSpill", x: 3366, y: 1628 },
+    { id: "drinkSpill", x: 1750, y: 880 },
+    { id: "cabinets", x: 1750, y: 360, scale: 0.5 },
+    { id: "applianceFeet", x: 340, y: 2100, scale: 0.5 },
+    { id: "tippedCup", x: 2600, y: 1360 },
   ],
 };

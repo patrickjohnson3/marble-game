@@ -155,7 +155,42 @@ for (const field of ["hitboxW", "hitboxH"]) {
     },
     "hitbox dimensions must match",
   );
+  rejectsEdit(
+    kitchenFloorMap,
+    (map) => {
+      map.fixtures.find((item) => item.kind === "cabinetBase")[field] = 100;
+    },
+    "hitbox dimensions must match",
+  );
 }
+
+rejectsEdit(
+  kitchenFloorMap,
+  (map) => {
+    map.fixtures.find((item) => item.kind === "cabinetBase").facing = "up";
+  },
+  "facing must be down or right",
+);
+rejectsEdit(
+  kitchenFloorMap,
+  (map) => {
+    map.fixtures.find((item) => item.kind === "applianceFoot").x = -50;
+  },
+  "rotated footprint",
+);
+rejectsEdit(
+  kitchenFloorMap,
+  (map) => {
+    map.fixtures.push({
+      kind: "cabinetBase",
+      x: 3500,
+      y: 3000,
+      w: 500,
+      h: 300,
+    });
+  },
+  "route lacks steering clearance",
+);
 
 for (const [edit, message] of [
   [

@@ -46,6 +46,74 @@ try {
     );
     const initialAnts = globalThis.structuredClone(dynamics.state.ants);
     const initialFood = globalThis.structuredClone(dynamics.state.cheerios);
+    if (id === "kitchen-floor") {
+      const bases = config.elements.filter(
+        (item) => item.fixture === "cabinetBase",
+      );
+      assert.ok(
+        bases.some((item) => item.y === 0 && item.w === config.world.width),
+        "cabinet bases frame the top edge",
+      );
+      assert.ok(
+        bases.some((item) => item.x === 0 && item.h > item.w),
+        "cabinet bases also frame the left edge",
+      );
+      assert.equal(
+        config.elements.filter((item) => item.fixture === "applianceFoot")
+          .length,
+        2,
+      );
+      assert.equal(
+        config.elements.filter((item) => item.fixture === "tippedCup").length,
+        1,
+      );
+      assert.ok(
+        initialAnts.filter((ant) => ant.y < config.world.height / 3).length >=
+          3,
+        "the upper third has a real food-and-ant scene",
+      );
+      assert.ok(initialFood.some((food) => food.y < config.world.height / 3));
+      assert.ok(
+        config.route?.length >= 4,
+        "the escape loop has an authored clearance certificate",
+      );
+      // A 240-unit lane is over four marble diameters wide. This is a static
+      // clearance check, not a simulation of escaping a live roach.
+      for (let index = 1; index < config.route.length; index++) {
+        const a = config.route[index - 1];
+        const b = config.route[index];
+        const steps = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 5);
+        for (let step = 0; step <= steps; step++) {
+          const circle = {
+            x: a.x + ((b.x - a.x) * step) / steps,
+            y: a.y + ((b.y - a.y) * step) / steps,
+            r: 120,
+          };
+          assert.ok(
+            circle.x >= circle.r &&
+              circle.y >= circle.r &&
+              circle.x <= config.world.width - circle.r &&
+              circle.y <= config.world.height - circle.r,
+          );
+          assert.ok(
+            runtime.state.obstacles.every(
+              (obstacle) =>
+                !circleOrientedRectContact(circle, obstacle).intersects,
+            ),
+            "wide escape loop stays clear of solid objects",
+          );
+        }
+      }
+    } else {
+      assert.equal(
+        config.elements.some(
+          (item) =>
+            item.fixture === "cabinetBase" || item.fixture === "tippedCup",
+        ),
+        false,
+        "breakfast kitchen composition stays unchanged",
+      );
+    }
     const obstaclesBefore = globalThis.structuredClone(runtime.state.obstacles);
     const floor = new FakeElement();
     renderMapTheme({

@@ -32,6 +32,10 @@ export const KITCHEN_FIXTURES = Object.freeze({
   fork: "fork",
   spoon: "spoon",
   sponge: "sponge",
+  cabinetBase: "cabinetBase",
+  applianceBase: "applianceBase",
+  applianceFoot: "applianceFoot",
+  tippedCup: "tippedCup",
 });
 
 // Utensil PNGs are centered with CSS background-size: contain. Collision uses
@@ -48,6 +52,13 @@ export const KITCHEN_SPOON_SPRITE = Object.freeze({
   height: 220,
   minWidth: 620,
   minHeight: 150,
+});
+
+export const KITCHEN_CUP_SPRITE = Object.freeze({
+  width: 1261,
+  height: 1247,
+  minWidth: 0,
+  minHeight: 0,
 });
 
 // Parking car uses the same centered background-size: contain transform.

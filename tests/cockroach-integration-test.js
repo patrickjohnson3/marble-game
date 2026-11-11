@@ -109,6 +109,8 @@ function harness() {
   const { context, runtime, state, feedback } = harness();
   Object.assign(state.marble, { x: 1500, y: 500 });
   Object.assign(runtime.state.cockroach, {
+    x: 900,
+    previousX: 900,
     mode: "scurry",
     harassmentIn: 1000,
     decisionIn: 0,
@@ -117,13 +119,14 @@ function harness() {
   const cereal = {
     kind: "cheerio",
     active: true,
-    x: 100,
+    // Both food positions must be on playable floor, outside the left bases.
+    x: 500,
     y: 500,
   };
   context.kitchenState = { cheerios: [cereal] };
   updatePhysics(context, 2, feedback);
   assert.ok(
-    runtime.state.cockroach.x < 500,
+    runtime.state.cockroach.x < 900,
     "the real physics path supplies live food to ordinary roach movement",
   );
   const x = runtime.state.cockroach.x;

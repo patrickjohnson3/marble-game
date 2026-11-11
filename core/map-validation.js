@@ -574,6 +574,24 @@ function validateComposition(config, { world, obstacles, errors, spawn }) {
     )
       errors.push(`unknown surface material '${item.material}'`);
     if (item.type === "obstacle") {
+      const kitchenBase = [
+        "cabinetBase",
+        "applianceBase",
+        "applianceFoot",
+      ].includes(item.fixture);
+      if (
+        kitchenBase &&
+        ((item.hitboxW !== undefined && item.hitboxW !== item.w) ||
+          (item.hitboxH !== undefined && item.hitboxH !== item.h))
+      )
+        errors.push(
+          "kitchen base hitbox dimensions must match the visible footprint",
+        );
+      if (
+        ["cabinetBase", "applianceBase"].includes(item.fixture) &&
+        !["down", "right"].includes(item.facing ?? "down")
+      )
+        errors.push("kitchen base facing must be down or right");
       if (
         config.theme === "livingRoom" &&
         ((item.hitboxW !== undefined && item.hitboxW !== item.w) ||
@@ -596,7 +614,7 @@ function validateComposition(config, { world, obstacles, errors, spawn }) {
         );
       // Kitchen sprite boxes intentionally include transparent space. Their
       // fitted collision parts are checked by the existing fixture tests.
-      if (!isKitchenFixture(item.fixture))
+      if (!isKitchenFixture(item.fixture) || kitchenBase)
         validateRotatedBounds(item, {
           world,
           errors,

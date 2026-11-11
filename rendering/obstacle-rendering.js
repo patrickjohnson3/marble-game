@@ -1,6 +1,7 @@
 import { rectBounds } from "../core/rect-bounds.js";
 import { createCanvas, drawRoundedRect } from "./wall-rendering.js";
 import {
+  KITCHEN_CUP_SPRITE,
   KITCHEN_FIXTURES,
   KITCHEN_FORK_SPRITE,
   KITCHEN_SPOON_SPRITE,
@@ -335,6 +336,31 @@ function renderKitchenObstacleWalls(container, obstacles) {
       case KITCHEN_FIXTURES.sponge:
         syncKitchenSpongeSprite(layer, sprites, fixture);
         break;
+      case KITCHEN_FIXTURES.tippedCup:
+        syncKitchenFixtureSprite(
+          layer,
+          sprites,
+          fixture,
+          "kitchenCupSprite",
+          KITCHEN_CUP_SPRITE.minWidth,
+          KITCHEN_CUP_SPRITE.minHeight,
+        );
+        break;
+      case KITCHEN_FIXTURES.cabinetBase:
+      case KITCHEN_FIXTURES.applianceBase:
+      case KITCHEN_FIXTURES.applianceFoot: {
+        const sprite = syncKitchenFixtureSprite(
+          layer,
+          sprites,
+          fixture,
+          "kitchenBase " + fixture.fixture,
+          0,
+          0,
+        );
+        sprite.style.borderRadius = (fixture.cornerRadius ?? 0) + "px";
+        sprite.setAttribute("data-facing", fixture.facing ?? "down");
+        break;
+      }
       default:
         continue;
     }

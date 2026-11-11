@@ -1,4 +1,5 @@
 import {
+  KITCHEN_CUP_SPRITE,
   KITCHEN_FORK_SPRITE,
   KITCHEN_SPOON_SPRITE,
   PARKING_CAR_SPRITE,
@@ -29,6 +30,27 @@ const spoonMetalRects = [
   [659, 23, 231, 173, 86.5],
   [645, 45, 275, 126, 63],
 ];
+
+// Measured in tipped-cup.webp pixels. Keep the handle's opening genuinely
+// empty, rather than colliding with the sprite's rectangular display box.
+const cupBodyRects = [
+  [190, 405, 860, 725, 22],
+  [120, 425, 160, 700, 80],
+  [85, 500, 230, 550, 115],
+  [1025, 398, 58, 734, 29],
+  [1035, 500, 95, 520, 47.5],
+  [320, 280, 115, 170, 57.5],
+  [350, 190, 135, 170, 67.5],
+  [415, 130, 125, 120, 60],
+  [500, 80, 230, 120, 60],
+  [685, 140, 140, 145, 70],
+  [760, 190, 115, 210, 57.5],
+  [785, 285, 115, 165, 57.5],
+];
+
+export function createTippedCupCollisionRects(cup) {
+  return createSpriteCollisionRects(cup, KITCHEN_CUP_SPRITE, cupBodyRects);
+}
 
 // Measured in parking-car.webp pixels: rounded bonnet, narrow flanks, rear
 // shoulders/bumper, and the slightly wider lower body. Preserve transparent
@@ -61,7 +83,7 @@ export function createSpoonCollisionRects(spoon) {
   );
 }
 
-function createSpriteCollisionRects(fixture, sprite, metalRects) {
+function createSpriteCollisionRects(fixture, sprite, parts) {
   const visualWidth = Math.max(fixture.hitboxW ?? fixture.w, sprite.minWidth);
   const visualHeight = Math.max(fixture.hitboxH ?? fixture.h, sprite.minHeight);
   const scale = Math.min(
@@ -74,7 +96,7 @@ function createSpriteCollisionRects(fixture, sprite, metalRects) {
   const centerX = fixture.x + fixture.w / 2;
   const centerY = fixture.y + fixture.h / 2;
 
-  return metalRects.map(([x, y, width, height, radius]) => {
+  return parts.map(([x, y, width, height, radius]) => {
     const localX = (x + width / 2 - sprite.width / 2) * scale;
     const localY = (y + height / 2 - sprite.height / 2) * scale;
     const hitboxW = width * scale;

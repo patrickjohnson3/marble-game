@@ -34,18 +34,18 @@ advance objectives or actors. Authoring data is not rebuilt per frame.
 
 Run `npm run map:validate -- --list` for available ids and kinds.
 
-| Field       | Supported content                                                                                     | Gameplay effect                                                                 |
-| ----------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `objective` | `eliminate` ant/all; `reach` named region                                                             | Completion and HUD                                                              |
-| `regions`   | `{id, label?, x, y, w, h}`                                                                            | Reach destination when referenced                                               |
-| `surfaces`  | `water`, `goo`, `rough`, `shag`, `ice`, `hazard`                                                      | Existing terrain effects                                                        |
-| `fixtures`  | Kitchen: `fork`, `spoon`, `sponge`; living room: `sofa`, `coffeeTable`, `bookcase`, `toyBlock`        | Solid collision; sponge retains its interaction                                 |
-| `obstacles` | Plain/rotated rectangles, optional `cornerRadius`                                                     | Solid walls, currently supported by living-room rendering                       |
-| `clusters`  | Kitchen: `cerealPacket`, `breakfastNapkin`, `cleanupScraps`, `drinkSpill`; living room: `readingPile` | Kitchen recipes include live ants and pushable cereal; reading pile is cosmetic |
-| `scenery`   | Living room: `sock`, `magazine`                                                                       | Flat cosmetic dressing, no collision                                            |
-| `popcorn`   | Living room: `{x, y, r, angle?}` circles                                                              | Pushable food; terrain drag and furniture contact                               |
-| `views`     | `{id, x, y, scale?}`                                                                                  | Screenshot targets only                                                         |
-| `route`     | Array of `{x, y}` waypoints                                                                           | Development clearance check only                                                |
+| Field       | Supported content                                                                                                                                            | Gameplay effect                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `objective` | `eliminate` ant/all; `reach` named region                                                                                                                    | Completion and HUD                                                              |
+| `regions`   | `{id, label?, x, y, w, h}`                                                                                                                                   | Reach destination when referenced                                               |
+| `surfaces`  | `water`, `goo`, `rough`, `shag`, `ice`, `hazard`                                                                                                             | Existing terrain effects                                                        |
+| `fixtures`  | Kitchen: `fork`, `spoon`, `sponge`, `cabinetBase`, `applianceBase`, `applianceFoot`, `tippedCup`; living room: `sofa`, `coffeeTable`, `bookcase`, `toyBlock` | Solid collision; sponge retains its interaction                                 |
+| `obstacles` | Plain/rotated rectangles, optional `cornerRadius`                                                                                                            | Solid walls, currently supported by living-room rendering                       |
+| `clusters`  | Kitchen: `cerealPacket`, `breakfastNapkin`, `cleanupScraps`, `drinkSpill`; living room: `readingPile`                                                        | Kitchen recipes include live ants and pushable cereal; reading pile is cosmetic |
+| `scenery`   | Living room: `sock`, `magazine`                                                                                                                              | Flat cosmetic dressing, no collision                                            |
+| `popcorn`   | Living room: `{x, y, r, angle?}` circles                                                                                                                     | Pushable food; terrain drag and furniture contact                               |
+| `views`     | `{id, x, y, scale?}`                                                                                                                                         | Screenshot targets only                                                         |
+| `route`     | Array of `{x, y}` waypoints                                                                                                                                  | Development clearance check only                                                |
 
 Supported authored themes are `kitchenFloor` and `livingRoom`. A theme must
 render its vocabulary: do not place a sofa in a kitchen or assume that naming
@@ -69,6 +69,16 @@ The existing moving/absorbing sponge belongs to `kitchen-floor` and targets its
 first water patch. Without water it remains solid and pushable, with absorption
 inactive. The breakfast kitchen's sponge remains a static fixture. That
 specialized behavior stays in `core/kitchen-dynamics.js`.
+
+The main kitchen frames its top/left edges with closed `cabinetBase` toe-kicks
+and an `applianceBase` skirt. These native fixtures paint their exact solid
+`w`/`h` footprint; smaller hidden hitboxes are rejected. `facing` is `down`
+(default) or `right` and selects the floor-facing trim. Author individual round
+`applianceFoot` fixtures with `cornerRadius` so the gaps between them stay real.
+`tippedCup` uses a transparent sprite and fitted body/rim/handle collision parts,
+following the utensil pipeline. Its opening faces +X at angle 0. See the main
+kitchen definition and [environment follow-up](kitchen-environment.md#edge-composition-follow-up)
+for placement, escape-loop clearance, visual evidence, and asset provenance.
 
 Shag expands to `roughPatch` with `material: "shag"`: static textured pile art
 and existing rough-terrain movement. It uses `roughPatchDragRetention` in

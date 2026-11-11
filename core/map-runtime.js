@@ -11,6 +11,7 @@ import {
   createForkCollisionRects,
   createParkingCarCollisionRects,
   createSpoonCollisionRects,
+  createTippedCupCollisionRects,
   normalizeJoinedObstacleRects,
 } from "./map-obstacles.js";
 import { rectBounds } from "./rect-bounds.js";
@@ -68,6 +69,8 @@ export function createResolvedMapState(
         return createForkCollisionRects(obstacle);
       if (obstacle.fixture === KITCHEN_FIXTURES.spoon)
         return createSpoonCollisionRects(obstacle);
+      if (obstacle.fixture === KITCHEN_FIXTURES.tippedCup)
+        return createTippedCupCollisionRects(obstacle);
       if (obstacle.fixture === "parkedCar")
         return createParkingCarCollisionRects(obstacle);
       return [obstacle];

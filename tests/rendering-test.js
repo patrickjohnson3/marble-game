@@ -1,6 +1,7 @@
 import { createResolvedMapState } from "../core/map-runtime.js";
 import { validateMapConfig } from "../core/map-validation.js";
-import { resolvedMapConfig } from "../core/map-config.js";
+import { baseMapConfig, resolvedMapConfig } from "../core/map-config.js";
+import { resolveMapVariantConfig } from "../core/map-variants.js";
 import assert from "node:assert/strict";
 import { circleOrientedRectContact } from "../core/physics-collisions.js";
 import {
@@ -2249,15 +2250,21 @@ function testKitchenObstaclesRenderAsFixtures() {
 testKitchenObstaclesRenderAsFixtures();
 
 function testMultipleKitchenFixturesHaveIndependentSprites() {
+  // Use the utensil-only kitchen for this synthetic six-fixture arrangement;
+  // adding props to the main kitchen would block its authored escape route.
+  const sourceMap = resolveMapVariantConfig(
+    baseMapConfig,
+    "kitchen-breakfast-spill",
+  );
   const extras = ["fork", "spoon", "sponge"].map((kind, index) => ({
-    ...resolvedMapConfig.elements.find((element) => element.fixture === kind),
+    ...sourceMap.elements.find((element) => element.fixture === kind),
     x: 500 + index * 1100,
     y: 600,
     angle: 0.2 * index,
   }));
   const map = {
-    ...resolvedMapConfig,
-    elements: [...resolvedMapConfig.elements, ...extras],
+    ...sourceMap,
+    elements: [...sourceMap.elements, ...extras],
   };
   assert.deepEqual(
     validateMapConfig(map),

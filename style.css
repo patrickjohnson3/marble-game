@@ -254,6 +254,112 @@ body {
   transform: rotate(var(--fixture-angle, 0rad));
   transform-origin: center;
 }
+.kitchenCupSprite {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+  background: url("assets/sprites/tipped-cup.webp") center / contain no-repeat;
+  filter: drop-shadow(0 8px 7px #0004);
+  transform: rotate(var(--fixture-angle, 0rad));
+  transform-origin: center;
+}
+.kitchenBase {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+  transform: rotate(var(--fixture-angle, 0rad));
+  transform-origin: center;
+  /* Only the soft shadow extends beyond the solid authored footprint. */
+  box-shadow: 10px 14px 18px #30251955;
+}
+.cabinetBase {
+  --panel-angle: 90deg;
+  --edge-angle: 0deg;
+  border: 4px solid #51412e;
+  background:
+    linear-gradient(
+      var(--edge-angle),
+      #332c23 0 38px,
+      #65543d 39px 48px,
+      transparent 49px
+    ),
+    repeating-linear-gradient(
+      var(--panel-angle),
+      transparent 0 520px,
+      #64543c 521px 524px,
+      #e0cfad 525px 528px,
+      transparent 529px 532px
+    ),
+    repeating-linear-gradient(
+      var(--panel-angle),
+      #a38a6522 0 2px,
+      #dbc39a22 3px 7px
+    ),
+    linear-gradient(
+      var(--edge-angle),
+      #94794f,
+      #c5ad85 28%,
+      #ddcaa5 90%,
+      #f0dfbb
+    );
+  box-shadow:
+    inset 0 0 0 9px #a58b6355,
+    10px 14px 18px #30251955;
+}
+.cabinetBase[data-facing="right"] {
+  --panel-angle: 0deg;
+  --edge-angle: 270deg;
+}
+.applianceBase {
+  --edge-angle: 0deg;
+  --vent-angle: 90deg;
+  border: 4px solid #484b49;
+  background:
+    linear-gradient(
+      var(--edge-angle),
+      #242827 0 36px,
+      #656b68 37px 52px,
+      transparent 53px
+    ),
+    repeating-linear-gradient(
+      var(--vent-angle),
+      transparent 0 44px,
+      #222b2b99 45px 49px,
+      #d1d4ca66 50px 52px,
+      transparent 53px 60px
+    ),
+    repeating-linear-gradient(
+      var(--edge-angle),
+      #ffffff12 0 1px,
+      #343b3912 2px 3px
+    ),
+    linear-gradient(
+      var(--edge-angle),
+      #707a78,
+      #c6cbc5 45%,
+      #939f9b 80%,
+      #e1e2d9
+    );
+}
+.applianceBase[data-facing="right"] {
+  --edge-angle: 270deg;
+  --vent-angle: 0deg;
+}
+.applianceFoot {
+  border: 8px solid #333732;
+  background: radial-gradient(
+    ellipse at 35% 30%,
+    #d0d0bd,
+    #8f968d 30%,
+    #4d5752 57%,
+    #252b29 60%,
+    #434b44 78%,
+    #202723
+  );
+  box-shadow:
+    inset 0 0 0 4px #b6bbae66,
+    7px 9px 9px #30251966;
+}
 .kitchenSpongeSprite {
   position: absolute;
   box-sizing: border-box;

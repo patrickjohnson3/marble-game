@@ -79,6 +79,7 @@ export const pwaFiles = [
   "assets/sprites/fork.png",
   "assets/sprites/sponge.png",
   "assets/sprites/spoon.png",
+  "assets/sprites/tipped-cup.webp",
   "assets/sprites/mouse.webp",
   "assets/sprites/shag.webp",
   "assets/sprites/oak-floor.webp",
