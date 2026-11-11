@@ -211,13 +211,16 @@ export function createUi({
     }
   }
 
+  function updateCameraControls() {
+    if (!cameraControls) return;
+    cameraControls.hidden = !settings.cameraControlsEnabled || !controls.hidden;
+    if (cameraControls.hidden) cameraControls.open = false;
+  }
+
   function setStartControls({ visible, disabled, label }) {
     if (visible !== undefined) {
       controls.hidden = !visible;
-      if (cameraControls) {
-        cameraControls.hidden = visible;
-        if (visible) cameraControls.open = false;
-      }
+      updateCameraControls();
     }
     if (disabled !== undefined) startBtn.disabled = disabled;
     if (label !== undefined) startBtn.textContent = label;
@@ -314,6 +317,7 @@ export function createUi({
     setPwaInstallAvailable,
     setPwaStatus,
     setStartControls,
+    updateCameraControls,
     updateDebugPanel,
     updateFps,
   };

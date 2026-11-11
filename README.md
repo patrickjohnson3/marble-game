@@ -44,8 +44,9 @@ Then open `http://localhost:8000/`.
 - Settings: use the gear button. Switching apps or hiding the page pauses play
   in Settings; press Resume when ready, or Set neutral first if your grip changed.
   The encounter stays in memory; a browser-discarded page starts fresh.
-- Camera: pinch to zoom and drag with two fingers to pan. After Start, open
-  **Camera** at the bottom left for single-tap zoom, pan, and Center buttons.
+- Camera: pinch to zoom and drag with two fingers to pan. Enable **camera buttons**
+  in Settings → Gameplay (off by default), then after Start open **Camera** at the
+  bottom left for single-tap zoom, pan, and Center buttons.
   Button panning keeps the marble visible; normal following resumes after the
   same short delay as a released gesture.
 - Objective: follow the top-left status. Kill all kitchen ants, then choose

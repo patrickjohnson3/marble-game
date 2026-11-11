@@ -48,6 +48,7 @@ export function bindSettingsPanel({
     resetSensitivitySetting,
     hapticsSetting,
     trailSetting,
+    cameraControlsSetting,
     fullscreenSetting,
     goalIndicatorSetting,
     cockroachCueSetting,
@@ -73,6 +74,7 @@ export function bindSettingsPanel({
   updateRangeOutput(sensitivitySetting, sensitivitySettingValue);
   hapticsSetting.checked = settings.hapticsEnabled;
   trailSetting.checked = settings.trailEnabled;
+  cameraControlsSetting.checked = settings.cameraControlsEnabled;
   fullscreenSetting.checked = settings.fullscreenEnabled;
   fullscreenSetting.disabled = fullscreenManagedByPwa;
   goalIndicatorSetting.checked = settings.goalIndicatorEnabled;
@@ -143,6 +145,7 @@ export function bindSettingsPanel({
   );
   bindCheckboxSetting(hapticsSetting, "hapticsEnabled");
   bindCheckboxSetting(trailSetting, "trailEnabled");
+  bindCheckboxSetting(cameraControlsSetting, "cameraControlsEnabled");
   bindCheckboxSetting(fullscreenSetting, "fullscreenEnabled", () => {
     applyFullscreenSetting();
   });

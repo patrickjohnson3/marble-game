@@ -2,7 +2,7 @@ export const copy = {
   bootError: "game failed to load. reconnect and try again.",
   title: "marble tilt",
   startHelp:
-    "Tilt your phone to roll, or use arrows/WASD. Kill all kitchen ants, then choose Next room; defeat the living-room mouse with fast hits, then reach its exit. Follow the objective shown above. Pinch to zoom; use two fingers to pan, or open Camera.",
+    "Tilt your phone to roll, or use arrows/WASD. Kill all kitchen ants, then choose Next room; defeat the living-room mouse with fast hits, then reach its exit. Follow the objective shown above. Pinch to zoom; use two fingers to pan. Enable Camera buttons in Settings.",
   initialHint: "",
   cockroach: {
     pursuit: "Roach chasing",
@@ -76,7 +76,7 @@ export const copy = {
       title: "Controls & map",
       movement: "Tilt your phone to steer. On desktop, use arrows or WASD.",
       camera:
-        "Pinch to zoom. Drag with two fingers to pan. Or open Camera to zoom, pan nearby, or center on the marble.",
+        "Pinch to zoom. Drag with two fingers to pan. Enable Camera buttons in Settings for single-tap zoom, pan, and centering.",
       goal: "Kill all kitchen ants, then choose Next room when ready. Defeat the living-room mouse and reach its exit, or hold inside the green goal. Your current objective is shown above. The Mouse arrow points from your marble toward a distant mouse automatically.",
     },
     sections: {
@@ -90,6 +90,7 @@ export const copy = {
       sensitivitySetting: "tilt response",
       hapticsSetting: "haptics",
       trailSetting: "trail",
+      cameraControlsSetting: "camera buttons",
       fullscreenSetting: "fullscreen",
       goalIndicatorSetting: "exit / goal arrow",
       cockroachCueSetting: "roach chase hints",

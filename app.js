@@ -569,6 +569,7 @@ export function createApp({
     physics.accel = settings.acceleration;
     haptics.enabled = settings.hapticsEnabled;
     trailRenderer.setEnabled(settings.trailEnabled);
+    ui.updateCameraControls();
   }
 
   function applyFullscreenSetting() {

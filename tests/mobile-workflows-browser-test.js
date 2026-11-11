@@ -506,6 +506,19 @@ window.__mapPreview = createApp();`,
       null,
       { timeout: timing.introReleaseDelayMs + 3000 },
     );
+    assert.equal(
+      await controls.isHidden(),
+      true,
+      "Camera stays hidden after Start by default",
+    );
+    await page.locator("#settingsToggle").tap();
+    const cameraOption = page.getByRole("checkbox", {
+      name: "camera buttons",
+      exact: true,
+    });
+    assert.equal(await cameraOption.isChecked(), false);
+    await cameraOption.check();
+    await page.locator("#resumeGame").tap();
     assert.equal(await controls.isVisible(), true);
     assert.equal(
       await controls.evaluate((element) => element.open),
@@ -606,7 +619,23 @@ window.__mapPreview = createApp();`,
       pausedCamera,
       "paused camera actions must not alter the view",
     );
+    await cameraOption.uncheck();
+    assert.equal(await controls.isHidden(), true);
+    assert.equal(await controls.evaluate((element) => element.open), false);
+    await cameraOption.check();
+    assert.equal(await controls.isVisible(), true);
+    assert.equal(
+      await controls.evaluate((element) => element.open),
+      false,
+      "re-enabled menu is folded",
+    );
+    assert.deepEqual(
+      await cameraState(),
+      pausedCamera,
+      "visibility changes cannot move or zoom the camera",
+    );
     await page.locator("#resumeGame").tap();
+    await page.locator("#cameraControlsTitle").tap();
 
     for (const viewport of [
       { width: 320, height: 256 },
@@ -631,6 +660,37 @@ window.__mapPreview = createApp();`,
     assert.equal(await controls.isHidden(), true);
     assert.equal(await controls.evaluate((element) => element.open), false);
     assert.equal(await page.locator("#start").isVisible(), true);
+    await page.reload({ waitUntil: "networkidle" });
+    assert.equal(
+      await controls.isHidden(),
+      true,
+      "saved opt-in still waits for Start",
+    );
+    await page.locator("#settingsToggle").tap();
+    assert.equal(
+      await cameraOption.isChecked(),
+      true,
+      "opt-in persists across reload",
+    );
+    await page.locator("#closeSettings").tap();
+    await page.locator("#start").tap();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(
+      () => window.__mapPreview.state.intro.released,
+      null,
+      { timeout: timing.introReleaseDelayMs + 3000 },
+    );
+    assert.equal(await controls.isVisible(), true);
+    await page.locator("#settingsToggle").tap();
+    await cameraOption.uncheck();
+    await page.reload({ waitUntil: "networkidle" });
+    await page.locator("#settingsToggle").tap();
+    assert.equal(
+      await cameraOption.isChecked(),
+      false,
+      "opting out persists too",
+    );
+    assert.equal(await controls.isHidden(), true);
   } finally {
     await page.close();
   }

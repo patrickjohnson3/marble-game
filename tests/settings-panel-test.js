@@ -36,6 +36,7 @@ function createPanelHarness() {
     acceleration: 0.115,
     hapticsEnabled: true,
     trailEnabled: false,
+    cameraControlsEnabled: false,
     fullscreenEnabled: true,
     goalIndicatorEnabled: false,
     cockroachCueEnabled: false,
@@ -47,6 +48,7 @@ function createPanelHarness() {
   const loadMap = fakeButton();
   const fpsSetting = fakeControl();
   const fullscreenSetting = fakeControl();
+  const cameraControlsSetting = fakeControl();
   const goalIndicatorSetting = fakeControl();
   const cockroachCueSetting = fakeControl();
   const hitboxOverlaySetting = fakeControl();
@@ -83,6 +85,7 @@ function createPanelHarness() {
       resetSensitivitySetting,
       hapticsSetting: fakeControl(),
       trailSetting: fakeControl(),
+      cameraControlsSetting,
       fullscreenSetting,
       goalIndicatorSetting,
       cockroachCueSetting,
@@ -157,6 +160,7 @@ function createPanelHarness() {
     }),
     fpsSetting,
     fullscreenSetting,
+    cameraControlsSetting,
     goalIndicatorSetting,
     cockroachCueSetting,
     hitboxOverlaySetting,
@@ -312,6 +316,24 @@ function testCockroachCueTogglePersistsAndRenders() {
 
 testCockroachCueTogglePersistsAndRenders();
 
+function testCameraButtonsTogglePersistsAndApplies() {
+  const { counts, cameraControlsSetting, settings } = createPanelHarness();
+  assert.equal(cameraControlsSetting.checked, false);
+  for (const enabled of [true, false]) {
+    cameraControlsSetting.checked = enabled;
+    cameraControlsSetting.listeners.change();
+    assert.equal(settings.cameraControlsEnabled, enabled);
+  }
+  assert.equal(counts().saveCount, 2);
+  assert.equal(
+    counts().applyCount,
+    2,
+    "visibility is projected immediately from preferences",
+  );
+}
+
+testCameraButtonsTogglePersistsAndApplies();
+
 function testHitboxOverlayTogglePersistsAndRenders() {
   const { counts, hitboxOverlaySetting, settings } = createPanelHarness();
 
@@ -341,6 +363,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
     acceleration: 0.115,
     hapticsEnabled: true,
     trailEnabled: false,
+    cameraControlsEnabled: false,
     fullscreenEnabled: true,
     goalIndicatorEnabled: false,
     cockroachCueEnabled: false,
@@ -372,6 +395,7 @@ function testInstalledPwaDisablesFullscreenToggle() {
       resetSensitivitySetting: fakeButton(),
       hapticsSetting: fakeControl(),
       trailSetting: fakeControl(),
+      cameraControlsSetting: fakeControl(),
       fullscreenSetting,
       goalIndicatorSetting: fakeControl(),
       cockroachCueSetting: fakeControl(),

@@ -70,6 +70,7 @@ export const domIds = {
   resetSensitivitySetting: "resetSensitivitySetting",
   hapticsSetting: "hapticsSetting",
   trailSetting: "trailSetting",
+  cameraControlsSetting: "cameraControlsSetting",
   fullscreenSetting: "fullscreenSetting",
   goalIndicatorSetting: "goalIndicatorSetting",
   cockroachCueSetting: "cockroachCueSetting",

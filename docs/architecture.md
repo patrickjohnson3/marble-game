@@ -359,12 +359,21 @@ arrive. It switches the game into keyboard mode and starts the intro countdown.
 Camera transforms and gestures are handled in `input/camera-controller.js` and
 `input/camera-gestures.js`. The folded Camera controls call the same controller
 for discrete zoom, pan, and centering. They reuse gesture limits and cooldown,
-enforce marble visibility immediately, and never change marble state. Pinch zoom
+enforce marble visibility immediately, and never change marble state.
+The saved **camera buttons** option in Settings → Gameplay defaults off. When
+enabled, the menu appears after Start; disabling it hides and collapses the menu
+immediately. Pinch and two-finger pan remain available with the menu hidden. Pinch zoom
 is an input/camera concern, not a physics concern. Zoom preserves the map point under the finger midpoint, subject to
 world bounds. Following stays suspended throughout a two-finger gesture; its
 cooldown begins when the gesture ends. Once the gesture is released, a visibility
 limit keeps the full marble inside the viewport during both cooldown and smooth
 following; deliberate two-finger map exploration remains unrestricted.
+
+The browser camera workflow checks default-off visibility, paused toggling,
+zoom/pan/Center actions, keyboard activation, reset, and persistence across
+reloads. The option was inspected in desktop Chrome at 390×844 and 844×390;
+see the [default-off setting](screenshots/camera-setting-phone.png).
+These viewport checks do not establish physical-phone behavior.
 
 ## Settings Responsibilities
 

@@ -181,30 +181,32 @@ function testStatsSettingPersistsValidChoice() {
   assert.equal(settings.statsEnabled, true);
 }
 
-function testCockroachCueDefaultsOffAndPersistsExplicitChoices() {
-  for (const saved of [{}, { cockroachCueEnabled: "true" }]) {
-    const settings = loadSettings({
-      storage: storageWith(JSON.stringify(saved)),
-      storageKey: "settings",
-    });
-    assert.equal(
-      settings.cockroachCueEnabled,
-      false,
-      "old or malformed preferences default off",
-    );
-  }
-  for (const enabled of [true, false]) {
-    const storage = storageWith(null);
-    saveSettings({
-      storage,
-      storageKey: "settings",
-      settings: { ...defaults, cockroachCueEnabled: enabled },
-    });
-    assert.equal(
-      loadSettings({ storage, storageKey: "settings" }).cockroachCueEnabled,
-      enabled,
-      "both explicit choices survive save/load",
-    );
+function testDisplayPreferencesDefaultOffAndPersistExplicitChoices() {
+  for (const key of ["cockroachCueEnabled", "cameraControlsEnabled"]) {
+    for (const saved of [{}, { [key]: "true" }]) {
+      const settings = loadSettings({
+        storage: storageWith(JSON.stringify(saved)),
+        storageKey: "settings",
+      });
+      assert.equal(
+        settings[key],
+        false,
+        `${key}: old or malformed preferences default off`,
+      );
+    }
+    for (const enabled of [true, false]) {
+      const storage = storageWith(null);
+      saveSettings({
+        storage,
+        storageKey: "settings",
+        settings: { ...defaults, [key]: enabled },
+      });
+      assert.equal(
+        loadSettings({ storage, storageKey: "settings" })[key],
+        enabled,
+        `${key}: both explicit choices survive save/load`,
+      );
+    }
   }
 }
 
@@ -287,7 +289,7 @@ testStorageReadErrorsFallBackToDefaults();
 testStorageWriteErrorsAreIgnored();
 testFpsSettingPersistsValidChoice();
 testStatsSettingPersistsValidChoice();
-testCockroachCueDefaultsOffAndPersistsExplicitChoices();
+testDisplayPreferencesDefaultOffAndPersistExplicitChoices();
 testMalformedSavedSettingsFallBackToDefaults();
 testNumericSettingsClampToControlRanges();
 

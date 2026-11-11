@@ -120,7 +120,7 @@ try {
   );
   assert.equal(
     document.getElementById("cameraHelp").textContent,
-    "Pinch to zoom. Drag with two fingers to pan. Or open Camera to zoom, pan nearby, or center on the marble.",
+    "Pinch to zoom. Drag with two fingers to pan. Enable Camera buttons in Settings for single-tap zoom, pan, and centering.",
   );
   assert.equal(
     document.getElementById("goalHelp").textContent,

@@ -595,6 +595,53 @@ function createCockroachCueHarness() {
   return { ui, state, size, cockroachCue, cockroachCueText, cockroachArrow };
 }
 
+function testCameraMenuFollowsPreferenceAndStartVisibility() {
+  const controls = new FakeElement();
+  const cameraControls = new FakeElement();
+  const settings = {
+    cameraControlsEnabled: false,
+    fpsEnabled: false,
+    statsEnabled: false,
+  };
+  const ui = createUi({
+    controls,
+    cameraControls,
+    settings,
+    startBtn: new FakeElement(),
+    fpsCounter: new FakeElement(),
+    debug: new FakeElement(),
+  });
+  ui.setStartControls({ visible: false });
+  assert.equal(
+    cameraControls.hidden,
+    true,
+    "starting must not override default-off camera buttons",
+  );
+  settings.cameraControlsEnabled = true;
+  ui.updateCameraControls();
+  assert.equal(cameraControls.hidden, false);
+  cameraControls.open = true;
+  settings.cameraControlsEnabled = false;
+  ui.updateCameraControls();
+  assert.equal(cameraControls.hidden, true);
+  assert.equal(cameraControls.open, false, "disabling closes an expanded menu");
+  settings.cameraControlsEnabled = true;
+  ui.updateCameraControls();
+  assert.equal(cameraControls.hidden, false);
+  assert.equal(cameraControls.open, false, "re-enabling starts folded");
+  ui.setStartControls({ visible: true });
+  ui.updateCameraControls();
+  assert.equal(cameraControls.hidden, true, "opt-in must still wait for Start");
+  ui.setStartControls({ visible: false });
+  assert.equal(
+    cameraControls.hidden,
+    false,
+    "starting honors the saved opt-in",
+  );
+}
+
+testCameraMenuFollowsPreferenceAndStartVisibility();
+
 function testCockroachPursuitCueAndOffscreenDirection() {
   const { ui, state, size, cockroachCue, cockroachCueText, cockroachArrow } =
     createCockroachCueHarness();

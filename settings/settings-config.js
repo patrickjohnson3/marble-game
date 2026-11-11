@@ -32,6 +32,10 @@ export const settingsSchema = Object.freeze({
     defaultValue: false,
     type: "boolean",
   }),
+  cameraControlsEnabled: Object.freeze({
+    defaultValue: false,
+    type: "boolean",
+  }),
   trailDefaultVersion: Object.freeze({
     defaultValue: 2,
     type: "number",

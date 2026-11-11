@@ -276,6 +276,11 @@ function testPhysicsAndSettingsRanges() {
   );
   assert.equal(settingsConfig.trailEnabled, false, "trail defaults off");
   assert.equal(
+    settingsConfig.cameraControlsEnabled,
+    false,
+    "camera buttons default off",
+  );
+  assert.equal(
     settingsConfig.goalIndicatorEnabled,
     false,
     "goal indicator defaults off",
