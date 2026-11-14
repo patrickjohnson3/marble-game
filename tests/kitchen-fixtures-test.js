@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { baseMapConfig } from "../core/map-config.js";
+import { physicsConfig } from "../core/game-config.js";
+import { updatePhysics } from "../core/physics.js";
 import { createResolvedMapState } from "../core/map-runtime.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { circleObstacleContact } from "../core/physics-collisions.js";
@@ -27,6 +29,7 @@ const silhouette = [
 for (const angle of [0, cup.angle, -0.4]) {
   const state = createResolvedMapState({
     ...map,
+    cockroach: undefined, // Isolate cup contact from the independently moving pest.
     elements: [{ ...cup, angle }],
   });
   function intersects(x, y) {
@@ -61,7 +64,83 @@ for (const angle of [0, cup.angle, -0.4]) {
     false,
     "a marble fits inside the visible handle opening",
   );
-  assert.equal(intersects(0, 50), true, "the cup body is solid");
+  assert.equal(intersects(0, 45), false, "the cup has a hollow interior");
+
+  for (const steps of [[0.5], [1], [2], [0.13, 0.8, 1.17, 2.2]]) {
+    function drive(startX, startY, directionX, directionY) {
+      const marble = {
+        x:
+          cup.x +
+          cup.w / 2 +
+          Math.cos(angle) * startX -
+          Math.sin(angle) * startY,
+        y:
+          cup.y +
+          cup.h / 2 +
+          Math.sin(angle) * startX +
+          Math.cos(angle) * startY,
+        r: 29,
+        vx: 0,
+        vy: 0,
+      };
+      const context = {
+        marble,
+        mapState: state,
+        physics: physicsConfig,
+        intro: { released: true },
+        bounds: { left: 0, top: 0, right: 4400, bottom: 4400 },
+        tilt: {
+          smoothX:
+            18 * (Math.cos(angle) * directionX - Math.sin(angle) * directionY),
+          smoothY:
+            18 * (Math.sin(angle) * directionX + Math.cos(angle) * directionY),
+        },
+      };
+      let elapsed = 0;
+      let index = 0;
+      while (elapsed < 90) {
+        const dt = Math.min(steps[index++ % steps.length], 90 - elapsed);
+        updatePhysics(context, dt, {});
+        elapsed += dt;
+      }
+      const dx = marble.x - cup.x - cup.w / 2;
+      const dy = marble.y - cup.y - cup.h / 2;
+      return {
+        x: Math.cos(angle) * dx + Math.sin(angle) * dy,
+        y: -Math.sin(angle) * dx + Math.cos(angle) * dy,
+      };
+    }
+    // +X is the mouth. The visible back is near local x=-164, and the side
+    // walls near y=-66 and y=152. These bounds prove containment without
+    // copying individual collision parts or asserting arbitrary speed tuning.
+    const entered = drive(240, 45, -1, 0);
+    assert.ok(
+      entered.x < -30 && entered.x > -135,
+      "normal movement enters through the mouth and stops at the closed back",
+    );
+    const exited = drive(entered.x, entered.y, 1, 0);
+    assert.ok(exited.x > 240, "normal movement can exit the cup again");
+    assert.ok(
+      drive(-260, 45, 1, 0).x < -160,
+      "the closed back prevents entry from behind",
+    );
+    assert.ok(
+      drive(0, 45, 0, -1).y > -66,
+      "the inner upper wall contains the marble",
+    );
+    assert.ok(
+      drive(0, 45, 0, 1).y < 152,
+      "the inner lower wall contains the marble",
+    );
+    assert.ok(
+      drive(0, -260, 0, 1).y < -66,
+      "the outer upper wall remains solid",
+    );
+    assert.ok(
+      drive(0, 260, 0, -1).y > 152,
+      "the outer lower wall remains solid",
+    );
+  }
 }
 
 const feet = runtime.obstacles.filter(
@@ -100,14 +179,22 @@ try {
   renderObstacleWalls(container, runtime.obstacles, { mapConfig: map });
   const layer = container.firstChild;
   const sprites = [...layer.children];
+  const cupSprite = container.children.find(
+    (sprite) => sprite.className === "kitchenCupSprite",
+  );
+  assert.ok(
+    cupSprite,
+    "the overhead cup sprite is outside the ordinary fixture stacking context",
+  );
   assert.equal(
-    sprites.length,
+    sprites.length + 1,
     map.elements.filter((item) => item.fixture).length,
     "composite collision pieces render as one prop",
   );
   assert.equal(
-    sprites.filter((sprite) => sprite.className === "kitchenCupSprite").length,
-    1,
+    container.children.length,
+    2,
+    "one overhead sprite serves all cup collision parts",
   );
   for (const fixture of runtime.obstacles.filter((item) =>
     ["cabinetBase", "applianceBase", "applianceFoot"].includes(item.fixture),
@@ -128,11 +215,35 @@ try {
     sprites,
     "redrawing retains existing fixture DOM nodes",
   );
+  assert.equal(
+    container.children[1],
+    cupSprite,
+    "redrawing reuses the overhead cup sprite",
+  );
   assert.deepEqual(
     runtime.obstacles,
     sourceBefore,
     "rendering owns no collision state",
   );
+  renderObstacleWalls(
+    container,
+    runtime.obstacles.filter((item) => item.fixture !== "tippedCup"),
+    { mapConfig: map },
+  );
+  assert.equal(
+    container.children.length,
+    1,
+    "a removed cup leaves no stale overhead surface",
+  );
+  renderObstacleWalls(container, createResolvedMapState(map).obstacles, {
+    mapConfig: map,
+  });
+  assert.equal(
+    container.children.length,
+    2,
+    "Retry reconstructs one fresh overhead surface",
+  );
+  assert.notEqual(container.children[1], cupSprite);
 } finally {
   if (originalDocument === undefined) delete globalThis.document;
   else globalThis.document = originalDocument;

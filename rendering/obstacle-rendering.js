@@ -337,14 +337,16 @@ function renderKitchenObstacleWalls(container, obstacles) {
         syncKitchenSpongeSprite(layer, sprites, fixture);
         break;
       case KITCHEN_FIXTURES.tippedCup:
+        // A sibling of the ordinary fixture layer so its ceramic surface can
+        // occlude the marble inside, without lifting the sponge/utensils too.
         syncKitchenFixtureSprite(
-          layer,
+          container,
           sprites,
           fixture,
           "kitchenCupSprite",
           KITCHEN_CUP_SPRITE.minWidth,
           KITCHEN_CUP_SPRITE.minHeight,
-        );
+        ).setAttribute("aria-hidden", "true");
         break;
       case KITCHEN_FIXTURES.cabinetBase:
       case KITCHEN_FIXTURES.applianceBase:

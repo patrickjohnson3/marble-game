@@ -31,14 +31,19 @@ const spoonMetalRects = [
   [645, 45, 275, 126, 63],
 ];
 
-// Measured in tipped-cup.webp pixels. Keep the handle's opening genuinely
-// empty, rather than colliding with the sprite's rectangular display box.
+// Measured in tipped-cup.webp pixels. The cup lies on its side with an open
+// mouth toward +X: side walls and a closed back enclose a roll-in cavity.
+// The overhead ceramic surface occludes this cavity; it is not a solid slab.
+// Keep the handle opening empty too.
 const cupBodyRects = [
-  [190, 405, 860, 725, 22],
+  [190, 405, 860, 45, 22],
+  [190, 1085, 860, 45, 22],
   [120, 425, 160, 700, 80],
   [85, 500, 230, 550, 115],
-  [1025, 398, 58, 734, 29],
-  [1035, 500, 95, 520, 47.5],
+  [1025, 398, 58, 76, 29],
+  [1025, 1056, 58, 76, 29],
+  [1035, 450, 75, 80, 37.5],
+  [1035, 1000, 75, 80, 37.5],
   [320, 280, 115, 170, 57.5],
   [350, 190, 135, 170, 67.5],
   [415, 130, 125, 120, 60],

@@ -100,7 +100,8 @@ body {
 #hitboxes {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  /* Debug geometry stays visible over the cup's overhead ceramic surface. */
+  z-index: 7;
   pointer-events: none;
 }
 .hitboxCanvas {
@@ -170,6 +171,7 @@ body {
 }
 #world.map-open .obstacleCanvas,
 #world.map-open .kitchenObstacleLayer,
+#world.map-open .kitchenCupSprite,
 #world.map-open .mapThemeLayer,
 #world.map-open .mapThemeOverlayLayer,
 #world.map-open .gooPatchCanvas,
@@ -256,12 +258,15 @@ body {
 }
 .kitchenCupSprite {
   position: absolute;
+  z-index: 6;
   box-sizing: border-box;
   pointer-events: none;
   background: url("assets/sprites/tipped-cup.webp") center / contain no-repeat;
   filter: drop-shadow(0 8px 7px #0004);
   transform: rotate(var(--fixture-angle, 0rad));
   transform-origin: center;
+  opacity: 0;
+  transition: opacity 0.45s ease;
 }
 .kitchenBase {
   position: absolute;

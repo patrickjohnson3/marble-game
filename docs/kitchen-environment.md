@@ -176,6 +176,34 @@ Final checks passed: `npm test`, `npm run map:validate`, `npm run lint`,
 on an isolated archive of the starting commit `c33192b`; it is a pre-existing
 failure, left outside this composition change.
 
+### Cup entry follow-up
+
+The tipped cup now has a hollow interior, solid side walls and a closed back,
+with its mouth open toward local +X (downward in the main kitchen). The same
+prepared rounded collision pieces serve the marble, food, and creatures.
+Normal steering rolls the marble in and back out; no special controls or
+inside/outside state are needed. The cup's existing cached sprite paints above
+the marble, occluding it beneath the opaque ceramic. Other fixtures retain
+their original layering, and the debug hitbox overlay stays above the cup.
+The asset, cup placement, water, and room layout are unchanged.
+
+`kitchen-fixtures-test.js` now drives entry/exit and contacts against both sides
+and the back at three rotations, using 0.5-, 1-, 2-frame and irregular update
+steps. Outer silhouette and handle-opening checks remain. Rendering tests check
+reuse and cleanup of the overhead sprite; `kitchen-fixtures-browser-test.js`
+exercises actual keyboard entry/exit, CSS stacking, Retry, and room-change
+cleanup through the real application.
+
+Portrait desktop Chrome evidence: [entering the mouth](screenshots/kitchen-cup-entering.png)
+and [rolling back out](screenshots/kitchen-cup-exited.png). The marble was
+positioned once outside the mouth at (2545, 1500), then keyboard input moved it
+to y≈1238 inside and back to y≈1507 outside. A separate 844×390 landscape
+inspection checked rendering. These checks do not establish physical-phone
+tilt feel; judge whether the hidden marble's location remains understandable.
+Node tests, browser smoke tests, map validation, lint, formatting, and cache
+checks passed. The full browser command still encounters the previously
+documented `max-age=600` service-worker upgrade timeout.
+
 ### Cup asset
 
 `assets/sprites/tipped-cup.webp` is a single 1261×1247 RGBA sprite, 120,106 bytes,

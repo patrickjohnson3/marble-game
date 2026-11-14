@@ -76,7 +76,10 @@ and an `applianceBase` skirt. These native fixtures paint their exact solid
 (default) or `right` and selects the floor-facing trim. Author individual round
 `applianceFoot` fixtures with `cornerRadius` so the gaps between them stay real.
 `tippedCup` uses a transparent sprite and fitted body/rim/handle collision parts,
-following the utensil pipeline. Its opening faces +X at angle 0. See the main
+following the utensil pipeline. It is hollow, with solid sides/back and an open
+mouth facing +X at angle 0. Its overhead ceramic surface paints above the marble,
+so entry naturally hides the marble until it rolls back out. The handle opening
+remains clear. See the main
 kitchen definition and [environment follow-up](kitchen-environment.md#edge-composition-follow-up)
 for placement, escape-loop clearance, visual evidence, and asset provenance.
 
