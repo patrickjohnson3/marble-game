@@ -101,7 +101,7 @@ body {
   position: absolute;
   inset: 0;
   /* Debug geometry stays visible over the cup's overhead ceramic surface. */
-  z-index: 7;
+  z-index: 8;
   pointer-events: none;
 }
 .hitboxCanvas {
@@ -757,6 +757,12 @@ body {
 }
 #marble.ready {
   visibility: visible;
+}
+#marble.insideCup {
+  z-index: 7;
+  opacity: 0.45;
+  /* A through-surface cue should not cast a floor shadow onto the cup. */
+  box-shadow: inset 0 0 0 1px #d9efff99;
 }
 #marble::before {
   content: "";

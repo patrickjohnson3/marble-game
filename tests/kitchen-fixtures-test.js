@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { baseMapConfig } from "../core/map-config.js";
-import { physicsConfig } from "../core/game-config.js";
+import { physicsConfig, visualConfig } from "../core/game-config.js";
 import { updatePhysics } from "../core/physics.js";
-import { createResolvedMapState } from "../core/map-runtime.js";
+import {
+  createMapRuntime,
+  createResolvedMapState,
+} from "../core/map-runtime.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
 import { circleObstacleContact } from "../core/physics-collisions.js";
 import { renderObstacleWalls } from "../rendering/obstacle-rendering.js";
+import { createMarbleView } from "../rendering/marble-view.js";
 import { FakeElement } from "./test-dom.js";
 
 const map = resolveMapVariantConfig(baseMapConfig, "kitchen-floor");
@@ -247,6 +251,96 @@ try {
 } finally {
   if (originalDocument === undefined) delete globalThis.document;
   else globalThis.document = originalDocument;
+}
+
+// Reveal only the marble within the ceramic cavity, not one rolling beside
+// the cup, outside its mouth/back, or through its transparent handle opening.
+for (const angle of [0, cup.angle, -0.4]) {
+  for (const [w, h] of [
+    [380, 380],
+    [760, 500],
+  ]) {
+    const source = { ...map, elements: [{ ...cup, angle, w, h }] };
+    const room = createMapRuntime({ initialMap: source });
+    const marbleEl = new FakeElement("marble");
+    const marble = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      r: 29,
+      roll: 0,
+      impactSquash: 0,
+    };
+    const view = createMarbleView({
+      marbleEl,
+      marble,
+      world: map.world,
+      mapConfig: map,
+      mapState: room.state,
+      visualConfig,
+    });
+    const before = globalThis.structuredClone(room.state);
+    const scale = Math.min(w / 1261, h / 1247);
+    function placeImagePoint(x, y) {
+      const dx = (x - 1261 / 2) * scale;
+      const dy = (y - 1247 / 2) * scale;
+      marble.x = cup.x + w / 2 + Math.cos(angle) * dx - Math.sin(angle) * dy;
+      marble.y = cup.y + h / 2 + Math.sin(angle) * dx + Math.cos(angle) * dy;
+      view.render();
+    }
+    placeImagePoint(650, 760);
+    assert.equal(
+      marbleEl.classList.contains("insideCup"),
+      true,
+      "the marble is revealed through the cup interior at any rotation/contain scale",
+    );
+    // Staying inside must preserve the same output and leave physics alone.
+    const insidePose = { ...marble };
+    view.render();
+    assert.equal(
+      marbleEl.classList.contains("insideCup"),
+      true,
+      "the reveal persists on subsequent renders while inside",
+    );
+    assert.deepEqual(marble, insidePose);
+    for (const [x, y] of [
+      [1250, 760],
+      [0, 760],
+      [600, 300],
+      [650, 1200],
+    ]) {
+      placeImagePoint(x, y);
+      assert.equal(
+        marbleEl.classList.contains("insideCup"),
+        false,
+        "outside the cup or inside the handle remains normally visible",
+      );
+    }
+    assert.deepEqual(
+      room.state,
+      before,
+      "rendering the reveal must not mutate runtime geometry or actors",
+    );
+    placeImagePoint(650, 760);
+    room.setActiveMap(source);
+    Object.assign(marble, source.spawn);
+    view.render();
+    assert.equal(
+      marbleEl.classList.contains("insideCup"),
+      false,
+      "Retry clears the reveal at spawn",
+    );
+    placeImagePoint(650, 760);
+    assert.equal(marbleEl.classList.contains("insideCup"), true);
+    room.setActiveMap(resolveMapVariantConfig(baseMapConfig, "living-room"));
+    view.render();
+    assert.equal(
+      marbleEl.classList.contains("insideCup"),
+      false,
+      "leaving the kitchen clears the reveal even at the same world position",
+    );
+  }
 }
 
 console.log("Kitchen fixture tests passed.");

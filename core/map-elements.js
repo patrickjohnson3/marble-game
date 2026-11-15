@@ -59,6 +59,9 @@ export const KITCHEN_CUP_SPRITE = Object.freeze({
   height: 1247,
   minWidth: 0,
   minHeight: 0,
+  // Visible cavity in source-image pixels; excludes the closed back, side
+  // walls, and transparent handle opening. Used only for the marble reveal.
+  interior: Object.freeze({ left: 315, top: 450, right: 1130, bottom: 1085 }),
 });
 
 // Parking car uses the same centered background-size: contain transform.

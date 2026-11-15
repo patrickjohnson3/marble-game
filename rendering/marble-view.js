@@ -1,14 +1,38 @@
 import { clamp } from "../core/geometry.js";
+import { KITCHEN_CUP_SPRITE } from "../core/map-elements.js";
+
+function prepareCupReveal(cup) {
+  const sprite = KITCHEN_CUP_SPRITE;
+  const scale = Math.min(
+    Math.max(cup.hitboxW ?? cup.w, sprite.minWidth) / sprite.width,
+    Math.max(cup.hitboxH ?? cup.h, sprite.minHeight) / sprite.height,
+  );
+  return {
+    centerX: cup.x + cup.w / 2,
+    centerY: cup.y + cup.h / 2,
+    cos: Math.cos(cup.angle ?? 0),
+    sin: Math.sin(cup.angle ?? 0),
+    left: (sprite.interior.left - sprite.width / 2) * scale,
+    right: (sprite.interior.right - sprite.width / 2) * scale,
+    top: (sprite.interior.top - sprite.height / 2) * scale,
+    bottom: (sprite.interior.bottom - sprite.height / 2) * scale,
+  };
+}
 
 export function createMarbleView({
   marbleEl,
   marble,
   world,
   mapConfig,
+  mapState,
   visualConfig,
 }) {
   const light = mapConfig.light;
   let worldDiagonal = Math.hypot(world.width, world.height);
+  // Disposable geometry cache for static cup artwork. Map activation/Retry
+  // replaces activeMap; the reveal itself is always derived from live position.
+  let cupMap = null;
+  let cupReveals = [];
   const contactShadowY = light.contactShadowY.toFixed(1) + "px";
   const contactShadowBlur = light.contactShadowBlur.toFixed(1) + "px";
   const lastStyle = {
@@ -20,6 +44,7 @@ export function createMarbleView({
     shadowX: "",
     shadowY: "",
     transform: "",
+    insideCup: null,
   };
 
   marbleEl.style.setProperty("--marble-contact-shadow-y", contactShadowY);
@@ -95,6 +120,28 @@ export function createMarbleView({
   }
 
   function render() {
+    const activeMap = mapState?.activeMap;
+    if (cupMap !== activeMap) {
+      cupMap = activeMap;
+      cupReveals = (activeMap?.elements ?? [])
+        .filter((element) => element.fixture === "tippedCup")
+        .map(prepareCupReveal);
+    }
+    let insideCup = false;
+    for (const cup of cupReveals) {
+      const dx = marble.x - cup.centerX;
+      const dy = marble.y - cup.centerY;
+      const x = cup.cos * dx + cup.sin * dy;
+      const y = -cup.sin * dx + cup.cos * dy;
+      if (x >= cup.left && x <= cup.right && y >= cup.top && y <= cup.bottom) {
+        insideCup = true;
+        break;
+      }
+    }
+    if (lastStyle.insideCup !== insideCup) {
+      lastStyle.insideCup = insideCup;
+      marbleEl.classList.toggle("insideCup", insideCup);
+    }
     const scaleX = (
       1 +
       marble.impactSquash * visualConfig.marble.impactScaleX

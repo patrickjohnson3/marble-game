@@ -182,9 +182,11 @@ The tipped cup now has a hollow interior, solid side walls and a closed back,
 with its mouth open toward local +X (downward in the main kitchen). The same
 prepared rounded collision pieces serve the marble, food, and creatures.
 Normal steering rolls the marble in and back out; no special controls or
-inside/outside state are needed. The cup's existing cached sprite paints above
-the marble, occluding it beneath the opaque ceramic. Other fixtures retain
-their original layering, and the debug hitbox overlay stays above the cup.
+inside/outside state are needed. In the initial entry pass the cup's existing
+cached sprite occluded the marble beneath the opaque ceramic; the
+[translucent reveal follow-up](#translucent-marble-follow-up) makes it visible inside.
+Other fixtures retain their original layering, and the debug hitbox overlay
+stays above the cup.
 The asset, cup placement, water, and room layout are unchanged.
 
 `kitchen-fixtures-test.js` now drives entry/exit and contacts against both sides
@@ -199,10 +201,39 @@ and [rolling back out](screenshots/kitchen-cup-exited.png). The marble was
 positioned once outside the mouth at (2545, 1500), then keyboard input moved it
 to y≈1238 inside and back to y≈1507 outside. A separate 844×390 landscape
 inspection checked rendering. These checks do not establish physical-phone
-tilt feel; judge whether the hidden marble's location remains understandable.
+tilt feel; judge how naturally the marble steers into and out of the mouth.
 Node tests, browser smoke tests, map validation, lint, formatting, and cache
 checks passed. The full browser command still encounters the previously
 documented `max-age=600` service-worker upgrade timeout.
+
+### Translucent marble follow-up
+
+The marble now appears as a translucent blue silhouette through the cup while
+its center is within the cavity. Initial reveal opacity is 45%; the cup stays
+opaque. The existing marble element paints above the cup and loses its floor
+shadow for this cue. Leaving restores normal opacity, shadow, and layering.
+The exterior and transparent handle opening keep their ordinary presentation.
+The same marble position, velocity, lighting, and collision rules remain in use.
+
+`KITCHEN_CUP_SPRITE.interior` describes the visible cavity in source-image
+coordinates. `createMarbleView()` prepares its rotated/contain-scaled world
+bounds once per active map, then reads the live marble position each render.
+The cached geometry is disposable; there is no new gameplay inside/outside
+state, duplicate marble, DOM layer, asset, or per-frame geometry allocation.
+Retry and map changes invalidate the cache. This experiment covers static cups;
+furniture and pipes have no new behavior.
+
+Regression checks cover rotated and height-limited display boxes, exterior and
+handle positions, entry/exit, and reset while inside. The browser test drives
+the real application with keyboard input and checks translucent/opaque styles,
+layer order, Retry, and room-change cleanup. Desktop Chrome inspection covered
+390×844 portrait and 844×390 landscape views:
+[inside the cup](screenshots/kitchen-cup-reveal.png),
+[landscape](screenshots/kitchen-cup-reveal-landscape.png).
+On physical phones, judge whether the 45% silhouette is clear enough and whether
+the entry/exit presentation communicates that the marble is inside the cup.
+Node tests, browser smoke tests, lint, formatting, map validation, and cache
+checks passed; the documented PWA upgrade timeout remains unchanged.
 
 ### Cup asset
 

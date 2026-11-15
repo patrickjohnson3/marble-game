@@ -161,6 +161,7 @@ function setupRenderers({
     marble,
     world,
     mapConfig: resolvedMapConfig,
+    mapState,
     visualConfig,
   });
   const terrainView = createTerrainView({
