@@ -12,12 +12,14 @@ export function createTerrainView({
   goalEl,
   mapState,
   dynamicsState = { ants: [], cheerios: [] },
+  marble = null,
   renderTerrainPatches: drawTerrainPatches = () => {},
   renderMapTheme: drawMapTheme = () => {},
   renderMapThemeDynamics: drawMapThemeDynamics = () => {},
   renderObstacleWalls,
   renderObstacleHitboxes,
   renderSpongeImpact,
+  renderContainerOccupants: drawContainerOccupants = () => {},
   goalFillEdgePercent = 70.8,
   hitboxOverlayEnabled = false,
 }) {
@@ -133,6 +135,15 @@ export function createTerrainView({
     renderHitboxes();
   }
 
+  function renderContainerOccupants() {
+    drawContainerOccupants(
+      obstaclesEl,
+      mapState.containers ?? [],
+      marble,
+      mapState.cockroach,
+    );
+  }
+
   function updateGoalProgress(progress) {
     const clampedProgress = Math.max(0, Math.min(progress, 1));
     goalEl.classList.toggle("active", clampedProgress > 0);
@@ -154,6 +165,7 @@ export function createTerrainView({
   }
 
   return {
+    renderContainerOccupants,
     reactToSpongeImpact,
     renderMovedObstacles,
     renderTerrain,

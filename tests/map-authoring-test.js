@@ -525,6 +525,30 @@ rejectsEdit(
 rejectsEdit(
   kitchenFloorMap,
   (map) => {
+    map.spawn.r = 26;
+  },
+  "cockroach navigation footprint",
+);
+const clearanceMap = resolved(kitchenFloorMap);
+assert.deepEqual(
+  validateMapConfig(
+    { ...clearanceMap, spawn: { ...clearanceMap.spawn, r: 26 } },
+    { spawn: clearanceMap.spawn },
+  ),
+  [],
+  "the footprint check honors the existing spawn override",
+);
+assert.ok(
+  validateMapConfig(clearanceMap, {
+    spawn: { ...clearanceMap.spawn, r: 26 },
+  }).includes(
+    "marble radius must accommodate the cockroach navigation footprint",
+  ),
+  "an override cannot bypass the shared footprint constraint",
+);
+rejectsEdit(
+  kitchenFloorMap,
+  (map) => {
     map.cockroach.y = NaN;
   },
   "finite coordinates",

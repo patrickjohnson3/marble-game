@@ -41,6 +41,7 @@ import {
 } from "./rendering/map-theme-rendering.js";
 import { createMarbleView } from "./rendering/marble-view.js";
 import {
+  renderContainerOccupants,
   renderObstacleHitboxes,
   renderObstacleWalls,
   renderSpongeImpact,
@@ -161,7 +162,6 @@ function setupRenderers({
     marble,
     world,
     mapConfig: resolvedMapConfig,
-    mapState,
     visualConfig,
   });
   const terrainView = createTerrainView({
@@ -179,6 +179,7 @@ function setupRenderers({
     goalEl,
     mapState,
     dynamicsState: kitchenDynamicsState,
+    marble,
     renderTerrainPatches: (type, container, elements, bounds) => {
       const renderer = terrainPatchRenderers[type];
       if (!renderer) return;
@@ -202,6 +203,7 @@ function setupRenderers({
       }),
     renderObstacleHitboxes,
     renderSpongeImpact,
+    renderContainerOccupants,
     goalFillEdgePercent: visualConfig.map.goalFillEdgePercent,
     hitboxOverlayEnabled: settings.hitboxOverlayEnabled,
   });

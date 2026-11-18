@@ -9,6 +9,7 @@ import {
 import { cockroachConfig, mouseConfig } from "./game-config.js";
 import { kitchenPoint } from "../maps/kitchen-layout.js";
 import { hasLikelyReachableGoal } from "./map-reachability.js";
+import { containerNavigationPadding } from "./containers.js";
 
 export const mapValidationMessages = Object.freeze({
   configRequired: "map config is required",
@@ -483,9 +484,13 @@ function validateMouse(config, { world, obstacles, errors, spawn }) {
     errors.push("mouse must appear reachable from spawn");
 }
 
-function validateCockroach(config, { world, obstacles, errors }) {
+function validateCockroach(config, { world, obstacles, errors, spawn }) {
   const cockroach = config.cockroach;
   if (!cockroach) return;
+  if (spawn?.r < cockroachConfig.radius + containerNavigationPadding)
+    errors.push(
+      "marble radius must accommodate the cockroach navigation footprint",
+    );
   if (config.theme !== "kitchenFloor")
     errors.push("cockroach requires the kitchenFloor theme");
   if (![cockroach.x, cockroach.y].every(Number.isFinite)) {
@@ -684,7 +689,7 @@ function validateComposition(config, { world, obstacles, errors, spawn }) {
       );
   }
   validateMouse(config, { world, obstacles, errors, spawn });
-  validateCockroach(config, { world, obstacles, errors });
+  validateCockroach(config, { world, obstacles, errors, spawn });
 }
 
 function validateRotatedBounds(rect, { world, errors, label }) {

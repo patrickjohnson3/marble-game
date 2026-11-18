@@ -8,6 +8,10 @@ import {
 } from "../core/map-elements.js";
 import { renderLivingRoomFixtures } from "./living-room-rendering.js";
 import { renderParkingFixtures } from "./parking-lot-rendering.js";
+import {
+  containerLocalPoint,
+  overlapsContainerCover,
+} from "../core/containers.js";
 
 function coveredByAny(rects, left, top, right, bottom) {
   return rects.some(
@@ -207,6 +211,145 @@ function applyRectStyle(element, rect) {
 }
 
 const kitchenFixtureSprites = new WeakMap();
+const containerCanvases = new WeakMap();
+const indicatorDash = [4, 3];
+const noDash = [];
+const occupantPoint = { x: 0, y: 0 };
+
+function drawContainedSilhouette(context, container, entity, roach) {
+  if (!entity) return;
+  containerLocalPoint(container, entity.x, entity.y, occupantPoint);
+  context.save();
+  const angle = roach ? entity.angle - (container.source.angle ?? 0) : 0;
+  context.transform(
+    Math.cos(angle),
+    Math.sin(angle),
+    -Math.sin(angle),
+    Math.cos(angle),
+    occupantPoint.x,
+    occupantPoint.y,
+  );
+  context.fillStyle = roach ? "rgba(75,43,23,0.12)" : "rgba(18,66,96,0.1)";
+  context.strokeStyle = roach ? "rgba(69,39,23,0.6)" : "rgba(18,58,83,0.52)";
+  context.lineWidth = 1.5;
+  context.setLineDash?.(indicatorDash);
+  context.beginPath();
+  context.ellipse(
+    0,
+    0,
+    entity.r,
+    entity.r * (roach ? 0.6 : 1),
+    0,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+  context.stroke();
+  if (roach) {
+    context.setLineDash?.(noDash);
+    context.beginPath();
+    for (let side = -1; side <= 1; side += 2) {
+      for (let leg = -1; leg <= 1; leg++) {
+        context.moveTo(leg * entity.r * 0.5, side * entity.r * 0.4);
+        context.lineTo(leg * entity.r * 0.8, side * entity.r * 1.2);
+      }
+      context.moveTo(entity.r * 0.7, side * entity.r * 0.2);
+      context.lineTo(entity.r * 2, side * entity.r * 0.6);
+    }
+    context.stroke();
+  }
+  context.restore();
+}
+
+export function renderContainerOccupants(
+  containerEl,
+  containers,
+  marble,
+  cockroach,
+) {
+  const sprites = kitchenFixtureSprites.get(containerEl?.firstChild);
+  if (!sprites) return;
+  for (const container of containers) {
+    const sprite = sprites.get(container.source);
+    if (!sprite) continue;
+    const marbleCovered = !!marble && overlapsContainerCover(container, marble);
+    const roachCovered =
+      !!cockroach &&
+      overlapsContainerCover(container, cockroach, cockroach.r * 2.4);
+    let cached = containerCanvases.get(sprite);
+    if (!cached && !marbleCovered && !roachCovered) continue;
+    if (!cached) {
+      const canvas = document.createElement("canvas");
+      canvas.className = "containerSilhouetteCanvas";
+      canvas.setAttribute("aria-hidden", "true");
+      const scale = Math.min(
+        1,
+        512 / Math.max(container.width, container.height),
+      );
+      canvas.width = Math.ceil(container.width * scale);
+      canvas.height = Math.ceil(container.height * scale);
+      sprite.appendChild(canvas);
+      cached = { canvas, context: canvas.getContext("2d"), scale };
+      containerCanvases.set(sprite, cached);
+    }
+    const changed =
+      cached.marbleCovered !== marbleCovered ||
+      cached.roachCovered !== roachCovered ||
+      (marbleCovered &&
+        (cached.mx !== marble.x ||
+          cached.my !== marble.y ||
+          cached.mr !== marble.r)) ||
+      (roachCovered &&
+        (cached.rx !== cockroach.x ||
+          cached.ry !== cockroach.y ||
+          cached.rr !== cockroach.r ||
+          cached.ra !== cockroach.angle));
+    if (!changed) continue;
+    if (cached.marbleCovered !== marbleCovered)
+      cached.canvas.setAttribute("data-marble-covered", String(marbleCovered));
+    if (cached.roachCovered !== roachCovered)
+      cached.canvas.setAttribute("data-roach-covered", String(roachCovered));
+    cached.marbleCovered = marbleCovered;
+    cached.roachCovered = roachCovered;
+    const context = cached.context;
+    if (!context) continue;
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, cached.canvas.width, cached.canvas.height);
+    if (!marbleCovered && !roachCovered) continue;
+    context.save();
+    context.setTransform(
+      cached.scale,
+      0,
+      0,
+      cached.scale,
+      cached.canvas.width / 2,
+      cached.canvas.height / 2,
+    );
+    const cover = container.cover;
+    context.beginPath();
+    context.rect(
+      cover.left,
+      cover.top,
+      cover.right - cover.left,
+      cover.bottom - cover.top,
+    );
+    context.clip();
+    if (marbleCovered) {
+      drawContainedSilhouette(context, container, marble, false);
+      cached.mx = marble.x;
+      cached.my = marble.y;
+      cached.mr = marble.r;
+    }
+    if (roachCovered) {
+      drawContainedSilhouette(context, container, cockroach, true);
+      cached.rx = cockroach.x;
+      cached.ry = cockroach.y;
+      cached.rr = cockroach.r;
+      cached.ra = cockroach.angle;
+    }
+    context.restore();
+  }
+}
 const spongeImpact = {
   durationMs: 280,
   referenceSpeed: 10,

@@ -2,19 +2,52 @@ import assert from "node:assert/strict";
 import { timing } from "../core/game-config.js";
 import { collectBrowserErrors } from "../tools/browser-support.js";
 
-function cupLayers() {
-  const cup = document.querySelector(".kitchenCupSprite");
+// Inspect actual canvas alpha relative to the geometric roof mask. This is a
+// clipping invariant, not a screenshot/color golden or a cosmetic pixel value.
+function containerAppearance() {
+  const app = window.__cupApp;
+  const container = app.mapRuntime.state.containers[0];
+  const sprite = document.querySelector(".kitchenCupSprite");
   const marble = document.getElementById("marble");
-  const z = (element) => Number(window.getComputedStyle(element).zIndex);
-  return {
-    parent: cup.parentElement.id,
-    cupOpacity: window.getComputedStyle(cup).opacity,
-    marbleOpacity: Number(window.getComputedStyle(marble).opacity),
-    cup: z(cup),
-    marble: z(marble),
-    hitboxes: z(document.getElementById("hitboxes")),
-    ordinaryFixtures: z(document.querySelector(".kitchenObstacleLayer")),
+  const canvas = sprite.querySelector("canvas");
+  const result = {
+    cupOpacity: window.getComputedStyle(sprite).opacity,
+    cupArt: window.getComputedStyle(sprite, "::before").backgroundImage,
+    cupFilter: window.getComputedStyle(sprite).filter,
+    marbleOpacity: window.getComputedStyle(marble).opacity,
+    belowCup:
+      Number(window.getComputedStyle(marble).zIndex) <
+      Number(window.getComputedStyle(sprite).zIndex),
+    canvasCount: document.querySelectorAll(".containerSilhouetteCanvas").length,
+    marbleCovered: canvas?.getAttribute("data-marble-covered"),
+    roachCovered: canvas?.getAttribute("data-roach-covered"),
+    paintInside: 0,
+    paintOutside: 0,
+    maxAlpha: 0,
   };
+  if (!canvas) return result;
+  const scale = canvas.width / container.width;
+  const pixels = canvas
+    .getContext("2d")
+    .getImageData(0, 0, canvas.width, canvas.height).data;
+  const roof = container.cover;
+  for (let y = 0; y < canvas.height; y++)
+    for (let x = 0; x < canvas.width; x++) {
+      const alpha = pixels[(y * canvas.width + x) * 4 + 3];
+      if (!alpha) continue;
+      const lx = (x + 0.5 - canvas.width / 2) / scale,
+        ly = (y + 0.5 - canvas.height / 2) / scale;
+      if (
+        lx < roof.left - 2 ||
+        lx > roof.right + 2 ||
+        ly < roof.top - 2 ||
+        ly > roof.bottom + 2
+      )
+        result.paintOutside++;
+      else result.paintInside++;
+      result.maxAlpha = Math.max(result.maxAlpha, alpha);
+    }
+  return result;
 }
 
 export async function testCupEntry(browser, baseUrl) {
@@ -27,8 +60,7 @@ export async function testCupEntry(browser, baseUrl) {
     await page.route("**/boot.js*", (route) =>
       route.fulfill({
         contentType: "text/javascript",
-        body: `import { createApp } from "./app.js";
-window.__cupApp = createApp();`,
+        body: `import {createApp} from "./app.js"; window.__cupApp=createApp();`,
       }),
     );
     await page.goto(baseUrl, { waitUntil: "networkidle" });
@@ -37,25 +69,15 @@ window.__cupApp = createApp();`,
     await page.waitForFunction(
       () => window.__cupApp.state.intro.released,
       null,
-      {
-        timeout: timing.introReleaseDelayMs + 5000,
-      },
+      { timeout: timing.introReleaseDelayMs + 5000 },
     );
     const centerY = await page.evaluate(() => {
       const app = window.__cupApp;
       app.gameController.pause();
-      const cup = app.mapRuntime.state.activeMap.elements.find(
-        (item) => item.fixture === "tippedCup",
-      );
-      // The authored cup opens downward. Position once outside its mouth;
-      // all entry/exit movement below comes from ordinary keyboard input.
-      if (cup.angle !== Math.PI / 2)
-        throw new Error(
-          "Update the keyboard approach for the authored cup rotation",
-        );
+      const c = app.mapRuntime.state.containers[0];
       Object.assign(app.state.marble, {
-        x: cup.x + cup.w / 2 - 45,
-        y: cup.y + cup.h / 2 + 240,
+        x: c.centerX - 45,
+        y: c.centerY + 240,
         vx: 0,
         vy: 0,
       });
@@ -63,56 +85,89 @@ window.__cupApp = createApp();`,
       app.mapRuntime.state.cockroach.harassmentIn = 10000;
       app.cameraController.centerOnMarble();
       app.gameController.resume();
-      return cup.y + cup.h / 2;
+      return c.centerY;
     });
-    const outside = await page.evaluate(cupLayers);
+    const outside = await page.evaluate(containerAppearance);
+    assert.equal(outside.marbleOpacity, "1");
+    assert.equal(outside.belowCup, true);
     assert.equal(
-      outside.marbleOpacity,
-      1,
-      "the marble remains opaque outside the cup",
+      outside.canvasCount,
+      0,
+      "exterior entities allocate no silhouette surface",
     );
-    assert.ok(outside.cup > outside.marble);
+    await page.keyboard.down("ArrowUp");
+    await page.waitForFunction(
+      () => {
+        const a = window.__cupApp,
+          c = a.mapRuntime.state.containers[0],
+          m = a.state.marble;
+        const dx = m.x - c.centerX,
+          dy = m.y - c.centerY,
+          x = c.cos * dx + c.sin * dy;
+        if (Math.abs(x - c.cover.right) > m.r * 0.6) return false;
+        a.gameController.pause();
+        return true;
+      },
+      null,
+      { timeout: 5000 },
+    );
+    await page.keyboard.up("ArrowUp");
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector(".containerSilhouetteCanvas")
+          ?.getAttribute("data-marble-covered") === "true",
+    );
+    const partial = await page.evaluate(containerAppearance);
+    assert.ok(partial.paintInside > 0);
+    assert.equal(
+      partial.paintOutside,
+      0,
+      "partial silhouettes never paint over the rim, handle, or exterior",
+    );
+    assert.equal(partial.marbleOpacity, "1");
+    assert.equal(
+      partial.belowCup,
+      true,
+      "partial entry never lifts or fades the entire sphere",
+    );
+    await page.evaluate(() => window.__cupApp.gameController.resume());
     await page.keyboard.down("ArrowUp");
     await page.waitForFunction(
       (y) => {
-        const app = window.__cupApp;
-        if (app.state.marble.y >= y) return false;
-        app.gameController.pause();
+        const a = window.__cupApp;
+        if (a.state.marble.y >= y) return false;
+        a.gameController.pause();
         return true;
       },
       centerY,
       { timeout: 5000 },
     );
     await page.keyboard.up("ArrowUp");
-    await page.waitForFunction(() =>
-      document.getElementById("marble").classList.contains("insideCup"),
+    const inside = await page.evaluate(containerAppearance);
+    assert.equal(inside.cupOpacity, "1");
+    assert.notEqual(
+      inside.cupArt,
+      "none",
+      "the static ceramic artwork remains visible",
     );
-    const layers = await page.evaluate(cupLayers);
     assert.equal(
-      layers.parent,
-      "obstacles",
-      "the cup must escape the lower fixture stacking context",
-    );
-    assert.equal(layers.cupOpacity, "1", "the ceramic stays opaque");
-    assert.ok(
-      layers.marbleOpacity > 0 && layers.marbleOpacity < 1,
-      "the marble is visible as a translucent through-surface cue",
+      inside.cupFilter,
+      "none",
+      "live indicators do not repaint a parent shadow filter",
     );
     assert.ok(
-      layers.ordinaryFixtures < layers.cup && layers.cup < layers.marble,
-      "the translucent marble paints above the cup",
+      inside.paintInside > 0 && inside.maxAlpha < 255,
+      "an opaque cup contains a restrained silhouette, not a solid pasted sphere",
     );
-    assert.ok(
-      layers.hitboxes > layers.marble,
-      "debug geometry remains visible inside the cup",
-    );
+    assert.equal(inside.paintOutside, 0);
     await page.evaluate(() => window.__cupApp.gameController.resume());
     await page.keyboard.down("ArrowDown");
     await page.waitForFunction(
       (y) => {
-        const app = window.__cupApp;
-        if (app.state.marble.y <= y + 240) return false;
-        app.gameController.pause();
+        const a = window.__cupApp;
+        if (a.state.marble.y <= y + 240) return false;
+        a.gameController.pause();
         return true;
       },
       centerY,
@@ -120,69 +175,144 @@ window.__cupApp = createApp();`,
     );
     await page.keyboard.up("ArrowDown");
     await page.waitForFunction(
-      () => !document.getElementById("marble").classList.contains("insideCup"),
+      () =>
+        document
+          .querySelector(".containerSilhouetteCanvas")
+          .getAttribute("data-marble-covered") === "false",
     );
-    const exited = await page.evaluate(cupLayers);
+    const exited = await page.evaluate(containerAppearance);
+    assert.equal(exited.marbleOpacity, "1");
+    assert.equal(exited.paintInside, 0);
+    assert.equal(exited.belowCup, true);
+
+    // Controlled encounter: a stationary marble inside, a pursuer behind the
+    // closed back. Movement, solid avoidance, attacks and rendering stay real.
+    await page.evaluate(() => {
+      const a = window.__cupApp,
+        c = a.mapRuntime.state.containers[0];
+      Object.assign(a.state.marble, {
+        x: c.centerX - 45,
+        y: c.centerY - 20,
+        vx: 0,
+        vy: 0,
+      });
+      Object.assign(a.state.input.tilt, {
+        rawX: 0,
+        rawY: 0,
+        smoothX: 0,
+        smoothY: 0,
+      });
+      Object.assign(a.mapRuntime.state.cockroach, {
+        x: c.centerX - 45,
+        y: c.centerY - 260,
+        mode: "harass",
+        engaged: true,
+        decisionIn: 0,
+        modeFrames: 10000,
+        contactLatched: false,
+        attackRecoveryFrames: 0,
+        routeX: null,
+        routeY: null,
+      });
+      a.gameController.resume();
+    });
+    await page.waitForFunction(
+      () => {
+        const a = window.__cupApp,
+          r = a.mapRuntime.state.cockroach,
+          c = a.mapRuntime.state.containers[0];
+        const dx = r.x - c.centerX,
+          dy = r.y - c.centerY,
+          x = c.cos * dx + c.sin * dy,
+          y = -c.sin * dx + c.cos * dy;
+        if (
+          !r.contactLatched ||
+          x < c.interior.left ||
+          x > c.interior.right ||
+          y < c.interior.top ||
+          y > c.interior.bottom
+        )
+          return false;
+        a.gameController.pause();
+        return true;
+      },
+      null,
+      { timeout: 8000 },
+    );
+    const pursued = await page.evaluate(containerAppearance);
     assert.equal(
-      exited.marbleOpacity,
-      1,
-      "leaving restores the normal opaque marble",
+      pursued.roachCovered,
+      "true",
+      "a pursuer inside the cup gets the same occlusion treatment",
     );
-    assert.ok(exited.marble < exited.cup, "leaving restores normal layering");
-    // Re-enter before Retry so reset cannot pass merely because the cue was
-    // already cleared by the preceding exit.
-    await page.evaluate(() => window.__cupApp.gameController.resume());
-    await page.keyboard.down("ArrowUp");
+    assert.equal(pursued.paintOutside, 0);
+    assert.equal(
+      await page.evaluate(
+        () => window.__cupApp.mapRuntime.state.cockroach.mode,
+      ),
+      "harass",
+    );
+    await page.evaluate(() => {
+      const a = window.__cupApp,
+        c = a.mapRuntime.state.containers[0];
+      Object.assign(a.state.marble, {
+        x: c.centerX - 45,
+        y: c.centerY + 320,
+        vx: 0,
+        vy: 0,
+      });
+      a.gameController.resume();
+    });
     await page.waitForFunction(
       (y) => {
-        const app = window.__cupApp;
-        if (app.state.marble.y >= y) return false;
-        app.gameController.pause();
+        const a = window.__cupApp;
+        if (a.mapRuntime.state.cockroach.y <= y + 230) return false;
+        a.gameController.pause();
         return true;
       },
       centerY,
-      { timeout: 5000 },
-    );
-    await page.keyboard.up("ArrowUp");
-    await page.waitForFunction(() =>
-      document.getElementById("marble").classList.contains("insideCup"),
-    );
-    const reset = await page.evaluate(() => {
-      const app = window.__cupApp;
-      const oldCup = document.querySelector(".kitchenCupSprite");
-      app.mapProgression.retryCurrentMap();
-      const spawn = app.mapRuntime.state.activeMap.spawn;
-      const result = {
-        atSpawn:
-          app.state.marble.x === spawn.x && app.state.marble.y === spawn.y,
-        oldCupRemoved: !oldCup.isConnected,
-        cupCount: document.querySelectorAll(".kitchenCupSprite").length,
-      };
-      return result;
-    });
-    assert.deepEqual(reset, {
-      atSpawn: true,
-      oldCupRemoved: true,
-      cupCount: 1,
-    });
-    await page.waitForFunction(
-      () => !document.getElementById("marble").classList.contains("insideCup"),
+      { timeout: 8000 },
     );
     assert.equal(
-      (await page.evaluate(cupLayers)).marbleOpacity,
-      1,
-      "Retry inside the cup clears translucency",
+      await page.evaluate(
+        () => window.__cupApp.mapRuntime.state.cockroach.mode,
+      ),
+      "harass",
+      "leaving the cup does not clear pursuit",
+    );
+    // Retry while occupied, rather than relying on an already-cleared overlay.
+    await page.evaluate(() => {
+      const a = window.__cupApp,
+        c = a.mapRuntime.state.containers[0];
+      Object.assign(a.state.marble, {
+        x: c.centerX - 45,
+        y: c.centerY - 20,
+        vx: 0,
+        vy: 0,
+      });
+      a.gameController.resume();
+    });
+    await page.waitForFunction(() => {
+      if (
+        document
+          .querySelector(".containerSilhouetteCanvas")
+          ?.getAttribute("data-marble-covered") !== "true"
+      )
+        return false;
+      window.__cupApp.gameController.pause();
+      return true;
+    });
+    await page.evaluate(() => window.__cupApp.mapProgression.retryCurrentMap());
+    assert.equal(
+      await page.locator(".containerSilhouetteCanvas").count(),
+      0,
+      "Retry drops the disposable occupied-container surface",
     );
     await page.evaluate(() =>
       window.__cupApp.mapProgression.loadMap("living-room"),
     );
     assert.equal(await page.locator(".kitchenCupSprite").count(), 0);
-    assert.equal(
-      await page
-        .locator("#marble")
-        .evaluate((element) => window.getComputedStyle(element).opacity),
-      "1",
-    );
+    assert.equal(await page.locator(".containerSilhouetteCanvas").count(), 0);
     assert.deepEqual(errors, []);
   } finally {
     await page.close();

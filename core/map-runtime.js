@@ -1,5 +1,10 @@
 import { createCockroach } from "./cockroach.js";
 import { createMouse } from "./mouse.js";
+import { cockroachConfig } from "./game-config.js";
+import {
+  createCupContainer,
+  containerNavigationPadding,
+} from "./containers.js";
 import { cloneMapComposition } from "./map-variants.js";
 import {
   KITCHEN_FIXTURES,
@@ -61,6 +66,7 @@ export function createResolvedMapState(
       ];
     }),
   );
+  const containers = [];
   const obstacles = normalizeObstacles(
     elementsByType[MAP_ELEMENT_TYPES.obstacle],
   )
@@ -69,8 +75,15 @@ export function createResolvedMapState(
         return createForkCollisionRects(obstacle);
       if (obstacle.fixture === KITCHEN_FIXTURES.spoon)
         return createSpoonCollisionRects(obstacle);
-      if (obstacle.fixture === KITCHEN_FIXTURES.tippedCup)
+      if (obstacle.fixture === KITCHEN_FIXTURES.tippedCup) {
+        containers.push(
+          createCupContainer(
+            obstacle,
+            cockroachConfig.radius + containerNavigationPadding,
+          ),
+        );
         return createTippedCupCollisionRects(obstacle);
+      }
       if (obstacle.fixture === "parkedCar")
         return createParkingCarCollisionRects(obstacle);
       return [obstacle];
@@ -79,6 +92,7 @@ export function createResolvedMapState(
   return {
     activeMap,
     obstacles,
+    containers,
     obstacleBounds: rectBounds(obstacles),
     terrainByType,
     mouse: createMouse(activeMap),
@@ -93,6 +107,7 @@ export function createMapRuntime({
   const state = {
     activeMap: null,
     obstacles: [],
+    containers: [],
     obstacleBounds: null,
     terrainByType: {},
     mouse: null,
@@ -113,6 +128,7 @@ export function createMapRuntime({
     });
     state.activeMap = derived.activeMap;
     state.obstacles = derived.obstacles;
+    state.containers = derived.containers;
     state.obstacleBounds = derived.obstacleBounds;
     state.terrainByType = derived.terrainByType;
     state.mouse = derived.mouse;

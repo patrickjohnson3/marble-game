@@ -289,6 +289,7 @@ export function createGameLoop({
       active ? frameDelta : 0,
     );
     marbleView.render();
+    terrainView?.renderContainerOccupants?.();
     if (!game.paused) trailRenderer.update(currentTime);
     effectsRenderer.render(currentTime);
     updateFrameBudgetMetric(

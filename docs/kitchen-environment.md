@@ -208,7 +208,9 @@ documented `max-age=600` service-worker upgrade timeout.
 
 ### Translucent marble follow-up
 
-The marble now appears as a translucent blue silhouette through the cup while
+This initial center-triggered experiment is superseded by
+[clipped container silhouettes and shared opening routes](container-interactions.md).
+It made the marble appear as a translucent blue silhouette through the cup while
 its center is within the cavity. Initial reveal opacity is 45%; the cup stays
 opaque. The existing marble element paints above the cup and loses its floor
 shadow for this cue. Leaving restores normal opacity, shadow, and layering.

@@ -261,12 +261,18 @@ body {
   z-index: 6;
   box-sizing: border-box;
   pointer-events: none;
-  background: url("assets/sprites/tipped-cup.webp") center / contain no-repeat;
-  filter: drop-shadow(0 8px 7px #0004);
   transform: rotate(var(--fixture-angle, 0rad));
   transform-origin: center;
   opacity: 0;
   transition: opacity 0.45s ease;
+}
+.kitchenCupSprite::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("assets/sprites/tipped-cup.webp") center / contain no-repeat;
+  /* Keep the static shadow off the live occupant canvas's filter group. */
+  filter: drop-shadow(0 8px 7px #0004);
 }
 .kitchenBase {
   position: absolute;
@@ -758,11 +764,12 @@ body {
 #marble.ready {
   visibility: visible;
 }
-#marble.insideCup {
-  z-index: 7;
-  opacity: 0.45;
-  /* A through-surface cue should not cast a floor shadow onto the cup. */
-  box-shadow: inset 0 0 0 1px #d9efff99;
+.containerSilhouetteCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 #marble::before {
   content: "";

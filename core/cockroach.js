@@ -1,4 +1,5 @@
 import { cockroachConfig } from "./game-config.js";
+import { containerPursuitTarget } from "./containers.js";
 import { pointInEllipsePatch } from "./geometry.js";
 import { ELLIPTICAL_SURFACE_SHAPES } from "./map-elements.js";
 import {
@@ -12,6 +13,7 @@ const tickFrames = 0.5;
 const targetMarble = { x: 0, y: 0, vx: 0, vy: 0 };
 const recoveryPhysics = { bounce: 0 };
 const noImpact = () => {};
+const pursuitTarget = { x: 0, y: 0 };
 
 export function createCockroach(map) {
   if (!map.cockroach || map.theme !== "kitchenFloor") return null;
@@ -40,6 +42,8 @@ export function createCockroach(map) {
     engaged: false,
     escapeFrames: 0,
     attackRecoveryFrames: 0,
+    routeX: null,
+    routeY: null,
   };
 }
 
@@ -142,7 +146,26 @@ function forage(cockroach, mapState, kitchenState) {
 
 function chooseDirection(cockroach, marble, mapState, kitchenState) {
   cockroach.decisionIndex++;
+  cockroach.routeX = cockroach.routeY = null;
   if (cockroach.mode === "harass") {
+    if (
+      containerPursuitTarget(
+        cockroach,
+        marble,
+        mapState,
+        clearAt,
+        pursuitTarget,
+      )
+    ) {
+      cockroach.routeX = pursuitTarget.x;
+      cockroach.routeY = pursuitTarget.y;
+      cockroach.angle = Math.atan2(
+        pursuitTarget.y - cockroach.y,
+        pursuitTarget.x - cockroach.x,
+      );
+      cockroach.decisionIn = cockroachConfig.attackDecisionInterval;
+      return;
+    }
     // A short lead is readable and still lets a quick turn evade the charge.
     const distance = Math.hypot(marble.x - cockroach.x, marble.y - cockroach.y);
     const lead = Math.min(
@@ -189,8 +212,18 @@ function moveCockroach(cockroach, speed, mapState) {
     }
   }
   const retention = Math.pow(cockroachConfig.knockbackRetention, tickFrames);
-  let dx = Math.cos(cockroach.angle) * speed * tickFrames;
-  let dy = Math.sin(cockroach.angle) * speed * tickFrames;
+  const step =
+    !Number.isFinite(cockroach.routeX) || cockroach.mode !== "harass"
+      ? speed * tickFrames
+      : Math.min(
+          speed * tickFrames,
+          Math.hypot(
+            cockroach.routeX - cockroach.x,
+            cockroach.routeY - cockroach.y,
+          ),
+        );
+  let dx = Math.cos(cockroach.angle) * step;
+  let dy = Math.sin(cockroach.angle) * step;
   dx += cockroach.knockbackX * tickFrames;
   dy += cockroach.knockbackY * tickFrames;
   cockroach.knockbackX *= retention;
@@ -345,6 +378,7 @@ export function updateCockroach(
     const recovering =
       cockroach.mode === "harass" &&
       (cockroach.attackRecoveryFrames > 0 || cockroach.contactLatched);
+    if (cockroach.mode !== "harass") cockroach.routeX = cockroach.routeY = null;
     const speed =
       cockroach.mode === "stunned" || recovering
         ? 0
@@ -419,6 +453,7 @@ export function resolveCockroachContact(
   if (relativeIncoming <= 0) return null;
   if (marbleIncoming >= cockroachConfig.repelSpeed) {
     cockroach.mode = "stunned";
+    cockroach.routeX = cockroach.routeY = null;
     cockroach.engaged = false;
     cockroach.escapeFrames = 0;
     cockroach.attackRecoveryFrames = 0;

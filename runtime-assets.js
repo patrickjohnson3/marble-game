@@ -3,6 +3,7 @@ export const runtimeScripts = [
   "boot.js",
   "core/copy.js",
   "core/cockroach.js",
+  "core/containers.js",
   "core/debug.js",
   "core/dom.js",
   "core/frame-loop.js",

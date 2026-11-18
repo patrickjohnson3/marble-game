@@ -77,12 +77,13 @@ and an `applianceBase` skirt. These native fixtures paint their exact solid
 `applianceFoot` fixtures with `cornerRadius` so the gaps between them stay real.
 `tippedCup` uses a transparent sprite and fitted body/rim/handle collision parts,
 following the utensil pipeline. It is hollow, with solid sides/back and an open
-mouth facing +X at angle 0. While the marble's center is inside the cavity,
-it appears through the opaque ceramic at 45% opacity. On exit it returns to its
-normal appearance. The handle opening remains clear and uses normal visibility.
-The cavity's image-space reveal bounds live in `KITCHEN_CUP_SPRITE.interior`;
-the marble renderer caches their world transform per map activation. This is
-display geometry for static cups and does not alter collision. See the main
+mouth facing +X at angle 0. Map load derives shared container geometry from
+`KITCHEN_CUP_SPRITE`: interior, opaque roof mask, and an exterior opening route.
+The roach follows that opening using the same live collision pieces as the marble.
+Covered portions of both bodies get clipped silhouettes; ordinary sprites stay
+below the opaque cup, preserving partial occlusion at the rim. See
+[container interactions](container-interactions.md) for the footprint invariant,
+local routing, visual limitations, and regression checks. See the main
 kitchen definition and [environment follow-up](kitchen-environment.md#edge-composition-follow-up)
 for placement, escape-loop clearance, visual evidence, and asset provenance.
 

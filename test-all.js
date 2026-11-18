@@ -11,6 +11,7 @@ const tests = [
   "tests/kitchen-spills-test.js",
   "tests/kitchen-layout-test.js",
   "tests/kitchen-fixtures-test.js",
+  "tests/containers-test.js",
   "tests/map-authoring-test.js",
   "tests/living-room-test.js",
   "tests/popcorn-test.js",
