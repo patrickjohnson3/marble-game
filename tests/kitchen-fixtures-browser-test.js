@@ -7,14 +7,84 @@ import { collectBrowserErrors } from "../tools/browser-support.js";
 // These assertions check layering and state transitions. The optional captures
 // below are real-renderer evidence for visual judgment, not pixel goldens.
 function containerAppearance() {
+  const app = window.__cupApp;
+  const container = app.mapRuntime.state.containers[0];
   const sprite = document.querySelector(".kitchenCupSprite");
   const interior = document.querySelector(".kitchenCupInterior");
   const marble = document.getElementById("marble");
   const roachLayer = document.querySelector(".cockroachCanvas").parentElement;
+  const clip = window.getComputedStyle(sprite, "::before").clipPath;
+  // Test geometric occlusion using the browser's real path parser. This does
+  // not depend on colors, antialiasing, or a screenshot golden.
+  const path = new window.Path2D(clip.match(/"([^"]+)"/)[1]);
+  const backdrop = new window.Path2D(
+    window.getComputedStyle(interior).clipPath.match(/"([^"]+)"/)[1],
+  );
+  const context = document.createElement("canvas").getContext("2d");
+  const ceramicAt = (x, y) =>
+    context.isPointInPath(
+      path,
+      x + container.width / 2,
+      y + container.height / 2,
+      "evenodd",
+    );
+  const mouth = container.opening;
+  const centerY = (mouth.top + mouth.bottom) / 2;
+  const mouthRadius = (mouth.right - mouth.left) / 2;
+  const backdropAt = (x, y) =>
+    context.isPointInPath(
+      backdrop,
+      x + container.width / 2,
+      y + container.height / 2,
+    );
+  let rearRoof = null;
+  const centersVisible = [
+    app.state.marble,
+    app.mapRuntime.state.cockroach,
+  ].every((entity) => {
+    if (!entity) return true;
+    const dx = entity.x - container.centerX,
+      dy = entity.y - container.centerY;
+    const x = container.cos * dx + container.sin * dy;
+    const y = -container.sin * dx + container.cos * dy;
+    const b = container.interior;
+    if (Math.abs(x) < 0.01 && Math.abs(y - centerY) < entity.r * 0.1)
+      rearRoof = ceramicAt(
+        x,
+        centerY - (entity.r + (mouth.bottom - mouth.top) / 2) / 2,
+      );
+    return (
+      x < b.left ||
+      x > b.right ||
+      y < b.top ||
+      y > b.bottom ||
+      (!ceramicAt(x, y) && backdropAt(x, y))
+    );
+  });
   return {
+    centersVisible,
+    rearRoof,
+    backdropFitsMouth: [-0.9, 0.9].every(
+      (y) =>
+        !backdropAt(
+          mouth.left + mouthRadius * 1.9,
+          centerY + (y * (mouth.bottom - mouth.top)) / 2,
+        ),
+    ),
+    closedWalls:
+      ceramicAt(container.interior.left - 1, centerY) &&
+      ceramicAt(0, container.interior.top - 1) &&
+      ceramicAt(0, container.interior.bottom + 1),
+    clearMouth: [-0.5, 0.5].every(
+      (y) =>
+        !ceramicAt(
+          mouth.left + mouthRadius * 1.5,
+          centerY + (y * (mouth.bottom - mouth.top)) / 2,
+        ),
+    ),
     cupOpacity: window.getComputedStyle(sprite).opacity,
     cupArt: window.getComputedStyle(sprite, "::before").backgroundImage,
-    clip: window.getComputedStyle(sprite, "::before").clipPath,
+    clip,
     supported: window.CSS.supports(
       "clip-path",
       sprite.style.getPropertyValue("--cup-clip"),
@@ -110,6 +180,32 @@ async function captureCupMatrix(page, directory) {
           "the cavity cannot cover the real insect",
         );
         assert.equal(appearance.canvasCount, 0);
+        assert.equal(
+          appearance.backdropFitsMouth,
+          true,
+          "the interior backdrop cannot leak a rectangle past the curved mouth",
+        );
+        assert.equal(
+          appearance.centersVisible,
+          true,
+          "interior occupants stay trackable",
+        );
+        assert.equal(
+          appearance.closedWalls,
+          true,
+          "the cutaway cannot expose a closed wall or bottom",
+        );
+        assert.equal(
+          appearance.clearMouth,
+          true,
+          "the exposed mouth cannot narrow as the rear view changes",
+        );
+        if (stage === "inside" && actors !== "both")
+          assert.equal(
+            appearance.rearRoof,
+            true,
+            "ceramic above a single occupant must not become a full-height rectangular slot",
+          );
         if (stage === "outside") {
           ordinaryMouth ??= appearance.clip;
           assert.equal(appearance.clip, ordinaryMouth);

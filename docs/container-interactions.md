@@ -39,7 +39,8 @@ Rendering uses two ordinary DOM layers:
 
 At rest the aperture is a narrow ellipse inside the rim. When an actor actually
 enters the cavity, the same aperture extends back toward its leading body extent
-as a bounded cutaway. It is connected to the mouth, leaving the back, side strips,
+as a curved, tapered cutaway. Its rear contour fits the occupants rather than
+stretching the full mouth height into a long slot. It is connected to the mouth, leaving the back, side strips,
 handle, and outer rim opaque. Both actors use the same rule. Outside antennae do
 not open a window through ceramic. If both are inside, one cutaway exposes them
 both; after they leave, only the ordinary mouth remains open.
@@ -55,8 +56,59 @@ This cutaway is an illustrative view into a solid object, not transparent cerami
 or a physically rendered 3D interior. The flat source image cannot supply parallax
 or a true curved inner floor. The explicit opening and visible interior make the
 tradeoff clearer than an unexplained x-ray outline. No second rendering engine,
-new bitmap, or actor render pass is needed. Unchanged cutaway depth skips style
+new bitmap, or actor render pass is needed. Unchanged cutaway geometry skips style
 updates; the interior is static and no additional canvas backing storage is used.
+
+## Curved-window follow-up
+
+The first cutaway reused the mouth's narrow ellipse radius at both ends and
+joined them with long straight edges. Live keyboard entry at 0.55× and 1× reproduced
+its rectangular appearance. A 90-frame trace at each zoom showed positional
+expansion rather than an opacity or draw-order toggle at the legitimate mouth
+threshold. Rapid movement made that tall slot open in only a few frames; no
+camera or collision change was needed.
+
+`cupCutawayShape()` now derives a rounded rear window from the live bodies and
+joins it to the fixed mouth with curved shoulders. Control points stay inside
+the existing cavity bounds. Each actor contributes with a smoothstep weight over
+one mouth width of leading-body penetration. That spatial blend also prevents a
+second entrant from abruptly resizing an occupied window. A quarter-radius visual
+margin leaves interior visible around the body, clamped at the physical walls.
+There is no elapsed-time animation, opacity fade, or delayed mask following the
+marble. Hovering or reversing at the same positions produces the same geometry.
+The existing interior backdrop covers the physical cavity behind the foreground
+mask so an off-center curved reveal cannot expose floor tiles underneath. Its
+front edge uses the same mouth ellipse, preventing rectangular backdrop corners
+from leaking through the sprite's transparent rim padding.
+
+[Before / after at both zooms](screenshots/cup-curved-comparison.png) uses real
+keyboard-entry screenshots. [Both occupants](screenshots/cup-curved-both.png) and
+[boundary views](screenshots/cup-curved-boundary.png) show the shared rule.
+The boundary views are positioned hover/side-wall scenarios, distinct from the
+live keyboard reversal checks. The source image still limits this to an
+illustrative cutaway; it does not provide a physically curved 3D inner surface.
+
+New deterministic coverage checks rounded body-sized rear bounds, physical limits,
+threshold continuity, actor handoff, and exact reversal without retained state.
+The real-browser test queries its actual CSS path with `Path2D`: the mouth stays
+open, walls stay masked, occupants' centers stay visible, and ceramic above a
+single occupant no longer becomes a full-height slot. This last assertion was
+verified to fail against the unchanged starting commit `4e40629` in a disposable
+copy, and pass with the fix. These are geometric checks, not pixel goldens.
+
+On 2026-11-19, the final Node suite, lint, formatting, map/cache validation,
+and diff checks passed. Final focused Chrome checks passed the live entry,
+pursuit, exit and 24-view matrix. Additional captures covered 30 positioned hover
+views, six actual keyboard reversals at the two zooms, and four off-center wall
+views, with no browser errors. These remain desktop evidence, not phone tests.
+
+Full browser validation is not green: a combined run reached the smoke-test pass
+then timed out in the PWA `max-age=600` upgrade case (`pwa-browser-test.js:802`).
+The final standalone PWA run reproduced that timeout; another combined attempt
+ended with SIGTERM. A disposable unchanged `4e40629` copy also failed waiting for
+an update, but in the later in-app case (`:695`, called from `:806`). That baseline
+failure does not isolate the exact current timeout. Service-worker logic was not
+changed; only generated release metadata was synchronized. No PWA fix is included.
 
 ## Shared traversability
 
@@ -97,7 +149,7 @@ its renderer is removed. Matrix poses are deliberately positioned and paused to
 compare rendering; live entry/pursuit above are separate evidence. Layer/clip
 assertions do not establish visual quality and are not pixel goldens.
 
-Inspected evidence: [near matrix](screenshots/cup-cutaway-near.png),
+Initial slot evidence, before the curved follow-up: [near matrix](screenshots/cup-cutaway-near.png),
 [far matrix](screenshots/cup-cutaway-far.png),
 [both inside](screenshots/cup-cutaway-both.png), and
 [landscape](screenshots/cup-cutaway-landscape.png).
@@ -155,6 +207,9 @@ Use zoom in/out during movement and while resting against each wall, then rotate
 the device. Follow/zoom should retain their existing behavior; clipping must stay
 attached to the cup. The scene has no camera viewing-angle control. Rotated cup
 fixtures are exercised by deterministic geometry/physics tests instead.
+For threshold hovering/reversal, alternate short up/down inputs around world
+position (2545,1405). Small movements should change only a small part of the
+opening, and backing out should retrace the same contour without a delayed fade.
 
 Physical Android Chrome/Brave and iPhone Safari/Chrome remain necessary for judging
 cutaway readability, touch/tilt feel, CSS clipping on those browsers, and sustained

@@ -12,6 +12,7 @@ import { physicsConfig } from "../core/game-config.js";
 import { updatePhysics } from "../core/physics.js";
 import { circleObstacleContact } from "../core/physics-collisions.js";
 import {
+  cupCutawayShape,
   renderObstacleWalls,
   renderContainerOccupants,
 } from "../rendering/obstacle-rendering.js";
@@ -240,6 +241,77 @@ assert.notEqual(runtime.state.containers[0], old);
 assert.equal(runtime.state.cockroach.routeX, null);
 runtime.setActiveMap(resolveMapVariantConfig(baseMapConfig, "living-room"));
 assert.deepEqual(runtime.state.containers, []);
+
+// The rear opening fits occupants instead of stretching the full mouth height.
+// Check real geometry bounds and continuity, independently of CSS path syntax.
+for (const angle of [0, Math.PI / 2, -0.4]) {
+  const s = scenario(angle);
+  const c = s.state.containers[0];
+  const centerY = (c.opening.top + c.opening.bottom) / 2;
+  const shape = (body, insect = null) => cupCutawayShape(c, body, insect, {});
+  const rest = shape(null);
+  assert.equal(rest.left, c.opening.left);
+  assert.equal(rest.top, c.opening.top);
+  assert.equal(rest.bottom, c.opening.bottom);
+  for (const r of [24, 29]) {
+    const body = world(s.cup, 0, centerY, r);
+    const occupied = shape(body);
+    assert.ok(
+      occupied.bottom - occupied.top > 2 * r,
+      "interior remains visible around the body",
+    );
+    assert.ok(
+      occupied.bottom - occupied.top < c.opening.bottom - c.opening.top,
+      "a single body must not expose the mouth's full height all the way back",
+    );
+    assert.ok(occupied.radius > r, "the rear edge curves around the occupant");
+    assert.deepEqual(
+      shape(null, body),
+      occupied,
+      "both actors share the same contour",
+    );
+    const threshold = c.opening.left + r;
+    const positions = [
+      threshold + 1,
+      threshold,
+      threshold - 1e-6,
+      threshold - r / 2,
+      threshold - r,
+      0,
+    ];
+    const entry = positions.map((x) => shape(world(s.cup, x, centerY, r)));
+    const exit = [...positions]
+      .reverse()
+      .map((x) => shape(world(s.cup, x, centerY, r)));
+    assert.deepEqual(
+      exit.reverse(),
+      entry,
+      "hovering/reversal has no history or delayed fade",
+    );
+    for (const key of ["left", "top", "bottom", "radius"])
+      assert.ok(
+        Math.abs(entry[2][key] - rest[key]) < 2e-6,
+        "crossing the reveal threshold cannot switch to a full-sized window",
+      );
+    for (const y of [c.interior.top + r, centerY, c.interior.bottom - r]) {
+      const offCenter = shape(world(s.cup, 0, y, r));
+      assert.ok(
+        offCenter.top >= c.interior.top &&
+          offCenter.bottom <= c.interior.bottom,
+      );
+      assert.ok(offCenter.left >= c.interior.left);
+    }
+  }
+  const resident = world(s.cup, 0, centerY - 20, 24);
+  const alone = shape(null, resident);
+  const entrant = world(s.cup, c.opening.left + 29 - 1e-6, centerY + 50);
+  const together = shape(entrant, resident);
+  for (const key of ["left", "top", "bottom", "radius"])
+    assert.ok(
+      Math.abs(together[key] - alone[key]) < 1e-6,
+      "a second entrant cannot pop an already occupied opening to another shape",
+    );
+}
 
 const originalDocument = globalThis.document;
 globalThis.document = { createElement: () => new FakeElement() };

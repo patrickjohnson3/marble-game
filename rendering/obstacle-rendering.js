@@ -210,21 +210,82 @@ function applyRectStyle(element, rect) {
 const kitchenFixtureSprites = new WeakMap();
 const cupViews = new WeakMap();
 const occupantPoint = { x: 0, y: 0 };
+const cutawayShape = {};
+const cupCutawayBodyMargin = 0.25; // In body radii, to show interior around it.
 
-// The aperture is an ellipse at rest. When occupied, extend the same aperture
-// back into a narrow cutaway, leaving the opaque rim, side walls and handle.
-// Coordinates stay local to the existing CSS contain box, before its rotation.
-function cupOpeningPath(container, left) {
+// Pure render geometry. Each body contributes gradually over one mouth width;
+// an entrant at the rim cannot abruptly resize an already occupied cutaway.
+// This is spatial easing, with no timer or retained occupancy to lag on reversal.
+export function cupCutawayShape(container, marble, cockroach, out) {
+  const mouth = container.opening;
+  const centerY = (mouth.top + mouth.bottom) / 2;
+  const mouthRadius = (mouth.right - mouth.left) / 2;
+  let left = mouth.left;
+  let top = centerY;
+  let bottom = centerY;
+  let influence = 0;
+  let radius = mouthRadius;
+  for (let i = 0; i < 2; i++) {
+    const entity = i === 0 ? marble : cockroach;
+    if (!entity || !pointInContainer(container, entity)) continue;
+    containerLocalPoint(container, entity.x, entity.y, occupantPoint);
+    const bodyLeft = occupantPoint.x - entity.r;
+    let weight = Math.max(
+      0,
+      Math.min(1, (mouth.left - bodyLeft) / (2 * mouthRadius)),
+    );
+    weight *= weight * (3 - 2 * weight);
+    const extent = entity.r * (1 + cupCutawayBodyMargin * weight);
+    left = Math.min(left, occupantPoint.x - extent);
+    top = Math.min(
+      top,
+      centerY + weight * (occupantPoint.y - extent - centerY),
+    );
+    bottom = Math.max(
+      bottom,
+      centerY + weight * (occupantPoint.y + extent - centerY),
+    );
+    radius = Math.max(radius, weight * extent);
+    influence = Math.max(influence, weight);
+  }
+  out.left = Math.max(container.interior.left, left);
+  out.top = Math.max(
+    container.interior.top,
+    mouth.top + influence * (top - mouth.top),
+  );
+  out.bottom = Math.min(
+    container.interior.bottom,
+    mouth.bottom + influence * (bottom - mouth.bottom),
+  );
+  out.radius = Math.min(
+    mouth.left + mouthRadius - out.left,
+    mouthRadius + influence * (radius - mouthRadius),
+  );
+  return out;
+}
+
+// Keep the exposed mouth fixed. Curved shoulders join it to a rounded body-sized
+// rear window, instead of extending the mouth's full height as a rectangular slot.
+function cupOpeningPath(container, shape) {
   const mouth = container.opening;
   const rx = (mouth.right - mouth.left) / 2;
   const ry = (mouth.bottom - mouth.top) / 2;
   const x = container.width / 2;
   const y = container.height / 2;
-  const back = x + left + rx;
+  const back = x + shape.left + shape.radius;
   const front = x + mouth.left + rx;
-  const top = y + mouth.top;
-  const bottom = y + mouth.bottom;
-  return `M${back} ${top} H${front} A${rx} ${ry} 0 0 1 ${front} ${bottom} H${back} A${rx} ${ry} 0 0 1 ${back} ${top} Z`;
+  const middle = (back + front) / 2;
+  const top = y + shape.top;
+  const bottom = y + shape.bottom;
+  const extension = Math.min(1, (mouth.left - shape.left) / (2 * rx));
+  // Bow the shoulders toward the cavity walls, including when two occupants
+  // need similar rear/mouth widths. Equal widths must not restore straight sides.
+  const upper = Math.min(shape.top, mouth.top);
+  const lower = Math.max(shape.bottom, mouth.bottom);
+  const upperControl = y + upper + extension * (container.interior.top - upper);
+  const lowerControl =
+    y + lower + extension * (container.interior.bottom - lower);
+  return `M${back} ${top} Q${middle} ${upperControl} ${front} ${y + mouth.top} A${rx} ${ry} 0 0 1 ${front} ${y + mouth.bottom} Q${middle} ${lowerControl} ${back} ${bottom} A${shape.radius} ${(bottom - top) / 2} 0 0 1 ${back} ${top} Z`;
 }
 
 export function renderContainerOccupants(
@@ -255,27 +316,37 @@ export function renderContainerOccupants(
         "--fixture-angle",
         (container.source.angle ?? 0) + "rad",
       );
-      interior.style.clipPath = `path("${cupOpeningPath(container, container.interior.left)}")`;
+      const bounds = container.interior;
+      // The foreground mask alone determines the visible contour. Its backdrop
+      // covers the cavity, but shares the curved mouth: a rectangular backdrop
+      // would leak through the photograph's transparent front corners.
+      const mouth = container.opening;
+      const rx = (mouth.right - mouth.left) / 2;
+      const ry = (mouth.bottom - mouth.top) / 2;
+      const x = container.width / 2;
+      const y = container.height / 2;
+      const front = x + mouth.left + rx;
+      interior.style.clipPath = `path("M${x + bounds.left} ${y + bounds.top} H${front} V${y + mouth.top} A${rx} ${ry} 0 0 1 ${front} ${y + mouth.bottom} V${y + bounds.bottom} H${x + bounds.left} Z")`;
       containerEl.appendChild(interior);
-      view = { interior, left: null };
+      view = { interior };
       cupViews.set(sprite, view);
     }
-    let left = container.opening.left;
-    for (let i = 0; i < 2; i++) {
-      const entity = i === 0 ? marble : cockroach;
-      // An exterior insect's antennae must never punch a window through a wall.
-      // Both actors use their real body and the same physical interior test.
-      if (!entity || !pointInContainer(container, entity)) continue;
-      containerLocalPoint(container, entity.x, entity.y, occupantPoint);
-      left = Math.min(left, occupantPoint.x - entity.r);
-    }
-    left = Math.max(container.interior.left, left);
-    if (view.left === left) continue;
-    view.left = left;
+    const shape = cupCutawayShape(container, marble, cockroach, cutawayShape);
+    if (
+      view.left === shape.left &&
+      view.top === shape.top &&
+      view.bottom === shape.bottom &&
+      view.radius === shape.radius
+    )
+      continue;
+    view.left = shape.left;
+    view.top = shape.top;
+    view.bottom = shape.bottom;
+    view.radius = shape.radius;
     const outer = `M0 0 H${container.width} V${container.height} H0 Z`;
     sprite.style.setProperty(
       "--cup-clip",
-      `path(evenodd, "${outer} ${cupOpeningPath(container, left)}")`,
+      `path(evenodd, "${outer} ${cupOpeningPath(container, shape)}")`,
     );
   }
 }
