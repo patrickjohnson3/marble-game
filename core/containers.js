@@ -1,7 +1,7 @@
 import { KITCHEN_CUP_SPRITE } from "./map-elements.js";
 
 // A small geometric description of the existing hollow prop. Solids remain in
-// mapState.obstacles; the interior, roof mask and opening guides share this pose.
+// mapState.obstacles; the interior, visible mouth and guides share this pose.
 export function createCupContainer(source, clearance) {
   const sprite = KITCHEN_CUP_SPRITE;
   const width = Math.max(source.hitboxW ?? source.w, sprite.minWidth);
@@ -23,7 +23,7 @@ export function createCupContainer(source, clearance) {
     bottom: (rect.bottom - sprite.height / 2) * scale,
   });
   result.interior = bounds(sprite.interior);
-  result.cover = bounds(sprite.cover);
+  result.opening = bounds(sprite.opening);
   const outside = bounds(sprite.exterior);
   const left = outside.left - clearance;
   const right = outside.right + clearance;
@@ -64,14 +64,6 @@ export function pointInContainer(container, point) {
     local.y >= b.top &&
     local.y <= b.bottom
   );
-}
-
-export function overlapsContainerCover(container, entity, radius = entity.r) {
-  containerLocalPoint(container, entity.x, entity.y, local);
-  const b = container.cover;
-  const dx = Math.max(b.left - local.x, 0, local.x - b.right);
-  const dy = Math.max(b.top - local.y, 0, local.y - b.bottom);
-  return dx * dx + dy * dy < radius * radius;
 }
 
 const distances = new Float64Array(5);

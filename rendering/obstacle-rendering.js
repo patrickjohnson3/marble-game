@@ -8,10 +8,7 @@ import {
 } from "../core/map-elements.js";
 import { renderLivingRoomFixtures } from "./living-room-rendering.js";
 import { renderParkingFixtures } from "./parking-lot-rendering.js";
-import {
-  containerLocalPoint,
-  overlapsContainerCover,
-} from "../core/containers.js";
+import { containerLocalPoint, pointInContainer } from "../core/containers.js";
 
 function coveredByAny(rects, left, top, right, bottom) {
   return rects.some(
@@ -211,54 +208,23 @@ function applyRectStyle(element, rect) {
 }
 
 const kitchenFixtureSprites = new WeakMap();
-const containerCanvases = new WeakMap();
-const indicatorDash = [4, 3];
-const noDash = [];
+const cupViews = new WeakMap();
 const occupantPoint = { x: 0, y: 0 };
 
-function drawContainedSilhouette(context, container, entity, roach) {
-  if (!entity) return;
-  containerLocalPoint(container, entity.x, entity.y, occupantPoint);
-  context.save();
-  const angle = roach ? entity.angle - (container.source.angle ?? 0) : 0;
-  context.transform(
-    Math.cos(angle),
-    Math.sin(angle),
-    -Math.sin(angle),
-    Math.cos(angle),
-    occupantPoint.x,
-    occupantPoint.y,
-  );
-  context.fillStyle = roach ? "rgba(75,43,23,0.12)" : "rgba(18,66,96,0.1)";
-  context.strokeStyle = roach ? "rgba(69,39,23,0.6)" : "rgba(18,58,83,0.52)";
-  context.lineWidth = 1.5;
-  context.setLineDash?.(indicatorDash);
-  context.beginPath();
-  context.ellipse(
-    0,
-    0,
-    entity.r,
-    entity.r * (roach ? 0.6 : 1),
-    0,
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
-  context.stroke();
-  if (roach) {
-    context.setLineDash?.(noDash);
-    context.beginPath();
-    for (let side = -1; side <= 1; side += 2) {
-      for (let leg = -1; leg <= 1; leg++) {
-        context.moveTo(leg * entity.r * 0.5, side * entity.r * 0.4);
-        context.lineTo(leg * entity.r * 0.8, side * entity.r * 1.2);
-      }
-      context.moveTo(entity.r * 0.7, side * entity.r * 0.2);
-      context.lineTo(entity.r * 2, side * entity.r * 0.6);
-    }
-    context.stroke();
-  }
-  context.restore();
+// The aperture is an ellipse at rest. When occupied, extend the same aperture
+// back into a narrow cutaway, leaving the opaque rim, side walls and handle.
+// Coordinates stay local to the existing CSS contain box, before its rotation.
+function cupOpeningPath(container, left) {
+  const mouth = container.opening;
+  const rx = (mouth.right - mouth.left) / 2;
+  const ry = (mouth.bottom - mouth.top) / 2;
+  const x = container.width / 2;
+  const y = container.height / 2;
+  const back = x + left + rx;
+  const front = x + mouth.left + rx;
+  const top = y + mouth.top;
+  const bottom = y + mouth.bottom;
+  return `M${back} ${top} H${front} A${rx} ${ry} 0 0 1 ${front} ${bottom} H${back} A${rx} ${ry} 0 0 1 ${back} ${top} Z`;
 }
 
 export function renderContainerOccupants(
@@ -272,82 +238,45 @@ export function renderContainerOccupants(
   for (const container of containers) {
     const sprite = sprites.get(container.source);
     if (!sprite) continue;
-    const marbleCovered = !!marble && overlapsContainerCover(container, marble);
-    const roachCovered =
-      !!cockroach &&
-      overlapsContainerCover(container, cockroach, cockroach.r * 2.4);
-    let cached = containerCanvases.get(sprite);
-    if (!cached && !marbleCovered && !roachCovered) continue;
-    if (!cached) {
-      const canvas = document.createElement("canvas");
-      canvas.className = "containerSilhouetteCanvas";
-      canvas.setAttribute("aria-hidden", "true");
-      const scale = Math.min(
-        1,
-        512 / Math.max(container.width, container.height),
+    let view = cupViews.get(sprite);
+    if (!view) {
+      // This background sits BELOW the real actors, not over the ceramic. The
+      // foreground image is the only occluder; there are no copied actor glyphs.
+      const interior = document.createElement("div");
+      interior.className = "kitchenCupInterior";
+      interior.setAttribute("aria-hidden", "true");
+      applyRectStyle(interior, {
+        x: container.centerX - container.width / 2,
+        y: container.centerY - container.height / 2,
+        w: container.width,
+        h: container.height,
+      });
+      interior.style.setProperty(
+        "--fixture-angle",
+        (container.source.angle ?? 0) + "rad",
       );
-      canvas.width = Math.ceil(container.width * scale);
-      canvas.height = Math.ceil(container.height * scale);
-      sprite.appendChild(canvas);
-      cached = { canvas, context: canvas.getContext("2d"), scale };
-      containerCanvases.set(sprite, cached);
+      interior.style.clipPath = `path("${cupOpeningPath(container, container.interior.left)}")`;
+      containerEl.appendChild(interior);
+      view = { interior, left: null };
+      cupViews.set(sprite, view);
     }
-    const changed =
-      cached.marbleCovered !== marbleCovered ||
-      cached.roachCovered !== roachCovered ||
-      (marbleCovered &&
-        (cached.mx !== marble.x ||
-          cached.my !== marble.y ||
-          cached.mr !== marble.r)) ||
-      (roachCovered &&
-        (cached.rx !== cockroach.x ||
-          cached.ry !== cockroach.y ||
-          cached.rr !== cockroach.r ||
-          cached.ra !== cockroach.angle));
-    if (!changed) continue;
-    if (cached.marbleCovered !== marbleCovered)
-      cached.canvas.setAttribute("data-marble-covered", String(marbleCovered));
-    if (cached.roachCovered !== roachCovered)
-      cached.canvas.setAttribute("data-roach-covered", String(roachCovered));
-    cached.marbleCovered = marbleCovered;
-    cached.roachCovered = roachCovered;
-    const context = cached.context;
-    if (!context) continue;
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.clearRect(0, 0, cached.canvas.width, cached.canvas.height);
-    if (!marbleCovered && !roachCovered) continue;
-    context.save();
-    context.setTransform(
-      cached.scale,
-      0,
-      0,
-      cached.scale,
-      cached.canvas.width / 2,
-      cached.canvas.height / 2,
+    let left = container.opening.left;
+    for (let i = 0; i < 2; i++) {
+      const entity = i === 0 ? marble : cockroach;
+      // An exterior insect's antennae must never punch a window through a wall.
+      // Both actors use their real body and the same physical interior test.
+      if (!entity || !pointInContainer(container, entity)) continue;
+      containerLocalPoint(container, entity.x, entity.y, occupantPoint);
+      left = Math.min(left, occupantPoint.x - entity.r);
+    }
+    left = Math.max(container.interior.left, left);
+    if (view.left === left) continue;
+    view.left = left;
+    const outer = `M0 0 H${container.width} V${container.height} H0 Z`;
+    sprite.style.setProperty(
+      "--cup-clip",
+      `path(evenodd, "${outer} ${cupOpeningPath(container, left)}")`,
     );
-    const cover = container.cover;
-    context.beginPath();
-    context.rect(
-      cover.left,
-      cover.top,
-      cover.right - cover.left,
-      cover.bottom - cover.top,
-    );
-    context.clip();
-    if (marbleCovered) {
-      drawContainedSilhouette(context, container, marble, false);
-      cached.mx = marble.x;
-      cached.my = marble.y;
-      cached.mr = marble.r;
-    }
-    if (roachCovered) {
-      drawContainedSilhouette(context, container, cockroach, true);
-      cached.rx = cockroach.x;
-      cached.ry = cockroach.y;
-      cached.rr = cockroach.r;
-      cached.ra = cockroach.angle;
-    }
-    context.restore();
   }
 }
 const spongeImpact = {
@@ -513,6 +442,7 @@ function renderKitchenObstacleWalls(container, obstacles) {
   }
   for (const [fixture, sprite] of sprites) {
     if (fixtures.has(fixture)) continue;
+    cupViews.get(sprite)?.interior.remove();
     sprite.remove();
     sprites.delete(fixture);
   }

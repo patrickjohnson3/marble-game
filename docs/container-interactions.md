@@ -1,135 +1,161 @@
-# Enterable cup: geometry, pursuit, and visibility
+# Sideways cup: opening, cutaway, and pursuit
 
-The existing coffee cup is the only currently enterable prop. Sofas, chests,
-bookcases and appliances keep their established solid footprints.
+The kitchen's ceramic cup lies on its side. Its source sprite opens toward local
++X; the authored `Math.PI / 2` rotation points the mouth down the screen beside the
+existing water spill. The camera only pans/scales this 2D world; there is no 3D
+mesh, perspective camera, shader, or depth buffer. Other furniture retains its
+established solid footprint.
 
-## What was wrong
+## Reproduced problems
 
-The first reveal tested the marble center, then raised the entire shaded sphere
-above the cup at 45% opacity. Crossing the boundary switched draw order for all
-of the sphere at once. Its highlights appeared on the painted ceramic even when
-only part of the marble was covered.
+The earlier center-triggered translucency was replaced with clipped occupant
+outlines and opening guides. Navigation through the mouth worked, but the flat
+photograph still painted its pale mouth over real actors. An entering marble
+could disappear behind this apparently solid ellipse, then appear as a dashed
+circle on the blue ceramic. The roach received a similar drawing rather than a
+view of its actual body. Its enlarged antenna envelope could even trigger that
+cue with its center outside the cavity: local position `(-140, -88)`, radius 24,
+is clear of solids but overlapped the old reveal mask.
+The [previous outline view](screenshots/container-occupants.png) is retained for
+comparison.
 
-The roach already used the same prepared obstacle pieces as the marble and had
-a smaller circular body. It could enter from the front, but its pursuit steering
-pointed through the back/side walls; collision rejection and local turns could
-oscillate indefinitely. A stationary target inside stayed at least 168 world
-units away after 900 frames from behind and from the handle side. When the roach
-entered legitimately, its ordinary canvas was occluded by the cup with no
-interior indicator. Navigation and visibility were separate failures.
+These were rendering defects. The existing hollow compound collision geometry,
+rotation, roach routing, and nearby spill already supported the intended scene.
+They have been preserved. There is no new fluid behavior or camera tuning.
 
-## Shared geometry and pursuit
+## One opening, real actors
 
-`KITCHEN_CUP_SPRITE` defines source-image interior, exterior, and roof bounds.
-`core/map-obstacles.js` uses the interior edges for the corresponding ceramic
-walls and keeps the existing fitted compound collision geometry.
-`core/containers.js` transforms the same profile into `mapRuntime.state.containers`
-on map load. Each descriptor has its fixture source, local interior/cover,
-world pose, five exterior guide points, and an `openingApproach` reference.
-Containment is derived from live positions; there is no persistent occupancy
-flag or second collision collection.
+`KITCHEN_CUP_SPRITE` holds source-image bounds for the interior, visible opening,
+and exterior navigation guides. The opening lies between the existing solid rim
+pieces. Those pieces now refer to the opening's edges without changing their
+sizes or positions. `core/containers.js` derives the world pose and local bounds
+once on map load. Both actors still use `mapRuntime.state.obstacles` as the one
+physical obstacle collection.
 
-Both bodies collide with `mapRuntime.state.obstacles`. The marble has radius 29;
-the roach has radius 24. Route probes use radius 27, including a 3-unit safety
-margin covering the intervals between 6-unit samples. This footprint fits every
-marble-clear passage. Validation rejects a roach map whose authored marble radius
-is smaller than the navigation footprint. A 60-unit passage and an opening close
-to a world edge are exercised by regression tests.
+Rendering uses two ordinary DOM layers:
 
-During harassment, a blocked direct route near a container triggers a bounded
-shortest-path search on its five-point exterior ring. All connections are checked
-against the live obstacle collection, including a moved sponge. Entry/exit
-connections go through the opening approach. The roach follows the first safe
-waypoint, clamps steps at arrival, and replans on its existing decision clock.
-Inside the cavity it pursues the current marble position rather than an intercept
-projected through a closed wall. If the opening is blocked, ordinary collision-safe
-avoidance continues until a valid route returns. There is no teleport or wall bypass.
+- A shaded interior below both the insect overlay and marble.
+- The original opaque photographic cup above them, with a clipped mouth.
 
-Harassment speed, attack strength, recovery, escape distance/time, stun, invulnerability,
-and quiet intervals retain their existing tuning. Entering the cup does not clear
-pursuit. Retry recreates both descriptors and the actor's optional route target.
+At rest the aperture is a narrow ellipse inside the rim. When an actor actually
+enters the cavity, the same aperture extends back toward its leading body extent
+as a bounded cutaway. It is connected to the mouth, leaving the back, side strips,
+handle, and outer rim opaque. Both actors use the same rule. Outside antennae do
+not open a window through ceramic. If both are inside, one cutaway exposes them
+both; after they leave, only the ordinary mouth remains open.
 
-This is local routing for a single-opening prop, not room-wide pathfinding. Future
-pipes or furniture need truthful solid geometry and an appropriate interior/opening
-profile, with their actual placements validated and exercised. Complex arrangements
-or multiple openings may need different guides; they are not implemented here.
+The actual marble and roach render in their normal layers, at normal opacity and
+size, with their normal shading. There is no duplicate sphere, insect glyph,
+silhouette canvas, global opacity switch, or retained occupancy flag. The opening
+advances continuously with body extent along the legal entry/exit path. Its local
+coordinates rotate and scale with the cup, independently of follow and zoom.
+Retry and room changes remove the disposable interior with the fixture.
 
-## Rendering choice
+This cutaway is an illustrative view into a solid object, not transparent ceramic
+or a physically rendered 3D interior. The flat source image cannot supply parallax
+or a true curved inner floor. The explicit opening and visible interior make the
+tradeoff clearer than an unexplained x-ray outline. No second rendering engine,
+new bitmap, or actor render pass is needed. Unchanged cutaway depth skips style
+updates; the interior is static and no additional canvas backing storage is used.
 
-Two approaches were assessed against the flat photographic sprite:
+## Shared traversability
 
-- Selective cup translucency would need extra compositing/masks to fade the body
-  while protecting its opaque rim and handle. The image has no separate interior
-  floor or depth layers; fading its painted surface would not recover that data.
-- A clipped occupant silhouette keeps the existing ceramic art opaque, including
-  its silhouette, rim, handle, and shading. It needs one small local overlay.
+The marble radius is 29; the roach radius is 24. Existing route probes use radius
+27, including a 3-unit safety margin covering intervals between 6-unit probes.
+Map validation checks this footprint against the checked marble spawn radius.
+Both bodies therefore fit the same physical passages in the current maps.
 
-The second approach is implemented. The original marble and roach stay in their
-normal layers below the cup. The sprite's alpha naturally obscures covered portions
-while exposing portions outside the opening. A faint flat outline/fill is clipped
-to the roof interior and drawn into a child canvas of the cup. It has no sphere
-glint or floor shadow painted onto the ceramic. The insect outline includes its
-body, legs, and antennae, making the two occupants distinguishable.
+The existing bounded five-guide exterior route sends a blocked pursuer through
+the mouth, checking the live obstacle collection including a moved sponge. Inside
+it pursues the current target rather than an intercept through a closed wall.
+A blocked mouth is not bypassed; ordinary collision-safe avoidance continues
+until access returns. Entry does not clear harassment. Attack, escape, goo,
+recovery, and speed tuning are unchanged. This remains local single-opening
+routing, not general room pathfinding.
 
-Coverage uses entity extent, not a center toggle. As a body crosses the roof edge,
-the clipped portion grows or shrinks continuously; neither the original body's
-opacity, size, nor draw order changes. The roof mask deliberately stops before the
-rim and excludes the handle. Real exterior shading/contact shadows stay intact.
-The debug hitboxes remain above the cup and its child overlay.
-The static artwork/shadow live on a pseudo-element, so silhouette updates do not
-also invalidate a filter group containing the whole cup and its live canvas.
+## Automated and visual checks
 
-`renderContainerOccupants()` reads authoritative entities after each frame's updates,
-including paused/reset renders. The canvas is created on first coverage and reused;
-unchanged covered poses do not repaint, and unchanged coverage flags do not rewrite
-DOM attributes. Retry/room changes discard it with the fixture DOM. Maximum backing
-dimension is 512 pixels; there are no per-frame route arrays or geometry rebuilding.
+`tests/containers-test.js` exercises rotated/scaled geometry, entry/exit from four
+approaches, three interior targets, swept roach paths, fixed/irregular update
+partitions, blocked/reopened access, narrow and world-edge clearance, and reset.
+Visibility tests cover extent-driven opening, exterior false reveals, identical
+rules for both actors, layer reuse, removal, and rendering leaving solids intact.
+`tests/kitchen-fixtures-test.js` checks marble entry, closed walls, and grazing rim
+and back-wall impacts at overspeed and a 2.2-frame update, including rotations.
+Touching a wall is allowed; penetration beyond numerical roundoff is not.
 
-This remains a 2D cutout view. The image cannot reveal a physically rendered inner
-cup floor or parallax. The outline is explicitly a through-object indicator. A real
-interior view would require additional artwork or a different rendering model.
+The real Chrome test in `tests/kitchen-fixtures-browser-test.js` drives keyboard
+entry and exit while changing zoom through the existing camera controller. A
+controlled pursuit starts the roach behind the closed back, lets real physics
+bring it inside to contact the marble, then checks that it exits after the target
+moves outside. It also checks Retry while occupied and changing rooms.
 
-## Evidence and checks
+Its reproducible visual matrix covers marble-only, roach-only, and both interacting,
+each outside / at the rim / inside / exiting at 0.55× and 1× zoom: 24 real-renderer
+captures at 390×844. "Only" means the other actor remains outside the cup, not that
+its renderer is removed. Matrix poses are deliberately positioned and paused to
+compare rendering; live entry/pursuit above are separate evidence. Layer/clip
+assertions do not establish visual quality and are not pixel goldens.
 
-Real-game desktop Chrome views at 390×844:
-[entering the mouth](screenshots/container-mouth.png),
-[partially covered](screenshots/container-partial.png),
-[both occupants inside](screenshots/container-occupants.png).
-A separate [844×390 landscape view](screenshots/container-landscape.png) checks the
-same interaction at a wider aspect ratio.
+Inspected evidence: [near matrix](screenshots/cup-cutaway-near.png),
+[far matrix](screenshots/cup-cutaway-far.png),
+[both inside](screenshots/cup-cutaway-both.png), and
+[landscape](screenshots/cup-cutaway-landscape.png).
+The sheets crop and arrange actual viewport captures; the command below saves
+the full screenshots and poses.
+Additional desktop captures exercise cup rotations 0 and −0.4 radians and the
+existing maximum zoom of 2.5×. These are fixture rotations/viewport changes,
+not a new camera angle or physical-device verification.
 
-Keyboard input drove the marble through the opening. A controlled stationary-target
-encounter then placed the roach behind the closed cup back; real physics/pursuit
-routed it inside to make contact. Moving the target outside made the roach leave
-through the opening and continue harassment. This distinguishes real keyboard
-movement from the positioned setup used to isolate the pursuit scenario.
+Generate the full matrix using existing test/browser helpers from the repo root:
 
-`tests/containers-test.js` checks entry and exit from four directions toward three
-interior targets at three rotations, entire swept paths remaining outside solids,
-fixed and irregular update partitions, blocked/reopened access, narrow clearance,
-world-edge access, reset, shared clipping geometry, bounded canvas storage, and cache
-reuse. Existing cup/utensil and encounter tests retain ordinary movement/contact checks.
-The browser suite drives entry/exit and pursuit through the application, inspects
-actual canvas alpha against the roof mask (not color/screenshot goldens), and checks
-normal body layering, opaque ceramic, Retry and room cleanup.
+```sh
+node --input-type=module <<'JS'
+import { createStaticServer, listen, launchBrowser, closeServer } from './tools/browser-support.js';
+import { testCupEntry } from './tests/kitchen-fixtures-browser-test.js';
+const server = createStaticServer(process.cwd());
+await listen(server);
+let browser;
+try {
+  browser = await launchBrowser();
+  await testCupEntry(browser, `http://127.0.0.1:${server.address().port}/`, {
+    screenshotDirectory: '/tmp/cup-views',
+  });
+} finally {
+  await browser?.close();
+  await closeServer(server);
+}
+JS
+```
 
-Final checks on Node 24.18.0 passed: `npm test`, `npm run lint`,
-`npm run format:check`, `npm run map:validate`, `npm run check-cache`, and
-`git diff --check`. Runtime modules and generated versions were synchronized with
-`npm run sync-cache`. `npm run test:browser` passed the gameplay/browser smoke
-checks, but the PWA suite failed waiting for the in-app update release at
-`tests/pwa-browser-test.js:695`. Running `node tests/pwa-browser-test.js` in a
-disposable copy of the unchanged starting commit, `3aa7bb6`, reproduced the same
-assertion. The full browser command therefore remains failing for this pre-existing
-update-test issue; these results do not establish that PWA upgrades always succeed.
+The directory contains 24 PNGs and `matrix.json` with camera/actor poses and
+computed layering. The normal browser suite runs the same scenarios without
+saving screenshots. Also run `npm test`, `npm run lint`, `npm run format:check`,
+`npm run map:validate`, and `npm run check-cache` after `npm run sync-cache`.
 
-A 120-frame desktop encounter sampled the game's existing smoothed JavaScript
-counters: median total 0.59 ms, physics 0.15 ms, render 0.05 ms; the 95th percentile
-of the smoothed total was 0.91 ms. These are not raw frame intervals, compositor/GPU
-measurements, or phone results. Canvas backing storage rose from 37,879,104 to
-38,456,704 bytes when occupied: one 380×380 overlay, 577,600 extra bytes. The
-reproduction used the normal 4400×4400 kitchen, twelve ants, and its existing props.
+On 2026-11-18, the Node suite, lint, formatting, map validation, cache validation,
+and `git diff --check` passed. The focused cup test and 24 captures passed, with
+no browser errors. The full `npm run test:browser` command passed on rerun,
+including PWA offline/upgrade regressions; an initial process had ended with
+SIGTERM before reporting a result. These were desktop Chrome checks on Node
+24.18.0, not physical-phone measurements.
 
-Physical Android Chrome/Brave and iPhone Safari/Chrome were unavailable. On hardware,
-judge the outline's contrast, whether the transition reads as entering a solid cup,
-whether a chase inside remains understandable, and sustained compositor cost.
+## Manual judgment
+
+Open the first kitchen and enable Camera buttons in Settings. At the cup beside
+the upper water spill (world center 2590,1260), approach its down-facing mouth
+around (2545,1500), roll up through the lip to (2545,1260), then roll down to exit.
+Repeat near either rim edge and at a faster approach. The mouth should stay hollow,
+the exposed body should remain opaque, and the cutaway should close as it leaves.
+Approaching the closed back must stop at the ceramic without a reveal. Let a
+chasing roach follow this route; it should enter, remain visible on the same
+interior, and follow back out. Try one inside while the other stays outside.
+
+Use zoom in/out during movement and while resting against each wall, then rotate
+the device. Follow/zoom should retain their existing behavior; clipping must stay
+attached to the cup. The scene has no camera viewing-angle control. Rotated cup
+fixtures are exercised by deterministic geometry/physics tests instead.
+
+Physical Android Chrome/Brave and iPhone Safari/Chrome remain necessary for judging
+cutaway readability, touch/tilt feel, CSS clipping on those browsers, and sustained
+compositor performance. Desktop captures cannot establish those results.

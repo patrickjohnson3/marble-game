@@ -78,10 +78,10 @@ and an `applianceBase` skirt. These native fixtures paint their exact solid
 `tippedCup` uses a transparent sprite and fitted body/rim/handle collision parts,
 following the utensil pipeline. It is hollow, with solid sides/back and an open
 mouth facing +X at angle 0. Map load derives shared container geometry from
-`KITCHEN_CUP_SPRITE`: interior, opaque roof mask, and an exterior opening route.
+`KITCHEN_CUP_SPRITE`: interior, clear mouth, and an exterior opening route.
 The roach follows that opening using the same live collision pieces as the marble.
-Covered portions of both bodies get clipped silhouettes; ordinary sprites stay
-below the opaque cup, preserving partial occlusion at the rim. See
+The mouth is visibly hollow; a temporary bounded cutaway reveals the real actors
+on a shaded interior while the ceramic rim and handle remain opaque. See
 [container interactions](container-interactions.md) for the footprint invariant,
 local routing, visual limitations, and regression checks. See the main
 kitchen definition and [environment follow-up](kitchen-environment.md#edge-composition-follow-up)

@@ -59,11 +59,11 @@ export const KITCHEN_CUP_SPRITE = Object.freeze({
   height: 1247,
   minWidth: 0,
   minHeight: 0,
-  // Shared cavity/opening, exterior detour bounds, and opaque roof area, all
-  // measured in source-image pixels. The rim and handle remain fully opaque.
+  // Shared cavity, clear mouth between the rim pieces, and exterior guides,
+  // measured in source-image pixels. Local +X is the open end of the cup.
   interior: Object.freeze({ left: 315, top: 450, right: 1130, bottom: 1085 }),
   exterior: Object.freeze({ left: 85, top: 80, right: 1130, bottom: 1132 }),
-  cover: Object.freeze({ left: 315, top: 450, right: 1015, bottom: 1085 }),
+  opening: Object.freeze({ left: 1020, top: 530, right: 1130, bottom: 1000 }),
 });
 
 // Parking car uses the same centered background-size: contain transform.

@@ -141,6 +141,51 @@ for (const angle of [0, cup.angle, -0.4]) {
       "the outer lower wall remains solid",
     );
   }
+
+  // Overspeed may follow a pest shove. Even across a long supported frame,
+  // neither a direct back-wall strike nor a grazing rim hit may tunnel through.
+  for (const [x, y, vx, vy] of [
+    [0, 45, -35, 0],
+    [210, -70, -30, 12],
+  ]) {
+    const marble = {
+      x: cup.x + cup.w / 2 + Math.cos(angle) * x - Math.sin(angle) * y,
+      y: cup.y + cup.h / 2 + Math.sin(angle) * x + Math.cos(angle) * y,
+      vx: Math.cos(angle) * vx - Math.sin(angle) * vy,
+      vy: Math.sin(angle) * vx + Math.cos(angle) * vy,
+      r: 29,
+    };
+    const context = {
+      marble,
+      mapState: state,
+      physics: physicsConfig,
+      intro: { released: true },
+      bounds: { left: 0, top: 0, right: 4400, bottom: 4400 },
+      tilt: { smoothX: 0, smoothY: 0 },
+    };
+    for (let i = 0; i < 30; i++) {
+      updatePhysics(context, 2.2, {});
+      assert.ok(
+        state.obstacles.every((part) => {
+          const contact = circleObstacleContact(marble, part);
+          // The contact predicate includes tangency. Allow floating-point
+          // roundoff at a resting surface, but no meaningful penetration.
+          return (
+            !contact.intersects ||
+            (contact.insideDistance === 0 &&
+              contact.distanceSq >= (marble.r - 1e-7) ** 2)
+          );
+        }),
+        "fast contact does not penetrate the solid rim or walls",
+      );
+      const dx = marble.x - cup.x - cup.w / 2;
+      const dy = marble.y - cup.y - cup.h / 2;
+      assert.ok(
+        Math.cos(angle) * dx + Math.sin(angle) * dy > -135,
+        "an interior or mouth approach cannot emerge behind the closed back",
+      );
+    }
+  }
 }
 
 const feet = runtime.obstacles.filter(

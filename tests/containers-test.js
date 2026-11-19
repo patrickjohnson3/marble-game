@@ -5,10 +5,7 @@ import {
   createResolvedMapState,
 } from "../core/map-runtime.js";
 import { resolveMapVariantConfig } from "../core/map-variants.js";
-import {
-  pointInContainer,
-  overlapsContainerCover,
-} from "../core/containers.js";
+import { pointInContainer } from "../core/containers.js";
 import { updateCockroach } from "../core/cockroach.js";
 import { cockroachConfig } from "../core/game-config.js";
 import { physicsConfig } from "../core/game-config.js";
@@ -18,7 +15,7 @@ import {
   renderObstacleWalls,
   renderContainerOccupants,
 } from "../rendering/obstacle-rendering.js";
-import { FakeCanvasElement, FakeElement } from "./test-dom.js";
+import { FakeElement } from "./test-dom.js";
 
 const map = resolveMapVariantConfig(baseMapConfig, "kitchen-floor");
 const authoredCup = map.elements.find((e) => e.fixture === "tippedCup");
@@ -106,15 +103,12 @@ for (const angle of [0, Math.PI / 2, -0.4]) {
       false,
       "the transparent handle is not the interior",
     );
-    assert.equal(
-      overlapsContainerCover(container, imagePoint(1050, 760)),
-      true,
-      "extent overlaps the roof even with the center beyond it",
-    );
-    assert.equal(
-      overlapsContainerCover(container, imagePoint(1200, 760)),
-      false,
-      "the exterior remains unaffected at either contain scale",
+    assert.ok(
+      container.opening.left > container.interior.left &&
+        container.opening.right === container.interior.right &&
+        container.opening.top > container.interior.top &&
+        container.opening.bottom < container.interior.bottom,
+      "the exposed mouth stays between the solid rim pieces",
     );
   }
 }
@@ -248,79 +242,88 @@ runtime.setActiveMap(resolveMapVariantConfig(baseMapConfig, "living-room"));
 assert.deepEqual(runtime.state.containers, []);
 
 const originalDocument = globalThis.document;
-globalThis.document = {
-  createElement: (tag) =>
-    tag === "canvas" ? new FakeCanvasElement() : new FakeElement(),
-};
+globalThis.document = { createElement: () => new FakeElement() };
 try {
   const s = scenario();
-  const c = s.state.containers[0];
   const layer = new FakeElement();
   renderObstacleWalls(layer, s.state.obstacles, { mapConfig: map });
   const sprite = layer.children.find((e) => e.className === "kitchenCupSprite");
-  // Center outside the roof but radius overlapping it: this must be partial
-  // occlusion, not a whole-entity transparency or draw-order toggle.
-  const partial = world(s.cup, 135, 45);
-  assert.equal(pointInContainer(c, partial), true);
-  assert.equal(overlapsContainerCover(c, partial), true);
-  renderContainerOccupants(layer, s.state.containers, partial, null);
-  const canvas = sprite.firstChild;
-  assert.ok(canvas);
-  assert.equal(canvas.attributes["data-marble-covered"], "true");
-  assert.ok(canvas.context.calls.some((call) => call[0] === "clip"));
-  const clipped = canvas.context.calls.find((call) => call[0] === "rect");
-  assert.deepEqual(clipped.slice(1), [
-    c.cover.left,
-    c.cover.top,
-    c.cover.right - c.cover.left,
-    c.cover.bottom - c.cover.top,
-  ]);
-  assert.ok(
-    canvas.width * canvas.height * 4 <= 1024 * 1024,
-    "only one bounded local canvas is needed per occupied cup",
+  const outside = world(s.cup, 260, 45);
+  renderContainerOccupants(layer, s.state.containers, outside, null);
+  const closed = sprite.style.properties["--cup-clip"];
+  assert.ok(closed.startsWith("path(evenodd,"), "the mouth is a real aperture");
+  const interior = layer.children.find(
+    (e) => e.className === "kitchenCupInterior",
   );
-  const calls = canvas.context.calls.length;
-  renderContainerOccupants(layer, s.state.containers, partial, null);
-  assert.equal(
-    canvas.context.calls.length,
-    calls,
-    "unchanged occupancy reuses its drawing",
-  );
-  const inside = world(s.cup, 0, 45);
-  Object.assign(s.roach, world(s.cup, 60, 45, 24));
-  const roachBefore = globalThis.structuredClone(s.roach);
-  const marbleBefore = { ...inside };
-  renderContainerOccupants(layer, s.state.containers, inside, s.roach);
-  assert.deepEqual(
-    s.roach,
-    roachBefore,
-    "silhouette rendering does not advance the insect",
-  );
-  assert.deepEqual(
-    inside,
-    marbleBefore,
-    "silhouette rendering does not alter the marble",
-  );
-  assert.equal(canvas.attributes["data-roach-covered"], "true");
-  assert.ok(
-    canvas.context.calls.some((call) => call[0] === "lineTo"),
-    "the insect has a distinct silhouette",
+  assert.ok(interior, "the cavity is below actors, not a glyph on the surface");
+  assert.equal(sprite.children.length, 0, "no silhouette canvas remains");
+  const children = [...layer.children];
+  // This was physically outside but its enlarged antenna envelope previously
+  // drew an insect on the ceramic. It must leave the ordinary opening alone.
+  Object.assign(s.roach, world(s.cup, -140, -88, 24));
+  assert.equal(pointInContainer(s.state.containers[0], s.roach), false);
+  renderContainerOccupants(layer, s.state.containers, outside, s.roach);
+  assert.equal(sprite.style.properties["--cup-clip"], closed);
+  const entering = world(s.cup, 135, 45);
+  renderContainerOccupants(layer, s.state.containers, entering, null);
+  const partial = sprite.style.properties["--cup-clip"];
+  assert.notEqual(
+    partial,
+    closed,
+    "the cutaway starts with the leading extent",
   );
   renderContainerOccupants(
     layer,
     s.state.containers,
-    world(s.cup, 260, 45),
+    world(s.cup, 134, 45),
     null,
   );
-  assert.equal(canvas.attributes["data-marble-covered"], "false");
-  assert.equal(canvas.attributes["data-roach-covered"], "false");
+  assert.notEqual(sprite.style.properties["--cup-clip"], partial);
+  const inside = world(s.cup, 0, 45);
+  const before = globalThis.structuredClone(s.state);
+  renderContainerOccupants(layer, s.state.containers, inside, null);
+  const marbleCut = sprite.style.properties["--cup-clip"];
+  Object.assign(s.roach, inside);
+  const roachBefore = { ...s.roach };
+  const marbleBefore = { ...outside };
+  renderContainerOccupants(layer, s.state.containers, outside, s.roach);
+  assert.deepEqual(
+    s.roach,
+    roachBefore,
+    "visibility cannot advance the insect",
+  );
+  assert.deepEqual(outside, marbleBefore, "visibility cannot move the marble");
   assert.equal(
-    sprite.firstChild,
-    canvas,
-    "entry/exit does not create additional layers",
+    sprite.style.properties["--cup-clip"],
+    marbleCut,
+    "identical bodies get identical visibility regardless of creature type",
+  );
+  renderContainerOccupants(layer, s.state.containers, inside, s.roach);
+  assert.equal(sprite.style.properties["--cup-clip"], marbleCut);
+  assert.deepEqual(
+    layer.children,
+    children,
+    "repeated frames reuse two static layers",
+  );
+  assert.deepEqual(
+    s.state.obstacles,
+    before.obstacles,
+    "visibility cannot alter solids",
+  );
+  renderContainerOccupants(layer, s.state.containers, outside, null);
+  assert.equal(
+    sprite.style.properties["--cup-clip"],
+    closed,
+    "exiting restores ceramic",
+  );
+  renderObstacleWalls(layer, [], { mapConfig: map });
+  assert.equal(
+    interior.parent,
+    null,
+    "removing the cup removes its cavity too",
   );
 } finally {
   if (originalDocument === undefined) delete globalThis.document;
   else globalThis.document = originalDocument;
 }
-console.log("Container geometry, navigation and silhouette tests passed.");
+console.log("Container geometry, navigation and cutaway tests passed.");

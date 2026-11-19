@@ -172,6 +172,7 @@ body {
 #world.map-open .obstacleCanvas,
 #world.map-open .kitchenObstacleLayer,
 #world.map-open .kitchenCupSprite,
+#world.map-open .kitchenCupInterior,
 #world.map-open .mapThemeLayer,
 #world.map-open .mapThemeOverlayLayer,
 #world.map-open .gooPatchCanvas,
@@ -256,9 +257,9 @@ body {
   transform: rotate(var(--fixture-angle, 0rad));
   transform-origin: center;
 }
-.kitchenCupSprite {
+.kitchenCupSprite,
+.kitchenCupInterior {
   position: absolute;
-  z-index: 6;
   box-sizing: border-box;
   pointer-events: none;
   transform: rotate(var(--fixture-angle, 0rad));
@@ -266,12 +267,23 @@ body {
   opacity: 0;
   transition: opacity 0.45s ease;
 }
+.kitchenCupSprite {
+  z-index: 6;
+}
+.kitchenCupInterior {
+  /* Below both the insect overlay (1) and marble (5), above the floor. */
+  z-index: 0;
+  background:
+    linear-gradient(0deg, #30281e55, transparent 35%, #fff1 65%, #30281e66),
+    linear-gradient(90deg, #413c35 10%, #a39882 65%, #dfd7c4 92%);
+}
 .kitchenCupSprite::before {
   content: "";
   position: absolute;
   inset: 0;
   background: url("assets/sprites/tipped-cup.webp") center / contain no-repeat;
-  /* Keep the static shadow off the live occupant canvas's filter group. */
+  clip-path: var(--cup-clip);
+  /* The static art retains its floor shadow; the cutaway has no actor copy. */
   filter: drop-shadow(0 8px 7px #0004);
 }
 .kitchenBase {
@@ -763,13 +775,6 @@ body {
 }
 #marble.ready {
   visibility: visible;
-}
-.containerSilhouetteCanvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
 }
 #marble::before {
   content: "";

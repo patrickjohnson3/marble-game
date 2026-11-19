@@ -36,6 +36,7 @@ const spoonMetalRects = [
 // The overhead ceramic surface occludes this cavity; it is not a solid slab.
 // Keep the handle opening empty too.
 const cupInterior = KITCHEN_CUP_SPRITE.interior;
+const cupOpening = KITCHEN_CUP_SPRITE.opening;
 const cupBodyRects = [
   [190, cupInterior.top - 45, 860, 45, 22],
   [190, cupInterior.bottom, 860, 45, 22],
@@ -43,8 +44,8 @@ const cupBodyRects = [
   [85, 500, cupInterior.left - 85, 550, 115],
   [1025, 398, 58, 76, 29],
   [1025, 1056, 58, 76, 29],
-  [1035, 450, 75, 80, 37.5],
-  [1035, 1000, 75, 80, 37.5],
+  [1035, cupInterior.top, 75, cupOpening.top - cupInterior.top, 37.5],
+  [1035, cupOpening.bottom, 75, 80, 37.5],
   [320, 280, 115, 170, 57.5],
   [350, 190, 135, 170, 67.5],
   [415, 130, 125, 120, 60],
