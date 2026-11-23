@@ -254,6 +254,20 @@ for (const angle of [0, Math.PI / 2, -0.4]) {
   assert.equal(rest.top, c.opening.top);
   assert.equal(rest.bottom, c.opening.bottom);
   for (const r of [24, 29]) {
+    for (const x of [c.interior.right - 0.01, c.interior.right + 0.01]) {
+      const atMouth = world(s.cup, x, centerY, r);
+      assert.ok(
+        s.state.obstacles.every(
+          (part) => !circleObstacleContact(atMouth, part).intersects,
+        ),
+        "the body can straddle the open mouth at the center boundary",
+      );
+      assert.deepEqual(
+        shape(atMouth),
+        rest,
+        "crossing the center boundary at the rim leaves the ordinary aperture intact",
+      );
+    }
     const body = world(s.cup, 0, centerY, r);
     const occupied = shape(body);
     assert.ok(
@@ -311,6 +325,39 @@ for (const angle of [0, Math.PI / 2, -0.4]) {
       Math.abs(together[key] - alone[key]) < 1e-6,
       "a second entrant cannot pop an already occupied opening to another shape",
     );
+
+  const backRoach = world(s.cup, -70, 115, 24);
+  const oppositeMarble = world(s.cup, -37, -20, 29);
+  assert.ok(
+    [backRoach, oppositeMarble].every((body) =>
+      s.state.obstacles.every(
+        (part) => !circleObstacleContact(body, part).intersects,
+      ),
+    ),
+    "the simultaneous rear-corner poses are physically clear",
+  );
+  const rearCorner = shape(oppositeMarble, backRoach);
+  assert.ok(
+    rearCorner.left + rearCorner.radius <= -70 + 1e-9,
+    "the rear wall clamp cannot push the rounded shoulders ahead of the roach",
+  );
+}
+
+// In a larger cup the mouth's ellipse can be deeper than either body radius.
+// A center within that ellipse still leaves it alone until the body reaches
+// the ceramic behind it.
+{
+  const cup = { ...authoredCup, angle: 0, w: 760, h: 760 };
+  const state = createResolvedMapState({ ...map, elements: [cup] });
+  const c = state.containers[0];
+  const r = state.cockroach.r;
+  const body = world(cup, c.opening.left + r + 1, 80, r);
+  assert.equal(pointInContainer(c, body), true);
+  assert.deepEqual(
+    cupCutawayShape(c, null, body, {}),
+    cupCutawayShape(c, null, null, {}),
+    "a body that has not reached the cutaway cannot reshape the mouth",
+  );
 }
 
 const originalDocument = globalThis.document;

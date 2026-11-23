@@ -96,6 +96,14 @@ single occupant no longer becomes a full-height slot. This last assertion was
 verified to fail against the unchanged starting commit `4e40629` in a disposable
 copy, and pass with the fix. These are geometric checks, not pixel goldens.
 
+The rear contour uses two rounded corners joined along the back. A single
+stretched ellipse used to hide part of an occupant near a rear corner when
+another body widened the opening. The rear shoulders now stay at or behind the
+deepest body's center when the closed wall limits the cutaway's depth. At the
+mouth the corners meet to form the original ellipse. A body straddling the rim
+can still overlap the cup's projected outline after the cutaway closes. The
+opaque rim covers only the part behind its artwork.
+
 On 2026-11-19, the final Node suite, lint, formatting, map/cache validation,
 and diff checks passed. Final focused Chrome checks passed the live entry,
 pursuit, exit and 24-view matrix. Additional captures covered 30 positioned hover
@@ -143,8 +151,9 @@ bring it inside to contact the marble, then checks that it exits after the targe
 moves outside. It also checks Retry while occupied and changing rooms.
 
 Its reproducible visual matrix covers marble-only, roach-only, and both interacting,
-each outside / at the rim / inside / exiting at 0.55× and 1× zoom: 24 real-renderer
-captures at 390×844. "Only" means the other actor remains outside the cup, not that
+each outside / at the rim / inside / exiting at 0.55× and 1× zoom, plus a
+simultaneous rear-corner pose at each zoom: 26 real-renderer captures at 390×844.
+"Only" means the other actor remains outside the cup, not that
 its renderer is removed. Matrix poses are deliberately positioned and paused to
 compare rendering; live entry/pursuit above are separate evidence. Layer/clip
 assertions do not establish visual quality and are not pixel goldens.
@@ -180,7 +189,7 @@ try {
 JS
 ```
 
-The directory contains 24 PNGs and `matrix.json` with camera/actor poses and
+The directory contains 26 PNGs and `matrix.json` with camera/actor poses and
 computed layering. The normal browser suite runs the same scenarios without
 saving screenshots. Also run `npm test`, `npm run lint`, `npm run format:check`,
 `npm run map:validate`, and `npm run check-cache` after `npm run sync-cache`.

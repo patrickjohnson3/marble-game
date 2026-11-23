@@ -220,6 +220,7 @@ export function cupCutawayShape(container, marble, cockroach, out) {
   const mouth = container.opening;
   const centerY = (mouth.top + mouth.bottom) / 2;
   const mouthRadius = (mouth.right - mouth.left) / 2;
+  let rearCenter = mouth.left + mouthRadius;
   let left = mouth.left;
   let top = centerY;
   let bottom = centerY;
@@ -237,6 +238,10 @@ export function cupCutawayShape(container, marble, cockroach, out) {
     weight *= weight * (3 - 2 * weight);
     const extent = entity.r * (1 + cupCutawayBodyMargin * weight);
     left = Math.min(left, occupantPoint.x - extent);
+    rearCenter = Math.min(
+      rearCenter,
+      occupantPoint.x + (1 - weight) * mouthRadius,
+    );
     top = Math.min(
       top,
       centerY + weight * (occupantPoint.y - extent - centerY),
@@ -258,7 +263,9 @@ export function cupCutawayShape(container, marble, cockroach, out) {
     mouth.bottom + influence * (bottom - mouth.bottom),
   );
   out.radius = Math.min(
-    mouth.left + mouthRadius - out.left,
+    // At the closed end, clipping the margin must not move the shoulder
+    // forward past the rear occupant's center.
+    rearCenter - out.left,
     mouthRadius + influence * (radius - mouthRadius),
   );
   return out;
@@ -285,7 +292,14 @@ function cupOpeningPath(container, shape) {
   const upperControl = y + upper + extension * (container.interior.top - upper);
   const lowerControl =
     y + lower + extension * (container.interior.bottom - lower);
-  return `M${back} ${top} Q${middle} ${upperControl} ${front} ${y + mouth.top} A${rx} ${ry} 0 0 1 ${front} ${y + mouth.bottom} Q${middle} ${lowerControl} ${back} ${bottom} A${shape.radius} ${(bottom - top) / 2} 0 0 1 ${back} ${top} Z`;
+  // Keep round corners when the actors spread across the cup. Stretching
+  // one rear ellipse across that gap rounds away the space behind each body.
+  const halfHeight = (bottom - top) / 2;
+  const cornerHeight =
+    halfHeight - extension * Math.max(0, halfHeight - shape.radius);
+  const rear = x + shape.left;
+  const corner = `A${shape.radius} ${cornerHeight} 0 0 1`;
+  return `M${back} ${top} Q${middle} ${upperControl} ${front} ${y + mouth.top} A${rx} ${ry} 0 0 1 ${front} ${y + mouth.bottom} Q${middle} ${lowerControl} ${back} ${bottom} ${corner} ${rear} ${bottom - cornerHeight} V${top + cornerHeight} ${corner} ${back} ${top} Z`;
 }
 
 export function renderContainerOccupants(

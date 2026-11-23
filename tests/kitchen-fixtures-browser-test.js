@@ -64,6 +64,8 @@ function containerAppearance() {
   return {
     centersVisible,
     rearRoof,
+    // A point inside the radius-24 roach at (-70, 115), clear of both walls.
+    rearCornerVisible: !ceramicAt(-86, 125) && backdropAt(-86, 125),
     backdropFitsMouth: [-0.9, 0.9].every(
       (y) =>
         !backdropAt(
@@ -111,9 +113,10 @@ async function captureCupMatrix(page, directory) {
         ["rim", 135],
         ["inside", 0],
         ["exiting", 170],
+        ...(actors === "both" ? [["rear-corner", -70]] : []),
       ]) {
         const pose = await page.evaluate(
-          async ({ scale, actors, x }) => {
+          async ({ scale, actors, stage, x }) => {
             const a = window.__cupApp,
               c = a.mapRuntime.state.containers[0];
             a.gameController.pause();
@@ -126,15 +129,21 @@ async function captureCupMatrix(page, directory) {
             Object.assign(
               a.state.marble,
               world(
-                actors === "roach" ? 240 : x,
-                actors === "roach" ? -80 : actors === "both" ? 10 : 45,
+                stage === "rear-corner" ? -37 : actors === "roach" ? 240 : x,
+                stage === "rear-corner"
+                  ? -20
+                  : actors === "roach"
+                    ? -80
+                    : actors === "both"
+                      ? 10
+                      : 45,
               ),
             );
             Object.assign(
               a.mapRuntime.state.cockroach,
               world(
                 actors === "marble" ? -280 : x,
-                actors === "both" ? 80 : 45,
+                stage === "rear-corner" ? 115 : actors === "both" ? 80 : 45,
               ),
               {
                 mode: "stunned",
@@ -167,7 +176,7 @@ async function captureCupMatrix(page, directory) {
               camera: { ...a.state.camera },
             };
           },
-          { scale, actors, x },
+          { scale, actors, stage, x },
         );
         const appearance = await page.evaluate(containerAppearance);
         assert.equal(appearance.cupOpacity, "1");
@@ -190,6 +199,12 @@ async function captureCupMatrix(page, directory) {
           true,
           "interior occupants stay trackable",
         );
+        if (stage === "rear-corner")
+          assert.equal(
+            appearance.rearCornerVisible,
+            true,
+            "another occupant must not close the cutaway over a body at the rear",
+          );
         assert.equal(
           appearance.closedWalls,
           true,
